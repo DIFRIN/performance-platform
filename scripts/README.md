@@ -7,13 +7,17 @@ Setter les variables d'environnement puis lancer `claude`. C'est tout.
 Le system prompt de chaque agent est chargé depuis `.claude/agents/<agent>.md` —
 source unique, utilisée à la fois par `agent.py/sh` et par Claude Code (subagents natifs).
 
-| Agent | Env settée | LLM lancé |
-|---|---|---|
-| `developer` | `ANTHROPIC_BASE_URL` = DeepSeek + `ANTHROPIC_API_KEY` = `$DEEPSEEK_API_KEY` | Claude Code → DeepSeek |
-| `reviewer` | idem | Claude Code → DeepSeek |
-| `tester` | idem | Claude Code → DeepSeek |
-| `system-designer` | `ANTHROPIC_BASE_URL` supprimée, `ANTHROPIC_API_KEY` = `$ANTHROPIC_API_KEY` | Claude Code → Anthropic |
-| `architect` | idem | Claude Code → Anthropic |
+> **Note importante** : les deux scripts exécutent `claude auth logout` avant chaque lancement
+> d'agent, pour garantir un état propre : pas de session Anthropic Pro parasite quand on
+> bascule vers DeepSeek, ni de variables DeepSeek résiduelles quand on repasse sur Anthropic.
+
+| Agent | Auth step | Env settée | LLM lancé |
+|---|---|---|---|
+| `developer` | `claude auth logout` → déconnecte Anthropic Pro | `ANTHROPIC_BASE_URL` = DeepSeek + `ANTHROPIC_API_KEY` = `$DEEPSEEK_API_KEY` + `ANTHROPIC_MODEL` = `deepseek-v4-pro` | Claude Code → DeepSeek V4 Pro |
+| `reviewer` | idem | idem | Claude Code → DeepSeek V4 Pro |
+| `tester` | idem | idem | Claude Code → DeepSeek V4 Pro |
+| `system-designer` | `claude auth logout` → déconnecte DeepSeek + `claude auth login` | `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` **supprimées** | Claude Code → Anthropic (auth natif) |
+| `architect` | idem | idem | Claude Code → Anthropic (auth natif) |
 
 ---
 
