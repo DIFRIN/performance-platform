@@ -98,7 +98,7 @@
 
 | ID | Titre | PDR | Module | Taille | Statut | Bloquée par |
 |---|---|---|---|---|---|---|
-| ISSUE-014 | ExecutionConfig | PDR-004 | platform-application | S | TODO | ISSUE-012 |
+| ISSUE-014 | ExecutionConfig | PDR-004 | platform-application | S | DONE | ISSUE-012 |
 | ISSUE-015 | ScenarioParser (YAML → ScenarioDefinition) | PDR-005 | platform-scenario-dsl | L | TODO | ISSUE-003,012 |
 | ISSUE-016 | ScenarioValidator + détection cycle DAG | PDR-005 | platform-scenario-dsl | L | TODO | ISSUE-015 |
 | ISSUE-019 | ExecutionPlanBuilder + DAG levels | PDR-006 | platform-execution-engine | L | TODO | ISSUE-006,016 |
@@ -227,6 +227,9 @@
 | 2026-06-13 | ISSUE-012 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-13 | ISSUE-013 | TODO → IN PROGRESS | Developer |
 | 2026-06-13 | ISSUE-013 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-13 | ISSUE-013 | IN REVIEW → DONE | Reviewer |
+| 2026-06-14 | ISSUE-014 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-014 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -235,4 +238,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-13 (ISSUE-013 IN REVIEW)
+**Dernière mise à jour** : 2026-06-14 (ISSUE-014 IN REVIEW)
