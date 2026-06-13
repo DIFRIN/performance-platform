@@ -88,9 +88,9 @@
 
 | Classe / Annotation | Statut | PDR | Issue |
 |---|---|---|---|
-| `@Preparation` ⚡ | ⬜ PLANNED | PDR-003 | ISSUE-010 |
-| `@Injection` ⚡ | ⬜ PLANNED | PDR-003 | ISSUE-010 |
-| `@Assertion` ⚡ | ⬜ PLANNED | PDR-003 | ISSUE-010 |
+| `@Preparation` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
+| `@Injection` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
+| `@Assertion` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
 | `TaskExecutor` ⚡ | ⬜ PLANNED | PDR-003 | ISSUE-011 |
 | `AssertionExecutor` | ⬜ PLANNED | PDR-003 | ISSUE-011 |
 

@@ -47,13 +47,79 @@ done
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
+# Safe trimming without xargs (avoids "unmatched single quote" warnings)
+safe_trim() {
+  tr -d '\r`'"'"'"' | sed -E 's/^[[:space:]]+//;s/[[:space:]]+$//'
+}
+
+# Discover files listed in the "Fichiers à Créer" section of an issue file.
+# Returns a list of relative paths (one per line) that exist on disk.
+# Handles the tree format: directory/ followed by indented ├── file.java
+discover_issue_files() {
+  local issue_file="$1"
+  local in_section=false
+  local current_dir=""  # track directory context for indented files
+  local -a paths=()
+
+  while IFS= read -r line; do
+    # Detect start of "Fichiers à Créer" section
+    if echo "$line" | grep -qE '^## Fichiers (à|a) Créer'; then
+      in_section=true
+      continue
+    fi
+    # End of section: next ## heading or --- separator
+    if $in_section; then
+      if echo "$line" | grep -qE '^## |^---'; then
+        in_section=false
+        continue
+      fi
+      # Skip the ``` fence lines
+      if echo "$line" | grep -qE '^```'; then
+        continue
+      fi
+      # Trim leading whitespace and tree-drawing chars (├── └── │   ├─ └─)
+      local trimmed
+      trimmed=$(echo "$line" | sed -E 's/^[[:space:]]*[│├└][─]*[[:space:]]*//')
+      # If empty after trimming (just tree chars or empty line), skip
+      [[ -z "$trimmed" ]] && continue
+      # Remove inline comments (— ...)
+      trimmed=$(echo "$trimmed" | sed -E 's/[[:space:]]*—.*$//')
+      # If the trimmed line ends with /, it's a directory context for subsequent files
+      if echo "$trimmed" | grep -q '/$'; then
+        current_dir="$trimmed"
+        # The directory itself may be a path (e.g. when it contains files)
+        # Add the directory if it exists and is tracked
+        [[ -d "$GIT_ROOT/$trimmed" ]] && paths+=("$trimmed")
+        continue
+      fi
+      # If it starts with platform- or src/ or is a relative path, it's a file
+      if echo "$trimmed" | grep -qE '^(platform-|src/|pom\.xml|\.claude/)'; then
+        # If current_dir is set, prepend it
+        local full_path
+        if [[ -n "$current_dir" ]]; then
+          full_path="${current_dir}${trimmed}"
+        else
+          full_path="$trimmed"
+        fi
+        if [[ -f "$GIT_ROOT/$full_path" ]] || [[ -d "$GIT_ROOT/$full_path" ]]; then
+          paths+=("$full_path")
+        fi
+      fi
+    fi
+  done < "$issue_file"
+
+  # Output unique paths
+  printf '%s\n' "${paths[@]}" | sort -u
+}
+
 # Extract field value from an Issue file: **Field** : value
 issue_field() {
   local file="$1" field="$2"
   grep -m1 "^\*\*${field}\*\*" "$file" \
     | sed "s/^\*\*${field}\*\*[[:space:]]*:[[:space:]]*//" \
     | tr -d '\r' \
-    | xargs
+    | tr -d '`' \
+    | safe_trim
 }
 
 # Derive conventional commit type from issue file content
@@ -69,7 +135,7 @@ commit_type() {
   # Read PDR module if available
   pdr_module=""
   for f in $pdr_file; do
-    [[ -f "$f" ]] && pdr_module=$(grep -m1 "^\*\*Module Maven\*\*" "$f" | sed 's/.*: *//' | tr -d '`' | xargs) && break
+    [[ -f "$f" ]] && pdr_module=$(grep -m1 "^\*\*Module Maven\*\*" "$f" | sed 's/.*: *//' | tr -d '`' | safe_trim) && break
   done
 
   local combined="${title,,} ${module,,} ${pdr_module,,}"
@@ -117,7 +183,7 @@ commit_description() {
     | sed 's/^# ISSUE-[0-9][0-9]* — //' \
     | tr '[:upper:]' '[:lower:]' \
     | sed 's/[[:space:]]*$//' \
-    | xargs
+    | safe_trim
 }
 
 # Build commit body from Issue objective
@@ -126,7 +192,7 @@ commit_body() {
   local objective module taille
 
   objective=$(awk '/^## Objectif/{found=1; next} found && /^---/{exit} found{print}' "$issue_file" \
-    | grep -v '^$' | head -2 | tr '\n' ' ' | xargs)
+    | grep -v '^$' | head -2 | tr '\n' ' ' | safe_trim)
   module=$(issue_field "$issue_file" "Module")
   taille=$(issue_field "$issue_file" "Taille")
 
@@ -147,7 +213,8 @@ fi
 # 1. Extract all DONE issues from progress.md in order
 DONE_ISSUES=()
 while IFS= read -r line; do
-  if echo "$line" | grep -qE "ISSUE-[0-9]+" && echo "$line" | grep -qiE "✅[[:space:]]*DONE|DONE[[:space:]]*✅|\|\s*DONE\s*\|"; then
+  # Only match Issue table rows (start with | ISSUE-XXX), skip PDR/history rows
+  if echo "$line" | grep -qE "^\|\s*ISSUE-[0-9]+\s*\|" && echo "$line" | grep -qiE "\|\s*DONE\s*\|"; then
     issue_id=$(echo "$line" | grep -oE "ISSUE-[0-9]+" | head -1)
     [[ -n "$issue_id" ]] && DONE_ISSUES+=("$issue_id")
   fi
@@ -159,11 +226,11 @@ if [[ ${#DONE_ISSUES[@]} -eq 0 ]]; then
 fi
 
 # 2. Find issues that don't have a commit yet
-# A commit exists if git log contains [ISSUE-XXX] or "Refs: ISSUE-XXX"
+# A commit exists if git log contains [ISSUE-XXX], "Refs: ISSUE-XXX", or "ISSUE-XXX:"
 UNCOMMITTED=()
 for issue_id in "${DONE_ISSUES[@]}"; do
-  committed=$(git -C "$GIT_ROOT" log --oneline --all \
-    | grep -iE "\[$issue_id\]|Refs:[[:space:]]*$issue_id" | head -1 || true)
+  committed=$(git -C "$GIT_ROOT" log --format="%s %b" --all \
+    | grep -iE "\[$issue_id\]|Refs:[[:space:]]*$issue_id|${issue_id}:" | head -1 || true)
   if [[ -z "$committed" ]]; then
     UNCOMMITTED+=("$issue_id")
   fi
@@ -211,8 +278,23 @@ ${BODY}"
     echo "─── Committing $issue_id ────────────────────────────"
     echo "  $TYPE($SCOPE): $DESC"
 
-    # Stage all modified tracked files (untracked files must be staged manually)
+    # Stage modified tracked files
     git -C "$GIT_ROOT" add -u
+
+    # Discover and stage files listed in the issue's "Fichiers à Créer" section
+    DISCOVERED_FILES=$(discover_issue_files "$ISSUE_FILE")
+    if [[ -n "$DISCOVERED_FILES" ]]; then
+      while IFS= read -r f; do
+        if [[ -f "$GIT_ROOT/$f" ]] || [[ -d "$GIT_ROOT/$f" ]]; then
+          git -C "$GIT_ROOT" add "$f" 2>/dev/null || true
+        fi
+      done <<< "$DISCOVERED_FILES"
+    fi
+
+    # Also stage tracking files that are always part of an issue delivery
+    for tf in ".claude/progress.md" ".claude/session-state.md" ".claude/context/interfaces-registry.md" ".claude/context/decisions-log.md"; do
+      [[ -f "$GIT_ROOT/$tf" ]] && git -C "$GIT_ROOT" add "$tf" 2>/dev/null || true
+    done
 
     # Check if there's anything staged
     if git -C "$GIT_ROOT" diff --cached --quiet; then

@@ -89,7 +89,7 @@
 | ISSUE-007 | Records Agent + ArchUnit domaine | PDR-001 | platform-domain | M | DONE | ISSUE-001,002 |
 | ISSUE-008 | Events cycle de vie scénario/phase/task | PDR-002 | platform-domain | M | DONE | ISSUE-001,002,004 |
 | ISSUE-009 | Events agent/report + AgentSignal scellé | PDR-002 | platform-domain | M | DONE | ISSUE-001,007 |
-| ISSUE-010 | Annotations @Preparation/@Injection/@Assertion | PDR-003 | platform-plugin-api | S | TODO | ISSUE-003,004 |
+| ISSUE-010 | Annotations @Preparation/@Injection/@Assertion | PDR-003 | platform-plugin-api | S | DONE | ISSUE-003,004 |
 | ISSUE-011 | Interfaces TaskExecutor/AssertionExecutor | PDR-003 | platform-plugin-api | S | TODO | ISSUE-010,006 |
 | ISSUE-012 | Ports entrants + exceptions applicatives | PDR-004 | platform-application | M | TODO | ISSUE-003,006 |
 | ISSUE-013 | Ports sortants (Repository/AgentRegistry/Publisher) | PDR-004 | platform-application | M | TODO | ISSUE-012,007 |
@@ -217,6 +217,8 @@
 | 2026-06-13 | ISSUE-009 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-13 | ISSUE-009 | IN REVIEW → DONE | Reviewer |
 | 2026-06-13 | PDR-002 | IN PROGRESS → DONE | Reviewer (ISSUE-008,009 all DONE) |
+| 2026-06-13 | ISSUE-010 | TODO → IN PROGRESS | Developer |
+| 2026-06-13 | ISSUE-010 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -225,4 +227,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-13 (ISSUE-009 DONE, PDR-002 DONE)
+**Dernière mise à jour** : 2026-06-13 (ISSUE-010 IN REVIEW)
