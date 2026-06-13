@@ -51,7 +51,7 @@
 |---|---|---|---|---|---|
 | PDR-001 | Domain Core Records | platform-domain | DONE | ISSUE-001..007 | — |
 | PDR-002 | Domain Events | platform-domain | DONE | ISSUE-008,009 | PDR-001 |
-| PDR-003 | Plugin API | platform-plugin-api | TODO | ISSUE-010,011 | PDR-001 |
+| PDR-003 | Plugin API | platform-plugin-api | IN PROGRESS | ISSUE-010,011 | PDR-001 |
 | PDR-004 | Application Ports & Use Cases | platform-application | TODO | ISSUE-012,013,014 | PDR-001 |
 | PDR-005 | Scenario DSL | platform-scenario-dsl | TODO | ISSUE-015..018 | PDR-001, PDR-004 |
 | PDR-006 | Execution Engine | platform-execution-engine | TODO | ISSUE-019..024 | PDR-001,002,004,005,007 |
@@ -90,7 +90,7 @@
 | ISSUE-008 | Events cycle de vie scénario/phase/task | PDR-002 | platform-domain | M | DONE | ISSUE-001,002,004 |
 | ISSUE-009 | Events agent/report + AgentSignal scellé | PDR-002 | platform-domain | M | DONE | ISSUE-001,007 |
 | ISSUE-010 | Annotations @Preparation/@Injection/@Assertion | PDR-003 | platform-plugin-api | S | DONE | ISSUE-003,004 |
-| ISSUE-011 | Interfaces TaskExecutor/AssertionExecutor | PDR-003 | platform-plugin-api | S | TODO | ISSUE-010,006 |
+| ISSUE-011 | Interfaces TaskExecutor/AssertionExecutor | PDR-003 | platform-plugin-api | S | DONE | ISSUE-010,006 |
 | ISSUE-012 | Ports entrants + exceptions applicatives | PDR-004 | platform-application | M | TODO | ISSUE-003,006 |
 | ISSUE-013 | Ports sortants (Repository/AgentRegistry/Publisher) | PDR-004 | platform-application | M | TODO | ISSUE-012,007 |
 
@@ -219,6 +219,8 @@
 | 2026-06-13 | PDR-002 | IN PROGRESS → DONE | Reviewer (ISSUE-008,009 all DONE) |
 | 2026-06-13 | ISSUE-010 | TODO → IN PROGRESS | Developer |
 | 2026-06-13 | ISSUE-010 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-13 | ISSUE-011 | TODO → IN PROGRESS | Developer |
+| 2026-06-13 | ISSUE-011 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 

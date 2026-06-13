@@ -91,8 +91,8 @@
 | `@Preparation` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
 | `@Injection` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
 | `@Assertion` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
-| `TaskExecutor` ⚡ | ⬜ PLANNED | PDR-003 | ISSUE-011 |
-| `AssertionExecutor` | ⬜ PLANNED | PDR-003 | ISSUE-011 |
+| `TaskExecutor` ⚡ | 🔄 IN PROGRESS | PDR-003 | ISSUE-011 |
+| `AssertionExecutor` | 🔄 IN PROGRESS | PDR-003 | ISSUE-011 |
 
 ## platform-application (Ports)
 

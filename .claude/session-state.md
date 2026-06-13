@@ -11,9 +11,9 @@
 
 **Date dernière session** : 2026-06-13
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-010 — Annotations @Preparation/@Injection/@Assertion
+**Issue active** : ISSUE-011 — Interfaces TaskExecutor/AssertionExecutor
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-003 — Plugin API (1/2, ISSUE-010 IN REVIEW, ISSUE-011 TODO)
+**PDR parent** : PDR-003 — Plugin API (2/2, ISSUE-010 DONE, ISSUE-011 IN REVIEW)
 
 ---
 
@@ -22,21 +22,24 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Dernière action** :
-Developer : ISSUE-010 IN REVIEW. Module platform-plugin-api créé. 3 annotations (@Preparation/@Injection/@Assertion) + AnnotationsRetentionTest (21 tests, reflexion RUNTIME+TYPE+Documented+smoke test). pom.xml 0 Spring. Ajouté au parent POM.
+Developer : ISSUE-011 IN REVIEW. 2 interfaces (TaskExecutor, AssertionExecutor) + ArchUnit test (1 test, 0 Spring dans com.performance.platform.plugin..). pom.xml ajouté ArchUnit. 22 tests passent BUILD SUCCESS.
 
 **Prochaine action** :
-Reviewer : review ISSUE-010 (Annotations), puis Developer : prendre ISSUE-011 (TaskExecutor/AssertionExecutor interfaces)
+Reviewer : review ISSUE-011 (TaskExecutor/AssertionExecutor interfaces + ArchUnit no-Spring)
 
 **Fichiers en cours** :
 ```
-platform-plugin-api/pom.xml                                    ✅ (0 Spring, depend platform-domain)
+platform-plugin-api/pom.xml                                    ✅ (ArchUnit ajouté)
 platform-plugin-api/src/main/java/com/performance/platform/plugin/
   Preparation.java                                             ✅
   Injection.java                                               ✅
   Assertion.java                                               ✅
+  TaskExecutor.java                                            ✅
+  AssertionExecutor.java                                       ✅
 platform-plugin-api/src/test/java/com/performance/platform/plugin/
   AnnotationsRetentionTest.java                                ✅ (21 tests)
-pom.xml                                                        ✅ (module ajouté)
+  PluginApiArchitectureTest.java                               ✅ (1 test ArchUnit)
+pom.xml                                                        ✅
 ```
 
 **Blocages** :
@@ -51,9 +54,9 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue à prendre)
 
-SI REVIEWER (ISSUE-010) :
+SI REVIEWER (ISSUE-011) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-010-plugin-api-annotations.md
+  .claude/issues/ISSUE-011-plugin-api-executor-interfaces.md
   .claude/adr/ADR-007-plugin-jar-system.md
 ```
 
@@ -81,3 +84,4 @@ SI REVIEWER (ISSUE-010) :
 | 2026-06-13 | Reviewer | ISSUE-008 | Revue APPROVED (0 bloquant, 2 recommandations) — 12 events conformes | ✅ DONE |
 | 2026-06-13 | Developer | ISSUE-009 | 7 events + AgentSignal + ScenarioRestartSignal + 43 tests. String target dans ReportPublished. | ✅ IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-009 | Revue APPROVED (0 bloquant). PDR-002 DONE. 392 tests. | ✅ DONE |
+| 2026-06-13 | Developer | ISSUE-011 | 2 interfaces (TaskExecutor/AssertionExecutor) + ArchUnit no-Spring + 22 tests | ✅ IN REVIEW |
