@@ -57,12 +57,12 @@
 | `TaskResult` (String taskName) | ✅ STABLE | PDR-001 | ISSUE-004 |
 | `ExecutionContext` | ✅ STABLE | PDR-001 | ISSUE-005 |
 | `PartialExecutionContext` | ✅ STABLE | PDR-001 | ISSUE-005 |
-| `ExecutionPlan` | ⬜ PLANNED | PDR-001 | ISSUE-006 |
-| `ExecutionStep` | ⬜ PLANNED | PDR-001 | ISSUE-006 |
-| `ExecutionState` | ⬜ PLANNED | PDR-001 | ISSUE-006 |
-| `InjectionResult` | ⬜ PLANNED | PDR-001 | ISSUE-006 |
-| `AssertionResult` | ⬜ PLANNED | PDR-001 | ISSUE-006 |
-| `Evidence` | ⬜ PLANNED | PDR-001 | ISSUE-006 |
+| `ExecutionPlan` | 🔄 IN PROGRESS | PDR-001 | ISSUE-006 |
+| `ExecutionStep` | 🔄 IN PROGRESS | PDR-001 | ISSUE-006 |
+| `ExecutionState` | 🔄 IN PROGRESS | PDR-001 | ISSUE-006 |
+| `InjectionResult` | 🔄 IN PROGRESS | PDR-001 | ISSUE-006 |
+| `AssertionResult` | 🔄 IN PROGRESS | PDR-001 | ISSUE-006 |
+| `Evidence` | 🔄 IN PROGRESS | PDR-001 | ISSUE-006 |
 | `AgentDescriptor` | ⬜ PLANNED | PDR-001 | ISSUE-007 |
 | `AgentCapabilities` | ⬜ PLANNED | PDR-001 | ISSUE-007 |
 | `AgentHeartbeat` | ⬜ PLANNED | PDR-001 | ISSUE-007 |
