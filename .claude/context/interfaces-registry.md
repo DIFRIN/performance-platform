@@ -63,9 +63,9 @@
 | `InjectionResult` | ✅ STABLE | PDR-001 | ISSUE-006 |
 | `AssertionResult` | ✅ STABLE | PDR-001 | ISSUE-006 |
 | `Evidence` | ✅ STABLE | PDR-001 | ISSUE-006 |
-| `AgentDescriptor` | ⬜ PLANNED | PDR-001 | ISSUE-007 |
-| `AgentCapabilities` | ⬜ PLANNED | PDR-001 | ISSUE-007 |
-| `AgentHeartbeat` | ⬜ PLANNED | PDR-001 | ISSUE-007 |
+| `AgentDescriptor` | 🔄 IN PROGRESS | PDR-001 | ISSUE-007 |
+| `AgentCapabilities` | 🔄 IN PROGRESS | PDR-001 | ISSUE-007 |
+| `AgentHeartbeat` | 🔄 IN PROGRESS | PDR-001 | ISSUE-007 |
 | `TaskDefinition` | ❌ REMOVED | ADR-008 | — (remplacé par `StepDefinition`) |
 | `TaskType` | ❌ REMOVED | — | — (remplacé par `String taskName`) |
 | `AgentSelector` | ❌ REMOVED | ADR-008 | — |

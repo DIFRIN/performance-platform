@@ -10,9 +10,9 @@
 ## État Courant
 
 **Date dernière session** : 2026-06-13
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-006 — ExecutionPlan/Step/State + VOs injection/assertion
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-007 — Records Agent (Descriptor/Capabilities/Heartbeat) + ArchUnit domaine
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
 **PDR parent** : PDR-001 — Domain Core Records
 
 ---
@@ -22,50 +22,26 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Dernière action** :
-ISSUE-006 APPROVED (Reviewer — re-review) : point bloquant [TEST-01] InjectionResult resolu avec 36 nouveaux tests. 248 tests au total dans platform-domain, 0 echec. ISSUE-006 → DONE.
+ISSUE-007 implementee (Developer) : 3 records (AgentDescriptor, AgentCapabilities, AgentHeartbeat) + AgentDescriptorTest (22 tests) + DomainArchitectureTest (3 tests). 25 nouveaux tests, 273 tests au total dans platform-domain, 0 echec. ISSUE-007 → IN REVIEW.
 
 **Prochaine action** :
-Developer : prendre ISSUE-007 — Records Agent + ArchUnit domaine (P0, non bloquee, dependances ISSUE-001 et ISSUE-002 satisfaites).
+Reviewer : revoir ISSUE-007. Si APPROVED → ISSUE-007 DONE → PDR-001 DONE (toutes les Issues DONE). Prochaine Issue debloquee : ISSUE-008 (Events cycle de vie scenario/phase/task, PDR-002, depend de ISSUE-001,002,004 — toutes DONE) ou ISSUE-010 (Annotations @Preparation/@Injection/@Assertion, PDR-003, depend de ISSUE-003,004 — toutes DONE).
 
 **Fichiers en cours** :
 ```
 platform-domain/src/main/java/com/performance/platform/domain/
-  ├── execution/
-  │   ├── ExecutionContext.java          ✅
-  │   ├── PartialExecutionContext.java   ✅
-  │   ├── PhaseStatus.java               ✅
-  │   ├── ExecutionStatus.java           ✅
-  │   ├── TaskCompletionPolicy.java      ✅
-  │   ├── RetryPolicy.java               ✅
-  │   ├── ExecutionPlan.java             ✅
-  │   ├── ExecutionStep.java             ✅
-  │   └── ExecutionState.java            ✅
-  ├── task/
-  │   ├── TaskStatus.java                ✅
-  │   └── TaskResult.java                ✅
-  ├── scenario/
-  │   ├── Phase.java                     ✅
-  │   ├── ExecutionMode.java             ✅
-  │   ├── ScenarioDefinition.java        ✅
-  │   └── StepDefinition.java            ✅
-  ├── injection/
-  │   ├── LoadModelType.java             ✅
-  │   ├── LoadModel.java                 ✅
-  │   └── InjectionResult.java           ✅
-  ├── assertion/
-  │   ├── AssertionOperator.java         ✅
-  │   ├── AssertionStatus.java           ✅
-  │   ├── AssertionResult.java           ✅
-  │   └── Evidence.java                  ✅
-platform-domain/src/test/java/.../execution/
-  ├── ExecutionContextTest.java          ✅ (29 tests)
-  ├── PartialExecutionContextTest.java   ✅ (26 tests)
-  └── ExecutionPlanTest.java             ✅ (31 tests)
-platform-domain/src/test/java/.../assertion/
-  ├── AssertionOperatorTest.java         ✅
-  └── AssertionResultTest.java           ✅ (25 tests)
-platform-domain/src/test/java/.../injection/
-  └── InjectionResultTest.java           ✅ (36 tests) NEW
+  ├── agent/
+  │   ├── AgentState.java                   ✅
+  │   ├── AgentDescriptor.java              ✅ NEW
+  │   ├── AgentCapabilities.java            ✅ NEW
+  │   └── AgentHeartbeat.java               ✅ NEW
+  (tous les autres fichiers inchanges depuis ISSUE-006)
+
+platform-domain/src/test/java/.../domain/
+  ├── agent/
+  │   └── AgentDescriptorTest.java          ✅ NEW (22 tests)
+  └── arch/
+      └── DomainArchitectureTest.java       ✅ NEW (3 tests)
 ```
 
 **Blocages** :
@@ -80,10 +56,14 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue à prendre)
 
-SI DEVELOPER (ISSUE-007) :
-  agents/developer.md
+SI REVIEWER (ISSUE-007) :
+  agents/reviewer.md
   .claude/issues/ISSUE-007-agent-descriptor-records.md
   .claude/context/interfaces-registry.md
+
+SI DEVELOPER (prochaine Issue) :
+  agents/developer.md
+  .claude/issues/ISSUE-008-events-scenario-phase-task.md  ou ISSUE-010
 ```
 
 ---
@@ -104,3 +84,4 @@ SI DEVELOPER (ISSUE-007) :
 | 2026-06-13 | Reviewer | ISSUE-005 | Revue APPROVED (0 bloquant, 4 observations) | ✅ DONE |
 | 2026-06-13 | Developer | ISSUE-006 | Impl 6 records + 2 tests + Maven | ✅ IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-006 | Re-review — [TEST-01] resolue, 92 tests total | ✅ DONE |
+| 2026-06-13 | Developer | ISSUE-007 | 3 records agent + 25 tests + ArchUnit pom.xml | ✅ IN REVIEW |

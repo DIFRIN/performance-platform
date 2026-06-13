@@ -86,7 +86,7 @@
 | ISSUE-004 | TaskResult (String taskName) | PDR-001 | platform-domain | S | DONE | ISSUE-001,002 |
 | ISSUE-005 | ExecutionContext + PartialExecutionContext | PDR-001 | platform-domain | M | DONE | ISSUE-001,004 |
 | ISSUE-006 | ExecutionPlan/Step/State + VOs injection/assertion | PDR-001 | platform-domain | M | DONE | ISSUE-003,005 |
-| ISSUE-007 | Records Agent + ArchUnit domaine | PDR-001 | platform-domain | M | TODO | ISSUE-001,002 |
+| ISSUE-007 | Records Agent + ArchUnit domaine | PDR-001 | platform-domain | M | DONE | ISSUE-001,002 |
 | ISSUE-008 | Events cycle de vie scénario/phase/task | PDR-002 | platform-domain | M | TODO | ISSUE-001,002,004 |
 | ISSUE-009 | Events agent/report + AgentSignal scellé | PDR-002 | platform-domain | M | TODO | ISSUE-001,007 |
 | ISSUE-010 | Annotations @Preparation/@Injection/@Assertion | PDR-003 | platform-plugin-api | S | TODO | ISSUE-003,004 |
@@ -206,6 +206,8 @@
 | 2026-06-13 | ISSUE-006 | TODO → IN PROGRESS | Developer |
 | 2026-06-13 | ISSUE-006 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-13 | ISSUE-006 | IN REVIEW → DONE | Reviewer |
+| 2026-06-13 | ISSUE-007 | TODO → IN PROGRESS | Developer |
+| 2026-06-13 | ISSUE-007 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -214,4 +216,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-13 (ISSUE-006 DONE)
+**Dernière mise à jour** : 2026-06-13 (ISSUE-007 IN REVIEW)
