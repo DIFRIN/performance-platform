@@ -2,10 +2,10 @@
 
 **Module Maven** : `platform-domain`
 **Package** : `com.performance.platform.domain.event`
-**Statut** : WAITING
+**Statut** : IN PROGRESS
 **Specs de référence** : `.claude/architecture.md` §4, `.claude/specifications/02-execution-engine.md` §8, `.claude/specifications/04-agent-runtime.md` §6-7, `.claude/specifications/05-transport-layer.md` §3
 **Dépend de** : PDR-001
-**Issues** : ISSUE-008, ISSUE-009
+**Issues** : ISSUE-008 (DONE), ISSUE-009 (IN REVIEW)
 
 ---
 
