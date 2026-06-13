@@ -1,6 +1,6 @@
 # CLAUDE.md — Performance Engineering Platform
 
-> Ce fichier est la première chose à lire après `session-state.md`.
+> Ce fichier est la première chose à lire après `.claude/session-state.md`.
 > Il contient les règles permanentes, la stack, et la table de routing.
 > Ne pas modifier sans décision explicite de l'Architect.
 
@@ -11,7 +11,7 @@
 **Nom** : Performance Engineering Platform
 **Objectif** : Plateforme de test de performance distribuée — mode LOCAL ou DISTRIBUTED avec le même artefact.
 **Stack** : Java 25 / Spring Boot 4.x / Gatling / PostgreSQL / Transport pluggable
-**Statut** : Voir `session-state.md` (état exact) + `roadmap.md` (phases)
+**Statut** : Voir `.claude/session-state.md` (état exact) + `.claude/roadmap.md` (phases)
 
 ---
 
@@ -19,11 +19,11 @@
 
 ```
 TOUJOURS lire dans cet ordre :
-  1. session-state.md              ← état exact + Issue active
+  1. .claude/session-state.md              ← état exact + Issue active
   2. CLAUDE.md                     ← ce fichier (règles)
-  3. progress.md                   ← trouver / confirmer l'Issue active
-  4. issues/ISSUE-XXX.md           ← détail de l'Issue active (si Developer)
-  5. agents/<role>.md              ← comportement de ton rôle
+  3. .claude/progress.md                   ← trouver / confirmer l'Issue active
+  4. .claude/issues/ISSUE-XXX.md           ← détail de l'Issue active (si Developer)
+  5. .claude/agents/<role>.md              ← comportement de ton rôle
 
 NE PAS lire les autres fichiers sauf si explicitement listés dans session-state.md.
 current-task.md est un scratchpad secondaire — ne pas le lire sauf si Architect/Reviewer
@@ -34,18 +34,18 @@ travaille sur une décision hors-Issue.
 
 ## 3. Les 4 Agents — Activation
 
-| Agent | Fichier | Prompt d'activation | Quand |
+| Agent | Fichier | Invocation CLI | Quand |
 |---|---|---|---|
-| **System Designer** | `agents/system-designer.md` | `.claude/agents/system-designer.md` | Avant tout développement — crée PDRs + Issues |
-| **Architect** | `agents/architect.md` | `.claude/agents/architect.md` | Décisions archi, ADRs, escalades |
-| **Developer** | `agents/developer.md` | `.claude/agents/developer.md` | Implémente les Issues de `progress.md` |
-| **Reviewer** | `agents/reviewer.md` | `.claude/agents/reviewer.md` | Après chaque Issue IN REVIEW |
-| **Tester** | `agents/tester.md` | `.claude/agents/tester.md` | Tests d'intégration + E2E |
+| **System Designer** | `.claude/agents/system-designer.md` | `@system-designer` ou `.claude/scripts/agent.sh system-designer` | Avant tout développement — crée PDRs + Issues |
+| **Architect** | `.claude/agents/architect.md` | `@architect` ou `.claude/scripts/agent.sh architect` | Décisions archi, ADRs, escalades |
+| **Developer** | `.claude/agents/developer.md` | `@developer` ou `.claude/scripts/agent.sh developer` | Implémente les Issues de `.claude/progress.md` |
+| **Reviewer** | `.claude/agents/reviewer.md` | `@reviewer` ou `.claude/scripts/agent.sh reviewer` | Après chaque Issue IN REVIEW — rapport uniquement |
+| **Tester** | `.claude/agents/tester.md` | `@tester` ou `.claude/scripts/agent.sh tester` | Tests d'intégration + E2E |
 
-**Reprise sans contexte** → `prompts/session-bootstrap.md`
+**Reprise sans contexte** → `.claude/prompts/session-bootstrap.md`
 **Commandes slash** → `/next` `/done` `/review`
-**Tracker d'avancement** → `progress.md`
-**Workflow complet** → `guides/agent-orchestration.md`
+**Tracker d'avancement** → `.claude/progress.md`
+**Workflow complet** → `.claude/guides/agent-orchestration.md`
 
 ---
 
@@ -101,13 +101,13 @@ performance-platform/
 ```
 
 Règles de dépendance : `platform-domain` ← `platform-application` ← tout le reste.
-Jamais de dépendance cyclique. Voir `architecture.md` section 3.
+Jamais de dépendance cyclique. Voir `.claude/architecture.md` section 3.
 
 ---
 
 ## 7. Conventions de Code
 
-**Nommage** — référence : `glossary.md`
+**Nommage** — référence : `.claude/glossary.md`
 - Interfaces : nom du concept (`ExecutionTransport`, `TaskExecutor`)
 - Implémentations : préfixe technologie (`KafkaExecutionTransport`)
 - Events : passé (`TaskCompleted`, `AgentRegistered`)
@@ -131,37 +131,37 @@ com.performance.platform.<module>/
 
 | Sujet | Fichier | Section |
 |---|---|---|
-| Vocabulaire ambigu | `glossary.md` | terme concerné |
-| DSL YAML / parsing | `specifications/01-scenario-dsl.md` | selon besoin |
-| Orchestration / DAG | `specifications/02-execution-engine.md` | selon besoin |
-| Nouveau TaskExecutor | `specifications/03-task-framework.md` | — |
-| Nouveau TaskExecutor (pattern) | `skills/task-executor-pattern.md` | complet |
-| Agent lifecycle | `specifications/04-agent-runtime.md` | — |
-| Transport | `specifications/05-transport-layer.md` | — |
-| Gatling | `specifications/06-injection-gatling.md` | — |
-| Gatling (patterns code) | `skills/gatling-dsl.md` | — |
-| Assertions | `specifications/07-assertion-framework.md` | — |
-| Reporting | `specifications/08-report-engine.md` | — |
-| Docker / K8s | `specifications/09-deployment.md` | — |
-| Architecture hexagonale | `skills/hexagonal-architecture.md` | complet |
-| Spring Modulith | `skills/spring-modulith.md` | complet |
-| Stratégie de tests | `skills/testing-strategy.md` | complet |
-| Interfaces implémentées | `context/interfaces-registry.md` | module concerné |
-| Décisions passées | `context/decisions-log.md` | sujet concerné |
-| Issues connues | `context/known-issues.md` | — |
-| Découpage des tâches | `context/task-breakdown.md` | phase concernée |
-| Dépendances inter-tâches | `context/dependency-map.md` | — |
-| Workflow agents | `guides/agent-orchestration.md` | — |
-| Plugin JAR externe | `specifications/03-task-framework.md` | section 7 |
-| Annotations @Preparation/@Injection/@Assertion | `adr/ADR-007-plugin-jar-system.md` | — |
-| Priorité config env vs properties | `adr/ADR-006-runtime-config-priority.md` | — |
-| Agents spécialisés + filtre local | `adr/ADR-008-specialized-agent-filter.md` | — |
-| Consumer group Kafka par agent | `adr/ADR-009-kafka-consumer-group-per-agent.md` | — |
-| PartialExecutionContext | `adr/ADR-010-partial-execution-context.md` | — |
-| Multi-claim orchestrateur | `adr/ADR-011-multi-claim-all-complete.md` | — |
-| Avancement PDRs/Issues | `progress.md` | tableau Issues |
-| Détail d'un PDR | `pdr/PDR-XXX.md` | selon Issue active |
-| Détail d'une Issue | `issues/ISSUE-XXX.md` | Issue active uniquement |
+| Vocabulaire ambigu | `.claude/glossary.md` | terme concerné |
+| DSL YAML / parsing | `.claude/specifications/01-scenario-dsl.md` | selon besoin |
+| Orchestration / DAG | `.claude/specifications/02-execution-engine.md` | selon besoin |
+| Nouveau TaskExecutor | `.claude/specifications/03-task-framework.md` | — |
+| Nouveau TaskExecutor (pattern) | `.claude/skills/task-executor-pattern.md` | complet |
+| Agent lifecycle | `.claude/specifications/04-agent-runtime.md` | — |
+| Transport | `.claude/specifications/05-transport-layer.md` | — |
+| Gatling | `.claude/specifications/06-injection-gatling.md` | — |
+| Gatling (patterns code) | `.claude/skills/gatling-dsl.md` | — |
+| Assertions | `.claude/specifications/07-assertion-framework.md` | — |
+| Reporting | `.claude/specifications/08-report-engine.md` | — |
+| Docker / K8s | `.claude/specifications/09-deployment.md` | — |
+| Architecture hexagonale | `.claude/skills/hexagonal-architecture.md` | complet |
+| Spring Modulith | `.claude/skills/spring-modulith.md` | complet |
+| Stratégie de tests | `.claude/skills/testing-strategy.md` | complet |
+| Interfaces implémentées | `.claude/context/interfaces-registry.md` | module concerné |
+| Décisions passées | `.claude/context/decisions-log.md` | sujet concerné |
+| Issues connues | `.claude/context/known-issues.md` | — |
+| Découpage des tâches | `.claude/context/task-breakdown.md` | phase concernée |
+| Dépendances inter-tâches | `.claude/context/dependency-map.md` | — |
+| Workflow agents | `.claude/guides/agent-orchestration.md` | — |
+| Plugin JAR externe | `.claude/specifications/03-task-framework.md` | section 7 |
+| Annotations @Preparation/@Injection/@Assertion | `.claude/adr/ADR-007-plugin-jar-system.md` | — |
+| Priorité config env vs properties | `.claude/adr/ADR-006-runtime-config-priority.md` | — |
+| Agents spécialisés + filtre local | `.claude/adr/ADR-008-specialized-agent-filter.md` | — |
+| Consumer group Kafka par agent | `.claude/adr/ADR-009-kafka-consumer-group-per-agent.md` | — |
+| PartialExecutionContext | `.claude/adr/ADR-010-partial-execution-context.md` | — |
+| Multi-claim orchestrateur | `.claude/adr/ADR-011-multi-claim-all-complete.md` | — |
+| Avancement PDRs/Issues | `.claude/progress.md` | tableau Issues |
+| Détail d'un PDR | `.claude/pdr/PDR-XXX.md` | selon Issue active |
+| Détail d'une Issue | `.claude/issues/ISSUE-XXX.md` | Issue active uniquement |
 
 ---
 
@@ -187,7 +187,7 @@ MODE=AGENT java -jar platform-app/target/*.jar
 - `TaskExecutor` sans annotation `@Preparation`, `@Injection`, ou `@Assertion`
 - Modification de `TaskExecutor`, `ExecutionTransport`, `ReportPublisher`, ou des 3 annotations
 - `executionContext.store.put(...)` — mutation directe du contexte
-- Nouvelle dépendance Maven non dans `constraints.md`
+- Nouvelle dépendance Maven non dans `.claude/constraints.md`
 - Variable d'env ignorée au profit d'une property hardcodée (env var doit être prioritaire)
 - Utilisation de `TaskDefinition` — remplacé par `StepDefinition` (ADR-008)
 - Utilisation de `TaskType` enum — remplacé par `taskName` String + annotations
