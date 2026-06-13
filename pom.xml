@@ -22,6 +22,7 @@
 
     <modules>
         <module>platform-domain</module>
+        <module>platform-plugin-api</module>
     </modules>
 
     <dependencyManagement>

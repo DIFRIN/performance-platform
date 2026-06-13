@@ -10,10 +10,10 @@
 ## État Courant
 
 **Date dernière session** : 2026-06-13
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-009 — Events agent/assertion/report + AgentSignal scellé
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE
-**PDR parent** : PDR-002 — Domain Events (DONE, 2/2 DONE)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-010 — Annotations @Preparation/@Injection/@Assertion
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
+**PDR parent** : PDR-003 — Plugin API (1/2, ISSUE-010 IN REVIEW, ISSUE-011 TODO)
 
 ---
 
@@ -22,25 +22,21 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Dernière action** :
-Reviewer : ISSUE-009 APPROVED. 7 events + AgentSignal sealed interface + ScenarioRestartSignal + 43 tests. 0 bloquant. PDR-002 (Domain Events) complete — 2/2 DONE. ReportPublished utilise String target (PublicationTarget removed from domain par System Designer). 392 tests, BUILD SUCCESS.
+Developer : ISSUE-010 IN REVIEW. Module platform-plugin-api créé. 3 annotations (@Preparation/@Injection/@Assertion) + AnnotationsRetentionTest (21 tests, reflexion RUNTIME+TYPE+Documented+smoke test). pom.xml 0 Spring. Ajouté au parent POM.
 
 **Prochaine action** :
-Developer : prendre ISSUE-010 (Annotations @Preparation/@Injection/@Assertion pour PDR-003 Plugin API)
+Reviewer : review ISSUE-010 (Annotations), puis Developer : prendre ISSUE-011 (TaskExecutor/AssertionExecutor interfaces)
 
 **Fichiers en cours** :
 ```
-platform-domain/src/main/java/com/performance/platform/domain/event/
-  AssertionPassed.java            ✅
-  AssertionFailed.java            ✅
-  AgentRegistered.java            ✅
-  AgentLost.java                  ✅
-  AgentRecovered.java             ✅
-  ReportGenerated.java            ✅
-  ReportPublished.java            ✅ (String target — PublicationTarget removed)
-  AgentSignal.java                ✅ (sealed interface)
-  ScenarioRestartSignal.java      ✅ (executionId nullable)
-platform-domain/src/test/java/com/performance/platform/domain/event/
-  SignalsTest.java                ✅ (43 tests)
+platform-plugin-api/pom.xml                                    ✅ (0 Spring, depend platform-domain)
+platform-plugin-api/src/main/java/com/performance/platform/plugin/
+  Preparation.java                                             ✅
+  Injection.java                                               ✅
+  Assertion.java                                               ✅
+platform-plugin-api/src/test/java/com/performance/platform/plugin/
+  AnnotationsRetentionTest.java                                ✅ (21 tests)
+pom.xml                                                        ✅ (module ajouté)
 ```
 
 **Blocages** :
@@ -55,9 +51,10 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue à prendre)
 
-SI DEVELOPER (prochaine Issue) :
-  .claude/agents/developer.md
-  .claude/issues/ISSUE-010-plugin-api-annotations.md  (PDR-003, P0, depend ISSUE-003,004 DONE)
+SI REVIEWER (ISSUE-010) :
+  .claude/agents/reviewer.md
+  .claude/issues/ISSUE-010-plugin-api-annotations.md
+  .claude/adr/ADR-007-plugin-jar-system.md
 ```
 
 ---
