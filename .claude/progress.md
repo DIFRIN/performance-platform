@@ -88,7 +88,7 @@
 | ISSUE-006 | ExecutionPlan/Step/State + VOs injection/assertion | PDR-001 | platform-domain | M | DONE | ISSUE-003,005 |
 | ISSUE-007 | Records Agent + ArchUnit domaine | PDR-001 | platform-domain | M | DONE | ISSUE-001,002 |
 | ISSUE-008 | Events cycle de vie scénario/phase/task | PDR-002 | platform-domain | M | DONE | ISSUE-001,002,004 |
-| ISSUE-009 | Events agent/report + AgentSignal scellé | PDR-002 | platform-domain | M | IN REVIEW | ISSUE-001,007 |
+| ISSUE-009 | Events agent/report + AgentSignal scellé | PDR-002 | platform-domain | M | DONE | ISSUE-001,007 |
 | ISSUE-010 | Annotations @Preparation/@Injection/@Assertion | PDR-003 | platform-plugin-api | S | TODO | ISSUE-003,004 |
 | ISSUE-011 | Interfaces TaskExecutor/AssertionExecutor | PDR-003 | platform-plugin-api | S | TODO | ISSUE-010,006 |
 | ISSUE-012 | Ports entrants + exceptions applicatives | PDR-004 | platform-application | M | TODO | ISSUE-003,006 |
