@@ -9,11 +9,11 @@
 
 ## Etat Courant
 
-**Date derniere session** : 2026-06-13
+**Date derniere session** : 2026-06-14
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-013 -- Ports sortants (Repository / AgentRegistry / ReportPublisher)
+**Issue active** : ISSUE-014 -- ExecutionConfig (record de configuration applicative)
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-004 -- Application Ports & Use Cases (ISSUE-012 DONE, ISSUE-013 IN REVIEW, ISSUE-014 TODO)
+**PDR parent** : PDR-004 -- Application Ports & Use Cases (ISSUE-012 DONE, ISSUE-013 DONE, ISSUE-014 IN REVIEW)
 
 ---
 
@@ -22,33 +22,33 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-013 completee. 3 interfaces (ExecutionRepository, AgentRegistryPort, ReportPublisherPort) + 1 test PortsCompileTest (7 scenarios). Tests OK, 0 compilation warning.
+Developer : ISSUE-014 completee. 1 record ExecutionConfig + 1 test ExecutionConfigTest (5 scenarios : creation, politiques, egalite, toString). Tests OK, 0 compilation warning.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-013 (ports sortants) -- verifier signatures conformes a l'Issue, 0 annotation Spring, noms glossaire.
-OU
-Developer : prendre ISSUE-014 (ExecutionConfig) si debloquee (dependance: ISSUE-012 DONE, pas ISSUE-013)
+Reviewer : revoir ISSUE-014. Puis PDR-004 sera DONE (3/3 issues). Prochaine : ISSUE-015 (ScenarioParser, PDR-005) si debloquee.
 
 **Fichiers en cours** :
 ```
 platform-application/src/main/java/com/performance/platform/application/
-  ports/in/ExecuteScenarioUseCase.java                                    OK
-  ports/in/ScenarioParsingUseCase.java                                    OK
-  ports/in/GetExecutionStatusUseCase.java                                 OK
-  ports/in/CancelExecutionUseCase.java                                    OK
-  ports/in/GenerateReportUseCase.java                                     OK
-  ports/out/ExecutionRepository.java                                      OK
-  ports/out/AgentRegistryPort.java                                        OK
-  ports/out/ReportPublisherPort.java                                      OK
-  exception/ExecutionException.java                                       OK
-  exception/ReportGenerationException.java                                OK
-  exception/NoAvailableAgentException.java                                OK
-  exception/InvalidScenarioException.java                                 OK
-  exception/ScenarioParsingException.java                                 OK
+  ports/in/ExecuteScenarioUseCase.java                                    STABLE
+  ports/in/ScenarioParsingUseCase.java                                    STABLE
+  ports/in/GetExecutionStatusUseCase.java                                 STABLE
+  ports/in/CancelExecutionUseCase.java                                    STABLE
+  ports/in/GenerateReportUseCase.java                                     STABLE
+  ports/out/ExecutionRepository.java                                      STABLE
+  ports/out/AgentRegistryPort.java                                        STABLE
+  ports/out/ReportPublisherPort.java                                      STABLE
+  config/ExecutionConfig.java                                             IN REVIEW
+  exception/ExecutionException.java                                       STABLE
+  exception/ReportGenerationException.java                                STABLE
+  exception/NoAvailableAgentException.java                                STABLE
+  exception/InvalidScenarioException.java                                 STABLE
+  exception/ScenarioParsingException.java                                 STABLE
 platform-application/src/test/java/com/performance/platform/application/
-  ports/out/PortsCompileTest.java                                         OK (7 scenarios, mock/no-op)
-  arch/ApplicationArchitectureTest.java                                   OK (2 regles, 0 Spring + 0 infra)
-pom.xml                                                                    OK
+  config/ExecutionConfigTest.java                                         IN REVIEW (5 scenarios)
+  ports/out/PortsCompileTest.java                                         STABLE (6 scenarios, mock/no-op)
+  arch/ApplicationArchitectureTest.java                                   STABLE (2 regles, 0 Spring + 0 infra)
+pom.xml                                                                    STABLE
 ```
 
 **Blocages** :
@@ -63,16 +63,16 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI REVIEWER (ISSUE-013) :
+SI REVIEWER (ISSUE-014) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-013-application-driven-ports.md
+  .claude/issues/ISSUE-014-application-execution-config.md
   .claude/context/interfaces-registry.md
   .claude/glossary.md
 
-SI DEVELOPER (ISSUE-014) :
+SI DEVELOPER (ISSUE-015) :
   .claude/agents/developer.md
-  .claude/issues/ISSUE-014.md
-  .claude/pdr/PDR-004.md
+  .claude/issues/ISSUE-015.md
+  .claude/pdr/PDR-005.md
 ```
 
 ---
@@ -103,3 +103,5 @@ SI DEVELOPER (ISSUE-014) :
 | 2026-06-13 | Reviewer | ISSUE-011 | Revue APPROVED. Signatures conformes, 0 TaskType, 0 Spring, javadoc complet. PDR-003 DONE. | OK DONE |
 | 2026-06-13 | Developer | ISSUE-012 | 5 use cases + 5 exceptions + ArchUnit (2 regles). platform-application cree. Tests OK. | OK IN REVIEW |
 | 2026-06-13 | Developer | ISSUE-013 | 3 ports sortants + PortsCompileTest (7 scenarios). Tests OK, 0 warning. | OK IN REVIEW |
+| 2026-06-13 | Reviewer | ISSUE-013 | Revue APPROVED (0 bloquant). Signatures conformes, multi-claim ADR-011, 0 Spring, 0 infra. | OK DONE |
+| 2026-06-14 | Developer | ISSUE-014 | ExecutionConfig record + 5 tests. Tests OK, 0 warning. | OK IN REVIEW |
