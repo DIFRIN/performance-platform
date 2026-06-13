@@ -23,8 +23,15 @@ IMPACT : [quels fichiers / comportements sont affectés]
 
 ## Log
 
-_Aucune décision enregistrée pour l'instant. Les premières entrées apparaîtront
-dès le début de la Phase 1._
+[2026-06-13] [platform-domain] DECISION : ReportPublished utilise String target au lieu de PublicationTarget
+CONTEXTE : PublicationTarget a ete retire du domaine par le System Designer (correction ISSUE-002 — fuite technologique : noms d'outils comme CONFLUENCE, S3). Mais PDR-002 et ISSUE-009, crees avant cette correction, referencent toujours PublicationTarget dans le record ReportPublished. Au moment d'implementer ISSUE-009, le type PublicationTarget n'existe plus dans platform-domain.
+RAISON : Le domaine ne doit pas connaitre les outils de publication concrets. Un String opaque preserve la genericite de l'evenement domaine tout en permettant au module platform-reporting d'utiliser son propre enum PublicationTarget pour les valeurs concretes.
+IMPACT : ReportPublished a field String target au lieu de PublicationTarget target. La Javadoc precise que les valeurs concretes sont definies dans platform-reporting.
+[2026-06-13] [platform-domain] DECISION : SignalId et ReportId n'ont pas de factory of() — utilise constructeur direct dans les tests
+CONTEXTE : Contrairement a AgentId et ExecutionId qui ont of(), SignalId n'a que generate() et ReportId n'a que generate(). Cette decision a ete prise dans ISSUE-001.
+RAISON : Les IDs de signal et de rapport sont toujours generes (pas de valeur predefinie en test). Pour les tests, new SignalId("x") ou SignalId.generate() suffisent.
+IMPACT : SignalsTest utilise new ReportId("report-1") et SignalId.generate().
+
 
 ---
 

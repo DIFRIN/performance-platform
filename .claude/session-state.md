@@ -11,9 +11,9 @@
 
 **Date dernière session** : 2026-06-13
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-008 — Events cycle de vie scénario/phase/task
+**Issue active** : ISSUE-009 — Events agent/assertion/report + AgentSignal scellé
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-002 — Domain Events (1/2 Issues)
+**PDR parent** : PDR-002 — Domain Events (IN PROGRESS, 1/2 DONE, 1/2 IN REVIEW)
 
 ---
 
@@ -22,29 +22,25 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Dernière action** :
-Implémenté 12 event records (ScenarioStarted, ScenarioFinished, ScenarioCancelled, PhaseStarted, PhaseCompleted, TaskDispatched, TaskClaimedByAgent, TaskWorkInProgress, TaskStarted, TaskCompleted, TaskFailed, TaskRetried) + LifecycleEventsTest (instanciation, egalite par valeur, validation non-null, champs nullables, validation progressPercent 0-100, attempt >= 1). mvn test -pl platform-domain -q : 0 erreur.
+ISSUE-009 implementee : 7 events (AssertionPassed, AssertionFailed, AgentRegistered, AgentLost, AgentRecovered, ReportGenerated, ReportPublished) + AgentSignal sealed interface + ScenarioRestartSignal + SignalsTest (33 tests). Micro-decision: PublicationTarget removed from domain par System Designer → utilise String target dans ReportPublished + documentation dans decisions-log.md. mvn test -pl platform-domain → 0 erreur, 0 warning compilation.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-008.
-Developer (après review) : candidats pour prochaine Issue — ISSUE-009 (Events agent/report/signals, PDR-002, dépend de ISSUE-001,007) ou ISSUE-010 (Annotations, PDR-003, dépend de ISSUE-003,004).
+Reviewer : revoir ISSUE-009 (lire .claude/issues/ISSUE-009-domain-agent-report-signals.md + .claude/pdr/PDR-002-domain-events.md)
 
 **Fichiers en cours** :
 ```
 platform-domain/src/main/java/com/performance/platform/domain/event/
-  ScenarioStarted.java          ✅
-  ScenarioFinished.java         ✅
-  ScenarioCancelled.java        ✅
-  PhaseStarted.java             ✅
-  PhaseCompleted.java           ✅
-  TaskDispatched.java           ✅
-  TaskClaimedByAgent.java       ✅
-  TaskWorkInProgress.java       ✅
-  TaskStarted.java              ✅
-  TaskCompleted.java            ✅
-  TaskFailed.java               ✅
-  TaskRetried.java              ✅
+  AssertionPassed.java            ✅
+  AssertionFailed.java            ✅
+  AgentRegistered.java            ✅
+  AgentLost.java                  ✅
+  AgentRecovered.java             ✅
+  ReportGenerated.java            ✅
+  ReportPublished.java            ✅ (String target — PublicationTarget removed)
+  AgentSignal.java                ✅ (sealed interface)
+  ScenarioRestartSignal.java      ✅ (executionId nullable)
 platform-domain/src/test/java/com/performance/platform/domain/event/
-  LifecycleEventsTest.java      ✅
+  SignalsTest.java                ✅ (33 tests)
 ```
 
 **Blocages** :
@@ -61,11 +57,12 @@ TOUJOURS :
 
 SI REVIEWER :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-008-domain-lifecycle-events.md
+  .claude/issues/ISSUE-009-domain-agent-report-signals.md
+  .claude/pdr/PDR-002-domain-events.md
 
 SI DEVELOPER (prochaine Issue après review) :
   .claude/agents/developer.md
-  .claude/issues/ISSUE-009-domain-agent-report-signals.md  ou ISSUE-010-plugin-api-annotations.md
+  .claude/issues/ISSUE-010-plugin-api-annotations.md  (PDR-003, P0, depend ISSUE-003,004 DONE)
 ```
 
 ---
@@ -89,3 +86,5 @@ SI DEVELOPER (prochaine Issue après review) :
 | 2026-06-13 | Developer | ISSUE-007 | 3 records agent + 25 tests + ArchUnit pom.xml | ✅ IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-007 | Revue APPROVED (0 bloquant, 2 recommandations) — PDR-001 DONE | ✅ DONE |
 | 2026-06-13 | Developer | ISSUE-008 | 12 events cycle de vie + LifecycleEventsTest (instanciation, egalite, validation) | ✅ IN REVIEW |
+| 2026-06-13 | Reviewer | ISSUE-008 | Revue APPROVED (0 bloquant, 2 recommandations) — 12 events conformes | ✅ DONE |
+| 2026-06-13 | Developer | ISSUE-009 | 7 events + AgentSignal + ScenarioRestartSignal + 33 tests. String target dans ReportPublished. | ✅ IN REVIEW |
