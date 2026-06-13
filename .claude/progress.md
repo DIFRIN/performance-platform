@@ -85,7 +85,7 @@
 | ISSUE-003 | Records Scenario/Step/LoadModel/RetryPolicy | PDR-001 | platform-domain | M | DONE | ISSUE-001,002 |
 | ISSUE-004 | TaskResult (String taskName) | PDR-001 | platform-domain | S | DONE | ISSUE-001,002 |
 | ISSUE-005 | ExecutionContext + PartialExecutionContext | PDR-001 | platform-domain | M | DONE | ISSUE-001,004 |
-| ISSUE-006 | ExecutionPlan/Step/State + VOs injection/assertion | PDR-001 | platform-domain | M | TODO | ISSUE-003,005 |
+| ISSUE-006 | ExecutionPlan/Step/State + VOs injection/assertion | PDR-001 | platform-domain | M | DONE | ISSUE-003,005 |
 | ISSUE-007 | Records Agent + ArchUnit domaine | PDR-001 | platform-domain | M | TODO | ISSUE-001,002 |
 | ISSUE-008 | Events cycle de vie scénario/phase/task | PDR-002 | platform-domain | M | TODO | ISSUE-001,002,004 |
 | ISSUE-009 | Events agent/report + AgentSignal scellé | PDR-002 | platform-domain | M | TODO | ISSUE-001,007 |
@@ -203,6 +203,8 @@
 | 2026-06-13 | ISSUE-005 | TODO → IN PROGRESS | Developer |
 | 2026-06-13 | ISSUE-005 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-13 | ISSUE-005 | IN REVIEW → DONE | Reviewer |
+| 2026-06-13 | ISSUE-006 | TODO → IN PROGRESS | Developer |
+| 2026-06-13 | ISSUE-006 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
