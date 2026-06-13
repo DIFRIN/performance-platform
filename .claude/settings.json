@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/scripts/auto-commit-done.sh",
+            "timeout": 60,
+            "statusMessage": "Commit auto des Issues DONE..."
+          }
+        ]
+      }
+    ]
+  }
+}
