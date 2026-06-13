@@ -205,6 +205,7 @@
 | 2026-06-13 | ISSUE-005 | IN REVIEW → DONE | Reviewer |
 | 2026-06-13 | ISSUE-006 | TODO → IN PROGRESS | Developer |
 | 2026-06-13 | ISSUE-006 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-13 | ISSUE-006 | IN REVIEW → DONE | Reviewer |
 
 ---
 
@@ -213,4 +214,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-13
+**Dernière mise à jour** : 2026-06-13 (ISSUE-006 DONE)
