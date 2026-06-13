@@ -11,9 +11,9 @@
 
 **Date derniere session** : 2026-06-14
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-014 -- ExecutionConfig (record de configuration applicative)
+**Issue active** : ISSUE-015 -- ScenarioParser IN REVIEW
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-004 -- Application Ports & Use Cases (ISSUE-012 DONE, ISSUE-013 DONE, ISSUE-014 IN REVIEW)
+**PDR parent** : PDR-005 -- Scenario DSL (ISSUE-015 IN REVIEW)
 
 ---
 
@@ -22,33 +22,27 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-014 completee. 1 record ExecutionConfig + 1 test ExecutionConfigTest (5 scenarios : creation, politiques, egalite, toString). Tests OK, 0 compilation warning.
+Developer : ISSUE-015 implemente. Module platform-scenario-dsl cree. 74 tests OK. ISSUE-015 IN REVIEW.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-014. Puis PDR-004 sera DONE (3/3 issues). Prochaine : ISSUE-015 (ScenarioParser, PDR-005) si debloquee.
+Reviewer : revoir ISSUE-015 (ScenarioParser, PDR-005). 74 tests, SnakeYAML + Jackson, parse YAML de reference.
 
 **Fichiers en cours** :
 ```
-platform-application/src/main/java/com/performance/platform/application/
-  ports/in/ExecuteScenarioUseCase.java                                    STABLE
-  ports/in/ScenarioParsingUseCase.java                                    STABLE
-  ports/in/GetExecutionStatusUseCase.java                                 STABLE
-  ports/in/CancelExecutionUseCase.java                                    STABLE
-  ports/in/GenerateReportUseCase.java                                     STABLE
-  ports/out/ExecutionRepository.java                                      STABLE
-  ports/out/AgentRegistryPort.java                                        STABLE
-  ports/out/ReportPublisherPort.java                                      STABLE
-  config/ExecutionConfig.java                                             IN REVIEW
-  exception/ExecutionException.java                                       STABLE
-  exception/ReportGenerationException.java                                STABLE
-  exception/NoAvailableAgentException.java                                STABLE
-  exception/InvalidScenarioException.java                                 STABLE
-  exception/ScenarioParsingException.java                                 STABLE
-platform-application/src/test/java/com/performance/platform/application/
-  config/ExecutionConfigTest.java                                         IN REVIEW (5 scenarios)
-  ports/out/PortsCompileTest.java                                         STABLE (6 scenarios, mock/no-op)
-  arch/ApplicationArchitectureTest.java                                   STABLE (2 regles, 0 Spring + 0 infra)
-pom.xml                                                                    STABLE
+platform-scenario-dsl/pom.xml                                             STABLE (waiting review)
+platform-scenario-dsl/src/main/java/com/performance/platform/scenario/parser/
+  ScenarioParser.java                                                     STABLE (waiting review)
+  YamlScenarioParser.java                                                 STABLE (waiting review)
+  DurationParser.java                                                     STABLE (waiting review)
+  dto/ScenarioYamlRoot.java                                               STABLE (waiting review)
+  dto/ScenarioYamlDto.java                                                STABLE (waiting review)
+  dto/ExecutionYamlDto.java                                               STABLE (waiting review)
+  dto/StepYamlDto.java                                                    STABLE (waiting review)
+  dto/LoadModelYamlDto.java                                               STABLE (waiting review)
+  dto/RetryPolicyYamlDto.java                                             STABLE (waiting review)
+platform-scenario-dsl/src/test/java/com/performance/platform/scenario/parser/
+  YamlScenarioParserTest.java                                             STABLE (74 tests)
+  DurationParserTest.java                                                 STABLE (23 tests)
 ```
 
 **Blocages** :
@@ -63,16 +57,15 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI REVIEWER (ISSUE-014) :
-  .claude/agents/reviewer.md
-  .claude/issues/ISSUE-014-application-execution-config.md
-  .claude/context/interfaces-registry.md
-  .claude/glossary.md
-
-SI DEVELOPER (ISSUE-015) :
+SI DEVELOPER (ISSUE-016) :
   .claude/agents/developer.md
-  .claude/issues/ISSUE-015.md
+  .claude/issues/ISSUE-016.md
   .claude/pdr/PDR-005.md
+
+SI REVIEWER (ISSUE-015) :
+  .claude/agents/reviewer.md
+  .claude/issues/ISSUE-015.md
+  .claude/specifications/01-scenario-dsl.md
 ```
 
 ---
@@ -105,3 +98,5 @@ SI DEVELOPER (ISSUE-015) :
 | 2026-06-13 | Developer | ISSUE-013 | 3 ports sortants + PortsCompileTest (7 scenarios). Tests OK, 0 warning. | OK IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-013 | Revue APPROVED (0 bloquant). Signatures conformes, multi-claim ADR-011, 0 Spring, 0 infra. | OK DONE |
 | 2026-06-14 | Developer | ISSUE-014 | ExecutionConfig record + 5 tests. Tests OK, 0 warning. | OK IN REVIEW |
+| 2026-06-14 | Reviewer | ISSUE-014 | Revue APPROVED (0 bloquant). PDR-004 DONE. 13 tests OK. | OK DONE |
+| 2026-06-14 | Developer | ISSUE-015 | Module platform-scenario-dsl cree. YamlScenarioParser + DurationParser + 6 DTOs. Parse YAML vers ScenarioDefinition. 74 tests OK. | OK IN REVIEW |

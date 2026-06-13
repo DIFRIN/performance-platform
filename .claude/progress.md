@@ -52,8 +52,8 @@
 | PDR-001 | Domain Core Records | platform-domain | DONE | ISSUE-001..007 | — |
 | PDR-002 | Domain Events | platform-domain | DONE | ISSUE-008,009 | PDR-001 |
 | PDR-003 | Plugin API | platform-plugin-api | DONE | ISSUE-010,011 | PDR-001 |
-| PDR-004 | Application Ports & Use Cases | platform-application | IN PROGRESS | ISSUE-012,013,014 | PDR-001 |
-| PDR-005 | Scenario DSL | platform-scenario-dsl | TODO | ISSUE-015..018 | PDR-001, PDR-004 |
+| PDR-004 | Application Ports & Use Cases | platform-application | DONE | ISSUE-012,013,014 | PDR-001 |
+| PDR-005 | Scenario DSL | platform-scenario-dsl | IN PROGRESS | ISSUE-015..018 | PDR-001, PDR-004 |
 | PDR-006 | Execution Engine | platform-execution-engine | TODO | ISSUE-019..024 | PDR-001,002,004,005,007 |
 | PDR-007 | Transport Layer Core | platform-transport | TODO | ISSUE-025,026,027 | PDR-001, PDR-002 |
 | PDR-008 | Transport Implementations | platform-transport | TODO | ISSUE-028..032 | PDR-001,002,007 |
@@ -99,7 +99,7 @@
 | ID | Titre | PDR | Module | Taille | Statut | Bloquée par |
 |---|---|---|---|---|---|---|
 | ISSUE-014 | ExecutionConfig | PDR-004 | platform-application | S | DONE | ISSUE-012 |
-| ISSUE-015 | ScenarioParser (YAML → ScenarioDefinition) | PDR-005 | platform-scenario-dsl | L | TODO | ISSUE-003,012 |
+| ISSUE-015 | ScenarioParser (YAML → ScenarioDefinition) | PDR-005 | platform-scenario-dsl | L | DONE | ISSUE-003,012 |
 | ISSUE-016 | ScenarioValidator + détection cycle DAG | PDR-005 | platform-scenario-dsl | L | TODO | ISSUE-015 |
 | ISSUE-019 | ExecutionPlanBuilder + DAG levels | PDR-006 | platform-execution-engine | L | TODO | ISSUE-006,016 |
 | ISSUE-020 | RetryExecutor (backoff exponentiel) | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019 |
@@ -225,11 +225,17 @@
 | 2026-06-13 | PDR-003 | IN PROGRESS → DONE | Reviewer (ISSUE-010,011 all DONE) |
 | 2026-06-13 | ISSUE-012 | TODO → IN PROGRESS | Developer |
 | 2026-06-13 | ISSUE-012 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-13 | ISSUE-012 | IN REVIEW → DONE | Reviewer (rattrapage) |
 | 2026-06-13 | ISSUE-013 | TODO → IN PROGRESS | Developer |
 | 2026-06-13 | ISSUE-013 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-13 | ISSUE-013 | IN REVIEW → DONE | Reviewer |
 | 2026-06-14 | ISSUE-014 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | ISSUE-014 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-014 | IN REVIEW → DONE | Reviewer |
+| 2026-06-14 | PDR-004 | IN PROGRESS → DONE | Reviewer (ISSUE-012,013,014 all DONE) |
+| 2026-06-14 | ISSUE-015 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | PDR-005 | TODO → IN PROGRESS | Developer (ISSUE-015) |
+| 2026-06-14 | ISSUE-015 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -238,4 +244,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ISSUE-014 IN REVIEW)
+**Dernière mise à jour** : 2026-06-14 (ISSUE-015 IN REVIEW, PDR-005 commence)
