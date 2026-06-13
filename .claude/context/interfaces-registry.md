@@ -78,11 +78,11 @@
 | `PhaseStarted` / `PhaseCompleted` | ✅ STABLE | PDR-002 | ISSUE-008 |
 | `TaskDispatched` / `TaskClaimedByAgent` / `TaskWorkInProgress` | ✅ STABLE | PDR-002 | ISSUE-008 |
 | `TaskStarted` / `TaskCompleted` / `TaskFailed` / `TaskRetried` | ✅ STABLE | PDR-002 | ISSUE-008 |
-| `AssertionPassed` / `AssertionFailed` | 🔄 IN PROGRESS | PDR-002 | ISSUE-009 |
-| `AgentRegistered` / `AgentLost` / `AgentRecovered` | 🔄 IN PROGRESS | PDR-002 | ISSUE-009 |
-| `ReportGenerated` / `ReportPublished` (String target) | 🔄 IN PROGRESS | PDR-002 | ISSUE-009 |
-| `AgentSignal` (sealed) | 🔄 IN PROGRESS | PDR-002 | ISSUE-009 |
-| `ScenarioRestartSignal` | 🔄 IN PROGRESS | PDR-002 | ISSUE-009 |
+| `AssertionPassed` / `AssertionFailed` | ✅ STABLE | PDR-002 | ISSUE-009 |
+| `AgentRegistered` / `AgentLost` / `AgentRecovered` | ✅ STABLE | PDR-002 | ISSUE-009 |
+| `ReportGenerated` / `ReportPublished` (String target) | ✅ STABLE | PDR-002 | ISSUE-009 |
+| `AgentSignal` (sealed) | ✅ STABLE | PDR-002 | ISSUE-009 |
+| `ScenarioRestartSignal` | ✅ STABLE | PDR-002 | ISSUE-009 |
 
 ## platform-plugin-api (module léger — 0 framework)
 

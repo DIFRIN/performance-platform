@@ -10,10 +10,10 @@
 ## État Courant
 
 **Date dernière session** : 2026-06-13
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-009 — Events agent/assertion/report + AgentSignal scellé
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-002 — Domain Events (IN PROGRESS, 1/2 DONE, 1/2 IN REVIEW)
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE
+**PDR parent** : PDR-002 — Domain Events (DONE, 2/2 DONE)
 
 ---
 
@@ -22,10 +22,10 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Dernière action** :
-ISSUE-009 implementee : 7 events (AssertionPassed, AssertionFailed, AgentRegistered, AgentLost, AgentRecovered, ReportGenerated, ReportPublished) + AgentSignal sealed interface + ScenarioRestartSignal + SignalsTest (43 tests). Micro-decision: PublicationTarget removed from domain par System Designer → utilise String target dans ReportPublished + documentation dans decisions-log.md. mvn test -pl platform-domain → 392 tests, 0 erreur, BUILD SUCCESS.
+Reviewer : ISSUE-009 APPROVED. 7 events + AgentSignal sealed interface + ScenarioRestartSignal + 43 tests. 0 bloquant. PDR-002 (Domain Events) complete — 2/2 DONE. ReportPublished utilise String target (PublicationTarget removed from domain par System Designer). 392 tests, BUILD SUCCESS.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-009 (lire .claude/issues/ISSUE-009-domain-agent-report-signals.md + .claude/pdr/PDR-002-domain-events.md)
+Developer : prendre ISSUE-010 (Annotations @Preparation/@Injection/@Assertion pour PDR-003 Plugin API)
 
 **Fichiers en cours** :
 ```
@@ -55,12 +55,7 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue à prendre)
 
-SI REVIEWER :
-  .claude/agents/reviewer.md
-  .claude/issues/ISSUE-009-domain-agent-report-signals.md
-  .claude/pdr/PDR-002-domain-events.md
-
-SI DEVELOPER (prochaine Issue après review) :
+SI DEVELOPER (prochaine Issue) :
   .claude/agents/developer.md
   .claude/issues/ISSUE-010-plugin-api-annotations.md  (PDR-003, P0, depend ISSUE-003,004 DONE)
 ```
@@ -88,3 +83,4 @@ SI DEVELOPER (prochaine Issue après review) :
 | 2026-06-13 | Developer | ISSUE-008 | 12 events cycle de vie + LifecycleEventsTest (instanciation, egalite, validation) | ✅ IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-008 | Revue APPROVED (0 bloquant, 2 recommandations) — 12 events conformes | ✅ DONE |
 | 2026-06-13 | Developer | ISSUE-009 | 7 events + AgentSignal + ScenarioRestartSignal + 43 tests. String target dans ReportPublished. | ✅ IN REVIEW |
+| 2026-06-13 | Reviewer | ISSUE-009 | Revue APPROVED (0 bloquant). PDR-002 DONE. 392 tests. | ✅ DONE |
