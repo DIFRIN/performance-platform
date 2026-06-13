@@ -10,10 +10,10 @@
 ## État Courant
 
 **Date dernière session** : 2026-06-13
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-007 — Records Agent (Descriptor/Capabilities/Heartbeat) + ArchUnit domaine
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE
-**PDR parent** : PDR-001 — Domain Core Records (DONE)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-008 — Events cycle de vie scénario/phase/task
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
+**PDR parent** : PDR-002 — Domain Events (1/2 Issues)
 
 ---
 
@@ -22,15 +22,29 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Dernière action** :
-Review ISSUE-007 : APPROVED (0 bloquant, 2 recommandations). ISSUE-007 → DONE, PDR-001 → DONE (toutes les Issues 001-007 sont DONE).
+Implémenté 12 event records (ScenarioStarted, ScenarioFinished, ScenarioCancelled, PhaseStarted, PhaseCompleted, TaskDispatched, TaskClaimedByAgent, TaskWorkInProgress, TaskStarted, TaskCompleted, TaskFailed, TaskRetried) + LifecycleEventsTest (instanciation, egalite par valeur, validation non-null, champs nullables, validation progressPercent 0-100, attempt >= 1). mvn test -pl platform-domain -q : 0 erreur.
 
 **Prochaine action** :
-Developer : prendre la prochaine Issue debloquee. Candidats prioritaires : ISSUE-008 (Events cycle de vie, PDR-002, depend de ISSUE-001,002,004 — toutes DONE) ou ISSUE-010 (Annotations, PDR-003, depend de ISSUE-003,004 — toutes DONE).
+Reviewer : revoir ISSUE-008.
+Developer (après review) : candidats pour prochaine Issue — ISSUE-009 (Events agent/report/signals, PDR-002, dépend de ISSUE-001,007) ou ISSUE-010 (Annotations, PDR-003, dépend de ISSUE-003,004).
 
 **Fichiers en cours** :
 ```
-PDR-001 DONE — tous les fichiers sont STABLE.
-Prochain module : platform-domain (ISSUE-008) ou platform-plugin-api (ISSUE-010).
+platform-domain/src/main/java/com/performance/platform/domain/event/
+  ScenarioStarted.java          ✅
+  ScenarioFinished.java         ✅
+  ScenarioCancelled.java        ✅
+  PhaseStarted.java             ✅
+  PhaseCompleted.java           ✅
+  TaskDispatched.java           ✅
+  TaskClaimedByAgent.java       ✅
+  TaskWorkInProgress.java       ✅
+  TaskStarted.java              ✅
+  TaskCompleted.java            ✅
+  TaskFailed.java               ✅
+  TaskRetried.java              ✅
+platform-domain/src/test/java/com/performance/platform/domain/event/
+  LifecycleEventsTest.java      ✅
 ```
 
 **Blocages** :
@@ -45,9 +59,13 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue à prendre)
 
-SI DEVELOPER (prochaine Issue) :
-  agents/developer.md
-  .claude/issues/ISSUE-008-events-scenario-phase-task.md  ou ISSUE-010
+SI REVIEWER :
+  .claude/agents/reviewer.md
+  .claude/issues/ISSUE-008-domain-lifecycle-events.md
+
+SI DEVELOPER (prochaine Issue après review) :
+  .claude/agents/developer.md
+  .claude/issues/ISSUE-009-domain-agent-report-signals.md  ou ISSUE-010-plugin-api-annotations.md
 ```
 
 ---
@@ -70,3 +88,4 @@ SI DEVELOPER (prochaine Issue) :
 | 2026-06-13 | Reviewer | ISSUE-006 | Re-review — [TEST-01] resolue, 92 tests total | ✅ DONE |
 | 2026-06-13 | Developer | ISSUE-007 | 3 records agent + 25 tests + ArchUnit pom.xml | ✅ IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-007 | Revue APPROVED (0 bloquant, 2 recommandations) — PDR-001 DONE | ✅ DONE |
+| 2026-06-13 | Developer | ISSUE-008 | 12 events cycle de vie + LifecycleEventsTest (instanciation, egalite, validation) | ✅ IN REVIEW |

@@ -74,10 +74,10 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `ScenarioStarted` / `ScenarioFinished` / `ScenarioCancelled` | ⬜ PLANNED | PDR-002 | ISSUE-008 |
-| `PhaseStarted` / `PhaseCompleted` | ⬜ PLANNED | PDR-002 | ISSUE-008 |
-| `TaskDispatched` / `TaskClaimedByAgent` / `TaskWorkInProgress` | ⬜ PLANNED | PDR-002 | ISSUE-008 |
-| `TaskStarted` / `TaskCompleted` / `TaskFailed` / `TaskRetried` | ⬜ PLANNED | PDR-002 | ISSUE-008 |
+| `ScenarioStarted` / `ScenarioFinished` / `ScenarioCancelled` | 🔄 IN PROGRESS | PDR-002 | ISSUE-008 |
+| `PhaseStarted` / `PhaseCompleted` | 🔄 IN PROGRESS | PDR-002 | ISSUE-008 |
+| `TaskDispatched` / `TaskClaimedByAgent` / `TaskWorkInProgress` | 🔄 IN PROGRESS | PDR-002 | ISSUE-008 |
+| `TaskStarted` / `TaskCompleted` / `TaskFailed` / `TaskRetried` | 🔄 IN PROGRESS | PDR-002 | ISSUE-008 |
 | `AssertionPassed` / `AssertionFailed` | ⬜ PLANNED | PDR-002 | ISSUE-009 |
 | `AgentRegistered` / `AgentLost` / `AgentRecovered` | ⬜ PLANNED | PDR-002 | ISSUE-009 |
 | `ReportGenerated` / `ReportPublished` | ⬜ PLANNED | PDR-002 | ISSUE-009 |
