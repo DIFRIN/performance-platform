@@ -49,7 +49,7 @@
 
 | ID | Nom | Module | Statut | Issues | Dépend de |
 |---|---|---|---|---|---|
-| PDR-001 | Domain Core Records | platform-domain | TODO | ISSUE-001..007 | — |
+| PDR-001 | Domain Core Records | platform-domain | DONE | ISSUE-001..007 | — |
 | PDR-002 | Domain Events | platform-domain | TODO | ISSUE-008,009 | PDR-001 |
 | PDR-003 | Plugin API | platform-plugin-api | TODO | ISSUE-010,011 | PDR-001 |
 | PDR-004 | Application Ports & Use Cases | platform-application | TODO | ISSUE-012,013,014 | PDR-001 |
