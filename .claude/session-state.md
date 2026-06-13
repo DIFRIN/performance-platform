@@ -10,9 +10,9 @@
 ## État Courant
 
 **Date dernière session** : 2026-06-13
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-006 — ExecutionPlan/Step/State + VOs injection/assertion
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE
 **PDR parent** : PDR-001 — Domain Core Records
 
 ---
@@ -22,10 +22,10 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Dernière action** :
-ISSUE-006 implémentée (Developer) : 6 records (ExecutionPlan/Step/State + InjectionResult/AssertionResult/Evidence) + 2 tests (43 tests) — compilé, 0 warning, tous les tests passent.
+ISSUE-006 APPROVED (Reviewer — re-review) : point bloquant [TEST-01] InjectionResult resolu avec 36 nouveaux tests. 248 tests au total dans platform-domain, 0 echec. ISSUE-006 → DONE.
 
 **Prochaine action** :
-Reviewer : ISSUE-006 — ExecutionPlan/Step/State + VOs injection/assertion — statut IN REVIEW.
+Developer : prendre ISSUE-007 — Records Agent + ArchUnit domaine (P0, non bloquee, dependances ISSUE-001 et ISSUE-002 satisfaites).
 
 **Fichiers en cours** :
 ```
@@ -37,9 +37,9 @@ platform-domain/src/main/java/com/performance/platform/domain/
   │   ├── ExecutionStatus.java           ✅
   │   ├── TaskCompletionPolicy.java      ✅
   │   ├── RetryPolicy.java               ✅
-  │   ├── ExecutionPlan.java             ✅ NEW
-  │   ├── ExecutionStep.java             ✅ NEW
-  │   └── ExecutionState.java            ✅ NEW
+  │   ├── ExecutionPlan.java             ✅
+  │   ├── ExecutionStep.java             ✅
+  │   └── ExecutionState.java            ✅
   ├── task/
   │   ├── TaskStatus.java                ✅
   │   └── TaskResult.java                ✅
@@ -51,19 +51,21 @@ platform-domain/src/main/java/com/performance/platform/domain/
   ├── injection/
   │   ├── LoadModelType.java             ✅
   │   ├── LoadModel.java                 ✅
-  │   └── InjectionResult.java           ✅ NEW
+  │   └── InjectionResult.java           ✅
   ├── assertion/
   │   ├── AssertionOperator.java         ✅
   │   ├── AssertionStatus.java           ✅
-  │   ├── AssertionResult.java           ✅ NEW
-  │   └── Evidence.java                  ✅ NEW
+  │   ├── AssertionResult.java           ✅
+  │   └── Evidence.java                  ✅
 platform-domain/src/test/java/.../execution/
   ├── ExecutionContextTest.java          ✅ (29 tests)
   ├── PartialExecutionContextTest.java   ✅ (26 tests)
-  └── ExecutionPlanTest.java             ✅ NEW (32 tests)
+  └── ExecutionPlanTest.java             ✅ (31 tests)
 platform-domain/src/test/java/.../assertion/
   ├── AssertionOperatorTest.java         ✅
-  └── AssertionResultTest.java           ✅ NEW (11 tests)
+  └── AssertionResultTest.java           ✅ (25 tests)
+platform-domain/src/test/java/.../injection/
+  └── InjectionResultTest.java           ✅ (36 tests) NEW
 ```
 
 **Blocages** :
@@ -78,19 +80,7 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue à prendre)
 
-SI REVIEWER (prochaine action recommandée) :
-  agents/reviewer.md
-  .claude/issues/ISSUE-006-execution-plan-state-records.md
-  platform-domain/src/main/java/.../execution/ExecutionPlan.java
-  platform-domain/src/main/java/.../execution/ExecutionStep.java
-  platform-domain/src/main/java/.../execution/ExecutionState.java
-  platform-domain/src/main/java/.../injection/InjectionResult.java
-  platform-domain/src/main/java/.../assertion/AssertionResult.java
-  platform-domain/src/main/java/.../assertion/Evidence.java
-  platform-domain/src/test/java/.../execution/ExecutionPlanTest.java
-  platform-domain/src/test/java/.../assertion/AssertionResultTest.java
-
-SI DEVELOPER (ISSUE-007 après review) :
+SI DEVELOPER (ISSUE-007) :
   agents/developer.md
   .claude/issues/ISSUE-007-agent-descriptor-records.md
   .claude/context/interfaces-registry.md
@@ -113,3 +103,4 @@ SI DEVELOPER (ISSUE-007 après review) :
 | 2026-06-13 | Developer | ISSUE-005 | ExecutionContext + PartialExecutionContext + 55 tests | ✅ IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-005 | Revue APPROVED (0 bloquant, 4 observations) | ✅ DONE |
 | 2026-06-13 | Developer | ISSUE-006 | Impl 6 records + 2 tests + Maven | ✅ IN REVIEW |
+| 2026-06-13 | Reviewer | ISSUE-006 | Re-review — [TEST-01] resolue, 92 tests total | ✅ DONE |
