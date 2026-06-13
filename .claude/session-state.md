@@ -11,9 +11,9 @@
 
 **Date dernière session** : 2026-06-13
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-011 — Interfaces TaskExecutor/AssertionExecutor
+**Issue active** : ISSUE-012 — Ports entrants + exceptions applicatives
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-003 — Plugin API (2/2, ISSUE-010 DONE, ISSUE-011 IN REVIEW)
+**PDR parent** : PDR-004 — Application Ports & Use Cases (ISSUE-012 IN REVIEW, ISSUE-013 TODO, ISSUE-014 TODO)
 
 ---
 
@@ -22,24 +22,30 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Dernière action** :
-Developer : ISSUE-011 IN REVIEW. 2 interfaces (TaskExecutor, AssertionExecutor) + ArchUnit test (1 test, 0 Spring dans com.performance.platform.plugin..). pom.xml ajouté ArchUnit. 22 tests passent BUILD SUCCESS.
+Developer : ISSUE-012 completee. 5 use case interfaces, 5 exceptions applicatives, 1 test ArchUnit (2 regles). Tests OK, 0 compilation warning.
 
 **Prochaine action** :
-Reviewer : review ISSUE-011 (TaskExecutor/AssertionExecutor interfaces + ArchUnit no-Spring)
+Reviewer : revoir ISSUE-012 (ports entrants + exceptions) — verifier signatures conformes a l'Issue, ArchUnit 0 Spring/0 infra, noms glossaire.
+OU
+Developer : prendre ISSUE-013 (ports sortants) si debloquee
 
 **Fichiers en cours** :
 ```
-platform-plugin-api/pom.xml                                    ✅ (ArchUnit ajouté)
-platform-plugin-api/src/main/java/com/performance/platform/plugin/
-  Preparation.java                                             ✅
-  Injection.java                                               ✅
-  Assertion.java                                               ✅
-  TaskExecutor.java                                            ✅
-  AssertionExecutor.java                                       ✅
-platform-plugin-api/src/test/java/com/performance/platform/plugin/
-  AnnotationsRetentionTest.java                                ✅ (21 tests)
-  PluginApiArchitectureTest.java                               ✅ (1 test ArchUnit)
-pom.xml                                                        ✅
+platform-application/pom.xml                                              ✅ (dep de platform-domain, ArchUnit test)
+platform-application/src/main/java/com/performance/platform/application/
+  ports/in/ExecuteScenarioUseCase.java                                    ✅
+  ports/in/ScenarioParsingUseCase.java                                    ✅
+  ports/in/GetExecutionStatusUseCase.java                                 ✅
+  ports/in/CancelExecutionUseCase.java                                    ✅
+  ports/in/GenerateReportUseCase.java                                     ✅
+  exception/ExecutionException.java                                       ✅
+  exception/ReportGenerationException.java                                ✅
+  exception/NoAvailableAgentException.java                                ✅
+  exception/InvalidScenarioException.java                                 ✅
+  exception/ScenarioParsingException.java                                 ✅
+platform-application/src/test/java/com/performance/platform/application/
+  arch/ApplicationArchitectureTest.java                                   ✅ (2 regles, 0 Spring + 0 infra)
+pom.xml                                                                    ✅ (module platform-application ajoute)
 ```
 
 **Blocages** :
@@ -54,10 +60,16 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue à prendre)
 
-SI REVIEWER (ISSUE-011) :
+SI REVIEWER (ISSUE-012) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-011-plugin-api-executor-interfaces.md
-  .claude/adr/ADR-007-plugin-jar-system.md
+  .claude/issues/ISSUE-012-ports-entrants-exceptions-applicatives.md
+  .claude/context/interfaces-registry.md
+  .claude/glossary.md
+
+SI DEVELOPER (ISSUE-013) :
+  .claude/agents/developer.md
+  .claude/issues/ISSUE-013.md
+  .claude/pdr/PDR-004.md
 ```
 
 ---
@@ -85,3 +97,5 @@ SI REVIEWER (ISSUE-011) :
 | 2026-06-13 | Developer | ISSUE-009 | 7 events + AgentSignal + ScenarioRestartSignal + 43 tests. String target dans ReportPublished. | ✅ IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-009 | Revue APPROVED (0 bloquant). PDR-002 DONE. 392 tests. | ✅ DONE |
 | 2026-06-13 | Developer | ISSUE-011 | 2 interfaces (TaskExecutor/AssertionExecutor) + ArchUnit no-Spring + 22 tests | ✅ IN REVIEW |
+| 2026-06-13 | Reviewer | ISSUE-011 | Revue APPROVED. Signatures conformes, 0 TaskType, 0 Spring, javadoc complet. PDR-003 DONE. | ✅ DONE |
+| 2026-06-13 | Developer | ISSUE-012 | 5 use cases + 5 exceptions + ArchUnit (2 regles). platform-application cree. Tests OK. | ✅ IN REVIEW |

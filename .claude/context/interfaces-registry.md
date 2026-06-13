@@ -91,18 +91,18 @@
 | `@Preparation` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
 | `@Injection` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
 | `@Assertion` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
-| `TaskExecutor` ⚡ | 🔄 IN PROGRESS | PDR-003 | ISSUE-011 |
-| `AssertionExecutor` | 🔄 IN PROGRESS | PDR-003 | ISSUE-011 |
+| `TaskExecutor` ⚡ | ✅ STABLE | PDR-003 | ISSUE-011 |
+| `AssertionExecutor` | ✅ STABLE | PDR-003 | ISSUE-011 |
 
 ## platform-application (Ports)
 
 | Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `ExecuteScenarioUseCase` | ⬜ PLANNED | PDR-004 | ISSUE-012 |
-| `ScenarioParsingUseCase` | ⬜ PLANNED | PDR-004 | ISSUE-012 |
-| `GetExecutionStatusUseCase` | ⬜ PLANNED | PDR-004 | ISSUE-012 |
-| `CancelExecutionUseCase` | ⬜ PLANNED | PDR-004 | ISSUE-012 |
-| `GenerateReportUseCase` | ⬜ PLANNED | PDR-004 | ISSUE-012 |
+| `ExecuteScenarioUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
+| `ScenarioParsingUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
+| `GetExecutionStatusUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
+| `CancelExecutionUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
+| `GenerateReportUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
 | `ExecutionRepository` | ⬜ PLANNED | PDR-004 | ISSUE-013 |
 | `AgentRegistryPort` | ⬜ PLANNED | PDR-004 | ISSUE-013 |
 | `ReportPublisherPort` | ⬜ PLANNED | PDR-004 | ISSUE-013 |
