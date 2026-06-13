@@ -98,21 +98,21 @@
 
 | Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `ExecuteScenarioUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
-| `ScenarioParsingUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
-| `GetExecutionStatusUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
-| `CancelExecutionUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
-| `GenerateReportUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
+| `ExecuteScenarioUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
+| `ScenarioParsingUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
+| `GetExecutionStatusUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
+| `CancelExecutionUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
+| `GenerateReportUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
 | `ExecutionRepository` | ✅ STABLE | PDR-004 | ISSUE-013 |
 | `AgentRegistryPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
 | `ReportPublisherPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
-| `ExecutionConfig` | 🔄 IN PROGRESS | PDR-004 | ISSUE-014 |
+| `ExecutionConfig` | ✅ STABLE | PDR-004 | ISSUE-014 |
 
 ## platform-scenario-dsl
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `ScenarioParser` | ⬜ PLANNED | PDR-005 | ISSUE-015 |
+| `ScenarioParser` | 🔄 IN PROGRESS | PDR-005 | ISSUE-015 |
 | `ScenarioValidator` / `ValidationResult` | ⬜ PLANNED | PDR-005 | ISSUE-016 |
 | `LoadModelRegistry` | ⬜ PLANNED | PDR-005 | ISSUE-017 |
 | `DefaultScenarioParsingService` | ⬜ PLANNED | PDR-005 | ISSUE-018 |
