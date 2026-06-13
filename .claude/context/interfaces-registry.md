@@ -103,9 +103,9 @@
 | `GetExecutionStatusUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
 | `CancelExecutionUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
 | `GenerateReportUseCase` | 🔄 IN PROGRESS | PDR-004 | ISSUE-012 |
-| `ExecutionRepository` | ⬜ PLANNED | PDR-004 | ISSUE-013 |
-| `AgentRegistryPort` | ⬜ PLANNED | PDR-004 | ISSUE-013 |
-| `ReportPublisherPort` | ⬜ PLANNED | PDR-004 | ISSUE-013 |
+| `ExecutionRepository` | 🔄 IN PROGRESS | PDR-004 | ISSUE-013 |
+| `AgentRegistryPort` | 🔄 IN PROGRESS | PDR-004 | ISSUE-013 |
+| `ReportPublisherPort` | 🔄 IN PROGRESS | PDR-004 | ISSUE-013 |
 | `ExecutionConfig` | ⬜ PLANNED | PDR-004 | ISSUE-014 |
 
 ## platform-scenario-dsl
