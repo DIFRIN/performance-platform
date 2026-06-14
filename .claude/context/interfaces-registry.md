@@ -129,9 +129,11 @@
 | `DagLevelCalculator` | ✅ STABLE | PDR-006 | ISSUE-019 |
 | `RetryExecutor` / `DefaultRetryExecutor` | ✅ STABLE | PDR-006 | ISSUE-020 |
 | `TaskCorrelationTracker` / `DefaultTaskCorrelationTracker` | ✅ STABLE | PDR-006 | ISSUE-021 |
-| `AgentAvailabilityChecker` / `DefaultAgentAvailabilityChecker` | 🔄 IN PROGRESS | PDR-006 | ISSUE-022 |
-| `ExecutionEngine` | ⬜ PLANNED | PDR-006 | ISSUE-023 |
-| `LocalExecutionEngine` | ⬜ PLANNED | PDR-006 | ISSUE-023 |
+| `AgentAvailabilityChecker` / `DefaultAgentAvailabilityChecker` | ✅ STABLE | PDR-006 | ISSUE-022 |
+| `ExecutionEngine` | 🔄 IN PROGRESS | PDR-006 | ISSUE-023 |
+| `LocalExecutionEngine` | 🔄 IN PROGRESS | PDR-006 | ISSUE-023 |
+| `DagPhaseExecutor` | 🔄 IN PROGRESS | PDR-006 | ISSUE-023 |
+| `TaskExecutorLookup` | 🔄 IN PROGRESS | PDR-006 | ISSUE-023 |
 | `RemoteExecutionEngine` | ⬜ PLANNED | PDR-006 | ISSUE-024 |
 
 ## platform-transport
