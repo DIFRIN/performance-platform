@@ -116,8 +116,9 @@
 | `ScenarioValidator` / `DefaultScenarioValidator` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
 | `ValidationResult` / `ValidationError` / `ValidationWarning` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
 | `DagCycleDetector` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
-| `LoadModelRegistry` / `DefaultLoadModelRegistry` / `LoadModelNotFoundException` | 🔄 IN PROGRESS | PDR-005 | ISSUE-017 |
-| `DefaultScenarioParsingService` | ⬜ PLANNED | PDR-005 | ISSUE-018 |
+| `LoadModelRegistry` / `DefaultLoadModelRegistry` / `LoadModelNotFoundException` | ✅ STABLE | PDR-005 | ISSUE-017 |
+| `DefaultScenarioParsingService` | 🔄 IN PROGRESS | PDR-005 | ISSUE-018 |
+| `ScenarioValidationException` | 🔄 IN PROGRESS | PDR-005 | ISSUE-018 |
 
 ## platform-execution-engine
 
