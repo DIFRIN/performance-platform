@@ -10,10 +10,10 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-14
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-025 — Interface ExecutionTransport + handlers + Subscription
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE
-**PDR parent** : PDR-007 — Transport Layer Core (IN PROGRESS)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-024 — RemoteExecutionEngine
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED
+**PDR parent** : PDR-006 — Execution Engine (IN PROGRESS)
 
 ---
 
@@ -22,24 +22,17 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Reviewer : ISSUE-025 IN REVIEW → DONE (APPROVED, 0 bloquant, 2 recommandations). 36 tests, BUILD SUCCESS. interfaces-registry → STABLE.
+Developer : ISSUE-024 RemoteExecutionEngine terminee. 4 fichiers (PartialContextBuilder + RemoteExecutionEngine + 2 tests). 22 nouveaux tests, 125 total BUILD SUCCESS.
 
 **Prochaine action** :
-Developer : prendre ISSUE-026 (TaskExecutionRequest + ExecutionEvent deja implementes avec ISSUE-025 — verifier et ajuster si necessaire, puis marquer DONE).
+Reviewer : revoir ISSUE-024 IN REVIEW
 
 **Fichiers en cours** :
 ```
-✅ platform-transport/pom.xml
-✅ platform-transport/src/main/java/.../transport/ExecutionTransport.java
-✅ platform-transport/src/main/java/.../transport/TaskRequestHandler.java
-✅ platform-transport/src/main/java/.../transport/AgentSignalHandler.java
-✅ platform-transport/src/main/java/.../transport/ExecutionEventHandler.java
-✅ platform-transport/src/main/java/.../transport/Subscription.java
-✅ platform-transport/src/main/java/.../transport/TransportException.java
-✅ platform-transport/src/main/java/.../transport/TransportType.java
-✅ platform-transport/src/main/java/.../transport/message/TaskExecutionRequest.java
-✅ platform-transport/src/main/java/.../transport/message/ExecutionEvent.java
-✅ platform-transport/src/test/java/.../transport/TransportInterfaceTest.java
+✅ platform-execution-engine/src/main/java/.../remote/PartialContextBuilder.java
+✅ platform-execution-engine/src/main/java/.../remote/RemoteExecutionEngine.java
+✅ platform-execution-engine/src/test/java/.../remote/PartialContextBuilderTest.java
+✅ platform-execution-engine/src/test/java/.../remote/RemoteExecutionEngineTest.java
 ```
 
 **Blocages** :
@@ -54,9 +47,9 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI DEVELOPER (prochaine session) :
-  .claude/agents/developer.md
-  .claude/issues/ISSUE-026-transport-messages-executionevent.md (TaskExecutionRequest, ExecutionEvent, PDR-007)
+SI REVIEWER (prochaine session) :
+  .claude/agents/reviewer.md
+  .claude/issues/ISSUE-024-remote-execution-engine.md
 ```
 
 ---
@@ -107,3 +100,6 @@ SI DEVELOPER (prochaine session) :
 | 2026-06-14 | Reviewer | ISSUE-023 | Revue APPROVED (0 bloquant, 3 recommandations). 103 tests BUILD SUCCESS. | OK DONE |
 | 2026-06-14 | Developer | ISSUE-025 | Module platform-transport + ExecutionTransport + 36 tests. IN REVIEW. | OK IN REVIEW |
 | 2026-06-14 | Reviewer | ISSUE-025 | Revue APPROVED (0 bloquant, 2 recommandations). 36 tests. | OK DONE |
+| 2026-06-14 | Developer | ISSUE-026 | Verification + TransportMessagesTest.java (26 tests). 62 tests total. | OK DONE |
+| 2026-06-14 | Reviewer | ISSUE-026 | Revue APPROVED (0 bloquant, 2 recommandations). 62 tests BUILD SUCCESS. | OK APPROVED |
+| 2026-06-14 | Reviewer | ISSUE-021 | Revue APPROVED (0 bloquant, 4 recommandations). 103 tests BUILD SUCCESS. | OK APPROVED |

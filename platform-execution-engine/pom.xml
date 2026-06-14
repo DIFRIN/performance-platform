@@ -43,6 +43,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Transport (ExecutionTransport, TaskExecutionRequest, ExecutionEvent) — PDR-007 -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-transport</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring context pour @Service, ApplicationEventPublisher, etc. -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -76,6 +83,14 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>3.27.3</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Mockito pour les mocks -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.16.1</version>
             <scope>test</scope>
         </dependency>
 
