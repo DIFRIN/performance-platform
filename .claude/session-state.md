@@ -9,11 +9,11 @@
 
 ## Etat Courant
 
-**Date derniere session** : 2026-06-15
+**Date derniere session** : 2026-06-14
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-016 -- ScenarioValidator IN REVIEW
+**Issue active** : ISSUE-017 -- LoadModelRegistry IN REVIEW
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-005 -- Scenario DSL (ISSUE-016 IN REVIEW)
+**PDR parent** : PDR-005 -- Scenario DSL (ISSUE-017 IN REVIEW)
 
 ---
 
@@ -22,23 +22,19 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-016 implemente. 7 fichiers crees (ScenarioValidator, DefaultScenarioValidator, ValidationResult, ValidationError, ValidationWarning, DagCycleDetector + 2 tests). 137 tests OK (total 211). ISSUE-016 IN REVIEW.
+Developer : ISSUE-017 implemente. 4 fichiers crees (LoadModelRegistry, DefaultLoadModelRegistry, LoadModelNotFoundException + test). Tests OK. ISSUE-017 IN REVIEW.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-016 (ScenarioValidator, PDR-005). 63 tests de validation, 15 tests DAG. Kahn's algorithm + BFS reachability.
+Reviewer : revoir ISSUE-017 (LoadModelRegistry, PDR-005). Taille S. 3 classes + 1 test.
 
 **Fichiers en cours** :
 ```
-platform-scenario-dsl/src/main/java/com/performance/platform/scenario/validation/
-  ScenarioValidator.java                                                     STABLE (waiting review)
-  DefaultScenarioValidator.java                                               STABLE (waiting review)
-  ValidationResult.java                                                       STABLE (waiting review)
-  ValidationError.java                                                        STABLE (waiting review)
-  ValidationWarning.java                                                      STABLE (waiting review)
-  DagCycleDetector.java                                                       STABLE (waiting review)
-platform-scenario-dsl/src/test/java/com/performance/platform/scenario/validation/
-  DefaultScenarioValidatorTest.java                                           STABLE (49 tests)
-  DagCycleDetectorTest.java                                                   STABLE (15 tests)
+platform-scenario-dsl/src/main/java/com/performance/platform/scenario/loadmodel/
+  LoadModelRegistry.java                                                      STABLE (waiting review)
+  DefaultLoadModelRegistry.java                                                STABLE (waiting review)
+  LoadModelNotFoundException.java                                              STABLE (waiting review)
+platform-scenario-dsl/src/test/java/com/performance/platform/scenario/loadmodel/
+  DefaultLoadModelRegistryTest.java                                            STABLE (waiting review)
 ```
 
 **Blocages** :
@@ -53,14 +49,13 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI REVIEWER (ISSUE-016) :
+SI REVIEWER (ISSUE-017) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-016.md
+  .claude/issues/ISSUE-017.md
   .claude/pdr/PDR-005.md
 
-SI DEVELOPER (ISSUE-017 ou ISSUE-018) :
+SI DEVELOPER (ISSUE-018) :
   .claude/agents/developer.md
-  .claude/issues/ISSUE-017.md (LoadModelRegistry)
   .claude/issues/ISSUE-018.md (ScenarioParsingUseCase)
 ```
 
