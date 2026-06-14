@@ -128,7 +128,7 @@
 | `DefaultExecutionPlanBuilder` | ✅ STABLE | PDR-006 | ISSUE-019 |
 | `DagLevelCalculator` | ✅ STABLE | PDR-006 | ISSUE-019 |
 | `RetryExecutor` / `DefaultRetryExecutor` | ✅ STABLE | PDR-006 | ISSUE-020 |
-| `TaskCorrelationTracker` | ⬜ PLANNED | PDR-006 | ISSUE-021 |
+| `TaskCorrelationTracker` / `DefaultTaskCorrelationTracker` | 🔄 IN PROGRESS | PDR-006 | ISSUE-021 |
 | `AgentAvailabilityChecker` | ⬜ PLANNED | PDR-006 | ISSUE-022 |
 | `ExecutionEngine` | ⬜ PLANNED | PDR-006 | ISSUE-023 |
 | `LocalExecutionEngine` | ⬜ PLANNED | PDR-006 | ISSUE-023 |
