@@ -53,8 +53,8 @@
 | PDR-002 | Domain Events | platform-domain | DONE | ISSUE-008,009 | PDR-001 |
 | PDR-003 | Plugin API | platform-plugin-api | DONE | ISSUE-010,011 | PDR-001 |
 | PDR-004 | Application Ports & Use Cases | platform-application | DONE | ISSUE-012,013,014 | PDR-001 |
-| PDR-005 | Scenario DSL | platform-scenario-dsl | IN PROGRESS | ISSUE-015..018 | PDR-001, PDR-004 |
-| PDR-006 | Execution Engine | platform-execution-engine | TODO | ISSUE-019..024 | PDR-001,002,004,005,007 |
+| PDR-005 | Scenario DSL | platform-scenario-dsl | DONE | ISSUE-015..018 | PDR-001, PDR-004 |
+| PDR-006 | Execution Engine | platform-execution-engine | IN PROGRESS | ISSUE-019..024 | PDR-001,002,004,005,007 |
 | PDR-007 | Transport Layer Core | platform-transport | TODO | ISSUE-025,026,027 | PDR-001, PDR-002 |
 | PDR-008 | Transport Implementations | platform-transport | TODO | ISSUE-028..032 | PDR-001,002,007 |
 | PDR-009 | Agent Runtime | platform-agent-runtime | TODO | ISSUE-033..038 | PDR-001,002,004,007 |
@@ -101,7 +101,7 @@
 | ISSUE-014 | ExecutionConfig | PDR-004 | platform-application | S | DONE | ISSUE-012 |
 | ISSUE-015 | ScenarioParser (YAML → ScenarioDefinition) | PDR-005 | platform-scenario-dsl | L | DONE | ISSUE-003,012 |
 | ISSUE-016 | ScenarioValidator + détection cycle DAG | PDR-005 | platform-scenario-dsl | L | DONE | ISSUE-015 |
-| ISSUE-019 | ExecutionPlanBuilder + DAG levels | PDR-006 | platform-execution-engine | L | TODO | ISSUE-006,016 |
+| ISSUE-019 | ExecutionPlanBuilder + DAG levels | PDR-006 | platform-execution-engine | L | DONE | ISSUE-006,016 |
 | ISSUE-020 | RetryExecutor (backoff exponentiel) | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019 |
 | ISSUE-021 | TaskCorrelationTracker (multi-claim) | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019 |
 | ISSUE-022 | AgentAvailabilityChecker | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019,013 |
@@ -243,6 +243,12 @@
 | 2026-06-14 | ISSUE-017 | IN REVIEW → DONE | Reviewer |
 | 2026-06-14 | ISSUE-018 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | ISSUE-018 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-018 | IN REVIEW → DONE | Reviewer |
+| 2026-06-14 | PDR-005 | IN PROGRESS → DONE | Reviewer (ISSUE-015..018 all DONE) |
+| 2026-06-14 | ISSUE-019 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | PDR-006 | TODO → IN PROGRESS | Developer (ISSUE-019 started) |
+| 2026-06-14 | ISSUE-019 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-019 | IN REVIEW → DONE | Reviewer |
 
 ---
 
