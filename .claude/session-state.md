@@ -11,9 +11,9 @@
 
 **Date derniere session** : 2026-06-14
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-024 — RemoteExecutionEngine
+**Issue active** : ISSUE-027 — InMemoryExecutionTransport
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED
-**PDR parent** : PDR-006 — Execution Engine (IN PROGRESS)
+**PDR parent** : PDR-007 — Transport Layer Core (IN PROGRESS)
 
 ---
 
@@ -22,17 +22,16 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-024 RemoteExecutionEngine terminee. 4 fichiers (PartialContextBuilder + RemoteExecutionEngine + 2 tests). 22 nouveaux tests, 125 total BUILD SUCCESS.
+Developer : Impl ISSUE-027 InMemoryExecutionTransport + 29 tests. Livraison synchrone, queues mémoire. 91 tests platform-transport (BUILD SUCCESS).
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-024 IN REVIEW
+Reviewer : vérifier ISSUE-027 InMemoryExecutionTransport (`.claude/issues/ISSUE-027-in-memory-transport.md`).
+Prochaine Issue TODO pour Developer : ISSUE-033 (TaskSpecializationFilter) ou ISSUE-028 (Transport properties).
 
 **Fichiers en cours** :
 ```
-✅ platform-execution-engine/src/main/java/.../remote/PartialContextBuilder.java
-✅ platform-execution-engine/src/main/java/.../remote/RemoteExecutionEngine.java
-✅ platform-execution-engine/src/test/java/.../remote/PartialContextBuilderTest.java
-✅ platform-execution-engine/src/test/java/.../remote/RemoteExecutionEngineTest.java
+✅ platform-transport/src/main/java/.../inmemory/InMemoryExecutionTransport.java
+✅ platform-transport/src/test/java/.../inmemory/InMemoryExecutionTransportTest.java
 ```
 
 **Blocages** :
@@ -49,7 +48,7 @@ TOUJOURS :
 
 SI REVIEWER (prochaine session) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-024-remote-execution-engine.md
+  .claude/issues/ISSUE-027-in-memory-transport.md
 ```
 
 ---
@@ -103,3 +102,4 @@ SI REVIEWER (prochaine session) :
 | 2026-06-14 | Developer | ISSUE-026 | Verification + TransportMessagesTest.java (26 tests). 62 tests total. | OK DONE |
 | 2026-06-14 | Reviewer | ISSUE-026 | Revue APPROVED (0 bloquant, 2 recommandations). 62 tests BUILD SUCCESS. | OK APPROVED |
 | 2026-06-14 | Reviewer | ISSUE-021 | Revue APPROVED (0 bloquant, 4 recommandations). 103 tests BUILD SUCCESS. | OK APPROVED |
+| 2026-06-14 | Developer | ISSUE-027 | Impl InMemoryExecutionTransport + 29 tests. 91 tests BUILD SUCCESS. | OK IN REVIEW |

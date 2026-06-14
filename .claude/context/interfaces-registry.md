@@ -134,8 +134,8 @@
 | `LocalExecutionEngine` | ✅ STABLE | PDR-006 | ISSUE-023 |
 | `DagPhaseExecutor` | ✅ STABLE | PDR-006 | ISSUE-023 |
 | `TaskExecutorLookup` | ✅ STABLE | PDR-006 | ISSUE-023 |
-| `RemoteExecutionEngine` | 🔄 IN PROGRESS | PDR-006 | ISSUE-024 |
-| `PartialContextBuilder` | 🔄 IN PROGRESS | PDR-006 | ISSUE-024 |
+| `RemoteExecutionEngine` | ✅ STABLE | PDR-006 | ISSUE-024 |
+| `PartialContextBuilder` | ✅ STABLE | PDR-006 | ISSUE-024 |
 
 ## platform-transport
 
@@ -147,7 +147,7 @@
 | `TaskExecutionRequest` | ✅ STABLE | PDR-007 | ISSUE-026 |
 | `ExecutionEvent` | ✅ STABLE | PDR-007 | ISSUE-026 |
 | `TransportType` | ✅ STABLE | PDR-007 | ISSUE-025 |
-| `InMemoryExecutionTransport` | ⬜ PLANNED | PDR-007 | ISSUE-027 |
+| `InMemoryExecutionTransport` | 🔄 IN PROGRESS | PDR-007 | ISSUE-027 |
 | Transport properties + `TransportConfiguration` | ⬜ PLANNED | PDR-008 | ISSUE-028 |
 | `KafkaExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-029 |
 | `RabbitMQExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-030 |
