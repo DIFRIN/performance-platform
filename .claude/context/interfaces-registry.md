@@ -160,8 +160,8 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `TaskSpecializationFilter` / `TaskFilterResult` | ⬜ PLANNED | PDR-009 | ISSUE-033 |
-| `AgentRegistrationPort` | ⬜ PLANNED | PDR-009 | ISSUE-034 |
+| `TaskSpecializationFilter` / `TaskFilterResult` / `DefaultTaskSpecializationFilter` | 🔄 IN PROGRESS | PDR-009 | ISSUE-033 |
+| `AgentRegistrationPort` / `TransportAgentRegistration` / `HeartbeatScheduler` / `RegistrationException` | ✅ STABLE | PDR-009 | ISSUE-034 |
 | `AgentRegistry` | ⬜ PLANNED | PDR-009 | ISSUE-035 |
 | `AgentRuntime` / `DistributedAgentRuntime` | ⬜ PLANNED | PDR-009 | ISSUE-036 |
 | `StatefulResourceCleaner` / `ScenarioRestartHandler` | ⬜ PLANNED | PDR-009 | ISSUE-037 |
