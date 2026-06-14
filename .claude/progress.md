@@ -100,7 +100,7 @@
 |---|---|---|---|---|---|---|
 | ISSUE-014 | ExecutionConfig | PDR-004 | platform-application | S | DONE | ISSUE-012 |
 | ISSUE-015 | ScenarioParser (YAML → ScenarioDefinition) | PDR-005 | platform-scenario-dsl | L | DONE | ISSUE-003,012 |
-| ISSUE-016 | ScenarioValidator + détection cycle DAG | PDR-005 | platform-scenario-dsl | L | TODO | ISSUE-015 |
+| ISSUE-016 | ScenarioValidator + détection cycle DAG | PDR-005 | platform-scenario-dsl | L | DONE | ISSUE-015 |
 | ISSUE-019 | ExecutionPlanBuilder + DAG levels | PDR-006 | platform-execution-engine | L | TODO | ISSUE-006,016 |
 | ISSUE-020 | RetryExecutor (backoff exponentiel) | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019 |
 | ISSUE-021 | TaskCorrelationTracker (multi-claim) | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019 |
@@ -236,6 +236,8 @@
 | 2026-06-14 | ISSUE-015 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | PDR-005 | TODO → IN PROGRESS | Developer (ISSUE-015) |
 | 2026-06-14 | ISSUE-015 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-016 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-016 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -244,4 +246,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ISSUE-015 IN REVIEW, PDR-005 commence)
+**Dernière mise à jour** : 2026-06-14 (ISSUE-016 IN REVIEW)
