@@ -57,7 +57,7 @@
 | PDR-006 | Execution Engine | platform-execution-engine | DONE | ISSUE-019..024 | PDR-001,002,004,005,007 |
 | PDR-007 | Transport Layer Core | platform-transport | IN PROGRESS | ISSUE-025,026,027 | PDR-001, PDR-002 |
 | PDR-008 | Transport Implementations | platform-transport | TODO | ISSUE-028..032 | PDR-001,002,007 |
-| PDR-009 | Agent Runtime | platform-agent-runtime | TODO | ISSUE-033..038 | PDR-001,002,004,007 |
+| PDR-009 | Agent Runtime | platform-agent-runtime | IN PROGRESS | ISSUE-033..038 | PDR-001,002,004,007 |
 | PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | TODO | ISSUE-039..045 | PDR-001,003,004 |
 | PDR-011 | Plugin System (infra `.plugin`) | platform-infrastructure | TODO | ISSUE-046..049 | PDR-001,003,010 |
 | PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | TODO | ISSUE-050..053 | PDR-001,004 |
@@ -110,8 +110,8 @@
 | ISSUE-025 | Interface ExecutionTransport + handlers | PDR-007 | platform-transport | M | DONE | ISSUE-009 |
 | ISSUE-026 | TaskExecutionRequest + ExecutionEvent | PDR-007 | platform-transport | S | DONE | ISSUE-025 |
 | ISSUE-027 | InMemoryExecutionTransport | PDR-007 | platform-transport | M | IN REVIEW | ISSUE-025,026 |
-| ISSUE-033 | TaskSpecializationFilter + TaskFilterResult | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-026,007 |
-| ISSUE-034 | AgentRegistrationPort + heartbeat | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-033 |
+| ISSUE-033 | TaskSpecializationFilter + TaskFilterResult | PDR-009 | platform-agent-runtime | M | IN REVIEW | ISSUE-026,007 |
+| ISSUE-034 | AgentRegistrationPort + heartbeat | PDR-009 | platform-agent-runtime | M | APPROVED | ISSUE-033 |
 | ISSUE-035 | AgentRegistry (orchestrateur) | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-034,013 |
 | ISSUE-036 | DistributedAgentRuntime | PDR-009 | platform-agent-runtime | L | TODO | ISSUE-033,034 |
 | ISSUE-037 | ScenarioRestart cleanup stateful | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-036 |
@@ -274,6 +274,11 @@
 | 2026-06-14 | PDR-006 | IN PROGRESS → DONE | Reviewer (ISSUE-019..024 all DONE) |
 | 2026-06-14 | ISSUE-027 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | ISSUE-027 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-033 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-033 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-034 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-034 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-034 | IN REVIEW → APPROVED | Reviewer |
 
 ---
 
@@ -282,4 +287,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ISSUE-027 IN REVIEW, 91 tests platform-transport)
+**Dernière mise à jour** : 2026-06-14 (ISSUE-034 APPROVED, Reviewer — 3 recommandations non-bloquantes)
