@@ -147,7 +147,9 @@
 | `TaskExecutionRequest` | ✅ STABLE | PDR-007 | ISSUE-026 |
 | `ExecutionEvent` | ✅ STABLE | PDR-007 | ISSUE-026 |
 | `TransportType` | ✅ STABLE | PDR-007 | ISSUE-025 |
-| `InMemoryExecutionTransport` | 🔄 IN PROGRESS | PDR-007 | ISSUE-027 |
+| `InMemoryExecutionTransport` | ✅ STABLE | PDR-007 | ISSUE-027 |
+| `AgentLifecycleEvent` | ✅ STABLE | PDR-007 | ADR-012 |
+| `AgentLifecycleEventHandler` | ✅ STABLE | PDR-007 | ADR-012 |
 | Transport properties + `TransportConfiguration` | ⬜ PLANNED | PDR-008 | ISSUE-028 |
 | `KafkaExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-029 |
 | `RabbitMQExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-030 |
@@ -160,9 +162,9 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `TaskSpecializationFilter` / `TaskFilterResult` / `DefaultTaskSpecializationFilter` | 🔄 IN PROGRESS | PDR-009 | ISSUE-033 |
+| `TaskSpecializationFilter` / `TaskFilterResult` / `DefaultTaskSpecializationFilter` | ✅ STABLE | PDR-009 | ISSUE-033 |
 | `AgentRegistrationPort` / `TransportAgentRegistration` / `HeartbeatScheduler` / `RegistrationException` | ✅ STABLE | PDR-009 | ISSUE-034 |
-| `AgentRegistry` / `InMemoryAgentRegistry` / `AgentTtlMonitor` | 🔄 IN PROGRESS | PDR-009 | ISSUE-035 |
+| `AgentRegistry` / `InMemoryAgentRegistry` / `AgentTtlMonitor` | ✅ STABLE | PDR-009 | ISSUE-035 |
 | `AgentRuntime` / `DistributedAgentRuntime` | ⬜ PLANNED | PDR-009 | ISSUE-036 |
 | `StatefulResourceCleaner` / `ScenarioRestartHandler` | ⬜ PLANNED | PDR-009 | ISSUE-037 |
 | `LocalAgent` | ⬜ PLANNED | PDR-009 | ISSUE-038 |
