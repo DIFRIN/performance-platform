@@ -140,7 +140,7 @@
 
 | ID | Titre | PDR | Module | Taille | Statut | Bloquée par |
 |---|---|---|---|---|---|---|
-| ISSUE-017 | LoadModelRegistry | PDR-005 | platform-scenario-dsl | S | TODO | ISSUE-015 |
+| ISSUE-017 | LoadModelRegistry | PDR-005 | platform-scenario-dsl | S | DONE | ISSUE-015 |
 | ISSUE-018 | ScenarioParsingUseCase | PDR-005 | platform-scenario-dsl | S | TODO | ISSUE-015,016 |
 | ISSUE-028 | Transport properties + Configuration | PDR-008 | platform-transport | M | TODO | ISSUE-025 |
 | ISSUE-029 | KafkaExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
@@ -238,6 +238,8 @@
 | 2026-06-14 | ISSUE-015 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-14 | ISSUE-016 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | ISSUE-016 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-017 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-017 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -246,4 +248,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ISSUE-016 IN REVIEW)
+**Dernière mise à jour** : 2026-06-14 (ISSUE-017 IN REVIEW)
