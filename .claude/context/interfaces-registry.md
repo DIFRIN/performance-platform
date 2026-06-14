@@ -140,12 +140,12 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `ExecutionTransport` ⚡ | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
-| `TaskRequestHandler` / `AgentSignalHandler` / `ExecutionEventHandler` / `Subscription` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
-| `TransportException` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
-| `TaskExecutionRequest` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
-| `ExecutionEvent` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
-| `TransportType` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
+| `ExecutionTransport` ⚡ | ✅ STABLE | PDR-007 | ISSUE-025 |
+| `TaskRequestHandler` / `AgentSignalHandler` / `ExecutionEventHandler` / `Subscription` | ✅ STABLE | PDR-007 | ISSUE-025 |
+| `TransportException` | ✅ STABLE | PDR-007 | ISSUE-025 |
+| `TaskExecutionRequest` | ✅ STABLE | PDR-007 | ISSUE-025 |
+| `ExecutionEvent` | ✅ STABLE | PDR-007 | ISSUE-025 |
+| `TransportType` | ✅ STABLE | PDR-007 | ISSUE-025 |
 | `InMemoryExecutionTransport` | ⬜ PLANNED | PDR-007 | ISSUE-027 |
 | Transport properties + `TransportConfiguration` | ⬜ PLANNED | PDR-008 | ISSUE-028 |
 | `KafkaExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-029 |
