@@ -108,7 +108,7 @@
 | ISSUE-023 | LocalExecutionEngine | PDR-006 | platform-execution-engine | L | DONE | ISSUE-019,020,013 |
 | ISSUE-024 | RemoteExecutionEngine | PDR-006 | platform-execution-engine | L | TODO | ISSUE-021,022,023,026 |
 | ISSUE-025 | Interface ExecutionTransport + handlers | PDR-007 | platform-transport | M | DONE | ISSUE-009 |
-| ISSUE-026 | TaskExecutionRequest + ExecutionEvent | PDR-007 | platform-transport | S | TODO | ISSUE-025 |
+| ISSUE-026 | TaskExecutionRequest + ExecutionEvent | PDR-007 | platform-transport | S | DONE | ISSUE-025 |
 | ISSUE-027 | InMemoryExecutionTransport | PDR-007 | platform-transport | M | TODO | ISSUE-025,026 |
 | ISSUE-033 | TaskSpecializationFilter + TaskFilterResult | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-026,007 |
 | ISSUE-034 | AgentRegistrationPort + heartbeat | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-033 |
@@ -264,6 +264,8 @@
 | 2026-06-14 | ISSUE-025 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | PDR-007 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | ISSUE-025 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-025 | IN REVIEW → DONE | Reviewer |
+| 2026-06-14 | ISSUE-026 | TODO → IN PROGRESS | Developer |
 
 ---
 
