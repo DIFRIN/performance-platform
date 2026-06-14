@@ -27,6 +27,7 @@
         <module>platform-scenario-dsl</module>
         <module>platform-execution-engine</module>
         <module>platform-transport</module>
+        <module>platform-agent-runtime</module>
     </modules>
 
     <dependencyManagement>
