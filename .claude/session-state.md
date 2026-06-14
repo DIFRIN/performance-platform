@@ -11,9 +11,9 @@
 
 **Date derniere session** : 2026-06-14
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-017 -- LoadModelRegistry IN REVIEW
+**Issue active** : ISSUE-018 -- ScenarioParsingUseCase
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-005 -- Scenario DSL (ISSUE-017 IN REVIEW)
+**PDR parent** : PDR-005 -- Scenario DSL (ISSUE-018 IN REVIEW — DERNIERE !)
 
 ---
 
@@ -22,19 +22,16 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-017 implemente. 4 fichiers crees (LoadModelRegistry, DefaultLoadModelRegistry, LoadModelNotFoundException + test). Tests OK. ISSUE-017 IN REVIEW.
+Developer : ISSUE-018 (ScenarioParsingUseCase) implementee. 3 fichiers + 10 tests. BUILD OK (160 tests). IN REVIEW.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-017 (LoadModelRegistry, PDR-005). Taille S. 3 classes + 1 test.
+Reviewer : revoir ISSUE-018 (DefaultScenarioParsingService, ScenarioValidationException). Puis PDR-005 DONE.
 
 **Fichiers en cours** :
 ```
-platform-scenario-dsl/src/main/java/com/performance/platform/scenario/loadmodel/
-  LoadModelRegistry.java                                                      STABLE (waiting review)
-  DefaultLoadModelRegistry.java                                                STABLE (waiting review)
-  LoadModelNotFoundException.java                                              STABLE (waiting review)
-platform-scenario-dsl/src/test/java/com/performance/platform/scenario/loadmodel/
-  DefaultLoadModelRegistryTest.java                                            STABLE (waiting review)
+✅ platform-scenario-dsl/src/main/java/.../usecase/DefaultScenarioParsingService.java
+✅ platform-scenario-dsl/src/main/java/.../usecase/ScenarioValidationException.java
+✅ platform-scenario-dsl/src/test/java/.../usecase/DefaultScenarioParsingServiceTest.java
 ```
 
 **Blocages** :
@@ -49,14 +46,14 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI REVIEWER (ISSUE-017) :
+SI REVIEWER (ISSUE-018) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-017.md
+  .claude/issues/ISSUE-018-scenario-parsing-usecase.md
   .claude/pdr/PDR-005.md
 
-SI DEVELOPER (ISSUE-018) :
+SI DEVELOPER (prochaine PDR) :
   .claude/agents/developer.md
-  .claude/issues/ISSUE-018.md (ScenarioParsingUseCase)
+  .claude/issues/ISSUE-019.md (ExecutionPlanBuilder, PDR-006)
 ```
 
 ---
@@ -93,3 +90,6 @@ SI DEVELOPER (ISSUE-018) :
 | 2026-06-14 | Reviewer | ISSUE-014 | Revue APPROVED (0 bloquant). PDR-004 DONE. | OK DONE |
 | 2026-06-14 | Developer | ISSUE-015 | Module platform-scenario-dsl cree. 74 tests OK. IN REVIEW. | OK IN REVIEW |
 | 2026-06-14 | Developer | ISSUE-016 | ScenarioValidator + DagCycleDetector. 137 tests OK. IN REVIEW. | OK IN REVIEW |
+| 2026-06-14 | Developer | ISSUE-017 | LoadModelRegistry. 4 fichiers, 12 tests. IN REVIEW. | OK IN REVIEW |
+| 2026-06-14 | Reviewer | ISSUE-017 | Revue APPROVED (0 bloquant). 150 tests total. | OK DONE |
+| 2026-06-14 | Developer | ISSUE-018 | Impl ScenarioParsingUseCase. 3 fichiers + 10 tests. BUILD OK. 160 tests. | OK IN REVIEW |
