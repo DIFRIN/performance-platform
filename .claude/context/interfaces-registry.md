@@ -113,7 +113,9 @@
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
 | `ScenarioParser` | 🔄 IN PROGRESS | PDR-005 | ISSUE-015 |
-| `ScenarioValidator` / `ValidationResult` | ⬜ PLANNED | PDR-005 | ISSUE-016 |
+| `ScenarioValidator` / `DefaultScenarioValidator` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
+| `ValidationResult` / `ValidationError` / `ValidationWarning` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
+| `DagCycleDetector` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
 | `LoadModelRegistry` | ⬜ PLANNED | PDR-005 | ISSUE-017 |
 | `DefaultScenarioParsingService` | ⬜ PLANNED | PDR-005 | ISSUE-018 |
 

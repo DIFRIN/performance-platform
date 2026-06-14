@@ -2,7 +2,7 @@
 
 **PDR** : PDR-005
 **Module** : `platform-scenario-dsl`
-**Statut** : WAITING
+**Statut** : IN REVIEW
 **Priorité** : P1
 **Bloquée par** : ISSUE-015
 **Estime** : L

@@ -9,11 +9,11 @@
 
 ## Etat Courant
 
-**Date derniere session** : 2026-06-14
+**Date derniere session** : 2026-06-15
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-015 -- ScenarioParser IN REVIEW
+**Issue active** : ISSUE-016 -- ScenarioValidator IN REVIEW
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-005 -- Scenario DSL (ISSUE-015 IN REVIEW)
+**PDR parent** : PDR-005 -- Scenario DSL (ISSUE-016 IN REVIEW)
 
 ---
 
@@ -22,27 +22,23 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-015 implemente. Module platform-scenario-dsl cree. 74 tests OK. ISSUE-015 IN REVIEW.
+Developer : ISSUE-016 implemente. 7 fichiers crees (ScenarioValidator, DefaultScenarioValidator, ValidationResult, ValidationError, ValidationWarning, DagCycleDetector + 2 tests). 137 tests OK (total 211). ISSUE-016 IN REVIEW.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-015 (ScenarioParser, PDR-005). 74 tests, SnakeYAML + Jackson, parse YAML de reference.
+Reviewer : revoir ISSUE-016 (ScenarioValidator, PDR-005). 63 tests de validation, 15 tests DAG. Kahn's algorithm + BFS reachability.
 
 **Fichiers en cours** :
 ```
-platform-scenario-dsl/pom.xml                                             STABLE (waiting review)
-platform-scenario-dsl/src/main/java/com/performance/platform/scenario/parser/
-  ScenarioParser.java                                                     STABLE (waiting review)
-  YamlScenarioParser.java                                                 STABLE (waiting review)
-  DurationParser.java                                                     STABLE (waiting review)
-  dto/ScenarioYamlRoot.java                                               STABLE (waiting review)
-  dto/ScenarioYamlDto.java                                                STABLE (waiting review)
-  dto/ExecutionYamlDto.java                                               STABLE (waiting review)
-  dto/StepYamlDto.java                                                    STABLE (waiting review)
-  dto/LoadModelYamlDto.java                                               STABLE (waiting review)
-  dto/RetryPolicyYamlDto.java                                             STABLE (waiting review)
-platform-scenario-dsl/src/test/java/com/performance/platform/scenario/parser/
-  YamlScenarioParserTest.java                                             STABLE (74 tests)
-  DurationParserTest.java                                                 STABLE (23 tests)
+platform-scenario-dsl/src/main/java/com/performance/platform/scenario/validation/
+  ScenarioValidator.java                                                     STABLE (waiting review)
+  DefaultScenarioValidator.java                                               STABLE (waiting review)
+  ValidationResult.java                                                       STABLE (waiting review)
+  ValidationError.java                                                        STABLE (waiting review)
+  ValidationWarning.java                                                      STABLE (waiting review)
+  DagCycleDetector.java                                                       STABLE (waiting review)
+platform-scenario-dsl/src/test/java/com/performance/platform/scenario/validation/
+  DefaultScenarioValidatorTest.java                                           STABLE (49 tests)
+  DagCycleDetectorTest.java                                                   STABLE (15 tests)
 ```
 
 **Blocages** :
@@ -57,15 +53,15 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI DEVELOPER (ISSUE-016) :
-  .claude/agents/developer.md
+SI REVIEWER (ISSUE-016) :
+  .claude/agents/reviewer.md
   .claude/issues/ISSUE-016.md
   .claude/pdr/PDR-005.md
 
-SI REVIEWER (ISSUE-015) :
-  .claude/agents/reviewer.md
-  .claude/issues/ISSUE-015.md
-  .claude/specifications/01-scenario-dsl.md
+SI DEVELOPER (ISSUE-017 ou ISSUE-018) :
+  .claude/agents/developer.md
+  .claude/issues/ISSUE-017.md (LoadModelRegistry)
+  .claude/issues/ISSUE-018.md (ScenarioParsingUseCase)
 ```
 
 ---
@@ -78,6 +74,7 @@ SI REVIEWER (ISSUE-015) :
 | 2026-06-12 | Developer | ISSUE-001 | Impl 8 identifiants + tests + Maven | OK DONE |
 | 2026-06-12 | Reviewer | ISSUE-001 | Re-review -- fix EventId test confirme | OK DONE |
 | 2026-06-12 | Developer | ISSUE-002 | Impl 14 enums + test AssertionOperator | OK IN REVIEW |
+| 2026-06-12 | Reviewer | ISSUE-002 | Revue APPROVED (0 bloquant) | OK DONE |
 | 2026-06-13 | Developer | ISSUE-003 | 4 records (Scenario/Step/LoadModel/RetryPolicy) + 2 tests | OK IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-003 | Revue APPROVED (0 bloquant, 2 recommandations) | OK DONE |
 | 2026-06-13 | Developer | ISSUE-004 | TaskResult + factories + 22 tests | OK IN REVIEW |
@@ -88,15 +85,16 @@ SI REVIEWER (ISSUE-015) :
 | 2026-06-13 | Reviewer | ISSUE-006 | Re-review -- [TEST-01] resolue, 92 tests total | OK DONE |
 | 2026-06-13 | Developer | ISSUE-007 | 3 records agent + 25 tests + ArchUnit pom.xml | OK IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-007 | Revue APPROVED (0 bloquant, 2 recommandations) -- PDR-001 DONE | OK DONE |
-| 2026-06-13 | Developer | ISSUE-008 | 12 events cycle de vie + LifecycleEventsTest (instanciation, egalite, validation) | OK IN REVIEW |
-| 2026-06-13 | Reviewer | ISSUE-008 | Revue APPROVED (0 bloquant, 2 recommandations) -- 12 events conformes | OK DONE |
-| 2026-06-13 | Developer | ISSUE-009 | 7 events + AgentSignal + ScenarioRestartSignal + 43 tests. String target dans ReportPublished. | OK IN REVIEW |
+| 2026-06-13 | Developer | ISSUE-008 | 12 events cycle de vie + LifecycleEventsTest | OK IN REVIEW |
+| 2026-06-13 | Reviewer | ISSUE-008 | Revue APPROVED (0 bloquant, 2 recommandations) | OK DONE |
+| 2026-06-13 | Developer | ISSUE-009 | 7 events + AgentSignal + ScenarioRestartSignal + 43 tests | OK IN REVIEW |
 | 2026-06-13 | Reviewer | ISSUE-009 | Revue APPROVED (0 bloquant). PDR-002 DONE. 392 tests. | OK DONE |
-| 2026-06-13 | Developer | ISSUE-011 | 2 interfaces (TaskExecutor/AssertionExecutor) + ArchUnit no-Spring + 22 tests | OK IN REVIEW |
-| 2026-06-13 | Reviewer | ISSUE-011 | Revue APPROVED. Signatures conformes, 0 TaskType, 0 Spring, javadoc complet. PDR-003 DONE. | OK DONE |
-| 2026-06-13 | Developer | ISSUE-012 | 5 use cases + 5 exceptions + ArchUnit (2 regles). platform-application cree. Tests OK. | OK IN REVIEW |
-| 2026-06-13 | Developer | ISSUE-013 | 3 ports sortants + PortsCompileTest (7 scenarios). Tests OK, 0 warning. | OK IN REVIEW |
-| 2026-06-13 | Reviewer | ISSUE-013 | Revue APPROVED (0 bloquant). Signatures conformes, multi-claim ADR-011, 0 Spring, 0 infra. | OK DONE |
-| 2026-06-14 | Developer | ISSUE-014 | ExecutionConfig record + 5 tests. Tests OK, 0 warning. | OK IN REVIEW |
-| 2026-06-14 | Reviewer | ISSUE-014 | Revue APPROVED (0 bloquant). PDR-004 DONE. 13 tests OK. | OK DONE |
-| 2026-06-14 | Developer | ISSUE-015 | Module platform-scenario-dsl cree. YamlScenarioParser + DurationParser + 6 DTOs. Parse YAML vers ScenarioDefinition. 74 tests OK. | OK IN REVIEW |
+| 2026-06-13 | Developer | ISSUE-011 | 2 interfaces + ArchUnit no-Spring + 22 tests | OK IN REVIEW |
+| 2026-06-13 | Reviewer | ISSUE-011 | Revue APPROVED. PDR-003 DONE. | OK DONE |
+| 2026-06-13 | Developer | ISSUE-012 | 5 use cases + 5 exceptions + ArchUnit | OK IN REVIEW |
+| 2026-06-13 | Developer | ISSUE-013 | 3 ports sortants + PortsCompileTest | OK IN REVIEW |
+| 2026-06-13 | Reviewer | ISSUE-013 | Revue APPROVED (0 bloquant) | OK DONE |
+| 2026-06-14 | Developer | ISSUE-014 | ExecutionConfig record + 5 tests | OK IN REVIEW |
+| 2026-06-14 | Reviewer | ISSUE-014 | Revue APPROVED (0 bloquant). PDR-004 DONE. | OK DONE |
+| 2026-06-14 | Developer | ISSUE-015 | Module platform-scenario-dsl cree. 74 tests OK. IN REVIEW. | OK IN REVIEW |
+| 2026-06-14 | Developer | ISSUE-016 | ScenarioValidator + DagCycleDetector. 137 tests OK. IN REVIEW. | OK IN REVIEW |
