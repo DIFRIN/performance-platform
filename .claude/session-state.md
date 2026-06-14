@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-14
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : Corrections architecturales ARCH-01..12 (pre-ISSUE-036)
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED
 **PDR parent** : PDR-007 (transport) + PDR-009 (agent-runtime)
 
 ---
@@ -22,12 +22,14 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : 12 corrections architecturales ARCH-01..12 appliquees :
-  - ARCH-01: Thread.interrupt() → log.warn (HeartbeatScheduler)
-  - ARCH-02: onAgentExpiredIfStillExpired() atomique (race TOCTOU)
-  - ARCH-03: scheduler.shutdown() (resource leak)
-  - ARCH-04: TtlTrackable interface (DIP)
-  - ARCH-05: Supplier<AgentState> + Supplier<Integer> (HeartbeatScheduler)
+Reviewer : re-review ARCH-01..12 → APPROVED (166 tests OK, BUILD SUCCESS)
+  - ARCH-01..12 tous CONFIRMED dans recommendations-tracking.md
+  - ISSUE-027: IN REVIEW → DONE
+  - ISSUE-033: IN REVIEW → DONE
+  - ISSUE-034: APPROVED → DONE
+  - ISSUE-035: APPROVED → DONE
+  - PDR-007: IN PROGRESS → DONE
+  - ADR-012 types ajoutes dans interfaces-registry.md
   - ARCH-06: AgentLifecycleEvent + AgentLifecycleEventHandler (ADR-012)
   - ARCH-07: throws RegistrationException (AgentRegistrationPort)
   - ARCH-08: Javadoc ExecutionEvent.of() corrige
@@ -38,23 +40,16 @@ Developer : 12 corrections architecturales ARCH-01..12 appliquees :
 166 tests (91 transport + 75 agent-runtime), BUILD SUCCESS.
 
 **Prochaine action** :
-Reviewer : re-review les 12 corrections ARCH-01..12, confirmer → commit.
-Puis : ISSUE-036 (DistributedAgentRuntime).
+Developer : ISSUE-036 (DistributedAgentRuntime) — la prochaine Issue TODO debloquee.
+Toutes les ARCH-01..12 sont CONFIRMED, le chemin est libre.
 
 **Fichiers modifies** :
 ```
-✅ platform-agent-runtime/.../registration/HeartbeatScheduler.java       [ARCH-01,03,05]
-✅ platform-agent-runtime/.../registration/AgentRegistrationPort.java    [ARCH-07]
-✅ platform-agent-runtime/.../registration/TransportAgentRegistration.java [ARCH-06,09,12]
-✅ platform-agent-runtime/.../registry/TtlTrackable.java                 [ARCH-04 — CREE]
-✅ platform-agent-runtime/.../registry/InMemoryAgentRegistry.java        [ARCH-02]
-✅ platform-agent-runtime/.../registry/AgentTtlMonitor.java              [ARCH-02,03,10]
-✅ platform-transport/.../AgentLifecycleEvent.java                       [ARCH-06 — CREE]
-✅ platform-transport/.../AgentLifecycleEventHandler.java                [ARCH-06 — CREE]
-✅ platform-transport/.../ExecutionTransport.java                        [ARCH-06]
-✅ platform-transport/.../inmemory/InMemoryExecutionTransport.java       [ARCH-06,11]
-✅ platform-transport/.../message/ExecutionEvent.java                    [ARCH-08]
-Tests adaptes pour tous les changements.
+✅ ARCH-01..12 CONFIRMED (Reviewer re-review)
+✅ recommendations-tracking.md — tous ARCH-[01-12] CONFIRMED
+✅ progress.md — ISSUE-027,033,034,035 → DONE, PDR-007 → DONE
+✅ interfaces-registry.md — AgentLifecycleEvent, AgentLifecycleEventHandler ajoutes
+✅ session-state.md — ce fichier
 ```
 
 **Blocages** :
@@ -80,5 +75,6 @@ SI REVIEWER :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-14 | Reviewer | ARCH-01..12 | Re-review, 12/12 CONFIRMED, ISSUE-027/033/034/035 DONE, PDR-007 DONE | APPROVED |
 | 2026-06-14 | Architect | ISSUE-027/033/034/035 | Revue architecturale — 12 corrections, ADR-012 | ARCH pending |
 | 2026-06-14 | Developer | ARCH-01..12 | 12 corrections appliquees, 166 tests OK | OK IN REVIEW |

@@ -55,7 +55,7 @@
 | PDR-004 | Application Ports & Use Cases | platform-application | DONE | ISSUE-012,013,014 | PDR-001 |
 | PDR-005 | Scenario DSL | platform-scenario-dsl | DONE | ISSUE-015..018 | PDR-001, PDR-004 |
 | PDR-006 | Execution Engine | platform-execution-engine | DONE | ISSUE-019..024 | PDR-001,002,004,005,007 |
-| PDR-007 | Transport Layer Core | platform-transport | IN PROGRESS | ISSUE-025,026,027 | PDR-001, PDR-002 |
+| PDR-007 | Transport Layer Core | platform-transport | DONE | ISSUE-025,026,027 | PDR-001, PDR-002 |
 | PDR-008 | Transport Implementations | platform-transport | TODO | ISSUE-028..032 | PDR-001,002,007 |
 | PDR-009 | Agent Runtime | platform-agent-runtime | IN PROGRESS | ISSUE-033..038 | PDR-001,002,004,007 |
 | PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | TODO | ISSUE-039..045 | PDR-001,003,004 |
@@ -280,6 +280,12 @@
 | 2026-06-14 | ISSUE-034 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-14 | ISSUE-034 | IN REVIEW → APPROVED | Reviewer |
 | 2026-06-14 | ISSUE-035 | IN REVIEW → APPROVED | Reviewer |
+| 2026-06-14 | ARCH-01..12 | APPLIED → CONFIRMED | Reviewer (re-review) |
+| 2026-06-14 | ISSUE-027 | IN REVIEW → DONE | Reviewer (ARCH-06,11 confirmed) |
+| 2026-06-14 | ISSUE-033 | IN REVIEW → DONE | Reviewer (re-review confirmed) |
+| 2026-06-14 | ISSUE-034 | APPROVED → DONE | Reviewer (ARCH-01,03,05,06,07,09,12 confirmed) |
+| 2026-06-14 | ISSUE-035 | APPROVED → DONE | Reviewer (ARCH-02,03,04,10 confirmed) |
+| 2026-06-14 | PDR-007 | IN PROGRESS → DONE | Reviewer (ISSUE-025,026,027 all DONE) |
 
 ---
 
@@ -288,4 +294,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ISSUE-035 IN REVIEW, 74 tests platform-agent-runtime)
+**Dernière mise à jour** : 2026-06-14 (ARCH-01..12 CONFIRMED, ISSUE-027,033,034,035 DONE, PDR-007 DONE)
