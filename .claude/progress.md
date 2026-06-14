@@ -55,7 +55,7 @@
 | PDR-004 | Application Ports & Use Cases | platform-application | DONE | ISSUE-012,013,014 | PDR-001 |
 | PDR-005 | Scenario DSL | platform-scenario-dsl | DONE | ISSUE-015..018 | PDR-001, PDR-004 |
 | PDR-006 | Execution Engine | platform-execution-engine | IN PROGRESS | ISSUE-019..024 | PDR-001,002,004,005,007 |
-| PDR-007 | Transport Layer Core | platform-transport | TODO | ISSUE-025,026,027 | PDR-001, PDR-002 |
+| PDR-007 | Transport Layer Core | platform-transport | IN PROGRESS | ISSUE-025,026,027 | PDR-001, PDR-002 |
 | PDR-008 | Transport Implementations | platform-transport | TODO | ISSUE-028..032 | PDR-001,002,007 |
 | PDR-009 | Agent Runtime | platform-agent-runtime | TODO | ISSUE-033..038 | PDR-001,002,004,007 |
 | PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | TODO | ISSUE-039..045 | PDR-001,003,004 |
@@ -107,7 +107,7 @@
 | ISSUE-022 | AgentAvailabilityChecker | PDR-006 | platform-execution-engine | M | DONE | ISSUE-019,013 |
 | ISSUE-023 | LocalExecutionEngine | PDR-006 | platform-execution-engine | L | DONE | ISSUE-019,020,013 |
 | ISSUE-024 | RemoteExecutionEngine | PDR-006 | platform-execution-engine | L | TODO | ISSUE-021,022,023,026 |
-| ISSUE-025 | Interface ExecutionTransport + handlers | PDR-007 | platform-transport | M | TODO | ISSUE-009 |
+| ISSUE-025 | Interface ExecutionTransport + handlers | PDR-007 | platform-transport | M | DONE | ISSUE-009 |
 | ISSUE-026 | TaskExecutionRequest + ExecutionEvent | PDR-007 | platform-transport | S | TODO | ISSUE-025 |
 | ISSUE-027 | InMemoryExecutionTransport | PDR-007 | platform-transport | M | TODO | ISSUE-025,026 |
 | ISSUE-033 | TaskSpecializationFilter + TaskFilterResult | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-026,007 |
@@ -260,6 +260,10 @@
 | 2026-06-14 | ISSUE-022 | IN REVIEW → DONE | Reviewer |
 | 2026-06-14 | ISSUE-023 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | ISSUE-023 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-14 | ISSUE-023 | IN REVIEW → DONE | Reviewer |
+| 2026-06-14 | ISSUE-025 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | PDR-007 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-025 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -268,4 +272,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ISSUE-023 IN REVIEW)
+**Dernière mise à jour** : 2026-06-14 (ISSUE-025 IN REVIEW)
