@@ -102,7 +102,7 @@
 | ISSUE-015 | ScenarioParser (YAML → ScenarioDefinition) | PDR-005 | platform-scenario-dsl | L | DONE | ISSUE-003,012 |
 | ISSUE-016 | ScenarioValidator + détection cycle DAG | PDR-005 | platform-scenario-dsl | L | DONE | ISSUE-015 |
 | ISSUE-019 | ExecutionPlanBuilder + DAG levels | PDR-006 | platform-execution-engine | L | DONE | ISSUE-006,016 |
-| ISSUE-020 | RetryExecutor (backoff exponentiel) | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019 |
+| ISSUE-020 | RetryExecutor (backoff exponentiel) | PDR-006 | platform-execution-engine | M | DONE | ISSUE-019 |
 | ISSUE-021 | TaskCorrelationTracker (multi-claim) | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019 |
 | ISSUE-022 | AgentAvailabilityChecker | PDR-006 | platform-execution-engine | M | TODO | ISSUE-019,013 |
 | ISSUE-023 | LocalExecutionEngine | PDR-006 | platform-execution-engine | L | TODO | ISSUE-019,020,013 |
@@ -249,6 +249,8 @@
 | 2026-06-14 | PDR-006 | TODO → IN PROGRESS | Developer (ISSUE-019 started) |
 | 2026-06-14 | ISSUE-019 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-14 | ISSUE-019 | IN REVIEW → DONE | Reviewer |
+| 2026-06-14 | ISSUE-020 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-020 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 

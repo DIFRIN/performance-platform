@@ -32,6 +32,10 @@ CONTEXTE : Contrairement a AgentId et ExecutionId qui ont of(), SignalId n'a que
 RAISON : Les IDs de signal et de rapport sont toujours generes (pas de valeur predefinie en test). Pour les tests, new SignalId("x") ou SignalId.generate() suffisent.
 IMPACT : SignalsTest utilise new ReportId("report-1") et SignalId.generate().
 
+[2026-06-14] [platform-execution-engine] DECISION : Kahn's BFS avec merge Math::max pour calculer les dagLevels — sans librairie externe
+CONTEXTE : La question "BFS ou tri topologique ? Quelle lib ?" etait en suspens depuis la phase de design. ISSUE-019 implemente ExecutionPlanBuilder.
+RAISON : Kahn (BFS sur degres entrants) est l'algorithme standard pour le tri topologique de DAG. Le merge avec Math::max gere correctement les dependances multiples (diamond pattern). Aucune librairie externe necessaire — l'algorithme tient en ~55 lignes de code et les collections Java standard suffisent.
+IMPACT : DagLevelCalculator.java dans platform-execution-engine/engine/plan/. Les dagLevels sont calcules globalement (toutes phases confondues) pour garantir la coherence des niveaux en presence de dependances inter-phases.
 
 ---
 
@@ -43,7 +47,7 @@ Documenter la décision prise ici quand elle est tranchée.
 | Sujet | Phase | Question |
 |---|---|---|
 | `ExecutionContext` serialization | Phase 1 | Comment sérialiser les `Object` du store pour le transport ? |
-| DAG level computation | Phase 2 | BFS ou tri topologique ? Quelle lib ? |
+| ~~DAG level computation~~ | Phase 2 | Resolu : Kahn's BFS, pas de lib (ISSUE-019) |
 | Gatling in-process isolation | Phase 4 | Comment isoler le classloader Gatling du reste de l'app ? |
 | Agent heartbeat storage | Phase 7 | In-memory (perte sur restart) ou PostgreSQL ? |
 | Report HTML templating | Phase 6 | Thymeleaf ou template string pur ? |

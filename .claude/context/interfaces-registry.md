@@ -124,10 +124,10 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `ExecutionPlanBuilder` | 🔄 IN PROGRESS | PDR-006 | ISSUE-019 |
-| `DefaultExecutionPlanBuilder` | 🔄 IN PROGRESS | PDR-006 | ISSUE-019 |
-| `DagLevelCalculator` | 🔄 IN PROGRESS | PDR-006 | ISSUE-019 |
-| `RetryExecutor` | ⬜ PLANNED | PDR-006 | ISSUE-020 |
+| `ExecutionPlanBuilder` | ✅ STABLE | PDR-006 | ISSUE-019 |
+| `DefaultExecutionPlanBuilder` | ✅ STABLE | PDR-006 | ISSUE-019 |
+| `DagLevelCalculator` | ✅ STABLE | PDR-006 | ISSUE-019 |
+| `RetryExecutor` / `DefaultRetryExecutor` | ✅ STABLE | PDR-006 | ISSUE-020 |
 | `TaskCorrelationTracker` | ⬜ PLANNED | PDR-006 | ISSUE-021 |
 | `AgentAvailabilityChecker` | ⬜ PLANNED | PDR-006 | ISSUE-022 |
 | `ExecutionEngine` | ⬜ PLANNED | PDR-006 | ISSUE-023 |

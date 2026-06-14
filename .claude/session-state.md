@@ -11,7 +11,7 @@
 
 **Date derniere session** : 2026-06-14
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-019 — ExecutionPlanBuilder + DAG levels
+**Issue active** : ISSUE-020 — RetryExecutor (backoff exponentiel)
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
 **PDR parent** : PDR-006 — Execution Engine (IN PROGRESS)
 
@@ -22,19 +22,17 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-019 IN REVIEW. Module platform-execution-engine cree avec pom.xml, ExecutionPlanBuilder (interface), DagLevelCalculator (algo Kahn), DefaultExecutionPlanBuilder. 23 tests OK. Tous modules OK.
+Developer : ISSUE-020 IN REVIEW. Module platform-execution-engine enrichi avec RetryExecutor (interface), DefaultRetryExecutor (impl backoff exponentiel + sneaky throw), 16 tests + SLF4J dep. 52 tests OK (16 nouveaux + 36 existants).
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-019 (ExecutionPlanBuilder + DAG levels).
+Reviewer : revoir ISSUE-020 (RetryExecutor).
 
 **Fichiers en cours** :
 ```
-✅ platform-execution-engine/pom.xml
-✅ platform-execution-engine/src/main/java/.../engine/plan/ExecutionPlanBuilder.java
-✅ platform-execution-engine/src/main/java/.../engine/plan/DagLevelCalculator.java
-✅ platform-execution-engine/src/main/java/.../engine/plan/DefaultExecutionPlanBuilder.java
-✅ platform-execution-engine/src/test/java/.../engine/plan/DagLevelCalculatorTest.java
-✅ platform-execution-engine/src/test/java/.../engine/plan/DefaultExecutionPlanBuilderTest.java
+✅ platform-execution-engine/pom.xml (ajout slf4j-api)
+✅ platform-execution-engine/src/main/java/.../engine/retry/RetryExecutor.java
+✅ platform-execution-engine/src/main/java/.../engine/retry/DefaultRetryExecutor.java
+✅ platform-execution-engine/src/test/java/.../engine/retry/DefaultRetryExecutorTest.java
 ```
 
 **Blocages** :
@@ -49,14 +47,14 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI REVIEWER (ISSUE-019) :
+SI REVIEWER (ISSUE-020) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-019-execution-plan-builder.md
+  .claude/issues/ISSUE-020-retry-executor.md
   .claude/pdr/PDR-006.md
 
 SI DEVELOPER (prochaine Issue) :
   .claude/agents/developer.md
-  .claude/issues/ISSUE-020.md (RetryExecutor, PDR-006)
+  .claude/issues/ISSUE-021.md (TaskCorrelationTracker, PDR-006)
 ```
 
 ---
@@ -98,3 +96,4 @@ SI DEVELOPER (prochaine Issue) :
 | 2026-06-14 | Developer | ISSUE-018 | Impl ScenarioParsingUseCase. 3 fichiers + 10 tests. BUILD OK. 160 tests. | OK IN REVIEW |
 | 2026-06-14 | Reviewer | ISSUE-018 | Revue APPROVED (0 bloquant). PDR-005 DONE. 160 tests. | OK DONE |
 | 2026-06-14 | Developer | ISSUE-019 | Module platform-execution-engine + ExecutionPlanBuilder + DagLevelCalculator. 23 tests. | OK IN REVIEW |
+| 2026-06-14 | Developer | ISSUE-020 | RetryExecutor + DefaultRetryExecutor + 16 tests. 52 tests OK. | OK IN REVIEW |
