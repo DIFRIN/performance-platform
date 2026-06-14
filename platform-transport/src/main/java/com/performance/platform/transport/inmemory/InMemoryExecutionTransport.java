@@ -35,6 +35,7 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
     private final List<TaskRequestHandler> taskHandlers = new CopyOnWriteArrayList<>();
     private final List<AgentSignalHandler> signalHandlers = new CopyOnWriteArrayList<>();
     private final ConcurrentMap<InMemorySubscription, ExecutionEventHandler> subscriptions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<InMemorySubscription, AgentLifecycleEventHandler> agentSubscriptions = new ConcurrentHashMap<>();
 
     // === ExecutionTransport ===
 
@@ -42,6 +43,9 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
     public void dispatchTask(TaskExecutionRequest request) {
         if (request == null) {
             throw new TransportException("request must not be null");
+        }
+        if (!connected.get()) {
+            throw new TransportException("transport is not connected");
         }
         log.debug("action=dispatch_task executionId={} messageId={} taskName={} handlerCount={}",
                 request.executionId().value(), request.id().value(),
@@ -56,6 +60,9 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
         if (signal == null) {
             throw new TransportException("signal must not be null");
         }
+        if (!connected.get()) {
+            throw new TransportException("transport is not connected");
+        }
         for (AgentSignalHandler handler : signalHandlers) {
             handler.onSignal(signal);
         }
@@ -66,6 +73,9 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
         if (event == null) {
             throw new TransportException("event must not be null");
         }
+        if (!connected.get()) {
+            throw new TransportException("transport is not connected");
+        }
         log.debug("action=publish_event executionId={} eventId={} agentId={} type={} subscriberCount={}",
                 event.executionId().value(), event.id().value(),
                 event.agentId() != null ? event.agentId().value() : "null",
@@ -75,6 +85,34 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
                 entry.getValue().onEvent(event);
             }
         }
+    }
+
+    @Override
+    public void publishAgentEvent(AgentLifecycleEvent event) {
+        if (event == null) {
+            throw new TransportException("event must not be null");
+        }
+        if (!connected.get()) {
+            throw new TransportException("transport is not connected");
+        }
+        log.debug("action=publish_agent_event eventId={} agentId={} type={} subscriberCount={}",
+                event.id().value(), event.agentId().value(),
+                event.eventType(), agentSubscriptions.size());
+        for (var entry : agentSubscriptions.entrySet()) {
+            if (entry.getKey().isActive()) {
+                entry.getValue().onEvent(event);
+            }
+        }
+    }
+
+    @Override
+    public Subscription subscribeAgentEvents(AgentLifecycleEventHandler handler) {
+        if (handler == null) {
+            throw new TransportException("handler must not be null");
+        }
+        var subscription = new InMemorySubscription(agentSubscriptions);
+        agentSubscriptions.put(subscription, handler);
+        return subscription;
     }
 
     @Override

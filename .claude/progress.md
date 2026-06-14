@@ -109,10 +109,10 @@
 | ISSUE-024 | RemoteExecutionEngine | PDR-006 | platform-execution-engine | L | DONE | ISSUE-021,022,023,026 |
 | ISSUE-025 | Interface ExecutionTransport + handlers | PDR-007 | platform-transport | M | DONE | ISSUE-009 |
 | ISSUE-026 | TaskExecutionRequest + ExecutionEvent | PDR-007 | platform-transport | S | DONE | ISSUE-025 |
-| ISSUE-027 | InMemoryExecutionTransport | PDR-007 | platform-transport | M | IN REVIEW | ISSUE-025,026 |
+| ISSUE-027 | InMemoryExecutionTransport | PDR-007 | platform-transport | M | DONE | ISSUE-025,026 |
 | ISSUE-033 | TaskSpecializationFilter + TaskFilterResult | PDR-009 | platform-agent-runtime | M | IN REVIEW | ISSUE-026,007 |
 | ISSUE-034 | AgentRegistrationPort + heartbeat | PDR-009 | platform-agent-runtime | M | APPROVED | ISSUE-033 |
-| ISSUE-035 | AgentRegistry (orchestrateur) | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-034,013 |
+| ISSUE-035 | AgentRegistry (orchestrateur) | PDR-009 | platform-agent-runtime | M | APPROVED | ISSUE-034,013 |
 | ISSUE-036 | DistributedAgentRuntime | PDR-009 | platform-agent-runtime | L | TODO | ISSUE-033,034 |
 | ISSUE-037 | ScenarioRestart cleanup stateful | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-036 |
 | ISSUE-038 | LocalAgent | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-036,027 |
@@ -279,6 +279,7 @@
 | 2026-06-14 | ISSUE-034 | TODO → IN PROGRESS | Developer |
 | 2026-06-14 | ISSUE-034 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-14 | ISSUE-034 | IN REVIEW → APPROVED | Reviewer |
+| 2026-06-14 | ISSUE-035 | IN REVIEW → APPROVED | Reviewer |
 
 ---
 
@@ -287,4 +288,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ISSUE-034 APPROVED, Reviewer — 3 recommandations non-bloquantes)
+**Dernière mise à jour** : 2026-06-14 (ISSUE-035 IN REVIEW, 74 tests platform-agent-runtime)

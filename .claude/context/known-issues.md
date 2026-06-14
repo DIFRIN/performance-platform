@@ -27,7 +27,15 @@
 
 ## Issues Ouvertes
 
-_Aucune issue pour l'instant._
+### [KI-001] toPayload(AgentDescriptor) — mapping manuel sans synchronisation automatique
+**Sévérité** : MEDIUM
+**Identifié par** : Architect le 2026-06-14
+**Phase impactée** : Phase 7 (PDR-009)
+**Symptôme** : Si `AgentDescriptor` gagne un nouveau champ, le payload de `ExecutionEvent`/`AgentLifecycleEvent` ne l'inclura pas automatiquement — la serialisation sera silencieusement incomplète.
+**Cause** : Mapping manuel champ par champ dans `TransportAgentRegistration.toPayload()`. Pas de Jackson dans ce module à ce stade.
+**Workaround** : Commentaire `// NOTE: synchroniser avec AgentDescriptor si le record évolue` ajouté sur la méthode.
+**Résolution prévue** : ISSUE-028 (Transport properties + Configuration) — introduction de Jackson dans le module transport.
+**Fichiers concernés** : `platform-agent-runtime/.../registration/TransportAgentRegistration.java`
 
 ---
 

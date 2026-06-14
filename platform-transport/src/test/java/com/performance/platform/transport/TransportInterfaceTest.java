@@ -171,6 +171,16 @@ class TransportInterfaceTest {
         public TransportType getType() {
             return TransportType.IN_MEMORY;
         }
+
+        @Override
+        public void publishAgentEvent(AgentLifecycleEvent event) {
+            // no-op
+        }
+
+        @Override
+        public Subscription subscribeAgentEvents(AgentLifecycleEventHandler handler) {
+            return new NoOpSubscription();
+        }
     }
 
     // === Tests ===

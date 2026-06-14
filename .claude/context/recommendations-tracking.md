@@ -1,6 +1,7 @@
 # Recommendations Tracking
 
-> Fichier de suivi des recommandations non-bloquantes émises par le Reviewer.
+> Fichier de suivi des recommandations non-bloquantes émises par le Reviewer,
+> et des corrections architecturales imposées par l'Architect.
 > **Lu par le Developer** avant de considérer une Issue comme terminée.
 > **Mis à jour par le Reviewer** au moment de l'APPROVED initial.
 > **Vidé par le Developer** après application + re-review confirmée.
@@ -14,6 +15,10 @@ Reviewer: APPROVED avec recommandations
   → écrit les recommandations ici avec statut PENDING
   → n'ajoute PAS le commit (en attente de révision)
 
+Architect: review architecturale
+  → écrit les corrections [ARCH-XX] avec statut PENDING
+  → indique l'Issue cible et la priorité (BLOQUANT avant ISSUE-036 / MINEUR)
+
 Developer: lit ce fichier, applique les recommandations
   → passe les recommandations en APPLIED
   → demande re-review (@reviewer rereview)
@@ -25,11 +30,231 @@ Reviewer: re-review confirme les corrections
 
 ---
 
-## Recommandations en Attente
+## ⚡ Corrections Architecturales — À Appliquer AVANT ISSUE-036
 
-> Format : `[ISSUE-XXX] [date] [STATUT] Description`
+> Émises par l'Architect le 2026-06-14 après revue de ISSUE-027, 033, 034, 035.
+> Les items [ARCH-01] à [ARCH-05] sont BLOQUANTS pour ISSUE-036.
+> Les items [ARCH-06] à [ARCH-12] sont des améliorations qualité à appliquer dans la foulée.
 
-_Aucune recommandation en attente._
+---
+
+### 🔴 Critiques — BLOQUANTS avant ISSUE-036
+
+**[ARCH-01]** [2026-06-14] [CONFIRMED] [CONCURRENCE-CRITIQUE]
+`HeartbeatScheduler.sendHeartbeat()` — `Thread.currentThread().interrupt()` sur une
+`RegistrationException` est sémantiquement incorrect et peut stopper silencieusement le
+scheduler Virtual Thread.
+
+**Fichier** : `platform-agent-runtime/.../registration/HeartbeatScheduler.java` lignes 130-133
+
+**Correction** :
+```java
+// AVANT (incorrect)
+} catch (RegistrationException e) {
+    Thread.currentThread().interrupt();
+}
+
+// APRÈS (correct)
+} catch (RegistrationException e) {
+    log.warn("action=heartbeat_failed agentId={} will retry on next interval",
+             agentId.value(), e);
+    // Pas d'interruption — le schedule continue naturellement
+}
+```
+
+---
+
+**[ARCH-02]** [2026-06-14] [CONFIRMED] [CONCURRENCE-CRITIQUE]
+Race condition TOCTOU dans `AgentTtlMonitor.checkExpired()` : entre `findExpired()` et
+`onAgentExpired()`, un heartbeat peut rafraîchir un agent qui sera quand même supprimé.
+Un agent vivant peut être retiré du registre.
+
+**Fichiers** :
+- `platform-agent-runtime/.../registry/AgentTtlMonitor.java` lignes 88-94
+- `platform-agent-runtime/.../registry/InMemoryAgentRegistry.java`
+
+**Correction** :
+1. Ajouter une méthode `onAgentExpiredIfStillExpired(AgentId, Instant checkedAt)` dans
+   `InMemoryAgentRegistry` qui utilise `computeIfPresent` avec re-vérification atomique :
+```java
+void onAgentExpiredIfStillExpired(AgentId agentId, Instant checkedAt) {
+    agents.computeIfPresent(agentId, (id, existing) ->
+            isExpired(existing, checkedAt) ? null : existing);
+}
+```
+2. Modifier `AgentTtlMonitor.checkExpired()` pour appeler cette méthode au lieu de
+   `onAgentExpired()` directement.
+
+---
+
+**[ARCH-03]** [2026-06-14] [CONFIRMED] [RESSOURCE-CRITIQUE]
+`ScheduledExecutorService` non fermé dans `stop()` des deux schedulers — resource leak.
+`f.cancel(false)` annule la future tâche mais NE ferme PAS le thread sous-jacent.
+
+**Fichiers** :
+- `platform-agent-runtime/.../registration/HeartbeatScheduler.java` — méthode `stop()`
+- `platform-agent-runtime/.../registry/AgentTtlMonitor.java` — méthode `stop()`
+
+**Correction** : ajouter `scheduler.shutdown()` après `f.cancel(false)` dans les deux `stop()`.
+
+---
+
+### 🟠 Importants — À corriger avant ISSUE-036
+
+**[ARCH-04]** [2026-06-14] [CONFIRMED] [DESIGN-DIP]
+`AgentTtlMonitor` dépend de `InMemoryAgentRegistry` (classe concrète) — violation du
+Dependency Inversion Principle. Bloque les futures implémentations (Redis, JDBC) du registre.
+
+**Fichier** : `platform-agent-runtime/.../registry/AgentTtlMonitor.java` ligne 28
+
+**Correction** : Introduire une interface package-private `TtlTrackable` dans le package
+`registry` exposant `findExpired(Instant)` et `onAgentExpiredIfStillExpired(AgentId, Instant)`.
+`InMemoryAgentRegistry` implements `AgentRegistry, TtlTrackable`.
+`AgentTtlMonitor` dépend de `TtlTrackable` uniquement.
+
+```java
+// package-private — visible uniquement dans le package registry
+interface TtlTrackable {
+    List<AgentDescriptor> findExpired(Instant now);
+    void onAgentExpiredIfStillExpired(AgentId agentId, Instant checkedAt);
+}
+```
+
+---
+
+**[ARCH-05]** [2026-06-14] [CONFIRMED] [DESIGN-STATEFUL]
+`HeartbeatScheduler` : `activeTaskCount` et `AgentState` figés à la construction.
+Tous les heartbeats reportent le même état initial — l'orchestrateur voit toujours
+`IDLE` avec 0 tâches actives, indépendamment de la réalité.
+
+**Fichier** : `platform-agent-runtime/.../registration/HeartbeatScheduler.java`
+
+**Correction** : Remplacer `int activeTaskCount` par des `Supplier<AgentState>` et
+`Supplier<Integer>` permettant à `DistributedAgentRuntime` (ISSUE-036) de passer des
+lambdas reflétant l'état réel :
+
+```java
+public HeartbeatScheduler(AgentRegistrationPort registrationPort,
+                          AgentId agentId,
+                          int intervalSeconds,
+                          Supplier<AgentState> stateSupplier,
+                          Supplier<Integer> activeTasksSupplier) { ... }
+
+// sendHeartbeat() devient :
+private void sendHeartbeat() {
+    var heartbeat = new AgentHeartbeat(
+            agentId,
+            stateSupplier.get(),       // état réel à l'instant T
+            activeTasksSupplier.get(), // tâches actives réelles
+            Instant.now()
+    );
+    ...
+}
+```
+
+Adapter les tests en conséquence (ex: `() -> AgentState.IDLE`, `() -> 0`).
+
+---
+
+### 🟡 Mineurs — Qualité (à appliquer dans la même PR)
+
+**[ARCH-06]** [2026-06-14] [CONFIRMED] [ADR-012]
+Migrer `TransportAgentRegistration` de `publishEvent(ExecutionEvent)` vers
+`publishAgentEvent(AgentLifecycleEvent)` — suppression du sentinel `NO_EXECUTION`.
+
+Voir **ADR-012** pour le design complet de `AgentLifecycleEvent` et l'extension de
+`ExecutionTransport`. Fichiers à créer/modifier :
+- CRÉER `platform-transport/.../AgentLifecycleEvent.java` (record)
+- CRÉER `platform-transport/.../AgentLifecycleEventHandler.java` (functional interface)
+- MODIFIER `platform-transport/.../ExecutionTransport.java` (+ `publishAgentEvent` + `subscribeAgentEvents`)
+- MODIFIER `platform-transport/.../inmemory/InMemoryExecutionTransport.java`
+- MODIFIER `platform-agent-runtime/.../registration/TransportAgentRegistration.java`
+- MODIFIER `.claude/context/interfaces-registry.md` (ajout des nouveaux types)
+
+---
+
+**[ARCH-07]** [2026-06-14] [CONFIRMED] [CONTRAT]
+`AgentRegistrationPort` : déclaration `throws RegistrationException` incohérente.
+`register()` la déclare, `deregister()` et `sendHeartbeat()` non — bien que
+l'implémentation les lève dans les 3 cas.
+
+**Fichier** : `platform-agent-runtime/.../registration/AgentRegistrationPort.java`
+
+**Correction** : Ajouter `throws RegistrationException` sur `deregister()` et `sendHeartbeat()`.
+(`RegistrationException` est unchecked — c'est une déclaration documentaire, pas fonctionnelle.)
+
+---
+
+**[ARCH-08]** [2026-06-14] [CONFIRMED] [JAVADOC]
+`ExecutionEvent.of()` : Javadoc incorrecte — indique "sans defensive copy" alors que la
+méthode appelle le constructeur canonique qui effectue `Map.copyOf()`.
+
+**Fichier** : `platform-transport/.../message/ExecutionEvent.java`
+
+**Correction** : Corriger la Javadoc pour refléter le comportement réel.
+
+---
+
+**[ARCH-09]** [2026-06-14] [CONFIRMED] [STYLE]
+`TransportAgentRegistration.capabilitiesToPayload()` utilise un nom qualifié complet
+`com.performance.platform.domain.agent.AgentCapabilities` au lieu d'un import.
+
+**Fichier** : `platform-agent-runtime/.../registration/TransportAgentRegistration.java` lignes 134-139
+
+**Correction** : Ajouter `import com.performance.platform.domain.agent.AgentCapabilities;`
+en haut du fichier et simplifier la signature de méthode.
+
+---
+
+**[ARCH-10]** [2026-06-14] [CONFIRMED] [LOGGING]
+`AgentTtlMonitor.checkExpired()` : aucun log produit quand un agent expire. L'expiration
+d'un agent est un événement opérationnel critique.
+
+**Fichier** : `platform-agent-runtime/.../registry/AgentTtlMonitor.java` méthode `checkExpired()`
+
+**Correction** :
+```java
+log.warn("action=agent_expired agentId={} lastHeartbeat={} ttl={}",
+         agent.id().value(), agent.lastHeartbeatAt(), agent.registrationTtl());
+```
+
+---
+
+**[ARCH-11]** [2026-06-14] [CONFIRMED] [ROBUSTESSE]
+`InMemoryExecutionTransport` : `dispatchTask()`, `publishEvent()`, `broadcastSignal()`
+opèrent sans vérifier `isConnected()`. Comportement divergent avec les implémentations
+réelles (Kafka, RabbitMQ).
+
+**Fichier** : `platform-transport/.../inmemory/InMemoryExecutionTransport.java`
+
+**Correction** : Ajouter une vérification défensive au début de chaque méthode de dispatch :
+```java
+if (!connected.get()) {
+    throw new TransportException("transport is not connected");
+}
+```
+
+---
+
+**[ARCH-12]** [2026-06-14] [CONFIRMED] [DETTE-TECHNIQUE]
+`TransportAgentRegistration.toPayload(AgentDescriptor)` : mapping manuel champ par champ.
+Si `AgentDescriptor` évolue, le payload ne sera pas mis à jour automatiquement.
+
+**Fichier** : `platform-agent-runtime/.../registration/TransportAgentRegistration.java`
+
+**Workaround** : Ajouter un commentaire `// NOTE: synchroniser avec AgentDescriptor si le record évolue`
+au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec ISSUE-028.
+
+---
+
+## Recommandations en Attente (Reviewer)
+
+> Recommandations non-bloquantes du Reviewer à appliquer avant commit.
+
+[ISSUE-035] [2026-06-14] [APPLIED] [CRAFT-07] Logging structure SLF4J absent de InMemoryAgentRegistry et AgentTtlMonitor
+[ISSUE-035] [2026-06-14] [APPLIED] [TEST-06] Thread.sleep() remplacer par Awaitility dans InMemoryAgentRegistryTest
+[ISSUE-035] [2026-06-14] [APPLIED] [SPEC] Annotations Spring @Component/@ConditionalOnProperty manquantes sur InMemoryAgentRegistry
+[ISSUE-035] [2026-06-14] [APPLIED] [SPEC-04] AgentTtlMonitor ne publie pas l'event AgentLost
 
 ---
 
@@ -42,3 +267,7 @@ _Aucune recommandation en attente._
 | 2026-06-14 | ISSUE-034 | [CRAFT-07] Logging structuré TransportAgentRegistration + HeartbeatScheduler | CONFIRMED |
 | 2026-06-14 | ISSUE-034 | [CRAFT-08] Constante NO_EXECUTION | CONFIRMED |
 | 2026-06-14 | ISSUE-034 | [TEST-06] CountDownLatch au lieu de Thread.sleep() | CONFIRMED |
+| 2026-06-14 | ISSUE-035 | [CRAFT-07] Logging structure InMemoryAgentRegistry + AgentTtlMonitor | APPLIED |
+| 2026-06-14 | ISSUE-035 | [TEST-06] Thread.sleep() → Awaitility InMemoryAgentRegistryTest | APPLIED |
+| 2026-06-14 | ISSUE-035 | [SPEC] Annotations @Component/@ConditionalOnProperty manquantes | APPLIED |
+| 2026-06-14 | ISSUE-035 | [SPEC-04] AgentTtlMonitor ne publie pas AgentLost | APPLIED |

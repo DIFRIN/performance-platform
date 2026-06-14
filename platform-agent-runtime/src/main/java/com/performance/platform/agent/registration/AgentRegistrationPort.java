@@ -25,14 +25,16 @@ public interface AgentRegistrationPort {
      * Désenregistre cet agent.
      *
      * @param agentId l'identifiant de l'agent à désenregistrer
+     * @throws RegistrationException en cas d'erreur de communication
      */
-    void deregister(AgentId agentId);
+    void deregister(AgentId agentId) throws RegistrationException;
 
     /**
      * Envoie un heartbeat à l'orchestrateur.
      *
      * @param agentId   l'identifiant de l'agent
      * @param heartbeat les données du heartbeat
+     * @throws RegistrationException en cas d'erreur de communication
      */
-    void sendHeartbeat(AgentId agentId, AgentHeartbeat heartbeat);
+    void sendHeartbeat(AgentId agentId, AgentHeartbeat heartbeat) throws RegistrationException;
 }
