@@ -39,6 +39,7 @@ class InMemoryExecutionTransportTest {
     @BeforeEach
     void setUp() {
         transport = new InMemoryExecutionTransport();
+        transport.connect();
         executionId = ExecutionId.generate();
         scenarioId = ScenarioId.of("scenario-1");
         taskId = TaskId.of("task-1");
@@ -111,7 +112,8 @@ class InMemoryExecutionTransportTest {
         @Test
         @DisplayName("should not be connected initially")
         void shouldNotBeConnectedInitially() {
-            assertThat(transport.isConnected()).isFalse();
+            var fresh = new InMemoryExecutionTransport();
+            assertThat(fresh.isConnected()).isFalse();
         }
 
         @Test

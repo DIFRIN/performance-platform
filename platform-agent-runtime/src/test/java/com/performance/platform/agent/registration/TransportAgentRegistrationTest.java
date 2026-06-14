@@ -5,10 +5,12 @@ import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentHeartbeat;
 import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.id.AgentId;
+import com.performance.platform.transport.AgentLifecycleEvent;
+import com.performance.platform.transport.AgentLifecycleEventHandler;
 import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.Subscription;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
-import com.performance.platform.transport.message.ExecutionEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,6 +37,7 @@ class TransportAgentRegistrationTest {
     @BeforeEach
     void setUp() {
         transport = new InMemoryExecutionTransport();
+        transport.connect();
         registration = new TransportAgentRegistration(transport);
         agentId = AgentId.generate();
         descriptor = new AgentDescriptor(
@@ -54,9 +57,9 @@ class TransportAgentRegistrationTest {
 
     // === Fixtures ===
 
-    private CopyOnWriteArrayList<ExecutionEvent> captureEvents() {
-        var events = new CopyOnWriteArrayList<ExecutionEvent>();
-        transport.subscribe(events::add);
+    private CopyOnWriteArrayList<AgentLifecycleEvent> captureEvents() {
+        var events = new CopyOnWriteArrayList<AgentLifecycleEvent>();
+        transport.subscribeAgentEvents(events::add);
         return events;
     }
 
@@ -74,7 +77,7 @@ class TransportAgentRegistrationTest {
 
             assertThat(events).hasSize(1);
             var event = events.get(0);
-            assertThat(event.eventType()).isEqualTo(ExecutionEvent.AGENT_REGISTERED);
+            assertThat(event.eventType()).isEqualTo(AgentLifecycleEvent.AGENT_REGISTERED);
             assertThat(event.agentId()).isEqualTo(agentId);
         }
 
@@ -120,15 +123,15 @@ class TransportAgentRegistrationTest {
         @DisplayName("should wrap TransportException in RegistrationException")
         void shouldWrapTransportException() {
             var broken = new ExecutionTransport() {
-                public void publishEvent(ExecutionEvent e) { throw new TransportException("down"); }
+                public void publishEvent(com.performance.platform.transport.message.ExecutionEvent e) { throw new TransportException("down"); }
+                public void publishAgentEvent(AgentLifecycleEvent e) { throw new TransportException("down"); }
                 public void dispatchTask(com.performance.platform.transport.message.TaskExecutionRequest r) {}
                 public void broadcastSignal(com.performance.platform.domain.event.AgentSignal s) {}
-                public com.performance.platform.transport.Subscription subscribe(com.performance.platform.transport.ExecutionEventHandler h) {
-                    return new com.performance.platform.transport.Subscription() {
-                        private boolean active = true;
-                        public void cancel() { active = false; }
-                        public boolean isActive() { return active; }
-                    };
+                public Subscription subscribe(com.performance.platform.transport.ExecutionEventHandler h) {
+                    return new Subscription() { private boolean a = true; public void cancel() { a = false; } public boolean isActive() { return a; } };
+                }
+                public Subscription subscribeAgentEvents(com.performance.platform.transport.AgentLifecycleEventHandler h) {
+                    return new Subscription() { private boolean a = true; public void cancel() { a = false; } public boolean isActive() { return a; } };
                 }
                 public void receiveTask(com.performance.platform.transport.TaskRequestHandler h) {}
                 public void receiveSignal(com.performance.platform.transport.AgentSignalHandler h) {}
@@ -158,7 +161,7 @@ class TransportAgentRegistrationTest {
 
             assertThat(events).hasSize(1);
             var event = events.get(0);
-            assertThat(event.eventType()).isEqualTo(ExecutionEvent.AGENT_DEREGISTERED);
+            assertThat(event.eventType()).isEqualTo(AgentLifecycleEvent.AGENT_DEREGISTERED);
             assertThat(event.agentId()).isEqualTo(agentId);
         }
 
@@ -192,7 +195,7 @@ class TransportAgentRegistrationTest {
 
             assertThat(events).hasSize(1);
             var event = events.get(0);
-            assertThat(event.eventType()).isEqualTo(ExecutionEvent.AGENT_HEARTBEAT);
+            assertThat(event.eventType()).isEqualTo(AgentLifecycleEvent.AGENT_HEARTBEAT);
             assertThat(event.agentId()).isEqualTo(agentId);
         }
 
@@ -248,12 +251,12 @@ class TransportAgentRegistrationTest {
         @DisplayName("should send heartbeats periodically")
         void shouldSendHeartbeatsPeriodically() throws InterruptedException {
             var latch = new CountDownLatch(2);
-            var events = new CopyOnWriteArrayList<ExecutionEvent>();
-            transport.subscribe(e -> {
+            var events = new CopyOnWriteArrayList<AgentLifecycleEvent>();
+            transport.subscribeAgentEvents(e -> {
                 events.add(e);
                 latch.countDown();
             });
-            var scheduler = new HeartbeatScheduler(registration, agentId, 1, 0);
+            var scheduler = new HeartbeatScheduler(registration, agentId, 1, () -> AgentState.IDLE, () -> 0);
 
             scheduler.start();
             var received = latch.await(5, TimeUnit.SECONDS);
@@ -262,13 +265,13 @@ class TransportAgentRegistrationTest {
             assertThat(received).isTrue(); // latch released before timeout
             assertThat(scheduler.heartbeatCount()).isGreaterThanOrEqualTo(2);
             assertThat(events).isNotEmpty();
-            assertThat(events.stream().allMatch(e -> e.eventType().equals(ExecutionEvent.AGENT_HEARTBEAT))).isTrue();
+            assertThat(events.stream().allMatch(e -> e.eventType().equals(AgentLifecycleEvent.AGENT_HEARTBEAT))).isTrue();
         }
 
         @Test
         @DisplayName("should respect ttl >= 3 × interval")
         void shouldRespectTtlGreaterOrEqualTo3TimesInterval() {
-            var scheduler = new HeartbeatScheduler(registration, agentId, 5, 0);
+            var scheduler = new HeartbeatScheduler(registration, agentId, 5, () -> AgentState.IDLE, () -> 0);
             assertThat(scheduler.registrationTtlSeconds()).isEqualTo(15);
         }
 
@@ -276,8 +279,8 @@ class TransportAgentRegistrationTest {
         @DisplayName("should report running state correctly")
         void shouldReportRunningStateCorrectly() throws InterruptedException {
             var latch = new CountDownLatch(1);
-            transport.subscribe(e -> latch.countDown());
-            var scheduler = new HeartbeatScheduler(registration, agentId, 1, 0);
+            transport.subscribeAgentEvents(e -> latch.countDown());
+            var scheduler = new HeartbeatScheduler(registration, agentId, 1, () -> AgentState.IDLE, () -> 0);
 
             assertThat(scheduler.isRunning()).isFalse();
             scheduler.start();
@@ -291,14 +294,14 @@ class TransportAgentRegistrationTest {
         @Test
         @DisplayName("should start with zero heartbeats")
         void shouldStartWithZeroHeartbeats() {
-            var scheduler = new HeartbeatScheduler(registration, agentId, 1, 0);
+            var scheduler = new HeartbeatScheduler(registration, agentId, 1, () -> AgentState.IDLE, () -> 0);
             assertThat(scheduler.heartbeatCount()).isZero();
         }
 
         @Test
         @DisplayName("should reject intervalSeconds < 1")
         void shouldRejectIntervalTooSmall() {
-            assertThatThrownBy(() -> new HeartbeatScheduler(registration, agentId, 0, 0))
+            assertThatThrownBy(() -> new HeartbeatScheduler(registration, agentId, 0, () -> AgentState.IDLE, () -> 0))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("intervalSeconds");
         }
@@ -306,14 +309,14 @@ class TransportAgentRegistrationTest {
         @Test
         @DisplayName("should reject null registrationPort")
         void shouldRejectNullPort() {
-            assertThatThrownBy(() -> new HeartbeatScheduler(null, agentId, 1, 0))
+            assertThatThrownBy(() -> new HeartbeatScheduler(null, agentId, 1, () -> AgentState.IDLE, () -> 0))
                     .isInstanceOf(NullPointerException.class);
         }
 
         @Test
         @DisplayName("should reject null agentId")
         void shouldRejectNullAgentId() {
-            assertThatThrownBy(() -> new HeartbeatScheduler(registration, null, 1, 0))
+            assertThatThrownBy(() -> new HeartbeatScheduler(registration, null, 1, () -> AgentState.IDLE, () -> 0))
                     .isInstanceOf(NullPointerException.class);
         }
     }

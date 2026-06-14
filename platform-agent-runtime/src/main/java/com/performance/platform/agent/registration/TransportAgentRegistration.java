@@ -1,13 +1,13 @@
 package com.performance.platform.agent.registration;
 
+import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentHeartbeat;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.EventId;
-import com.performance.platform.domain.id.ExecutionId;
+import com.performance.platform.transport.AgentLifecycleEvent;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.TransportException;
-import com.performance.platform.transport.message.ExecutionEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +19,12 @@ import java.util.Objects;
 
 /**
  * Implémentation de {@link AgentRegistrationPort} qui publie les événements
- * d'enregistrement et de heartbeat via {@link ExecutionTransport}.
+ * de cycle de vie d'agent via {@link ExecutionTransport#publishAgentEvent}.
  * <p>
- * Chaque méthode construit un {@link ExecutionEvent} avec le type approprié
- * et le payload contenant les données du domaine, puis le publie.
+ * Utilise {@link AgentLifecycleEvent} (ADR-012) — pas d'{@code ExecutionId},
+ * canal séparé des événements d'exécution.
  */
 public class TransportAgentRegistration implements AgentRegistrationPort {
-
-    /** ExecutionId sentinelle pour les événements non liés à une exécution. */
-    static final ExecutionId NO_EXECUTION = ExecutionId.of("NO_EXECUTION");
 
     private static final Logger log = LoggerFactory.getLogger(TransportAgentRegistration.class);
 
@@ -41,16 +38,14 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
     public void register(AgentDescriptor descriptor) throws RegistrationException {
         Objects.requireNonNull(descriptor, "descriptor must not be null");
         try {
-            var event = new ExecutionEvent(
+            var event = new AgentLifecycleEvent(
                     EventId.generate(),
-                    NO_EXECUTION,
-                    null,
                     descriptor.id(),
-                    ExecutionEvent.AGENT_REGISTERED,
+                    AgentLifecycleEvent.AGENT_REGISTERED,
                     toPayload(descriptor),
                     Instant.now()
             );
-            transport.publishEvent(event);
+            transport.publishAgentEvent(event);
             log.info("action=agent_registered agentId={} name={} supportedTasks={}",
                     descriptor.id().value(), descriptor.name(), descriptor.supportedTaskNames().size());
         } catch (TransportException e) {
@@ -63,16 +58,14 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
     public void deregister(AgentId agentId) {
         Objects.requireNonNull(agentId, "agentId must not be null");
         try {
-            var event = new ExecutionEvent(
+            var event = new AgentLifecycleEvent(
                     EventId.generate(),
-                    NO_EXECUTION,
-                    null,
                     agentId,
-                    ExecutionEvent.AGENT_DEREGISTERED,
+                    AgentLifecycleEvent.AGENT_DEREGISTERED,
                     Map.of("agentId", agentId.value()),
                     Instant.now()
             );
-            transport.publishEvent(event);
+            transport.publishAgentEvent(event);
             log.info("action=agent_deregistered agentId={}", agentId.value());
         } catch (TransportException e) {
             log.error("action=agent_deregistration_failed agentId={}", agentId.value(), e);
@@ -85,16 +78,14 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
         Objects.requireNonNull(agentId, "agentId must not be null");
         Objects.requireNonNull(heartbeat, "heartbeat must not be null");
         try {
-            var event = new ExecutionEvent(
+            var event = new AgentLifecycleEvent(
                     EventId.generate(),
-                    NO_EXECUTION,
-                    null,
                     agentId,
-                    ExecutionEvent.AGENT_HEARTBEAT,
+                    AgentLifecycleEvent.AGENT_HEARTBEAT,
                     toPayload(heartbeat),
                     Instant.now()
             );
-            transport.publishEvent(event);
+            transport.publishAgentEvent(event);
             log.debug("action=heartbeat_sent agentId={} state={} activeTasks={}",
                     agentId.value(), heartbeat.state(), heartbeat.activeTasks());
         } catch (TransportException e) {
@@ -104,6 +95,7 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
     }
 
     // === Conversion des objets domaine en payload Map ===
+    // NOTE: synchroniser avec AgentDescriptor si le record évolue (ARCH-12)
 
     private static Map<String, Object> toPayload(AgentDescriptor d) {
         var payload = new LinkedHashMap<String, Object>();
@@ -117,7 +109,6 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
         payload.put("registeredAt", d.registeredAt().toString());
         payload.put("lastHeartbeatAt", d.lastHeartbeatAt().toString());
         payload.put("registrationTtlSeconds", d.registrationTtl().toSeconds());
-        // AgentCapabilities est un record — on le sérialise via ses composants
         payload.put("capabilities", capabilitiesToPayload(d.capabilities()));
         return payload;
     }
@@ -131,8 +122,7 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
         return payload;
     }
 
-    private static Map<String, Object> capabilitiesToPayload(
-            com.performance.platform.domain.agent.AgentCapabilities caps) {
+    private static Map<String, Object> capabilitiesToPayload(AgentCapabilities caps) {
         var map = new LinkedHashMap<String, Object>();
         map.put("maxConcurrentTasks", caps.maxConcurrentTasks());
         map.put("version", caps.version());

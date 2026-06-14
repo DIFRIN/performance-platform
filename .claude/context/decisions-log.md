@@ -43,6 +43,13 @@ IMPACT : DagLevelCalculator.java dans platform-execution-engine/engine/plan/. Le
 
 ---
 
+[2026-06-14] [platform-transport + platform-agent-runtime] DECISION : AgentLifecycleEvent séparé de ExecutionEvent (ADR-012)
+CONTEXTE : `TransportAgentRegistration` utilisait un sentinel `ExecutionId.of("NO_EXECUTION")` pour les events d'enregistrement/heartbeat car `ExecutionEvent` requiert un `executionId` obligatoire. Identifié comme design smell lors de la revue architecturale post-ISSUE-034/035.
+RAISON : Option B retenue (sur 3 options évaluées) — créer `AgentLifecycleEvent` sans `executionId` et étendre `ExecutionTransport` avec `publishAgentEvent()` + `subscribeAgentEvents()`. Option A (sentinel) rejetée pour sémantique incorrecte. Option C (executionId nullable) rejetée car modifie le contrat de `ExecutionEvent` et force gestion null sur tous les handlers existants.
+IMPACT : Nouveaux fichiers `AgentLifecycleEvent.java` et `AgentLifecycleEventHandler.java` dans `platform-transport`. `ExecutionTransport` étendu (⚡ interface publique critique). `TransportAgentRegistration` migre de `publishEvent` vers `publishAgentEvent`. Voir ADR-012.
+
+---
+
 ## Décisions Attendues (À Ne Pas Oublier)
 
 Ces points sont connus comme source de micro-décisions à prendre lors de l'implémentation.

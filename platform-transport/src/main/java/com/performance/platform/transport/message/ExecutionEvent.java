@@ -46,8 +46,10 @@ public record ExecutionEvent(
     }
 
     /**
-     * Constructeur de commodite sans defensive copy — utilise pour la
-     * deserialisation ou les tests quand la Map est deja immuable.
+     * Constructeur de commodite. Delegue au constructeur canonique qui
+     * effectue {@code Map.copyOf(payload)} pour garantir l'immutabilite.
+     * Utile pour la deserialisation ou les tests quand la Map fournie
+     * est deja immuable ou sera copiee de toute facon.
      */
     public static ExecutionEvent of(
             EventId id,

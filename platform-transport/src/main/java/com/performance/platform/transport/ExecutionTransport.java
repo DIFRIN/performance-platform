@@ -104,4 +104,27 @@ public interface ExecutionTransport {
      * @return le type de transport
      */
     TransportType getType();
+
+    /**
+     * Publie un événement de cycle de vie d'agent (enregistrement, heartbeat,
+     * désenregistrement). Ces événements n'ont pas d'{@code ExecutionId} —
+     * ils sont portés par {@link AgentLifecycleEvent}.
+     * <p>
+     * Ajouté suite à l'ADR-012 pour séparer les canaux execution / lifecycle.
+     *
+     * @param event l'événement à publier
+     * @throws TransportException en cas d'erreur de communication
+     */
+    void publishAgentEvent(AgentLifecycleEvent event);
+
+    /**
+     * Souscrit aux événements de cycle de vie d'agent.
+     * Utilisé côté orchestrateur pour alimenter l'{@code AgentRegistry}.
+     * <p>
+     * Ajouté suite à l'ADR-012.
+     *
+     * @param handler le handler à enregistrer
+     * @return une {@link Subscription} permettant d'annuler l'enregistrement
+     */
+    Subscription subscribeAgentEvents(AgentLifecycleEventHandler handler);
 }

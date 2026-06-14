@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * Planificateur de heartbeat périodique pour un agent.
@@ -24,6 +25,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>
  * Garantit que {@code ttl >= 3 × intervalSeconds} pour éviter les
  * expirations intempestives côté orchestrateur.
+ * <p>
+ * Les {@link Supplier} d'état et de tâches actives permettent à
+ * {@code DistributedAgentRuntime} de fournir l'état réel à chaque heartbeat.
  */
 public class HeartbeatScheduler {
 
@@ -32,7 +36,8 @@ public class HeartbeatScheduler {
     private final AgentRegistrationPort registrationPort;
     private final AgentId agentId;
     private final int intervalSeconds;
-    private final int activeTaskCount;
+    private final Supplier<AgentState> stateSupplier;
+    private final Supplier<Integer> activeTasksSupplier;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(
             Thread.ofVirtual().factory()
     );
@@ -46,19 +51,22 @@ public class HeartbeatScheduler {
      * @param registrationPort le port d'enregistrement
      * @param agentId          l'identifiant de l'agent local
      * @param intervalSeconds  l'intervalle entre deux heartbeats (≥ 1)
-     * @param activeTaskCount  le nombre de tâches actives (pour le heartbeat initial, 0)
+     * @param stateSupplier    fournit l'état courant de l'agent à chaque heartbeat
+     * @param activeTasksSupplier fournit le nombre de tâches actives à chaque heartbeat
      */
     public HeartbeatScheduler(AgentRegistrationPort registrationPort,
                               AgentId agentId,
                               int intervalSeconds,
-                              int activeTaskCount) {
+                              Supplier<AgentState> stateSupplier,
+                              Supplier<Integer> activeTasksSupplier) {
         this.registrationPort = Objects.requireNonNull(registrationPort, "registrationPort must not be null");
         this.agentId = Objects.requireNonNull(agentId, "agentId must not be null");
         if (intervalSeconds < 1) {
             throw new IllegalArgumentException("intervalSeconds must be >= 1, got " + intervalSeconds);
         }
         this.intervalSeconds = intervalSeconds;
-        this.activeTaskCount = activeTaskCount;
+        this.stateSupplier = Objects.requireNonNull(stateSupplier, "stateSupplier must not be null");
+        this.activeTasksSupplier = Objects.requireNonNull(activeTasksSupplier, "activeTasksSupplier must not be null");
     }
 
     /**
@@ -80,7 +88,7 @@ public class HeartbeatScheduler {
     }
 
     /**
-     * Arrête le planificateur. Les heartbeats en cours peuvent se terminer.
+     * Arrête le planificateur. Annule les tâches futures et ferme le scheduler.
      */
     public void stop() {
         log.info("action=heartbeat_scheduler_stop agentId={} totalHeartbeats={}",
@@ -89,6 +97,7 @@ public class HeartbeatScheduler {
         if (f != null) {
             f.cancel(false);
         }
+        scheduler.shutdown();
     }
 
     /**
@@ -121,15 +130,16 @@ public class HeartbeatScheduler {
         try {
             var heartbeat = new AgentHeartbeat(
                     agentId,
-                    AgentState.IDLE,
-                    activeTaskCount,
+                    stateSupplier.get(),
+                    activeTasksSupplier.get(),
                     Instant.now()
             );
             registrationPort.sendHeartbeat(agentId, heartbeat);
             heartbeatCount.incrementAndGet();
         } catch (RegistrationException e) {
-            // Le heartbeat suivant réessaiera — on ne casse pas le schedule
-            Thread.currentThread().interrupt();
+            log.warn("action=heartbeat_failed agentId={} will retry on next interval",
+                    agentId.value(), e);
+            // Pas d'interruption — le schedule continue naturellement
         }
     }
 }
