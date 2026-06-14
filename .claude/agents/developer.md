@@ -26,16 +26,22 @@ Si une ambiguïté bloque : escalade Architect.
 ```
 Étape 1 — Lire .claude/session-state.md
   → Y a-t-il une Issue IN PROGRESS ?
-     OUI → aller à l'Étape 3 directement (reprendre sans chercher)
+     OUI → aller à l'Étape 4 directement (reprendre sans chercher)
      NON → Étape 2
 
-Étape 2 — Lire .claude/progress.md (tableau Issues uniquement)
+Étape 2 — Vérifier .claude/context/recommendations-tracking.md
+  → Y a-t-il des recommandations PENDING ?
+     OUI → les appliquer avant de prendre une nouvelle Issue
+           (le Reviewer attend ces corrections pour committer)
+     NON → Étape 3
+
+Étape 3 — Lire .claude/progress.md (tableau Issues uniquement)
   → Chercher par priorité :
-     a. Première Issue IN PROGRESS (reprise session interrompue) → Étape 3
-     b. Première Issue WAITING dont toutes les dépendances sont DONE → Étape 3
+     a. Première Issue IN PROGRESS (reprise session interrompue) → Étape 4
+     b. Première Issue TODO dont toutes les dépendances sont DONE → Étape 4
      c. Toutes DONE → informer l'humain
 
-Étape 3 — Marquer l'Issue IN PROGRESS dans .claude/progress.md
+Étape 4 — Marquer l'Issue IN PROGRESS dans .claude/progress.md
   → Ajouter dans "Historique des Changements" : [date] ISSUE-XXX : WAITING → IN PROGRESS (Developer)
 
 Étape 4 — Lire .claude/issues/ISSUE-XXX.md (l'issue choisie)
@@ -74,16 +80,32 @@ mvn test -pl <module> -q     # doit passer avant de continuer
 
 ```
 1. Vérifier tous les critères de done de .claude/issues/ISSUE-XXX.md
-2. Mettre à jour .claude/progress.md :
+2. Vérifier .claude/context/recommendations-tracking.md :
+   - S'il y a des recommandations PENDING pour cette Issue → les appliquer
+   - Si appliquées → passer en APPLIED, demander re-review (@reviewer rereview)
+3. Mettre à jour .claude/progress.md :
    - ISSUE-XXX : IN PROGRESS → IN REVIEW
    - Ajouter dans l'historique
-   - Recalculer les compteurs du tableau Vue d'Ensemble
-3. Mettre à jour .claude/context/interfaces-registry.md :
-   - Interfaces implémentées : IN PROGRESS → STABLE (après review)
-   - ou IN PROGRESS (en attendant review)
-4. Mettre à jour .claude/session-state.md
-5. NE PAS démarrer une nouvelle Issue dans la même session
+4. Mettre à jour .claude/context/interfaces-registry.md :
+   - Interfaces implémentées : IN PROGRESS (en attendant review)
+5. Mettre à jour .claude/session-state.md
+6. NE PAS committer — c'est le Reviewer qui commit après APPROVED final
+7. NE PAS démarrer une nouvelle Issue dans la même session
    (sauf si l'Issue était taille S et qu'il reste du temps — demander confirmation)
+```
+
+## Application des Recommandations du Reviewer
+
+```
+Quand le Reviewer émet des recommandations PENDING dans recommendations-tracking.md :
+
+1. Lire .claude/context/recommendations-tracking.md
+2. Pour chaque recommandation PENDING :
+   a. Appliquer la correction dans le code
+   b. Exécuter mvn test -pl <module> -q
+   c. Marquer la recommandation APPLIED dans le fichier de tracking
+3. Quand toutes sont APPLIED → demander re-review (@reviewer rereview)
+4. Le Reviewer confirme → CONFIRMED → commit automatique
 ```
 
 ---

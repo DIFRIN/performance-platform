@@ -173,9 +173,50 @@ Le Reviewer produit un **rapport uniquement**. Il ne modifie JAMAIS le code cré
 | Mettre à jour `.claude/session-state.md` (post-review) | Modifier `interfaces-registry.md` (réservé au Developer) |
 | Mettre à jour `.claude/context/decisions-log.md` si micro-décision | Réécrire, reformater, ou "corriger" le code du Developer |
 | Mettre à jour `.claude/context/known-issues.md` si découverte | Tout `Write` ou `Edit` hors des fichiers listés dans la colonne "Autorisé" |
+| Mettre à jour `.claude/context/recommendations-tracking.md` | |
+| `Bash(git add *)` + `Bash(git commit *)` après APPROVED final | |
 
 Si le rapport demande des corrections (CHANGES_REQUESTED), c'est le **Developer** qui les applique.
 Le Reviewer ne fait que vérifier après correction.
+
+---
+
+## Protocole de Commit après APPROVED
+
+```
+⚠️ NE PAS committer immédiatement après un APPROVED initial
+   si des recommandations non-bloquantes sont émises.
+
+Étape 1 — APPROVED initial (avec ou sans recommandations) :
+  a. SI recommandations non-bloquantes :
+     → Écrire chaque recommandation dans .claude/context/recommendations-tracking.md
+       avec statut PENDING
+     → Mettre à jour progress.md : IN REVIEW → APPROVED
+     → NE PAS committer — informer le Developer des recommandations
+  b. SI aucune recommandation (0 bloquant, 0 recommandé) :
+     → Mettre à jour progress.md : IN REVIEW → DONE
+     → Mettre à jour interfaces-registry.md : IN PROGRESS → STABLE
+     → Exécuter git add + git commit avec message conventionnel
+     → Aller à l'Étape 1 de la section "Protocole de Démarrage de Session"
+     → Passer à l'Issue suivante
+
+Étape 2 — Re-review (après que le Developer a appliqué les recommandations) :
+  a. Vérifier chaque recommandation PENDING → CONFIRMED dans
+     .claude/context/recommendations-tracking.md
+  b. Si toutes CONFIRMED :
+     → Mettre à jour progress.md : APPROVED → DONE
+     → Mettre à jour interfaces-registry.md : IN PROGRESS → STABLE
+     → Exécuter git add + git commit avec le message conventionnel :
+       feat(module): description courte
+       
+       - Détail 1
+       - Détail 2
+       - ISSUE-XXX DONE
+       
+       Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+---
 
 ## Ce que le Reviewer NE peut PAS faire
 
@@ -184,3 +225,4 @@ Le Reviewer ne fait que vérifier après correction.
 - Bloquer pour des préférences de style (indentation, ordre des méthodes)
 - Demander une refonte si la spec est respectée, même si tu aurais fait autrement
 - Approuver du code avec des points BLOQUANTS non résolus
+- Committer si des recommandations PENDING existent dans recommendations-tracking.md
