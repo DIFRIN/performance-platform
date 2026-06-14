@@ -112,7 +112,7 @@
 | ISSUE-027 | InMemoryExecutionTransport | PDR-007 | platform-transport | M | DONE | ISSUE-025,026 |
 | ISSUE-033 | TaskSpecializationFilter + TaskFilterResult | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-026,007 |
 | ISSUE-034 | AgentRegistrationPort + heartbeat | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-033 |
-| ISSUE-035 | AgentRegistry (orchestrateur) | PDR-009 | platform-agent-runtime | M | APPROVED | ISSUE-034,013 |
+| ISSUE-035 | AgentRegistry (orchestrateur) | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-034,013 |
 | ISSUE-036 | DistributedAgentRuntime | PDR-009 | platform-agent-runtime | L | TODO | ISSUE-033,034 |
 | ISSUE-037 | ScenarioRestart cleanup stateful | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-036 |
 | ISSUE-038 | LocalAgent | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-036,027 |
