@@ -149,6 +149,7 @@ com.performance.platform.<module>/
 | Interfaces implémentées | `.claude/context/interfaces-registry.md` | module concerné |
 | Décisions passées | `.claude/context/decisions-log.md` | sujet concerné |
 | Issues connues | `.claude/context/known-issues.md` | — |
+| Recommandations Reviewer en attente | `.claude/context/recommendations-tracking.md` | complet |
 | Découpage des tâches | `.claude/context/task-breakdown.md` | phase concernée |
 | Dépendances inter-tâches | `.claude/context/dependency-map.md` | — |
 | Workflow agents | `.claude/guides/agent-orchestration.md` | — |
