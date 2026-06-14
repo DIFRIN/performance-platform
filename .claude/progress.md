@@ -106,7 +106,7 @@
 | ISSUE-021 | TaskCorrelationTracker (multi-claim) | PDR-006 | platform-execution-engine | M | DONE | ISSUE-019 |
 | ISSUE-022 | AgentAvailabilityChecker | PDR-006 | platform-execution-engine | M | DONE | ISSUE-019,013 |
 | ISSUE-023 | LocalExecutionEngine | PDR-006 | platform-execution-engine | L | DONE | ISSUE-019,020,013 |
-| ISSUE-024 | RemoteExecutionEngine | PDR-006 | platform-execution-engine | L | TODO | ISSUE-021,022,023,026 |
+| ISSUE-024 | RemoteExecutionEngine | PDR-006 | platform-execution-engine | L | DONE | ISSUE-021,022,023,026 |
 | ISSUE-025 | Interface ExecutionTransport + handlers | PDR-007 | platform-transport | M | DONE | ISSUE-009 |
 | ISSUE-026 | TaskExecutionRequest + ExecutionEvent | PDR-007 | platform-transport | S | DONE | ISSUE-025 |
 | ISSUE-027 | InMemoryExecutionTransport | PDR-007 | platform-transport | M | TODO | ISSUE-025,026 |
@@ -266,6 +266,10 @@
 | 2026-06-14 | ISSUE-025 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-14 | ISSUE-025 | IN REVIEW → DONE | Reviewer |
 | 2026-06-14 | ISSUE-026 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-026 | IN PROGRESS → DONE | Developer |
+| 2026-06-14 | ISSUE-026 | DONE → APPROVED | Reviewer |
+| 2026-06-14 | ISSUE-024 | TODO → IN PROGRESS | Developer |
+| 2026-06-14 | ISSUE-024 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -274,4 +278,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ISSUE-025 IN REVIEW)
+**Dernière mise à jour** : 2026-06-14 (ISSUE-024 IN REVIEW)

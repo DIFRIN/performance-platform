@@ -134,7 +134,8 @@
 | `LocalExecutionEngine` | ✅ STABLE | PDR-006 | ISSUE-023 |
 | `DagPhaseExecutor` | ✅ STABLE | PDR-006 | ISSUE-023 |
 | `TaskExecutorLookup` | ✅ STABLE | PDR-006 | ISSUE-023 |
-| `RemoteExecutionEngine` | ⬜ PLANNED | PDR-006 | ISSUE-024 |
+| `RemoteExecutionEngine` | 🔄 IN PROGRESS | PDR-006 | ISSUE-024 |
+| `PartialContextBuilder` | 🔄 IN PROGRESS | PDR-006 | ISSUE-024 |
 
 ## platform-transport
 
@@ -143,8 +144,8 @@
 | `ExecutionTransport` ⚡ | ✅ STABLE | PDR-007 | ISSUE-025 |
 | `TaskRequestHandler` / `AgentSignalHandler` / `ExecutionEventHandler` / `Subscription` | ✅ STABLE | PDR-007 | ISSUE-025 |
 | `TransportException` | ✅ STABLE | PDR-007 | ISSUE-025 |
-| `TaskExecutionRequest` | ✅ STABLE | PDR-007 | ISSUE-025 |
-| `ExecutionEvent` | ✅ STABLE | PDR-007 | ISSUE-025 |
+| `TaskExecutionRequest` | ✅ STABLE | PDR-007 | ISSUE-026 |
+| `ExecutionEvent` | ✅ STABLE | PDR-007 | ISSUE-026 |
 | `TransportType` | ✅ STABLE | PDR-007 | ISSUE-025 |
 | `InMemoryExecutionTransport` | ⬜ PLANNED | PDR-007 | ISSUE-027 |
 | Transport properties + `TransportConfiguration` | ⬜ PLANNED | PDR-008 | ISSUE-028 |

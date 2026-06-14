@@ -2,7 +2,7 @@
 
 **PDR** : PDR-006
 **Module** : `platform-execution-engine`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-019
 **Estime** : M
