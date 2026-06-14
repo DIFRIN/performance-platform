@@ -11,9 +11,9 @@
 
 **Date derniere session** : 2026-06-14
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-023 — LocalExecutionEngine
+**Issue active** : ISSUE-025 — Interface ExecutionTransport + handlers + Subscription
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-006 — Execution Engine (IN PROGRESS)
+**PDR parent** : PDR-007 — Transport Layer Core (IN PROGRESS)
 
 ---
 
@@ -22,18 +22,24 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-023 implementee — LocalExecutionEngine avec DagPhaseExecutor, TaskExecutorLookup. 21 tests (103 total), BUILD SUCCESS. Les 3 phases s'executent en sequence, niveau DAG en parallele via Virtual Threads, ASSERTION toujours executee meme si phases precedentes en echec. Event publishing complet.
+Developer : ISSUE-025 IN PROGRESS → IN REVIEW. Module platform-transport cree (ExecutionTransport ⚡, TaskRequestHandler, AgentSignalHandler, ExecutionEventHandler, Subscription, TransportException, TaskExecutionRequest, ExecutionEvent, TransportType). 36 tests BUILD SUCCESS, 0 warning. interfaces-registry mis a jour → IN PROGRESS.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-023. Verifier criteres de done : sequence phases, parallelisme VT, SKIPPED sur dep failed, event publishing, Verdict.
+Reviewer : revoir ISSUE-025. Puis Developer : prendre ISSUE-026 (deja implemente avec ISSUE-025 — verifier et ajuster si necessaire).
 
 **Fichiers en cours** :
 ```
-✅ platform-execution-engine/src/main/java/.../engine/ExecutionEngine.java
-✅ platform-execution-engine/src/main/java/.../engine/local/TaskExecutorLookup.java
-✅ platform-execution-engine/src/main/java/.../engine/local/DagPhaseExecutor.java
-✅ platform-execution-engine/src/main/java/.../engine/local/LocalExecutionEngine.java
-✅ platform-execution-engine/src/test/java/.../engine/local/LocalExecutionEngineTest.java
+🔄 platform-transport/pom.xml (module parent pom.xml deja a jour)
+🔄 platform-transport/src/main/java/.../transport/ExecutionTransport.java (IN REVIEW)
+🔄 platform-transport/src/main/java/.../transport/TaskRequestHandler.java (IN REVIEW)
+🔄 platform-transport/src/main/java/.../transport/AgentSignalHandler.java (IN REVIEW)
+🔄 platform-transport/src/main/java/.../transport/ExecutionEventHandler.java (IN REVIEW)
+🔄 platform-transport/src/main/java/.../transport/Subscription.java (IN REVIEW)
+🔄 platform-transport/src/main/java/.../transport/TransportException.java (IN REVIEW)
+🔄 platform-transport/src/main/java/.../transport/TransportType.java (IN REVIEW)
+🔄 platform-transport/src/main/java/.../transport/message/TaskExecutionRequest.java (IN REVIEW)
+🔄 platform-transport/src/main/java/.../transport/message/ExecutionEvent.java (IN REVIEW)
+🔄 platform-transport/src/test/java/.../transport/TransportInterfaceTest.java (IN REVIEW)
 ```
 
 **Blocages** :
@@ -50,7 +56,7 @@ TOUJOURS :
 
 SI REVIEWER (prochaine session) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-023.md (LocalExecutionEngine, PDR-006)
+  .claude/issues/ISSUE-025-transport-interface-handlers.md (ExecutionTransport, PDR-007)
 ```
 
 ---
@@ -98,3 +104,5 @@ SI REVIEWER (prochaine session) :
 | 2026-06-14 | Developer | ISSUE-022 | AgentAvailabilityChecker + DefaultAgentAvailabilityChecker + 7 tests. 82 total. | OK IN REVIEW |
 | 2026-06-14 | Reviewer | ISSUE-022 | Revue APPROVED (0 bloquant, 2 recommandations). 82 tests BUILD SUCCESS. | OK DONE |
 | 2026-06-14 | Developer | ISSUE-023 | Impl LocalExecutionEngine + DagPhaseExecutor + TaskExecutorLookup. 21 tests, 103 total. | OK IN REVIEW |
+| 2026-06-14 | Reviewer | ISSUE-023 | Revue APPROVED (0 bloquant, 3 recommandations). 103 tests BUILD SUCCESS. | OK DONE |
+| 2026-06-14 | Developer | ISSUE-025 | Module platform-transport + ExecutionTransport ⚡ + 36 tests. IN REVIEW. | OK IN REVIEW |

@@ -28,6 +28,10 @@ CONTEXTE : PublicationTarget a ete retire du domaine par le System Designer (cor
 RAISON : Le domaine ne doit pas connaitre les outils de publication concrets. Un String opaque preserve la genericite de l'evenement domaine tout en permettant au module platform-reporting d'utiliser son propre enum PublicationTarget pour les valeurs concretes.
 IMPACT : ReportPublished a field String target au lieu de PublicationTarget target. La Javadoc precise que les valeurs concretes sont definies dans platform-reporting.
 [2026-06-13] [platform-domain] DECISION : SignalId et ReportId n'ont pas de factory of() — utilise constructeur direct dans les tests
+[2026-06-14] [platform-transport] DECISION : TaskExecutionRequest, ExecutionEvent, et TransportType crees dans ISSUE-025 (et non dans les Issues designees ISSUE-026 et ISSUE-028)
+CONTEXTE : L'interface ExecutionTransport (ISSUE-025) reference TaskExecutionRequest, ExecutionEvent, et TransportType dans ses signatures. Ces types etaient planifies pour ISSUE-026 (messages) et ISSUE-028 (properties). La compilation de l'interface est impossible sans ces types.
+RAISON : Les types sont dans le meme module platform-transport. Les creer dans ISSUE-025 permet la compilation immediate de l'interface. ISSUE-026 pourra ajouter le test unitaire TransportMessagesTest.java. ISSUE-028 pourra ajouter les proprietes de configuration par type. Aucune duplication generee.
+IMPACT : ISSUE-025 cree 10 fichiers (vs 7 prevus). ISSUE-026 herite de TaskExecutionRequest.java et ExecutionEvent.java deja crees — reduit a la creation de TransportMessagesTest.java. TransportType anciennement REMOVED du domaine est maintenant STABLE dans platform-transport.
 CONTEXTE : Contrairement a AgentId et ExecutionId qui ont of(), SignalId n'a que generate() et ReportId n'a que generate(). Cette decision a ete prise dans ISSUE-001.
 RAISON : Les IDs de signal et de rapport sont toujours generes (pas de valeur predefinie en test). Pour les tests, new SignalId("x") ou SignalId.generate() suffisent.
 IMPACT : SignalsTest utilise new ReportId("report-1") et SignalId.generate().

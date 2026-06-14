@@ -130,22 +130,23 @@
 | `RetryExecutor` / `DefaultRetryExecutor` | ✅ STABLE | PDR-006 | ISSUE-020 |
 | `TaskCorrelationTracker` / `DefaultTaskCorrelationTracker` | ✅ STABLE | PDR-006 | ISSUE-021 |
 | `AgentAvailabilityChecker` / `DefaultAgentAvailabilityChecker` | ✅ STABLE | PDR-006 | ISSUE-022 |
-| `ExecutionEngine` | 🔄 IN PROGRESS | PDR-006 | ISSUE-023 |
-| `LocalExecutionEngine` | 🔄 IN PROGRESS | PDR-006 | ISSUE-023 |
-| `DagPhaseExecutor` | 🔄 IN PROGRESS | PDR-006 | ISSUE-023 |
-| `TaskExecutorLookup` | 🔄 IN PROGRESS | PDR-006 | ISSUE-023 |
+| `ExecutionEngine` | ✅ STABLE | PDR-006 | ISSUE-023 |
+| `LocalExecutionEngine` | ✅ STABLE | PDR-006 | ISSUE-023 |
+| `DagPhaseExecutor` | ✅ STABLE | PDR-006 | ISSUE-023 |
+| `TaskExecutorLookup` | ✅ STABLE | PDR-006 | ISSUE-023 |
 | `RemoteExecutionEngine` | ⬜ PLANNED | PDR-006 | ISSUE-024 |
 
 ## platform-transport
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `ExecutionTransport` ⚡ | ⬜ PLANNED | PDR-007 | ISSUE-025 |
-| `TaskRequestHandler` / `AgentSignalHandler` / `ExecutionEventHandler` / `Subscription` | ⬜ PLANNED | PDR-007 | ISSUE-025 |
-| `TaskExecutionRequest` | ⬜ PLANNED | PDR-007 | ISSUE-026 |
-| `ExecutionEvent` | ⬜ PLANNED | PDR-007 | ISSUE-026 |
+| `ExecutionTransport` ⚡ | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
+| `TaskRequestHandler` / `AgentSignalHandler` / `ExecutionEventHandler` / `Subscription` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
+| `TransportException` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
+| `TaskExecutionRequest` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
+| `ExecutionEvent` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
+| `TransportType` | 🔄 IN PROGRESS | PDR-007 | ISSUE-025 |
 | `InMemoryExecutionTransport` | ⬜ PLANNED | PDR-007 | ISSUE-027 |
-| `TransportType` | ⬜ PLANNED | PDR-008 | ISSUE-028 |
 | Transport properties + `TransportConfiguration` | ⬜ PLANNED | PDR-008 | ISSUE-028 |
 | `KafkaExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-029 |
 | `RabbitMQExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-030 |
