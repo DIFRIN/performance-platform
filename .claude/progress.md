@@ -110,7 +110,7 @@
 | ISSUE-025 | Interface ExecutionTransport + handlers | PDR-007 | platform-transport | M | DONE | ISSUE-009 |
 | ISSUE-026 | TaskExecutionRequest + ExecutionEvent | PDR-007 | platform-transport | S | DONE | ISSUE-025 |
 | ISSUE-027 | InMemoryExecutionTransport | PDR-007 | platform-transport | M | DONE | ISSUE-025,026 |
-| ISSUE-033 | TaskSpecializationFilter + TaskFilterResult | PDR-009 | platform-agent-runtime | M | IN REVIEW | ISSUE-026,007 |
+| ISSUE-033 | TaskSpecializationFilter + TaskFilterResult | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-026,007 |
 | ISSUE-034 | AgentRegistrationPort + heartbeat | PDR-009 | platform-agent-runtime | M | APPROVED | ISSUE-033 |
 | ISSUE-035 | AgentRegistry (orchestrateur) | PDR-009 | platform-agent-runtime | M | APPROVED | ISSUE-034,013 |
 | ISSUE-036 | DistributedAgentRuntime | PDR-009 | platform-agent-runtime | L | TODO | ISSUE-033,034 |
