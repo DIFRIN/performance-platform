@@ -25,6 +25,7 @@
         <module>platform-plugin-api</module>
         <module>platform-application</module>
         <module>platform-scenario-dsl</module>
+        <module>platform-execution-engine</module>
     </modules>
 
     <dependencyManagement>

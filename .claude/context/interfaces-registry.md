@@ -112,19 +112,21 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `ScenarioParser` | 🔄 IN PROGRESS | PDR-005 | ISSUE-015 |
-| `ScenarioValidator` / `DefaultScenarioValidator` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
-| `ValidationResult` / `ValidationError` / `ValidationWarning` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
-| `DagCycleDetector` | 🔄 IN PROGRESS | PDR-005 | ISSUE-016 |
+| `ScenarioParser` | ✅ STABLE | PDR-005 | ISSUE-015 |
+| `ScenarioValidator` / `DefaultScenarioValidator` | ✅ STABLE | PDR-005 | ISSUE-016 |
+| `ValidationResult` / `ValidationError` / `ValidationWarning` | ✅ STABLE | PDR-005 | ISSUE-016 |
+| `DagCycleDetector` | ✅ STABLE | PDR-005 | ISSUE-016 |
 | `LoadModelRegistry` / `DefaultLoadModelRegistry` / `LoadModelNotFoundException` | ✅ STABLE | PDR-005 | ISSUE-017 |
-| `DefaultScenarioParsingService` | 🔄 IN PROGRESS | PDR-005 | ISSUE-018 |
-| `ScenarioValidationException` | 🔄 IN PROGRESS | PDR-005 | ISSUE-018 |
+| `DefaultScenarioParsingService` | ✅ STABLE | PDR-005 | ISSUE-018 |
+| `ScenarioValidationException` | ✅ STABLE | PDR-005 | ISSUE-018 |
 
 ## platform-execution-engine
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `ExecutionPlanBuilder` | ⬜ PLANNED | PDR-006 | ISSUE-019 |
+| `ExecutionPlanBuilder` | 🔄 IN PROGRESS | PDR-006 | ISSUE-019 |
+| `DefaultExecutionPlanBuilder` | 🔄 IN PROGRESS | PDR-006 | ISSUE-019 |
+| `DagLevelCalculator` | 🔄 IN PROGRESS | PDR-006 | ISSUE-019 |
 | `RetryExecutor` | ⬜ PLANNED | PDR-006 | ISSUE-020 |
 | `TaskCorrelationTracker` | ⬜ PLANNED | PDR-006 | ISSUE-021 |
 | `AgentAvailabilityChecker` | ⬜ PLANNED | PDR-006 | ISSUE-022 |

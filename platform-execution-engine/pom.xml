@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.performance</groupId>
+        <artifactId>performance-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>platform-execution-engine</artifactId>
+    <name>Platform Execution Engine</name>
+    <description>Orchestration des phases PREPARATION / INJECTION / ASSERTION. ExecutionPlanBuilder, RetryExecutor, Local/Remote engines.</description>
+
+    <dependencies>
+        <!-- Domaine pur (records ExecutionPlan, ExecutionStep, ExecutionContext, ScenarioDefinition, etc.) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Ports applicatifs + exceptions (InvalidScenarioException, ExecutionConfig, etc.) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Scenario DSL (ScenarioValidator, DagCycleDetector, etc.) — usage futur par les engines -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-scenario-dsl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring context pour @Component — le module sera integre dans l'app Spring Boot -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>6.2.6</version>
+        </dependency>
+
+        <!-- JUnit 5 pour les tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

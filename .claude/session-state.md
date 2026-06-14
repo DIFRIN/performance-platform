@@ -11,9 +11,9 @@
 
 **Date derniere session** : 2026-06-14
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-018 -- ScenarioParsingUseCase
+**Issue active** : ISSUE-019 — ExecutionPlanBuilder + DAG levels
 **Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
-**PDR parent** : PDR-005 -- Scenario DSL (ISSUE-018 IN REVIEW — DERNIERE !)
+**PDR parent** : PDR-006 — Execution Engine (IN PROGRESS)
 
 ---
 
@@ -22,16 +22,19 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-018 (ScenarioParsingUseCase) implementee. 3 fichiers + 10 tests. BUILD OK (160 tests). IN REVIEW.
+Developer : ISSUE-019 IN REVIEW. Module platform-execution-engine cree avec pom.xml, ExecutionPlanBuilder (interface), DagLevelCalculator (algo Kahn), DefaultExecutionPlanBuilder. 23 tests OK. Tous modules OK.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-018 (DefaultScenarioParsingService, ScenarioValidationException). Puis PDR-005 DONE.
+Reviewer : revoir ISSUE-019 (ExecutionPlanBuilder + DAG levels).
 
 **Fichiers en cours** :
 ```
-✅ platform-scenario-dsl/src/main/java/.../usecase/DefaultScenarioParsingService.java
-✅ platform-scenario-dsl/src/main/java/.../usecase/ScenarioValidationException.java
-✅ platform-scenario-dsl/src/test/java/.../usecase/DefaultScenarioParsingServiceTest.java
+✅ platform-execution-engine/pom.xml
+✅ platform-execution-engine/src/main/java/.../engine/plan/ExecutionPlanBuilder.java
+✅ platform-execution-engine/src/main/java/.../engine/plan/DagLevelCalculator.java
+✅ platform-execution-engine/src/main/java/.../engine/plan/DefaultExecutionPlanBuilder.java
+✅ platform-execution-engine/src/test/java/.../engine/plan/DagLevelCalculatorTest.java
+✅ platform-execution-engine/src/test/java/.../engine/plan/DefaultExecutionPlanBuilderTest.java
 ```
 
 **Blocages** :
@@ -46,14 +49,14 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI REVIEWER (ISSUE-018) :
+SI REVIEWER (ISSUE-019) :
   .claude/agents/reviewer.md
-  .claude/issues/ISSUE-018-scenario-parsing-usecase.md
-  .claude/pdr/PDR-005.md
+  .claude/issues/ISSUE-019-execution-plan-builder.md
+  .claude/pdr/PDR-006.md
 
-SI DEVELOPER (prochaine PDR) :
+SI DEVELOPER (prochaine Issue) :
   .claude/agents/developer.md
-  .claude/issues/ISSUE-019.md (ExecutionPlanBuilder, PDR-006)
+  .claude/issues/ISSUE-020.md (RetryExecutor, PDR-006)
 ```
 
 ---
@@ -93,3 +96,5 @@ SI DEVELOPER (prochaine PDR) :
 | 2026-06-14 | Developer | ISSUE-017 | LoadModelRegistry. 4 fichiers, 12 tests. IN REVIEW. | OK IN REVIEW |
 | 2026-06-14 | Reviewer | ISSUE-017 | Revue APPROVED (0 bloquant). 150 tests total. | OK DONE |
 | 2026-06-14 | Developer | ISSUE-018 | Impl ScenarioParsingUseCase. 3 fichiers + 10 tests. BUILD OK. 160 tests. | OK IN REVIEW |
+| 2026-06-14 | Reviewer | ISSUE-018 | Revue APPROVED (0 bloquant). PDR-005 DONE. 160 tests. | OK DONE |
+| 2026-06-14 | Developer | ISSUE-019 | Module platform-execution-engine + ExecutionPlanBuilder + DagLevelCalculator. 23 tests. | OK IN REVIEW |
