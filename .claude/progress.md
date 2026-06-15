@@ -118,7 +118,7 @@
 | ISSUE-038 | LocalAgent | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-036,027 |
 | ISSUE-039 | TaskExecutorRegistry | PDR-010 | platform-infrastructure | M | DONE | ISSUE-011 |
 | ISSUE-040 | DatabaseTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
-| ISSUE-041 | Kafka Consumer/Producer TaskExecutors | PDR-010 | platform-infrastructure | L | TODO | ISSUE-039 |
+| ISSUE-041 | Kafka Consumer/Producer TaskExecutors | PDR-010 | platform-infrastructure | L | DONE | ISSUE-039 |
 | ISSUE-042 | MockServerTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
 | ISSUE-050 | Entities JPA + migrations Flyway | PDR-012 | platform-infrastructure | M | TODO | ISSUE-006,013 |
 | ISSUE-051 | Mappers domain↔entity | PDR-012 | platform-infrastructure | M | TODO | ISSUE-050 |
@@ -308,6 +308,10 @@
 | 2026-06-15 | ISSUE-040 | TODO → IN PROGRESS | Developer |
 | 2026-06-15 | ISSUE-040 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-15 | ISSUE-040 | ADR-013 + ADR-014 appliqués | Developer |
+| 2026-06-15 | ISSUE-040 | IN REVIEW → DONE | Reviewer (APPROVED) |
+| 2026-06-15 | ISSUE-041 | TODO → IN PROGRESS | Developer |
+| 2026-06-15 | ISSUE-041 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-15 | ISSUE-041 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05 violations CC-02 (6 methodes >40L, 1 classe >300L) |
 
 ---
 
@@ -316,4 +320,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-15 (ISSUE-039 IN REVIEW — TaskExecutorRegistry implemente)
+**Dernière mise à jour** : 2026-06-15 (ISSUE-041 IN REVIEW — Kafka Consumer/Producer TaskExecutors implementes)
