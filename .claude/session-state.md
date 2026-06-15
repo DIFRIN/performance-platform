@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-15
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-037 (ScenarioRestart cleanup stateful)
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [x] DONE
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-038 (LocalAgent)
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] DONE
 **PDR parent** : PDR-009 (agent-runtime)
 
 ---
@@ -22,23 +22,26 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Reviewer : revue ISSUE-037 → APPROVED (0 bloquant, 0 recommandation).
-  - StatefulResourceCleaner + ScenarioRestartHandler + TaskExecutionPipeline : clean.
-  - Extraction CRAFT-05 de ISSUE-036 terminee (DistributedAgentRuntime 684→462 lignes).
-  - 114 tests OK (106 existants + 8 ScenarioRestartHandlerTest).
-  - ISSUE-037 : IN REVIEW → DONE. Interfaces : IN PROGRESS → STABLE.
-  - Commit execute.
+Developer : ISSUE-038 (LocalAgent) implementee.
+  - Cree LocalAgent + TaskExecutionPipeline rendu public (constructeur + execute + publishClaimEvent + executorCount).
+  - 35 nouveaux tests (LocalAgentTest : 11 groupes, 35 tests) : lifecycle, task reception, task execution, concurrent, restart, canExecute, constructor, state transitions, task ignored, in-memory transport, missing executor.
+  - Total 149 tests OK (114 existants + 35 nouveaux).
+  - LocalAgent : pas de heartbeat, pas de registration (mode LOCAL, meme JVM).
+  - ISSUE-038 : IN PROGRESS → IN REVIEW.
 
 **Prochaine action** :
-Developer : ISSUE-038 (LocalAgent) — prochaine Issue TODO debloquee.
-  Bloquee par ISSUE-036 (DONE ✓) et ISSUE-027 (DONE ✓).
+Reviewer : ISSUE-038 (LocalAgent) — revoir l'implementation.
+  Puis Developer : ISSUE-039 (TaskExecutorRegistry) — prochaine Issue TODO debloquee.
   Voir `.claude/progress.md`.
 
 **Fichiers modifies** :
 ```
-✅ progress.md — ISSUE-037 : IN REVIEW → DONE
-✅ interfaces-registry.md — StatefulResourceCleaner/ScenarioRestartHandler : IN PROGRESS → STABLE
+✅ progress.md — ISSUE-038 : TODO → IN PROGRESS → IN REVIEW
+✅ interfaces-registry.md — LocalAgent : PLANNED → IN PROGRESS
 ✅ session-state.md — ce fichier
+🔄 platform-agent-runtime/src/main/java/com/performance/platform/agent/local/LocalAgent.java (nouveau)
+🔄 platform-agent-runtime/src/test/java/com/performance/platform/agent/local/LocalAgentTest.java (nouveau)
+🔄 platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/TaskExecutionPipeline.java (class + constructeur + 3 methodes → public)
 ```
 
 **Blocages** :
@@ -53,9 +56,9 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI DEVELOPPER (ISSUE-038) :
+SI REVIEWER (ISSUE-038) :
   .claude/issues/ISSUE-038-local-agent.md
-  .claude/agents/developer.md
+  .claude/agents/reviewer.md
 ```
 
 ---
@@ -64,6 +67,7 @@ SI DEVELOPPER (ISSUE-038) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-15 | Developer | ISSUE-038 | LocalAgent + TaskExecutionPipeline public + 35 tests, 149 OK | IN REVIEW |
 | 2026-06-15 | Reviewer | ISSUE-037 | Revue APPROVED, 0 bloquant, commit | DONE |
 | 2026-06-15 | Developer | ISSUE-037 | ScenarioRestartHandler + extraction TaskExecutionPipeline + 8 tests, 114 OK | IN REVIEW |
 | 2026-06-15 | Reviewer | ISSUE-036 | Re-review, 3 CONFIRMED + 2 DEFERRED, commit | DONE |

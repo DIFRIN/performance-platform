@@ -29,9 +29,9 @@ import java.util.concurrent.atomic.AtomicReference;
  * conversion {@link PartialExecutionContext} → {@link ExecutionContext},
  * exécution, publication du résultat, et nettoyage final.
  * <p>
- * Package-private — utilisé exclusivement par {@link DistributedAgentRuntime}.
+ * Utilisé par {@link DistributedAgentRuntime} et {@code LocalAgent}.
  */
-class TaskExecutionPipeline {
+public class TaskExecutionPipeline {
 
     private static final Logger log = LoggerFactory.getLogger(TaskExecutionPipeline.class);
 
@@ -47,7 +47,7 @@ class TaskExecutionPipeline {
     private final AtomicInteger activeTaskCount;
     private final AtomicReference<AgentState> currentState;
 
-    TaskExecutionPipeline(
+    public TaskExecutionPipeline(
             ExecutionTransport transport,
             Map<String, TaskExecutor> taskExecutors,
             AgentId agentId,
@@ -67,7 +67,7 @@ class TaskExecutionPipeline {
         this.currentState = currentState;
     }
 
-    int executorCount() {
+    public int executorCount() {
         return taskExecutors.size();
     }
 
@@ -78,7 +78,7 @@ class TaskExecutionPipeline {
      * la conversion du contexte, l'exécution, la publication du résultat,
      * et le nettoyage final (décrément du compteur, transition d'état).
      */
-    void execute(TaskExecutionRequest request) {
+    public void execute(TaskExecutionRequest request) {
         var startTime = Instant.now();
         var step = request.step();
         var executionId = request.executionId();
@@ -154,7 +154,7 @@ class TaskExecutionPipeline {
 
     // === Helpers de publication d'événements ===
 
-    void publishClaimEvent(TaskExecutionRequest request) {
+    public void publishClaimEvent(TaskExecutionRequest request) {
         var payload = new LinkedHashMap<String, Object>();
         payload.put("taskName", request.step().taskName());
         payload.put("agentId", agentId.value());

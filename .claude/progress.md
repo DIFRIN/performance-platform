@@ -115,7 +115,7 @@
 | ISSUE-035 | AgentRegistry (orchestrateur) | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-034,013 |
 | ISSUE-036 | DistributedAgentRuntime | PDR-009 | platform-agent-runtime | L | DONE | ISSUE-033,034 |
 | ISSUE-037 | ScenarioRestart cleanup stateful | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-036 |
-| ISSUE-038 | LocalAgent | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-036,027 |
+| ISSUE-038 | LocalAgent | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-036,027 |
 | ISSUE-039 | TaskExecutorRegistry | PDR-010 | platform-infrastructure | M | TODO | ISSUE-011 |
 | ISSUE-040 | DatabaseTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
 | ISSUE-041 | Kafka Consumer/Producer TaskExecutors | PDR-010 | platform-infrastructure | L | TODO | ISSUE-039 |
@@ -295,6 +295,8 @@
 | 2026-06-15 | ISSUE-037 | IN REVIEW → DONE | Reviewer (APPROVED, 0 bloquant, 0 recommandation) |
 | 2026-06-15 | ISSUE-037 | TODO → IN PROGRESS | Developer |
 | 2026-06-15 | ISSUE-037 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-15 | ISSUE-038 | TODO → IN PROGRESS | Developer |
+| 2026-06-15 | ISSUE-038 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 
@@ -303,4 +305,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-14 (ARCH-01..12 CONFIRMED, ISSUE-027,033,034,035 DONE, PDR-007 DONE)
+**Dernière mise à jour** : 2026-06-15 (ISSUE-038 IN REVIEW — LocalAgent implemente, PDR-009 complet une fois reviewed)
