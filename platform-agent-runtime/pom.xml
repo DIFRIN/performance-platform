@@ -36,6 +36,36 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Plugin API (TaskExecutor interface, 0 framework) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-plugin-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- SLF4J API (logging) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+
+        <!-- Mockito (tests) -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.14.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Awaitility (tests async) -->
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>4.2.2</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- JUnit 5 pour les tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
