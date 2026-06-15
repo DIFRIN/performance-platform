@@ -182,7 +182,7 @@
 | `DatasourceProvider` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 |
 | `PlatformDatasourcesProperties` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 (ADR-014) |
 | `DatasourceConfiguration` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 (ADR-014) |
-| `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | 🔄 IN PROGRESS | PDR-010 | ISSUE-041 |
+| `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-041 |
 | `MockServerTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-042 |
 | `ShellTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-043 |
 | `DockerTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-044 |
