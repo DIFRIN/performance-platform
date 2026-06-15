@@ -316,6 +316,7 @@
 | 2026-06-15 | ISSUE-042 | TODO → IN PROGRESS | Developer |
 | 2026-06-15 | ISSUE-042 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-15 | ISSUE-042 | IN REVIEW → APPROVED | Reviewer — 4 recommandations PENDING (CRAFT-05/CRAFT-08x2/CRAFT-07) |
+| 2026-06-16 | ISSUE-042 | APPROVED → DONE | Reviewer — re-review: 4 recommandations CONFIRMED (CRAFT-05/CRAFT-08x2/CRAFT-07) |
 
 ---
 
@@ -324,4 +325,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-15 (ISSUE-041 DONE — Kafka Consumer/Producer TaskExecutors)
+**Dernière mise à jour** : 2026-06-16 (ISSUE-042 DONE — MockServerTaskExecutor)
