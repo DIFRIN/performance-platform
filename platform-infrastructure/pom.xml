@@ -131,6 +131,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- WireMock standalone (MockServerTaskExecutor embedded) -->
+        <dependency>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock</artifactId>
+            <version>3.12.1</version>
+        </dependency>
+
     </dependencies>
 
 </project>

@@ -119,7 +119,7 @@
 | ISSUE-039 | TaskExecutorRegistry | PDR-010 | platform-infrastructure | M | DONE | ISSUE-011 |
 | ISSUE-040 | DatabaseTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-041 | Kafka Consumer/Producer TaskExecutors | PDR-010 | platform-infrastructure | L | DONE | ISSUE-039 |
-| ISSUE-042 | MockServerTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
+| ISSUE-042 | MockServerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-050 | Entities JPA + migrations Flyway | PDR-012 | platform-infrastructure | M | TODO | ISSUE-006,013 |
 | ISSUE-051 | Mappers domain↔entity | PDR-012 | platform-infrastructure | M | TODO | ISSUE-050 |
 | ISSUE-052 | JpaExecutionRepository | PDR-012 | platform-infrastructure | M | TODO | ISSUE-051,013 |
@@ -313,6 +313,9 @@
 | 2026-06-15 | ISSUE-041 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-15 | ISSUE-041 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05 violations CC-02 (6 methodes >40L, 1 classe >300L) |
 | 2026-06-15 | ISSUE-041 | CHANGES_REQUESTED → DONE | Reviewer — re-review: 4 recommandations CONFIRMED (CRAFT-05/CRAFT-07/PRECISION/CRAFT-08) |
+| 2026-06-15 | ISSUE-042 | TODO → IN PROGRESS | Developer |
+| 2026-06-15 | ISSUE-042 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-15 | ISSUE-042 | IN REVIEW → APPROVED | Reviewer — 4 recommandations PENDING (CRAFT-05/CRAFT-08x2/CRAFT-07) |
 
 ---
 

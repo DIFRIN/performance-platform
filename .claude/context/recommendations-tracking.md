@@ -266,6 +266,10 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-041] [2026-06-15] [CONFIRMED] [CRAFT-07] executionId absent des logs dans KafkaConsumerTaskExecutor et KafkaProducerTaskExecutor malgre ExecutionContext disponible
 [ISSUE-041] [2026-06-15] [CONFIRMED] [PRECISION] executeConsume() : toTake plafonne le compteur mais le KafkaConsumer a deja consomme tout le batch — semantique trompeuse (max.poll.records ou Javadoc)
 [ISSUE-041] [2026-06-15] [CONFIRMED] [CRAFT-08] Cles de sortie ("messagesConsumed", "lag", "messagesProduced", "messagesFailed") en string literals sans constantes
+[ISSUE-042] [2026-06-16] [CONFIRMED] [CRAFT-05] MockServerTaskExecutor 383 lignes > 300 — CC-02 justification ajoutee en Javadoc
+[ISSUE-042] [2026-06-16] [CONFIRMED] [CRAFT-08] Cles de parametres ("deployment", "action", "port", "mappingsPath", "externalUrl") → constantes PARAM_DEPLOYMENT, PARAM_ACTION, PARAM_PORT, PARAM_MAPPINGS_PATH, PARAM_EXTERNAL_URL
+[ISSUE-042] [2026-06-16] [CONFIRMED] [CRAFT-08] Magic string "default" → constante DEFAULT_EXECUTION_KEY
+[ISSUE-042] [2026-06-16] [CONFIRMED] [CRAFT-07] executionId ajoute aux logs mode EXTERNAL + handler erreur execute()
 
 ---
 
@@ -291,3 +295,7 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-15 | ISSUE-041 | [CRAFT-07] executionId ajouté à tous les logs (threadé via ExecutionContext) | CONFIRMED |
 | 2026-06-15 | ISSUE-041 | [PRECISION] Javadoc executeConsume() + pollMessages() expliquant max.poll.records et toTake | CONFIRMED |
 | 2026-06-15 | ISSUE-041 | [CRAFT-08] Constantes OUTPUT_MESSAGES_CONSUMED/OUTPUT_LAG/OUTPUT_MESSAGES_PRODUCED/OUTPUT_MESSAGES_FAILED | CONFIRMED |
+| 2026-06-16 | ISSUE-042 | [CRAFT-05] CC-02 justification ajoutee en Javadoc | APPLIED |
+| 2026-06-16 | ISSUE-042 | [CRAFT-08] Constantes PARAM_DEPLOYMENT/ACTION/PORT/MAPPINGS_PATH/EXTERNAL_URL | APPLIED |
+| 2026-06-16 | ISSUE-042 | [CRAFT-08] Constante DEFAULT_EXECUTION_KEY | APPLIED |
+| 2026-06-16 | ISSUE-042 | [CRAFT-07] executionId ajoute aux logs mode EXTERNAL + handler erreur execute() | APPLIED |
