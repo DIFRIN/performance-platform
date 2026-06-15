@@ -288,6 +288,8 @@
 | 2026-06-14 | PDR-007 | IN PROGRESS → DONE | Reviewer (ISSUE-025,026,027 all DONE) |
 | 2026-06-15 | ISSUE-036 | TODO → IN PROGRESS | Developer |
 | 2026-06-15 | ISSUE-036 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-15 | ISSUE-036 | IN REVIEW → APPROVED | Reviewer (0 bloquant, 5 recommandations PENDING) |
+| 2026-06-15 | ISSUE-036 | APPROVED → DONE | Reviewer (re-review, 3 CONFIRMED, 2 DEFERRED) |
 
 ---
 

@@ -14,7 +14,6 @@ import com.performance.platform.domain.execution.PartialExecutionContext;
 import com.performance.platform.domain.id.*;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.TransportException;
@@ -100,6 +99,9 @@ public class DistributedAgentRuntime implements AgentRuntime {
 
     /** Executor pour l'exécution des tâches (Virtual Threads). */
     private final ExecutorService taskExecutorService = Executors.newVirtualThreadPerTaskExecutor();
+
+    /** TaskName utilisé pour les TaskResult wrappers dans le bridge PartialExecutionContext → ExecutionContext. */
+    private static final String PARTIAL_TASK_WRAPPER = "_partial_";
 
     // === Verrou pour start/stop ===
 
@@ -589,7 +591,7 @@ public class DistributedAgentRuntime implements AgentRuntime {
             for (var agentEntry : entry.getValue().entrySet()) {
                 var wrapperResult = TaskResult.success(
                         TaskId.of(taskId),
-                        "_partial_",
+                        PARTIAL_TASK_WRAPPER,
                         Duration.ZERO,
                         Map.of("value", agentEntry.getValue())
                 );

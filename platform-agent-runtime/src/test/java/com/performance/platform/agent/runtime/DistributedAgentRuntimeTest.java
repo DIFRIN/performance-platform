@@ -253,8 +253,7 @@ class DistributedAgentRuntimeTest {
             transport.dispatchTask(request);
 
             // No events should be published for unsupported tasks
-            // Wait briefly and verify
-            try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            await().pollDelay(200, TimeUnit.MILLISECONDS).until(() -> true);
             assertThat(events).noneMatch(e -> ExecutionEvent.TASK_CLAIMED.equals(e.eventType()));
             assertThat(runtime.processedMessageCount()).isEqualTo(0);
         }
@@ -285,7 +284,7 @@ class DistributedAgentRuntimeTest {
             // Deuxième réception — même messageId
             transport.dispatchTask(request);
 
-            try { Thread.sleep(200); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            await().pollDelay(300, TimeUnit.MILLISECONDS).until(() -> true);
 
             long claimCount2 = events.stream()
                     .filter(e -> ExecutionEvent.TASK_CLAIMED.equals(e.eventType())
