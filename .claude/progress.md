@@ -292,6 +292,9 @@
 | 2026-06-15 | ISSUE-036 | APPROVED → DONE | Reviewer (re-review, 3 CONFIRMED, 2 DEFERRED) |
 | 2026-06-15 | ISSUE-037 | TODO → IN PROGRESS | Developer |
 | 2026-06-15 | ISSUE-037 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-15 | ISSUE-037 | IN REVIEW → DONE | Reviewer (APPROVED, 0 bloquant, 0 recommandation) |
+| 2026-06-15 | ISSUE-037 | TODO → IN PROGRESS | Developer |
+| 2026-06-15 | ISSUE-037 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 

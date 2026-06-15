@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-15
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-037 (ScenarioRestart cleanup stateful)
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] DONE
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [x] DONE
 **PDR parent** : PDR-009 (agent-runtime)
 
 ---
@@ -22,36 +22,22 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ISSUE-037 implemente.
-  - Cree StatefulResourceCleaner interface + ScenarioRestartHandler (agent.restart package)
-  - Cree TaskExecutionPipeline (package-private, extraction de executeTask + publishing)
-  - Refactorise DistributedAgentRuntime (684 → 462 lignes, delegue au pipeline et handler)
-  - Cree ScenarioRestartHandlerTest (8 tests : cleaners, cancellation, state transitions, empty cleaners)
-  - CRAFT-05 (DEFERRED→ISSUE-037) : APPLIED — extraction terminee
-  - 114 tests OK (106 existants + 8 nouveaux)
-  - 0 compile warning
+Reviewer : revue ISSUE-037 → APPROVED (0 bloquant, 0 recommandation).
+  - StatefulResourceCleaner + ScenarioRestartHandler + TaskExecutionPipeline : clean.
+  - Extraction CRAFT-05 de ISSUE-036 terminee (DistributedAgentRuntime 684→462 lignes).
+  - 114 tests OK (106 existants + 8 ScenarioRestartHandlerTest).
+  - ISSUE-037 : IN REVIEW → DONE. Interfaces : IN PROGRESS → STABLE.
+  - Commit execute.
 
 **Prochaine action** :
-Reviewer : relecture ISSUE-037.
-  - Verifier StatefulResourceCleaner, ScenarioRestartHandler, TaskExecutionPipeline
-  - Verifier le refactoring DistributedAgentRuntime
-  - Verifier les tests ScenarioRestartHandlerTest
-  - Si APPROVED : ISSUE-037 → DONE (ou IN REVIEW → APPROVED → re-review si recommandations)
-  - Sinon : recommandations PENDING dans recommendations-tracking.md
-
-  OU Developer peut prendre ISSUE-038 (LocalAgent) si l'humain le souhaite.
+Developer : ISSUE-038 (LocalAgent) — prochaine Issue TODO debloquee.
+  Bloquee par ISSUE-036 (DONE ✓) et ISSUE-027 (DONE ✓).
+  Voir `.claude/progress.md`.
 
 **Fichiers modifies** :
 ```
-✅ StatefulResourceCleaner.java — nouvelle interface dans agent.restart
-✅ ScenarioRestartHandler.java — nouveau composant restart
-✅ TaskExecutionPipeline.java — extraction executeTask + publishing (package-private)
-✅ DistributedAgentRuntime.java — refactorise, delegue au pipeline + handler
-✅ ScenarioRestartHandlerTest.java — 8 nouveaux tests
-✅ DistributedAgentRuntimeTest.java — adapte au nouveau constructeur (List<StatefulResourceCleaner>)
-✅ interfaces-registry.md — StatefulResourceCleaner/ScenarioRestartHandler → IN PROGRESS
-✅ progress.md — ISSUE-037 → IN REVIEW
-✅ recommendations-tracking.md — CRAFT-05 APPLIED
+✅ progress.md — ISSUE-037 : IN REVIEW → DONE
+✅ interfaces-registry.md — StatefulResourceCleaner/ScenarioRestartHandler : IN PROGRESS → STABLE
 ✅ session-state.md — ce fichier
 ```
 
@@ -67,11 +53,6 @@ TOUJOURS :
   .claude/session-state.md                (ce fichier)
   .claude/progress.md                     (Issue a prendre)
 
-SI REVIEWER :
-  .claude/issues/ISSUE-037-scenario-restart-cleanup.md
-  .claude/context/recommendations-tracking.md
-  .claude/agents/reviewer.md
-
 SI DEVELOPPER (ISSUE-038) :
   .claude/issues/ISSUE-038-local-agent.md
   .claude/agents/developer.md
@@ -83,6 +64,7 @@ SI DEVELOPPER (ISSUE-038) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-15 | Reviewer | ISSUE-037 | Revue APPROVED, 0 bloquant, commit | DONE |
 | 2026-06-15 | Developer | ISSUE-037 | ScenarioRestartHandler + extraction TaskExecutionPipeline + 8 tests, 114 OK | IN REVIEW |
 | 2026-06-15 | Reviewer | ISSUE-036 | Re-review, 3 CONFIRMED + 2 DEFERRED, commit | DONE |
 | 2026-06-15 | Developer | ISSUE-036 | 5 recommandations : 3 APPLIED + 2 DEFERRED | OK |
