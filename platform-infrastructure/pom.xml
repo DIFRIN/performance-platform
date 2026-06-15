@@ -43,6 +43,27 @@
             <version>7.0.0</version>
         </dependency>
 
+        <!-- Spring JDBC : ResourceDatabasePopulator, JdbcTemplate, DataSourceUtils (ADR-013) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>7.0.0</version>
+        </dependency>
+
+        <!-- HikariCP : pool de connexions (datasources nommées, ADR-013 + ADR-014) -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>6.2.1</version>
+        </dependency>
+
+        <!-- Spring Boot : @ConfigurationProperties, @EnableConfigurationProperties (ADR-014) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- SLF4J API (logging structure) -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -62,6 +83,36 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>3.27.3</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- PostgreSQL JDBC Driver (utilisé par DatabaseTaskExecutor + Testcontainers) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.5</version>
+        </dependency>
+
+        <!-- Testcontainers PostgreSQL (tests d'intégration DatabaseTaskExecutor) -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.20.6</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.20.6</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Testcontainers JUnit 5 integration (@Testcontainers, @Container) -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.20.6</version>
             <scope>test</scope>
         </dependency>
 

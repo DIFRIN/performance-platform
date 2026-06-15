@@ -1,11 +1,10 @@
 package com.performance.platform.agent.runtime;
 
 import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
-import com.performance.platform.agent.filter.TaskFilterResult;
 import com.performance.platform.agent.filter.TaskSpecializationFilter;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.RegistrationException;
-import com.performance.platform.agent.restart.StatefulResourceCleaner;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentHeartbeat;
@@ -17,11 +16,7 @@ import com.performance.platform.domain.id.*;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.plugin.TaskExecutor;
-import com.performance.platform.transport.ExecutionTransport;
-import com.performance.platform.transport.Subscription;
-import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
@@ -35,8 +30,6 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -499,7 +492,6 @@ class DistributedAgentRuntimeTest {
         void shouldHandleMultipleConcurrentTasks() {
             var events = captureExecutionEvents();
             var taskCount = 3;
-            var completedLatch = new CountDownLatch(taskCount);
 
             var executor = new TaskExecutor() {
                 @Override
@@ -551,7 +543,7 @@ class DistributedAgentRuntimeTest {
         @Test
         @DisplayName("should cancel active tasks and return to IDLE on restart signal")
         void shouldCancelActiveTasksOnRestart() {
-            var events = captureExecutionEvents();
+            captureExecutionEvents();
             var blockLatch = new CountDownLatch(1);
             var interrupted = new AtomicReference<>(false);
 
@@ -759,7 +751,7 @@ class DistributedAgentRuntimeTest {
         @Test
         @DisplayName("should reflect executing state when tasks are active")
         void shouldReflectExecutingState() {
-            var events = captureExecutionEvents();
+            captureExecutionEvents();
             var startedLatch = new CountDownLatch(1);
             var releaseLatch = new CountDownLatch(1);
 

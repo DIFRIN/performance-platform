@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-15
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-039 (TaskExecutorRegistry)
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-040 (DatabaseTaskExecutor)
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
 **PDR parent** : PDR-010 (Task Executors infra .executor) — IN PROGRESS
 
 ---
@@ -22,24 +22,33 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Reviewer : re-review ISSUE-039 — APPROVED
-  - [CRAFT-01] UnsupportedTaskNameException CONFIRMED (classe creee, ancienne supprimee, toutes references mises a jour)
-  - [CRAFT-02/CRAFT-08] Set.copyOf() CONFIRMED (snapshot immuable, test verifie UnsupportedOperationException)
-  - mvn test -pl platform-infrastructure : 15 tests, 0 failures, BUILD SUCCESS
-  - recommendations-tracking.md : [CRAFT-01] et [CRAFT-02] APPLIED → CONFIRMED
-  - progress.md : ISSUE-039 CHANGES_REQUESTED → DONE
-  - interfaces-registry.md : TaskExecutorRegistry, DefaultTaskExecutorRegistry, UnsupportedTaskNameException IN PROGRESS → STABLE
-  - Commit effectue
+Developer : ADR-013 + ADR-014 appliqués sur ISSUE-040
+  - ADR-013 (Spring-first) : spring-jdbc + HikariCP ajoutés au pom.xml
+    - POPULATE : ResourceDatabasePopulator + DefaultResourceLoader (remplace readScript + split(";"))
+    - PURGE : JdbcTemplate (remplace Connection/Statement manuels)
+    - Output POPULATE : rowsAffected → scriptExecuted
+  - ADR-014 (Datasource config) : PlatformDatasourcesProperties + DatasourceConfiguration créés
+    - DatasourceProvider n'est plus @Component → bean créé par DatasourceConfiguration
+    - HikariDataSource par datasource nommée, bindé depuis platform.datasources.*
+  - Tests: 15 unitaires + 12 intégration = 27 tests OK
+  - Nettoyage: imports inutilisés dans ScenarioRestartHandlerTest (CountDownLatch, Mockito)
 
 **Prochaine action** :
-Developer : prendre ISSUE-040 (DatabaseTaskExecutor) — prochaine issue TODO dans PDR-010
+Reviewer : revoir ISSUE-040 (DatabaseTaskExecutor). Puis Developer prend ISSUE-041 (Kafka Consumer/Producer TaskExecutors).
 
 **Fichiers modifies** :
 ```
-✅ recommendations-tracking.md — [CRAFT-01] et [CRAFT-02] APPLIED → CONFIRMED
-✅ progress.md — ISSUE-039 CHANGES_REQUESTED → DONE + history
-✅ interfaces-registry.md — 3 types IN PROGRESS → STABLE
+✅ platform-infrastructure/pom.xml — +spring-jdbc, +HikariCP, +spring-boot (ADR-013/014)
+✅ platform-infrastructure/src/main/java/.../executor/database/DatabaseTaskExecutor.java (refacto ADR-013)
+✅ platform-infrastructure/src/main/java/.../executor/database/DatasourceProvider.java (retrait @Component, ADR-014)
+🆕 platform-infrastructure/src/main/java/.../executor/database/PlatformDatasourcesProperties.java (ADR-014)
+🆕 platform-infrastructure/src/main/java/.../executor/database/DatasourceConfiguration.java (ADR-014)
+✅ platform-infrastructure/src/test/java/.../executor/database/DatabaseTaskExecutorIT.java (scriptExecuted, ADR-013)
+✅ platform-agent-runtime/src/test/.../restart/ScenarioRestartHandlerTest.java (imports inutilisés retirés)
+✅ progress.md — ADR-013/014 appliqués
+✅ interfaces-registry.md — PlatformDatasourcesProperties + DatasourceConfiguration ajoutés
 ✅ session-state.md — ce fichier
+```
 ```
 
 **Blocages** :
@@ -50,12 +59,16 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-TOUJOURS :
+SI REVIEWER :
   .claude/session-state.md                (ce fichier)
-  .claude/progress.md                     (Issue a prendre)
+  .claude/progress.md                     (confirmer ISSUE-040 IN REVIEW)
+  .claude/issues/ISSUE-040-database-task-executor.md
+  .claude/agents/reviewer.md
 
-SI DEVELOPPER (ISSUE-039) :
-  .claude/issues/ISSUE-039-task-executor-registry.md
+SI DEVELOPER (ISSUE-041) :
+  .claude/session-state.md
+  .claude/progress.md
+  .claude/issues/ISSUE-041-kafka-task-executors.md
   .claude/agents/developer.md
 ```
 
@@ -65,15 +78,5 @@ SI DEVELOPPER (ISSUE-039) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
-| 2026-06-15 | Reviewer | ISSUE-039 | Revue CHANGES_REQUESTED, 2 points bloquants | CHANGES_REQUESTED |
-| 2026-06-15 | Reviewer | ISSUE-038 | Revue APPROVED, 0 bloquant, commit, PDR-009 DONE | DONE |
-| 2026-06-15 | Developer | ISSUE-038 | LocalAgent + TaskExecutionPipeline public + 35 tests, 149 OK | IN REVIEW |
-| 2026-06-15 | Reviewer | ISSUE-037 | Revue APPROVED, 0 bloquant, commit | DONE |
-| 2026-06-15 | Developer | ISSUE-037 | ScenarioRestartHandler + extraction TaskExecutionPipeline + 8 tests, 114 OK | IN REVIEW |
-| 2026-06-15 | Reviewer | ISSUE-036 | Re-review, 3 CONFIRMED + 2 DEFERRED, commit | DONE |
-| 2026-06-15 | Developer | ISSUE-036 | 5 recommandations : 3 APPLIED + 2 DEFERRED | OK |
-| 2026-06-15 | Reviewer | ISSUE-036 | Revue APPROVED, 0 bloquant, 5 recommandations PENDING | APPROVED |
-| 2026-06-15 | Developer | ISSUE-036 | AgentRuntime + DistributedAgentRuntime + 31 tests, 106 total OK | IN REVIEW |
-| 2026-06-14 | Reviewer | ARCH-01..12 | Re-review, 12/12 CONFIRMED, ISSUE-027/033/034/035 DONE, PDR-007 DONE | APPROVED |
-| 2026-06-14 | Architect | ISSUE-027/033/034/035 | Revue architecturale — 12 corrections, ADR-012 | ARCH pending |
-| 2026-06-14 | Developer | ARCH-01..12 | 12 corrections appliquees, 166 tests OK | OK IN REVIEW |
+| 2026-06-15 | Developer | ISSUE-040 | DatabaseTaskExecutor + DatasourceProvider + 12 ITs + failsafe setup | IN REVIEW |
+| 2026-06-15 | Reviewer | ISSUE-039 | Re-review CHANGES_REQUESTED, 2 CONFIRMED, commit | DONE |

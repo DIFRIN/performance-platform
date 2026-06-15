@@ -102,6 +102,15 @@ La plateforme elle-même ne doit pas consommer plus de :
 - Les interfaces publiques (`TaskExecutor`, `ExecutionTransport`, `ReportPublisher`)
   sont versionnées. Toute modification breaking : nouvel ADR obligatoire.
 
+### CC-05 — Spring-first Infrastructure (ADR-013)
+Pour tout nouveau composant infrastructure, vérifier d'abord si Spring/Spring Boot
+fournit un composant équivalent. Ne coder custom que si Spring n'offre pas de solution
+directement configurable. Exemples : `ResourceDatabasePopulator` (pas de `split(";")`),
+`DefaultResourceLoader`/`Resource` (pas de `getResourceAsStream` manuel), `HikariDataSource`
+(pas de pool maison), `@ConfigurationProperties` (pas de parsing `Map` manuel),
+`JdbcTemplate`/`JdbcClient` (pas de `PreparedStatement` brut).
+Ne s'applique JAMAIS à `platform-domain` ni `platform-plugin-api` (0 Spring — CF-08).
+
 ---
 
 ## Contraintes de Déploiement

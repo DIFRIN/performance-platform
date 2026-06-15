@@ -12,7 +12,6 @@ import com.performance.platform.domain.event.ScenarioStarted;
 import com.performance.platform.domain.event.TaskClaimedByAgent;
 import com.performance.platform.domain.event.TaskCompleted;
 import com.performance.platform.domain.event.TaskDispatched;
-import com.performance.platform.domain.event.TaskFailed;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionState;
@@ -54,7 +53,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -473,7 +471,6 @@ public class RemoteExecutionEngine implements ExecutionEngine {
                 pending.messageId, event.occurredAt()));
     }
 
-    @SuppressWarnings("unchecked")
     private void handleTaskCompleted(ExecutionEvent event, PendingDispatch pending) {
         if (event.agentId() == null) return;
 

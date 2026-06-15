@@ -3,8 +3,8 @@ package com.performance.platform.agent.restart;
 import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
 import com.performance.platform.domain.id.AgentId;
-import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.MessageId;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

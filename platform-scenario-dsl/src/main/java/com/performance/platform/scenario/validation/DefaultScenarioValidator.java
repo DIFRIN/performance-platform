@@ -65,7 +65,6 @@ public class DefaultScenarioValidator implements ScenarioValidator {
         }
 
         Map<String, StepDefinition> stepsById = new LinkedHashMap<>();
-        boolean hasInjection = false;
         boolean hasAssertion = false;
 
         for (int i = 0; i < scenario.steps().size(); i++) {
@@ -92,8 +91,6 @@ public class DefaultScenarioValidator implements ScenarioValidator {
             validatePhase(step, errors, stepPath);
 
             if (step.phase() == Phase.INJECTION) {
-                hasInjection = true;
-                // Warning: timeout absent sur step INJECTION
                 if (step.timeout() == null) {
                     warnings.add(new ValidationWarning(stepPath + ".timeout",
                         "No timeout specified for INJECTION step. Default timeout will be used."));

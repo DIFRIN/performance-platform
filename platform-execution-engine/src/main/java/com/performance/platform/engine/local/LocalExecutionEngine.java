@@ -17,7 +17,6 @@ import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
-import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.engine.ExecutionEngine;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;

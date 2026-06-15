@@ -123,6 +123,8 @@ Ces décisions sont FINALES. Ne pas les re-discuter sans nouvel ADR.
 | Artefact | Un seul JAR, mode par config | ADR-005 |
 | Communication inter-modules | ApplicationEventPublisher uniquement | ADR-004 |
 | Domain model | Records Java 25 immuables | ADR-004 |
+| Spring-first infra | Utiliser composants Spring, no custom code si Spring le fournit | ADR-013 |
+| Config datasources | Références logiques dans scénario, JDBC dans application.yaml | ADR-014 |
 
 ---
 

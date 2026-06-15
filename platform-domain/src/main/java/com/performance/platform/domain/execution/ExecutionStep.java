@@ -6,7 +6,6 @@ import com.performance.platform.domain.scenario.StepDefinition;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * Etape du plan d'exécution dérivé du scenario.

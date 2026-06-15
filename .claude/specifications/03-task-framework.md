@@ -214,18 +214,62 @@ Les assertions accèdent au contexte via `context.getFirst(taskId, type)` ou
 
 ---
 
-## 6. Datasource Configuration
+## 6. Datasource Configuration (ADR-014)
 
-Les datasources sont configurées globalement dans `application.yaml` et référencées par nom :
+**Règle** : la config technique JDBC vit dans `application.yaml` sous
+`platform.datasources.<nom-logique>`. Le YAML de scénario ne référence qu'un **nom
+logique** — jamais de credentials (CNF-03, ADR-006). Les credentials passent par
+variables d'environnement.
+
+### 6.1 application.yaml — config technique
 
 ```yaml
-datasources:
-  customer-db:
-    url: jdbc:postgresql://localhost:5432/customers
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
-    driver: org.postgresql.Driver
+platform:
+  datasources:
+    customer-db:
+      url: jdbc:postgresql://localhost:5432/customers
+      username: ${DB_USER:postgres}
+      password: ${DB_PASSWORD:changeme}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+        connection-timeout: 30000
+    warehouse-db:
+      url: jdbc:postgresql://warehouse:5432/wh
+      username: ${WH_USER:postgres}
+      password: ${WH_PASSWORD:changeme}
+      driver-class-name: org.postgresql.Driver
 ```
+
+### 6.2 scenario.yaml — référence logique uniquement
+
+```yaml
+steps:
+  - id: purge-db
+    task: database
+    phase: PREPARATION
+    parameters:
+      operation: PURGE
+      datasource: customer-db      # ← résolu contre platform.datasources.customer-db
+      table: orders
+```
+
+### 6.3 Résolution nom logique → DataSource (Sous-option C1)
+
+`@ConfigurationProperties(prefix = "platform")` binde `platform.datasources.*` dans
+une `Map<String, DatasourceProperties>`. Un `@Bean DatasourceProvider` construit un
+`HikariDataSource` par entrée et l'enregistre par nom. Le `DatabaseTaskExecutor`
+injecte `DatasourceProvider` et résout via `datasourceProvider.get(name)`.
+
+- `PlatformDatasourcesProperties` (record `@ConfigurationProperties`)
+- `DatasourceConfiguration` (`@Bean DatasourceProvider`, construit les HikariDataSource)
+- `DatasourceProvider` : registre logique (n'est plus `@Component` — fourni par le `@Bean`)
+
+Si le scénario référence une datasource absente de `application.yaml` →
+`TaskResult.failed("No datasource registered for name: ...")`.
+
+Détail complet et code de référence : `.claude/adr/ADR-014-datasource-configuration.md`.
 
 ---
 
@@ -404,3 +448,27 @@ Contient **uniquement** :
     <scope>provided</scope>  <!-- provided : disponible au runtime de la plateforme -->
 </dependency>
 ```
+
+---
+
+## 8. Règle Spring-first — Composants à Utiliser (ADR-013)
+
+**Règle ferme (CC-05)** : pour tout composant de `platform-infrastructure`, vérifier
+d'abord si Spring/Spring Boot fournit un équivalent configurable. Ne coder custom que
+ce que Spring n'offre pas. Ne s'applique **jamais** à `platform-domain` ni
+`platform-plugin-api` (0 Spring — CF-08, ADR-004).
+
+| Besoin | À utiliser (Spring) | NE PAS coder à la main |
+|---|---|---|
+| Exécuter un script SQL | `ResourceDatabasePopulator` | `sql.split(";")` + boucle `Statement.execute` |
+| Lire une ressource `classpath:`/`file:` | `DefaultResourceLoader` → `Resource` | `getResourceAsStream` + `Files.readString` |
+| Pool de connexions JDBC | `HikariDataSource` | pool maison, `DriverManager` ad hoc |
+| Binding YAML → objet | `@ConfigurationProperties` (records) | parsing manuel de `Map<String,Object>` |
+| SQL simple (COUNT/EXISTS) | `JdbcTemplate` / `JdbcClient` | `Connection` + `PreparedStatement` manuels |
+| Transaction | `TransactionTemplate` / `@Transactional` | `setAutoCommit`/`commit`/`rollback` manuels |
+
+**Dépendances `platform-infrastructure`** : `spring-jdbc` + `HikariCP` (cf. ADR-013).
+
+> Note POPULATE : `ResourceDatabasePopulator` n'expose pas de `rowsAffected`. L'output
+> de POPULATE devient `scriptExecuted` (et non `rowsAffected`). PURGE conserve
+> `rowsAffected`. Détail : `.claude/adr/ADR-013-spring-first-infrastructure.md`.

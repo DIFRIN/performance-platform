@@ -160,7 +160,9 @@ com.performance.platform.<module>/
 | Consumer group Kafka par agent | `.claude/adr/ADR-009-kafka-consumer-group-per-agent.md` | — |
 | PartialExecutionContext | `.claude/adr/ADR-010-partial-execution-context.md` | — |
 | Multi-claim orchestrateur | `.claude/adr/ADR-011-multi-claim-all-complete.md` | — |
-| AgentLifecycleEvent séparé de ExecutionEvent | `.claude/adr/ADR-012-agent-lifecycle-event.md` | — |\n| AgentLifecycleEvent séparé de ExecutionEvent | `.claude/adr/ADR-012-agent-lifecycle-event.md` | — |
+| AgentLifecycleEvent séparé de ExecutionEvent | `.claude/adr/ADR-012-agent-lifecycle-event.md` | — |
+| Spring-first infra | `.claude/adr/ADR-013-spring-first-infrastructure.md` | — |
+| Config datasources | `.claude/adr/ADR-014-datasource-configuration.md` | — |
 | Avancement PDRs/Issues | `.claude/progress.md` | tableau Issues |
 | Détail d'un PDR | `.claude/pdr/PDR-XXX.md` | selon Issue active |
 | Détail d'une Issue | `.claude/issues/ISSUE-XXX.md` | Issue active uniquement |

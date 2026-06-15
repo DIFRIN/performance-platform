@@ -6,17 +6,15 @@ import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.HeartbeatScheduler;
 import com.performance.platform.agent.registration.RegistrationException;
 import com.performance.platform.agent.restart.ScenarioRestartHandler;
-import com.performance.platform.agent.restart.StatefulResourceCleaner;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.event.AgentSignal;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
-import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.id.*;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.TransportException;
-import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 
 import org.slf4j.Logger;

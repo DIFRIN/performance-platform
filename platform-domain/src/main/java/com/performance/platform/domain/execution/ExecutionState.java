@@ -5,7 +5,6 @@ import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.scenario.Phase;
 
 import java.time.Instant;
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 

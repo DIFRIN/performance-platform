@@ -117,7 +117,7 @@
 | ISSUE-037 | ScenarioRestart cleanup stateful | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-036 |
 | ISSUE-038 | LocalAgent | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-036,027 |
 | ISSUE-039 | TaskExecutorRegistry | PDR-010 | platform-infrastructure | M | DONE | ISSUE-011 |
-| ISSUE-040 | DatabaseTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
+| ISSUE-040 | DatabaseTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-041 | Kafka Consumer/Producer TaskExecutors | PDR-010 | platform-infrastructure | L | TODO | ISSUE-039 |
 | ISSUE-042 | MockServerTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
 | ISSUE-050 | Entities JPA + migrations Flyway | PDR-012 | platform-infrastructure | M | TODO | ISSUE-006,013 |
@@ -305,6 +305,9 @@
 | 2026-06-15 | PDR-010 | TODO → IN PROGRESS | Developer (ISSUE-039 started) |
 | 2026-06-15 | ISSUE-039 | IN REVIEW → CHANGES_REQUESTED | Reviewer |
 | 2026-06-15 | ISSUE-039 | CHANGES_REQUESTED → DONE | Reviewer (re-review, 2 CONFIRMED) |
+| 2026-06-15 | ISSUE-040 | TODO → IN PROGRESS | Developer |
+| 2026-06-15 | ISSUE-040 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-15 | ISSUE-040 | ADR-013 + ADR-014 appliqués | Developer |
 
 ---
 
