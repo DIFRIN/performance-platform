@@ -114,7 +114,7 @@
 | ISSUE-034 | AgentRegistrationPort + heartbeat | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-033 |
 | ISSUE-035 | AgentRegistry (orchestrateur) | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-034,013 |
 | ISSUE-036 | DistributedAgentRuntime | PDR-009 | platform-agent-runtime | L | DONE | ISSUE-033,034 |
-| ISSUE-037 | ScenarioRestart cleanup stateful | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-036 |
+| ISSUE-037 | ScenarioRestart cleanup stateful | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-036 |
 | ISSUE-038 | LocalAgent | PDR-009 | platform-agent-runtime | M | TODO | ISSUE-036,027 |
 | ISSUE-039 | TaskExecutorRegistry | PDR-010 | platform-infrastructure | M | TODO | ISSUE-011 |
 | ISSUE-040 | DatabaseTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
@@ -290,6 +290,8 @@
 | 2026-06-15 | ISSUE-036 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-15 | ISSUE-036 | IN REVIEW → APPROVED | Reviewer (0 bloquant, 5 recommandations PENDING) |
 | 2026-06-15 | ISSUE-036 | APPROVED → DONE | Reviewer (re-review, 3 CONFIRMED, 2 DEFERRED) |
+| 2026-06-15 | ISSUE-037 | TODO → IN PROGRESS | Developer |
+| 2026-06-15 | ISSUE-037 | IN PROGRESS → IN REVIEW | Developer |
 
 ---
 

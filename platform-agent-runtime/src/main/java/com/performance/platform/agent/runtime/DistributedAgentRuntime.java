@@ -5,15 +5,14 @@ import com.performance.platform.agent.filter.TaskSpecializationFilter;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.HeartbeatScheduler;
 import com.performance.platform.agent.registration.RegistrationException;
+import com.performance.platform.agent.restart.ScenarioRestartHandler;
+import com.performance.platform.agent.restart.StatefulResourceCleaner;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.event.AgentSignal;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
 import com.performance.platform.domain.execution.ExecutionContext;
-import com.performance.platform.domain.execution.PartialExecutionContext;
 import com.performance.platform.domain.id.*;
-import com.performance.platform.domain.scenario.StepDefinition;
-import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.TransportException;
@@ -44,9 +43,8 @@ import java.util.stream.Collectors;
  *   <li>Réception broadcast via {@link ExecutionTransport#receiveTask}</li>
  *   <li>Filtrage via {@link TaskSpecializationFilter} — match sur supportedTaskNames</li>
  *   <li>Si {@code Responsible} : vérification d'idempotence (MessageId déjà traité ?)</li>
- *   <li>Publication {@code TASK_CLAIMED} via {@link ExecutionTransport#publishEvent}</li>
- *   <li>Exécution sur {@code Virtual Thread} avec reporting périodique de progression</li>
- *   <li>Publication {@code TASK_COMPLETED} ou {@code TASK_FAILED}</li>
+ *   <li>Publication {@code TASK_CLAIMED} via {@link TaskExecutionPipeline#publishClaimEvent}</li>
+ *   <li>Exécution sur {@code Virtual Thread} via {@link TaskExecutionPipeline#execute}</li>
  * </ol>
  *
  * <h3>Multi-claim (ADR-011)</h3>
@@ -56,6 +54,10 @@ import java.util.stream.Collectors;
  * <h3>Idempotence</h3>
  * Les {@code MessageId} déjà traités sont ignorés. Le set est nettoyé périodiquement
  * (rétention basée sur le {@code taskExecutionTimeout}).
+ *
+ * <h3>ScenarioRestart</h3>
+ * Délégué à {@link ScenarioRestartHandler} qui orchestre le cleanup des ressources
+ * stateful, l'annulation des tâches actives et la transition d'état.
  *
  * <h3>Thread safety</h3>
  * Tous les champs mutables utilisent des structures concurrentes :
@@ -72,9 +74,13 @@ public class DistributedAgentRuntime implements AgentRuntime {
     private final TaskSpecializationFilter filter;
     private final AgentRegistrationPort registrationPort;
     private final HeartbeatScheduler heartbeatScheduler;
-    private final Map<String, TaskExecutor> taskExecutors;
     private final AgentDescriptor staticDescriptor;
     private final Duration taskExecutionTimeout;
+
+    // === Collaborateurs ===
+
+    private final TaskExecutionPipeline taskPipeline;
+    private final ScenarioRestartHandler restartHandler;
 
     // === État concurrent ===
 
@@ -100,9 +106,6 @@ public class DistributedAgentRuntime implements AgentRuntime {
     /** Executor pour l'exécution des tâches (Virtual Threads). */
     private final ExecutorService taskExecutorService = Executors.newVirtualThreadPerTaskExecutor();
 
-    /** TaskName utilisé pour les TaskResult wrappers dans le bridge PartialExecutionContext → ExecutionContext. */
-    private static final String PARTIAL_TASK_WRAPPER = "_partial_";
-
     // === Verrou pour start/stop ===
 
     private final Object lifecycleLock = new Object();
@@ -119,6 +122,7 @@ public class DistributedAgentRuntime implements AgentRuntime {
      * @param heartbeatInterval    l'intervalle entre deux heartbeats
      * @param taskExecutionTimeout le timeout d'exécution d'une tâche (utilisé pour le reporting)
      * @param taskExecutors        la liste des {@link TaskExecutor} disponibles (résolus par taskName)
+     * @param cleaners             la liste des {@link StatefulResourceCleaner} (peut être vide)
      */
     public DistributedAgentRuntime(
             ExecutionTransport transport,
@@ -127,7 +131,8 @@ public class DistributedAgentRuntime implements AgentRuntime {
             AgentDescriptor descriptor,
             Duration heartbeatInterval,
             Duration taskExecutionTimeout,
-            List<TaskExecutor> taskExecutors
+            List<TaskExecutor> taskExecutors,
+            List<StatefulResourceCleaner> cleaners
     ) {
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
         this.filter = Objects.requireNonNull(filter, "filter must not be null");
@@ -138,7 +143,7 @@ public class DistributedAgentRuntime implements AgentRuntime {
             throw new IllegalArgumentException("taskExecutionTimeout must be positive, got " + taskExecutionTimeout);
         }
         Objects.requireNonNull(taskExecutors, "taskExecutors must not be null");
-        this.taskExecutors = taskExecutors.stream()
+        var executorMap = taskExecutors.stream()
                 .collect(Collectors.toUnmodifiableMap(
                         TaskExecutor::getSupportedTaskName,
                         Function.identity(),
@@ -159,6 +164,15 @@ public class DistributedAgentRuntime implements AgentRuntime {
                 this::getState,
                 activeTaskCount::get
         );
+
+        this.taskPipeline = new TaskExecutionPipeline(
+                transport, executorMap, descriptor.id(),
+                progressScheduler, taskExecutionTimeout,
+                activeTasks, activeTaskCount, currentState
+        );
+
+        this.restartHandler = new ScenarioRestartHandler(
+                Objects.requireNonNull(cleaners, "cleaners must not be null"));
     }
 
     // === AgentRuntime ===
@@ -235,29 +249,8 @@ public class DistributedAgentRuntime implements AgentRuntime {
                 staticDescriptor.id().value(), activeTaskCount.get());
         currentState.set(AgentState.DRAINING);
 
-        // Attendre la fin des tâches actives (avec timeout)
-        long drainTimeoutMs = taskExecutionTimeout.toMillis() * 2;
-        long deadline = System.currentTimeMillis() + drainTimeoutMs;
-        while (activeTaskCount.get() > 0 && System.currentTimeMillis() < deadline) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
-        int remaining = activeTaskCount.get();
-        if (remaining > 0) {
-            log.warn("action=drain_timeout agentId={} remainingTasks={} cancelling",
-                    staticDescriptor.id().value(), remaining);
-            // Annuler les tâches restantes
-            for (var entry : activeTasks.entrySet()) {
-                entry.getValue().cancel(true);
-            }
-            activeTasks.clear();
-            activeTaskCount.set(0);
-        }
+        // Drain des tâches actives avec timeout
+        drainActiveTasks();
 
         // Arrêter le heartbeat
         heartbeatScheduler.stop();
@@ -310,34 +303,11 @@ public class DistributedAgentRuntime implements AgentRuntime {
                 signal.executionId() != null ? signal.executionId().value() : "ALL",
                 signal.reason());
 
-        // Annuler les tâches correspondant à l'executionId (ou toutes si null)
-        var targetExecutionId = signal.executionId();
-        var toCancel = new ArrayList<Map.Entry<MessageId, Future<?>>>();
+        restartHandler.onSignal(signal, activeTasks, activeTaskCount, currentState,
+                staticDescriptor.id());
 
-        for (var entry : activeTasks.entrySet()) {
-            if (targetExecutionId == null || matchesExecutionId(entry.getKey(), targetExecutionId)) {
-                toCancel.add(entry);
-            }
-        }
-
-        for (var entry : toCancel) {
-            log.info("action=cancel_task agentId={} messageId={} reason=scenario_restart",
-                    staticDescriptor.id().value(), entry.getKey().value());
-            entry.getValue().cancel(true);
-            // Remove atomically — si déjà retiré par executeTask, ne pas double-décrémenter
-            if (activeTasks.remove(entry.getKey()) != null) {
-                activeTaskCount.decrementAndGet();
-            }
-        }
-
-        // Repasser à IDLE si plus aucune tâche active
-        if (activeTaskCount.get() == 0) {
-            currentState.compareAndSet(AgentState.EXECUTING, AgentState.IDLE);
-            currentState.compareAndSet(AgentState.DRAINING, AgentState.IDLE);
-        }
-
-        log.info("action=scenario_restart_complete agentId={} cancelledTasks={} remainingTasks={}",
-                staticDescriptor.id().value(), toCancel.size(), activeTaskCount.get());
+        log.info("action=scenario_restart_complete agentId={} remainingTasks={}",
+                staticDescriptor.id().value(), activeTaskCount.get());
     }
 
     // === Réception de tâche (broadcast) ===
@@ -346,7 +316,7 @@ public class DistributedAgentRuntime implements AgentRuntime {
      * Handler appelé par le transport à la réception d'une {@link TaskExecutionRequest}.
      * <p>
      * Exécuté sur le thread du transport (peut être un Virtual Thread selon l'implémentation).
-     * La tâche elle-même est soumise à un Virtual Thread dédié.
+     * La tâche elle-même est soumise à un Virtual Thread dédié via {@link TaskExecutionPipeline}.
      */
     private void onTaskReceived(TaskExecutionRequest request) {
         if (currentState.get() == AgentState.OFFLINE || currentState.get() == AgentState.DRAINING) {
@@ -377,17 +347,14 @@ public class DistributedAgentRuntime implements AgentRuntime {
                 request.id().value(), request.step().taskName());
 
         // 3. Publication du claim
-        publishExecutionEvent(request, ExecutionEvent.TASK_CLAIMED, Map.of(
-                "taskName", request.step().taskName(),
-                "agentId", staticDescriptor.id().value()
-        ));
+        taskPipeline.publishClaimEvent(request);
 
         // 4. Transition d'état
         currentState.compareAndSet(AgentState.IDLE, AgentState.EXECUTING);
         activeTaskCount.incrementAndGet();
 
         // 5. Exécution asynchrone sur Virtual Thread
-        var future = taskExecutorService.submit(() -> executeTask(request));
+        var future = taskExecutorService.submit(() -> taskPipeline.execute(request));
         activeTasks.put(request.id(), future);
     }
 
@@ -402,224 +369,42 @@ public class DistributedAgentRuntime implements AgentRuntime {
         }
     }
 
-    // === Exécution de tâche ===
+    // === Drain des tâches actives ===
 
     /**
-     * Exécute une tâche sur le thread courant (Virtual Thread).
-     * Gère le reporting périodique de progression et la publication du résultat.
+     * Attend la fin des tâches actives (avec timeout), puis annule les restantes.
      */
-    private void executeTask(TaskExecutionRequest request) {
-        var startTime = Instant.now();
-        var step = request.step();
-        var executionId = request.executionId();
-        var taskId = step.id();
-        var agentId = staticDescriptor.id();
-        var messageId = request.id();
-
-        ScheduledFuture<?> progressFuture = null;
-
-        try {
-            // Démarrer le reporting périodique de progression
-            long progressIntervalMs = Math.max(1_000, taskExecutionTimeout.toMillis() / 3);
-            progressFuture = progressScheduler.scheduleAtFixedRate(
-                    () -> publishProgress(executionId, taskId, agentId, messageId),
-                    progressIntervalMs,
-                    progressIntervalMs,
-                    TimeUnit.MILLISECONDS
-            );
-
-            // Résoudre le TaskExecutor
-            var executor = taskExecutors.get(step.taskName());
-            if (executor == null) {
-                log.error("action=no_executor agentId={} taskName={} messageId={}",
-                        agentId.value(), step.taskName(), messageId.value());
-                var failedResult = TaskResult.failed(
-                        taskId, step.taskName(), Duration.ZERO,
-                        "No TaskExecutor registered for taskName=" + step.taskName(), null);
-                publishTaskCompleted(request, failedResult);
-                return;
-            }
-
-            // Construire l'ExecutionContext à partir du PartialExecutionContext
-            var executionContext = toExecutionContext(request.context());
-
-            // Exécuter la tâche
-            var result = executor.execute(executionContext, step);
-            var duration = Duration.between(startTime, Instant.now());
-
-            // Publier le résultat
-            publishTaskCompleted(request, result);
-
-            log.info("action=task_executed agentId={} executionId={} taskName={} status={} durationMs={}",
-                    agentId.value(), executionId.value(), step.taskName(),
-                    result.status(), duration.toMillis());
-
-        } catch (Exception e) {
-            log.error("action=task_execution_error agentId={} executionId={} taskName={}",
-                    agentId.value(), executionId.value(), step.taskName(), e);
-            var duration = Duration.between(startTime, Instant.now());
-            var failedResult = TaskResult.failed(
-                    taskId, step.taskName(), duration, e.getMessage(), e);
-            publishTaskCompleted(request, failedResult);
-
-        } finally {
-            // Arrêter le reporting de progression
-            if (progressFuture != null) {
-                progressFuture.cancel(false);
-            }
-
-            // Nettoyer (remove retourne null si déjà retiré par onScenarioRestart)
-            if (activeTasks.remove(messageId) != null) {
-                int remaining = activeTaskCount.decrementAndGet();
-
-                // Transition d'état si plus aucune tâche active
-                if (remaining == 0) {
-                    var current = currentState.get();
-                    if (current == AgentState.EXECUTING) {
-                        currentState.compareAndSet(AgentState.EXECUTING, AgentState.IDLE);
-                    }
-                }
+    private void drainActiveTasks() {
+        long drainTimeoutMs = taskExecutionTimeout.toMillis() * 2;
+        long deadline = System.currentTimeMillis() + drainTimeoutMs;
+        while (activeTaskCount.get() > 0 && System.currentTimeMillis() < deadline) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
             }
         }
-    }
 
-    // === Helpers de publication d'événements ===
-
-    private void publishExecutionEvent(TaskExecutionRequest request, String eventType,
-                                        Map<String, Object> extraPayload) {
-        var payload = new LinkedHashMap<>(extraPayload);
-        payload.put("taskName", request.step().taskName());
-        payload.put("taskId", request.step().id().value());
-
-        var event = ExecutionEvent.of(
-                EventId.generate(),
-                request.executionId(),
-                request.id(),
-                staticDescriptor.id(),
-                eventType,
-                payload,
-                Instant.now()
-        );
-
-        try {
-            transport.publishEvent(event);
-        } catch (TransportException e) {
-            log.warn("action=publish_event_failed agentId={} eventType={} executionId={}",
-                    staticDescriptor.id().value(), eventType,
-                    request.executionId().value(), e);
-        }
-    }
-
-    private void publishTaskCompleted(TaskExecutionRequest request, TaskResult result) {
-        var eventType = result.isSuccess()
-                ? ExecutionEvent.TASK_COMPLETED
-                : ExecutionEvent.TASK_FAILED;
-
-        var payload = new LinkedHashMap<String, Object>();
-        payload.put("taskName", result.taskName());
-        payload.put("taskId", result.taskId().value());
-        payload.put("status", result.status().name());
-        payload.put("durationMs", result.duration().toMillis());
-        if (!result.isSuccess() && result.errorMessage() != null) {
-            payload.put("error", result.errorMessage());
-        }
-        // Inclure les outputs pour TASK_COMPLETED
-        if (result.isSuccess() && !result.outputs().isEmpty()) {
-            payload.put("outputs", result.outputs());
-        }
-
-        var event = ExecutionEvent.of(
-                EventId.generate(),
-                request.executionId(),
-                request.id(),
-                staticDescriptor.id(),
-                eventType,
-                payload,
-                Instant.now()
-        );
-
-        try {
-            transport.publishEvent(event);
-        } catch (TransportException e) {
-            log.warn("action=publish_result_failed agentId={} eventType={} executionId={}",
-                    staticDescriptor.id().value(), eventType,
-                    request.executionId().value(), e);
-        }
-    }
-
-    private void publishProgress(ExecutionId executionId, TaskId taskId,
-                                  AgentId agentId, MessageId messageId) {
-        var payload = new LinkedHashMap<String, Object>();
-        payload.put("taskId", taskId.value());
-        payload.put("agentId", agentId.value());
-        payload.put("messageId", messageId.value());
-
-        var event = ExecutionEvent.of(
-                EventId.generate(),
-                executionId,
-                messageId,
-                agentId,
-                ExecutionEvent.TASK_WORK_IN_PROGRESS,
-                payload,
-                Instant.now()
-        );
-
-        try {
-            transport.publishEvent(event);
-        } catch (TransportException e) {
-            log.debug("action=publish_progress_failed agentId={} executionId={}",
-                    agentId.value(), executionId.value(), e);
-        }
-    }
-
-    // === Conversion PartialExecutionContext → ExecutionContext ===
-
-    /**
-     * Convertit un {@link PartialExecutionContext} (côté agent) en
-     * {@link ExecutionContext} compatible avec {@link TaskExecutor#execute}.
-     * <p>
-     * Chaque entrée du store partiel (Object) est wrappée dans un {@link TaskResult}
-     * factice pour satisfaire le contrat de {@link ExecutionContext#get}
-     * et {@link ExecutionContext#getFirst}.
-     */
-    private ExecutionContext toExecutionContext(PartialExecutionContext partial) {
-        Map<String, Map<String, TaskResult>> store = new HashMap<>();
-
-        for (var entry : partial.store().entrySet()) {
-            var taskId = entry.getKey();
-            var agentResults = new HashMap<String, TaskResult>();
-            for (var agentEntry : entry.getValue().entrySet()) {
-                var wrapperResult = TaskResult.success(
-                        TaskId.of(taskId),
-                        PARTIAL_TASK_WRAPPER,
-                        Duration.ZERO,
-                        Map.of("value", agentEntry.getValue())
-                );
-                agentResults.put(agentEntry.getKey(), wrapperResult);
+        int remaining = activeTaskCount.get();
+        if (remaining > 0) {
+            log.warn("action=drain_timeout agentId={} remainingTasks={} cancelling",
+                    staticDescriptor.id().value(), remaining);
+            for (var entry : activeTasks.entrySet()) {
+                entry.getValue().cancel(true);
             }
-            store.put(taskId, Map.copyOf(agentResults));
+            activeTasks.clear();
+            activeTaskCount.set(0);
         }
-
-        return new ExecutionContext(
-                partial.executionId(),
-                partial.scenarioId(),
-                Map.copyOf(store)
-        );
     }
 
     // === Nettoyage des MessageId expirés ===
 
     /**
      * Nettoie périodiquement le set des MessageId déjà traités pour éviter
-     * une fuite mémoire. Supprime les entrées plus anciennes que
-     * {@code 2 × taskExecutionTimeout}.
+     * une fuite mémoire. Supprime les entrées si le set dépasse un seuil raisonnable.
      */
     private void cleanupExpiredMessageIds() {
-        // Stratégie simple : on nettoie si le set dépasse un seuil raisonnable
-        // car on ne stocke pas de timestamp par MessageId.
-        // On vide complètement le set — les messages en double arrivent
-        // dans une fenêtre courte (retry transport), donc un nettoyage
-        // périodique à 2× taskExecutionTimeout est sûr.
         int beforeSize = processedMessageIds.size();
         if (beforeSize > 10_000) {
             processedMessageIds.clear();
@@ -644,22 +429,9 @@ public class DistributedAgentRuntime implements AgentRuntime {
                 staticDescriptor.capabilities(),
                 currentState.get(),
                 staticDescriptor.registeredAt(),
-                Instant.now(), // lastHeartbeatAt mis à jour localement
+                Instant.now(),
                 Duration.ofSeconds(heartbeatScheduler.registrationTtlSeconds())
         );
-    }
-
-    /**
-     * Vérifie si un MessageId est associé à un ExecutionId donné.
-     * Simplification : on ne peut pas retrouver l'executionId depuis le MessageId seul
-     * sans le conserver. Pour le restart, on annule toutes les tâches si executionId
-     * n'est pas trouvé dans le cache.
-     */
-    private boolean matchesExecutionId(MessageId messageId, ExecutionId targetExecutionId) {
-        // Note: on ne conserve pas le mapping MessageId → ExecutionId dans cette version.
-        // En pratique, un ScenarioRestart avec executionId non-null annulera toutes les
-        // tâches (comportement conservateur). L'optimisation viendra avec ISSUE-037.
-        return true;
     }
 
     // === Accesseurs package-private pour les tests ===
@@ -681,6 +453,10 @@ public class DistributedAgentRuntime implements AgentRuntime {
     }
 
     int executorCount() {
-        return taskExecutors.size();
+        return taskPipeline.executorCount();
+    }
+
+    int cleanerCount() {
+        return restartHandler.cleanerCount();
     }
 }

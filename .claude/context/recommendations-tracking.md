@@ -255,7 +255,7 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-035] [2026-06-14] [APPLIED] [TEST-06] Thread.sleep() remplacer par Awaitility dans InMemoryAgentRegistryTest
 [ISSUE-035] [2026-06-14] [APPLIED] [SPEC] Annotations Spring @Component/@ConditionalOnProperty manquantes sur InMemoryAgentRegistry
 [ISSUE-035] [2026-06-14] [APPLIED] [SPEC-04] AgentTtlMonitor ne publie pas l'event AgentLost
-[ISSUE-036] [2026-06-15] [DEFERRED→ISSUE-037] [CRAFT-05] DistributedAgentRuntime 684 lignes (>300), start() 55 lignes, stop() 66 lignes, executeTask() 73 lignes — extraction recommandée dans ISSUE-037
+[ISSUE-036] [2026-06-15] [APPLIED] [CRAFT-05] DistributedAgentRuntime 684 lignes (>300) → 462 lignes — extraction TaskExecutionPipeline (274) + ScenarioRestartHandler (127) dans ISSUE-037
 [ISSUE-036] [2026-06-15] [CONFIRMED] [CRAFT-08] Magic string "_partial_" dans toExecutionContext() → extraite en constante PARTIAL_TASK_WRAPPER
 [ISSUE-036] [2026-06-15] [CONFIRMED] [TEST-06] Deux Thread.sleep() résiduels → remplacés par await().pollDelay()
 [ISSUE-036] [2026-06-15] [CONFIRMED] [IMPORT-01] Import inutilisé TaskStatus supprimé
