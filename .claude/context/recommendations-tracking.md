@@ -260,6 +260,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-036] [2026-06-15] [CONFIRMED] [TEST-06] Deux Thread.sleep() résiduels → remplacés par await().pollDelay()
 [ISSUE-036] [2026-06-15] [CONFIRMED] [IMPORT-01] Import inutilisé TaskStatus supprimé
 [ISSUE-036] [2026-06-15] [DEFERRED→ISSUE-039] [DESIGN] toExecutionContext() Partial→ExecutionContext — workaround à formaliser dans ISSUE-039
+[ISSUE-039] [2026-06-15] [CONFIRMED] [CRAFT-02/CRAFT-08] getSupportedTaskNames() retourne Collections.unmodifiableSet (vue muable) au lieu de Set.copyOf (snapshot immuable) — Javadoc incorrecte
+[ISSUE-039] [2026-06-15] [CONFIRMED] [CRAFT-01] UnsupportedTaskTypeException contient "TaskType" (terme anti-glossaire) → renommer en UnsupportedTaskNameException
 
 ---
 

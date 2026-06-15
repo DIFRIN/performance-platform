@@ -28,6 +28,7 @@
         <module>platform-execution-engine</module>
         <module>platform-transport</module>
         <module>platform-agent-runtime</module>
+        <module>platform-infrastructure</module>
     </modules>
 
     <dependencyManagement>
