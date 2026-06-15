@@ -6,7 +6,6 @@ import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.domain.task.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

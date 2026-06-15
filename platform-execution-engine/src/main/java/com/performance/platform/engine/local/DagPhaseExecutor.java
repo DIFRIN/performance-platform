@@ -1,6 +1,5 @@
 package com.performance.platform.engine.local;
 
-import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.event.TaskCompleted;
 import com.performance.platform.domain.event.TaskFailed;
 import com.performance.platform.domain.execution.ExecutionContext;

@@ -6,7 +6,6 @@ import com.performance.platform.domain.agent.AgentHeartbeat;
 import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.transport.AgentLifecycleEvent;
-import com.performance.platform.transport.AgentLifecycleEventHandler;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.Subscription;
 import com.performance.platform.transport.TransportException;

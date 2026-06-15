@@ -1,6 +1,5 @@
 package com.performance.platform.agent.registry;
 
-import com.performance.platform.application.ports.out.AgentRegistryPort;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentHeartbeat;
 import com.performance.platform.domain.id.AgentId;

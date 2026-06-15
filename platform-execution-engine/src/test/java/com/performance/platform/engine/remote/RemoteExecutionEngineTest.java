@@ -18,7 +18,6 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.engine.availability.AgentAvailabilityChecker;
 import com.performance.platform.engine.correlation.DefaultTaskCorrelationTracker;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
@@ -105,10 +104,6 @@ class RemoteExecutionEngineTest {
 
     private ExecutionStep execStep(StepDefinition stepDef, List<TaskId> deps, int dagLevel, Set<String> requiredKeys) {
         return new ExecutionStep(stepDef, deps == null ? List.of() : deps, dagLevel, requiredKeys);
-    }
-
-    private ExecutionStep execStep(StepDefinition stepDef, List<TaskId> deps, int dagLevel) {
-        return execStep(stepDef, deps, dagLevel, Set.of());
     }
 
     /**
@@ -236,7 +231,7 @@ class RemoteExecutionEngineTest {
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, config, eventPublisher);
 
-            Thread engineThread = startInThread(() -> engine.execute(sc));
+            startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
 
             TaskExecutionRequest req = transport.dispatchedRequests.get(0);
@@ -263,7 +258,7 @@ class RemoteExecutionEngineTest {
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, allComplete, eventPublisher);
 
-            Thread engineThread = startInThread(() -> engine.execute(sc));
+            startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
 
             TaskExecutionRequest req = transport.dispatchedRequests.get(0);
@@ -622,6 +617,13 @@ class RemoteExecutionEngineTest {
         @Override public void disconnect() {}
         @Override public boolean isConnected() { return true; }
         @Override public TransportType getType() { return TransportType.IN_MEMORY; }
+        @Override public void publishAgentEvent(AgentLifecycleEvent event) {}
+        @Override public Subscription subscribeAgentEvents(AgentLifecycleEventHandler handler) {
+            return new Subscription() {
+                @Override public void cancel() {}
+                @Override public boolean isActive() { return true; }
+            };
+        }
 
         void fireEvent(ExecutionEvent event) {
             if (eventHandler != null) eventHandler.onEvent(event);

@@ -4,7 +4,6 @@ import com.performance.platform.application.exception.InvalidScenarioException;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionStep;
-import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;

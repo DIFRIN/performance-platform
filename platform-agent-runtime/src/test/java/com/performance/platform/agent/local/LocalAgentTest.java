@@ -1,6 +1,6 @@
 package com.performance.platform.agent.local;
 
-import com.performance.platform.agent.restart.StatefulResourceCleaner;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
@@ -546,7 +546,7 @@ class LocalAgentTest {
         @Test
         @DisplayName("should cancel active tasks and return to IDLE on restart signal")
         void shouldCancelActiveTasksOnRestart() {
-            var events = captureExecutionEvents();
+            captureExecutionEvents();
             var blockLatch = new CountDownLatch(1);
             var interrupted = new AtomicReference<>(false);
 
@@ -778,7 +778,7 @@ class LocalAgentTest {
         @Test
         @DisplayName("should reflect executing state when tasks are active")
         void shouldReflectExecutingState() {
-            var events = captureExecutionEvents();
+            captureExecutionEvents();
             var startedLatch = new CountDownLatch(1);
             var releaseLatch = new CountDownLatch(1);
 

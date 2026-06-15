@@ -93,6 +93,7 @@
 | `@Assertion` ⚡ | ✅ STABLE | PDR-003 | ISSUE-010 |
 | `TaskExecutor` ⚡ | ✅ STABLE | PDR-003 | ISSUE-011 |
 | `AssertionExecutor` | ✅ STABLE | PDR-003 | ISSUE-011 |
+| `StatefulResourceCleaner` | 🔄 IN PROGRESS | PDR-009/PDR-010 | ISSUE-040 |
 
 ## platform-application (Ports)
 
@@ -177,7 +178,10 @@
 | `TaskExecutorRegistry` | ✅ STABLE | PDR-010 | ISSUE-039 |
 | `DefaultTaskExecutorRegistry` | ✅ STABLE | PDR-010 | ISSUE-039 |
 | `UnsupportedTaskNameException` | ✅ STABLE | PDR-010 | ISSUE-039 |
-| `DatabaseTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-040 |
+| `DatabaseTaskExecutor` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 |
+| `DatasourceProvider` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 |
+| `PlatformDatasourcesProperties` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 (ADR-014) |
+| `DatasourceConfiguration` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 (ADR-014) |
 | `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-041 |
 | `MockServerTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-042 |
 | `ShellTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-043 |

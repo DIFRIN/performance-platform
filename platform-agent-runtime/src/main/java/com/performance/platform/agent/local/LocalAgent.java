@@ -4,7 +4,7 @@ import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.filter.TaskFilterResult;
 import com.performance.platform.agent.filter.TaskSpecializationFilter;
 import com.performance.platform.agent.restart.ScenarioRestartHandler;
-import com.performance.platform.agent.restart.StatefulResourceCleaner;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.agent.runtime.AgentRuntime;
 import com.performance.platform.agent.runtime.TaskExecutionPipeline;
 import com.performance.platform.domain.agent.AgentDescriptor;
@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;

@@ -1,6 +1,5 @@
 package com.performance.platform.scenario.validation;
 
-import com.performance.platform.domain.execution.RetryPolicy;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.injection.LoadModel;

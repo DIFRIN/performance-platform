@@ -6,6 +6,7 @@ import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.SignalId;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 @DisplayName("ScenarioRestartHandler")
 class ScenarioRestartHandlerTest {
