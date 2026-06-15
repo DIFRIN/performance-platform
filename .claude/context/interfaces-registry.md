@@ -167,7 +167,7 @@
 | `AgentRegistry` / `InMemoryAgentRegistry` / `AgentTtlMonitor` | ✅ STABLE | PDR-009 | ISSUE-035 |
 | `AgentRuntime` / `DistributedAgentRuntime` | ✅ STABLE | PDR-009 | ISSUE-036 |
 | `StatefulResourceCleaner` / `ScenarioRestartHandler` | ✅ STABLE | PDR-009 | ISSUE-037 |
-| `LocalAgent` | 🔄 IN PROGRESS | PDR-009 | ISSUE-038 |
+| `LocalAgent` | ✅ STABLE | PDR-009 | ISSUE-038 |
 | `AgentAllocator` | ❌ REMOVED | ADR-008 | — |
 
 ## platform-infrastructure — `.executor` (PDR-010)
