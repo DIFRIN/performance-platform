@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-15
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-039 (TaskExecutorRegistry)
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-010 (Task Executors infra .executor) — IN PROGRESS
 
 ---
@@ -22,25 +22,23 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : corrige les 2 recommandations PENDING ISSUE-039 :
-  - [CRAFT-01] UnsupportedTaskTypeException → UnsupportedTaskNameException (classe + fichier + toutes les references)
-  - [CRAFT-02/CRAFT-08] Collections.unmodifiableSet() → Set.copyOf() dans DefaultTaskExecutorRegistry
-  - mvn test -pl platform-infrastructure : OK
-  - recommendations-tracking.md : [CRAFT-01] et [CRAFT-02] PENDING → APPLIED
-  - interfaces-registry.md : UnsupportedTaskTypeException → UnsupportedTaskNameException
+Reviewer : re-review ISSUE-039 — APPROVED
+  - [CRAFT-01] UnsupportedTaskNameException CONFIRMED (classe creee, ancienne supprimee, toutes references mises a jour)
+  - [CRAFT-02/CRAFT-08] Set.copyOf() CONFIRMED (snapshot immuable, test verifie UnsupportedOperationException)
+  - mvn test -pl platform-infrastructure : 15 tests, 0 failures, BUILD SUCCESS
+  - recommendations-tracking.md : [CRAFT-01] et [CRAFT-02] APPLIED → CONFIRMED
+  - progress.md : ISSUE-039 CHANGES_REQUESTED → DONE
+  - interfaces-registry.md : TaskExecutorRegistry, DefaultTaskExecutorRegistry, UnsupportedTaskNameException IN PROGRESS → STABLE
+  - Commit effectue
 
 **Prochaine action** :
-@reviewer rereview ISSUE-039 — les 2 recommandations sont APPLIED, le code est pret pour re-review.
+Developer : prendre ISSUE-040 (DatabaseTaskExecutor) — prochaine issue TODO dans PDR-010
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/src/main/java/.../executor/TaskExecutorRegistry.java — UnsupportedTaskNameException
-✅ platform-infrastructure/src/main/java/.../executor/DefaultTaskExecutorRegistry.java — Set.copyOf() + UnsupportedTaskNameException
-✅ platform-infrastructure/src/main/java/.../executor/UnsupportedTaskNameException.java — nouveau (renomme depuis UnsupportedTaskTypeException.java)
-❌ platform-infrastructure/src/main/java/.../executor/UnsupportedTaskTypeException.java — supprime
-✅ platform-infrastructure/src/test/java/.../executor/DefaultTaskExecutorRegistryTest.java — UnsupportedTaskNameException
-✅ recommendations-tracking.md — [CRAFT-01] et [CRAFT-02] PENDING → APPLIED
-✅ interfaces-registry.md — UnsupportedTaskNameException
+✅ recommendations-tracking.md — [CRAFT-01] et [CRAFT-02] APPLIED → CONFIRMED
+✅ progress.md — ISSUE-039 CHANGES_REQUESTED → DONE + history
+✅ interfaces-registry.md — 3 types IN PROGRESS → STABLE
 ✅ session-state.md — ce fichier
 ```
 

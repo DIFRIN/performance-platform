@@ -174,9 +174,9 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `TaskExecutorRegistry` | 🔄 IN PROGRESS | PDR-010 | ISSUE-039 |
-| `DefaultTaskExecutorRegistry` | 🔄 IN PROGRESS | PDR-010 | ISSUE-039 |
-| `UnsupportedTaskNameException` | 🔄 IN PROGRESS | PDR-010 | ISSUE-039 |
+| `TaskExecutorRegistry` | ✅ STABLE | PDR-010 | ISSUE-039 |
+| `DefaultTaskExecutorRegistry` | ✅ STABLE | PDR-010 | ISSUE-039 |
+| `UnsupportedTaskNameException` | ✅ STABLE | PDR-010 | ISSUE-039 |
 | `DatabaseTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-040 |
 | `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-041 |
 | `MockServerTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-042 |
