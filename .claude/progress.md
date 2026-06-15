@@ -58,7 +58,7 @@
 | PDR-007 | Transport Layer Core | platform-transport | DONE | ISSUE-025,026,027 | PDR-001, PDR-002 |
 | PDR-008 | Transport Implementations | platform-transport | TODO | ISSUE-028..032 | PDR-001,002,007 |
 | PDR-009 | Agent Runtime | platform-agent-runtime | DONE | ISSUE-033..038 | PDR-001,002,004,007 |
-| PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | TODO | ISSUE-039..045 | PDR-001,003,004 |
+| PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | IN PROGRESS | ISSUE-039..045 | PDR-001,003,004 |
 | PDR-011 | Plugin System (infra `.plugin`) | platform-infrastructure | TODO | ISSUE-046..049 | PDR-001,003,010 |
 | PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | TODO | ISSUE-050..053 | PDR-001,004 |
 | PDR-013 | Gatling Injection | platform-injection-gatling | TODO | ISSUE-054..058 | PDR-001,003 |
@@ -116,7 +116,7 @@
 | ISSUE-036 | DistributedAgentRuntime | PDR-009 | platform-agent-runtime | L | DONE | ISSUE-033,034 |
 | ISSUE-037 | ScenarioRestart cleanup stateful | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-036 |
 | ISSUE-038 | LocalAgent | PDR-009 | platform-agent-runtime | M | DONE | ISSUE-036,027 |
-| ISSUE-039 | TaskExecutorRegistry | PDR-010 | platform-infrastructure | M | TODO | ISSUE-011 |
+| ISSUE-039 | TaskExecutorRegistry | PDR-010 | platform-infrastructure | M | DONE | ISSUE-011 |
 | ISSUE-040 | DatabaseTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
 | ISSUE-041 | Kafka Consumer/Producer TaskExecutors | PDR-010 | platform-infrastructure | L | TODO | ISSUE-039 |
 | ISSUE-042 | MockServerTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
@@ -301,6 +301,9 @@
 | 2026-06-15 | ISSUE-037 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-15 | ISSUE-038 | TODO → IN PROGRESS | Developer |
 | 2026-06-15 | ISSUE-038 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-15 | ISSUE-039 | TODO → IN PROGRESS | Developer |
+| 2026-06-15 | PDR-010 | TODO → IN PROGRESS | Developer (ISSUE-039 started) |
+| 2026-06-15 | ISSUE-039 | IN REVIEW → CHANGES_REQUESTED | Reviewer |
 
 ---
 
@@ -309,4 +312,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-15 (ISSUE-038 IN REVIEW — LocalAgent implemente, PDR-009 complet une fois reviewed)
+**Dernière mise à jour** : 2026-06-15 (ISSUE-039 IN REVIEW — TaskExecutorRegistry implemente)

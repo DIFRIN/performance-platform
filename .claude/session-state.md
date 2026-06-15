@@ -10,10 +10,10 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-15
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-038 (LocalAgent)
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [x] DONE
-**PDR parent** : PDR-009 (agent-runtime) — DONE
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-039 (TaskExecutorRegistry)
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**PDR parent** : PDR-010 (Task Executors infra .executor) — IN PROGRESS
 
 ---
 
@@ -22,22 +22,25 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Reviewer : revue ISSUE-038 → APPROVED (0 bloquant, 0 recommandation).
-  - LocalAgent + TaskExecutionPipeline public : clean.
-  - 149 tests OK (114 existants + 35 LocalAgentTest).
-  - PDR-009 (Agent Runtime) : IN PROGRESS → DONE (ISSUE-033..038 all DONE).
-  - ISSUE-038 : IN REVIEW → DONE. Interfaces : IN PROGRESS → STABLE.
-  - Commit execute.
+Developer : corrige les 2 recommandations PENDING ISSUE-039 :
+  - [CRAFT-01] UnsupportedTaskTypeException → UnsupportedTaskNameException (classe + fichier + toutes les references)
+  - [CRAFT-02/CRAFT-08] Collections.unmodifiableSet() → Set.copyOf() dans DefaultTaskExecutorRegistry
+  - mvn test -pl platform-infrastructure : OK
+  - recommendations-tracking.md : [CRAFT-01] et [CRAFT-02] PENDING → APPLIED
+  - interfaces-registry.md : UnsupportedTaskTypeException → UnsupportedTaskNameException
 
 **Prochaine action** :
-Developer : ISSUE-039 (TaskExecutorRegistry) — prochaine Issue TODO debloquee.
-  PDR-010 (Task Executors infra .executor) — nouveau PDR a demarrer.
-  Voir `.claude/progress.md`.
+@reviewer rereview ISSUE-039 — les 2 recommandations sont APPLIED, le code est pret pour re-review.
 
 **Fichiers modifies** :
 ```
-✅ progress.md — ISSUE-038 : IN REVIEW → DONE, PDR-009 : IN PROGRESS → DONE
-✅ interfaces-registry.md — LocalAgent : IN PROGRESS → STABLE
+✅ platform-infrastructure/src/main/java/.../executor/TaskExecutorRegistry.java — UnsupportedTaskNameException
+✅ platform-infrastructure/src/main/java/.../executor/DefaultTaskExecutorRegistry.java — Set.copyOf() + UnsupportedTaskNameException
+✅ platform-infrastructure/src/main/java/.../executor/UnsupportedTaskNameException.java — nouveau (renomme depuis UnsupportedTaskTypeException.java)
+❌ platform-infrastructure/src/main/java/.../executor/UnsupportedTaskTypeException.java — supprime
+✅ platform-infrastructure/src/test/java/.../executor/DefaultTaskExecutorRegistryTest.java — UnsupportedTaskNameException
+✅ recommendations-tracking.md — [CRAFT-01] et [CRAFT-02] PENDING → APPLIED
+✅ interfaces-registry.md — UnsupportedTaskNameException
 ✅ session-state.md — ce fichier
 ```
 
@@ -64,6 +67,7 @@ SI DEVELOPPER (ISSUE-039) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-15 | Reviewer | ISSUE-039 | Revue CHANGES_REQUESTED, 2 points bloquants | CHANGES_REQUESTED |
 | 2026-06-15 | Reviewer | ISSUE-038 | Revue APPROVED, 0 bloquant, commit, PDR-009 DONE | DONE |
 | 2026-06-15 | Developer | ISSUE-038 | LocalAgent + TaskExecutionPipeline public + 35 tests, 149 OK | IN REVIEW |
 | 2026-06-15 | Reviewer | ISSUE-037 | Revue APPROVED, 0 bloquant, commit | DONE |
