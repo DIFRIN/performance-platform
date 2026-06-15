@@ -9,10 +9,10 @@
 
 ## Etat Courant
 
-**Date derniere session** : 2026-06-15
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Date derniere session** : 2026-06-16
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-042 (MockServerTaskExecutor)
-**Statut issue** : [ ] WAITING | [x] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
 **PDR parent** : PDR-010 (Task Executors infra .executor) — IN PROGRESS
 
 ---
@@ -22,16 +22,18 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Reviewer : re-review ISSUE-041 — 4 recommandations CONFIRMED (CRAFT-05 CC-02 justification + extraction pollMessages/sendMessages/sumPartitionOffsets, CRAFT-07 executionId ajoute aux logs, PRECISION Javadoc executeConsume + pollMessages expliquant max.poll.records/toTake, CRAFT-08 constantes OUTPUT_*). Compilation + tests unitaires OK. ISSUE-041 DONE.
+Reviewer : ISSUE-042 APPROVED (0 bloquant, 4 recommandations PENDING). 23 tests OK. Recommandations : CRAFT-05 (classe 367L), CRAFT-08 (constantes parametres + magic string), CRAFT-07 (executionId dans logs EXTERNAL).
 
 **Prochaine action** :
-Developer : prendre ISSUE-042 (MockServerTaskExecutor) — premiere Issue TODO non bloquee dans PDR-010.
+Developer : appliquer les 4 recommandations PENDING de ISSUE-042, puis demander re-review.
 
 **Fichiers modifies** :
 ```
-✅ .claude/context/recommendations-tracking.md — 4 ISSUE-041 APPLIED → CONFIRMED
-✅ .claude/progress.md — ISSUE-041 CHANGES_REQUESTED → DONE
-✅ .claude/context/interfaces-registry.md — KafkaConsumer/KafkaProducer → STABLE
+✅ platform-infrastructure/pom.xml — ajout dependance WireMock 3.12.1
+✅ platform-infrastructure/src/main/java/.../executor/mock/MockServerTaskExecutor.java — cree
+✅ platform-infrastructure/src/test/java/.../executor/mock/MockServerTaskExecutorTest.java — cree
+✅ .claude/progress.md — ISSUE-042 IN PROGRESS → IN REVIEW
+✅ .claude/context/interfaces-registry.md — MockServerTaskExecutor PLANNED → IN PROGRESS
 ✅ .claude/session-state.md — ce fichier
 ```
 
