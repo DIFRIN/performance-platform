@@ -312,6 +312,7 @@
 | 2026-06-15 | ISSUE-041 | TODO → IN PROGRESS | Developer |
 | 2026-06-15 | ISSUE-041 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-15 | ISSUE-041 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05 violations CC-02 (6 methodes >40L, 1 classe >300L) |
+| 2026-06-15 | ISSUE-041 | CHANGES_REQUESTED → DONE | Reviewer — re-review: 4 recommandations CONFIRMED (CRAFT-05/CRAFT-07/PRECISION/CRAFT-08) |
 
 ---
 
@@ -320,4 +321,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-15 (ISSUE-041 IN REVIEW — Kafka Consumer/Producer TaskExecutors implementes)
+**Dernière mise à jour** : 2026-06-15 (ISSUE-041 DONE — Kafka Consumer/Producer TaskExecutors)
