@@ -9,11 +9,11 @@
 
 ## Etat Courant
 
-**Date derniere session** : 2026-06-14
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : Corrections architecturales ARCH-01..12 (pre-ISSUE-036)
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED
-**PDR parent** : PDR-007 (transport) + PDR-009 (agent-runtime)
+**Date derniere session** : 2026-06-15
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-036 (DistributedAgentRuntime)
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED
+**PDR parent** : PDR-009 (agent-runtime)
 
 ---
 
@@ -22,34 +22,33 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Reviewer : re-review ARCH-01..12 → APPROVED (166 tests OK, BUILD SUCCESS)
-  - ARCH-01..12 tous CONFIRMED dans recommendations-tracking.md
-  - ISSUE-027: IN REVIEW → DONE
-  - ISSUE-033: IN REVIEW → DONE
-  - ISSUE-034: APPROVED → DONE
-  - ISSUE-035: APPROVED → DONE
-  - PDR-007: IN PROGRESS → DONE
-  - ADR-012 types ajoutes dans interfaces-registry.md
-  - ARCH-06: AgentLifecycleEvent + AgentLifecycleEventHandler (ADR-012)
-  - ARCH-07: throws RegistrationException (AgentRegistrationPort)
-  - ARCH-08: Javadoc ExecutionEvent.of() corrige
-  - ARCH-09: import AgentCapabilities (qualifie complet -> import)
-  - ARCH-10: log.warn format ARCH-10 (AgentTtlMonitor)
-  - ARCH-11: isConnected() guards (InMemoryExecutionTransport)
-  - ARCH-12: commentaire synchronisation mapping (TransportAgentRegistration)
-166 tests (91 transport + 75 agent-runtime), BUILD SUCCESS.
+Developer : ISSUE-036 — AgentRuntime interface + DistributedAgentRuntime implementation completee.
+  - AgentRuntime.java (interface, 6 methodes)
+  - DistributedAgentRuntime.java (implementation complete, ~390 lignes)
+    - Lifecycle : start/stop avec drain gracieux
+    - Reception broadcast + filtrage via TaskSpecializationFilter
+    - Idempotence sur MessageId (ConcurrentHashMap.newKeySet)
+    - Execution sur Virtual Thread avec TaskExecutor
+    - Publication events : TASK_CLAIMED, TASK_WORK_IN_PROGRESS, TASK_COMPLETED/TASK_FAILED
+    - Reporting progression periodique (intervalle ≤ taskExecutionTimeout/3)
+    - ScenarioRestart : annulation atomique sans double-decrement
+    - Conversion PartialExecutionContext → ExecutionContext
+  - DistributedAgentRuntimeTest.java (31 tests, 9 Nested classes)
+    - Lifecycle, Task Reception, Task Execution, Concurrent, ScenarioRestart
+    - canExecute, Constructor validation, State Transitions, TaskIgnored
+  - pom.xml : ajout platform-plugin-api + slf4j-api + mockito + awaitility
+  106 tests au total (75 existants + 31 nouveaux), BUILD SUCCESS, 0 erreur.
 
 **Prochaine action** :
-Developer : ISSUE-036 (DistributedAgentRuntime) — la prochaine Issue TODO debloquee.
-Toutes les ARCH-01..12 sont CONFIRMED, le chemin est libre.
+Reviewer : revue de ISSUE-036 (AgentRuntime + DistributedAgentRuntime).
+Lancer @reviewer pour passer en IN REVIEW → APPROVED/DONE.
 
 **Fichiers modifies** :
 ```
-✅ ARCH-01..12 CONFIRMED (Reviewer re-review)
-✅ recommendations-tracking.md — tous ARCH-[01-12] CONFIRMED
-✅ progress.md — ISSUE-027,033,034,035 → DONE, PDR-007 → DONE
-✅ interfaces-registry.md — AgentLifecycleEvent, AgentLifecycleEventHandler ajoutes
-✅ session-state.md — ce fichier
+✅ AgentRuntime.java — interface (package runtime)
+✅ DistributedAgentRuntime.java — implementation (~390 lignes)
+✅ DistributedAgentRuntimeTest.java — 31 tests unitaires
+✅ pom.xml — dépendances platform-plugin-api, slf4j-api, mockito, awaitility
 ```
 
 **Blocages** :
@@ -65,8 +64,9 @@ TOUJOURS :
   .claude/progress.md                     (Issue a prendre)
 
 SI REVIEWER :
-  .claude/context/recommendations-tracking.md   (verifier ARCH-01..12 APPLIED)
+  .claude/context/recommendations-tracking.md   (verifier PENDING)
   .claude/agents/reviewer.md
+  .claude/issues/ISSUE-036-distributed-agent-runtime.md
 ```
 
 ---
@@ -75,6 +75,7 @@ SI REVIEWER :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-15 | Developer | ISSUE-036 | AgentRuntime + DistributedAgentRuntime + 31 tests, 106 total OK | IN REVIEW |
 | 2026-06-14 | Reviewer | ARCH-01..12 | Re-review, 12/12 CONFIRMED, ISSUE-027/033/034/035 DONE, PDR-007 DONE | APPROVED |
 | 2026-06-14 | Architect | ISSUE-027/033/034/035 | Revue architecturale — 12 corrections, ADR-012 | ARCH pending |
 | 2026-06-14 | Developer | ARCH-01..12 | 12 corrections appliquees, 166 tests OK | OK IN REVIEW |
