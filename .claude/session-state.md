@@ -11,8 +11,8 @@
 
 **Date derniere session** : 2026-06-15
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-040 (DatabaseTaskExecutor)
-**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Issue active** : ISSUE-041 (Kafka Consumer/Producer TaskExecutors)
+**Statut issue** : [ ] WAITING | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [x] CHANGES_REQUESTED | [ ] DONE
 **PDR parent** : PDR-010 (Task Executors infra .executor) — IN PROGRESS
 
 ---
@@ -22,31 +22,16 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : ADR-013 + ADR-014 appliqués sur ISSUE-040
-  - ADR-013 (Spring-first) : spring-jdbc + HikariCP ajoutés au pom.xml
-    - POPULATE : ResourceDatabasePopulator + DefaultResourceLoader (remplace readScript + split(";"))
-    - PURGE : JdbcTemplate (remplace Connection/Statement manuels)
-    - Output POPULATE : rowsAffected → scriptExecuted
-  - ADR-014 (Datasource config) : PlatformDatasourcesProperties + DatasourceConfiguration créés
-    - DatasourceProvider n'est plus @Component → bean créé par DatasourceConfiguration
-    - HikariDataSource par datasource nommée, bindé depuis platform.datasources.*
-  - Tests: 15 unitaires + 12 intégration = 27 tests OK
-  - Nettoyage: imports inutilisés dans ScenarioRestartHandlerTest (CountDownLatch, Mockito)
+Developer : 4 recommandations PENDING (ISSUE-041) → APPLIED. CRAFT-05 (ajout CC-02 justification + extraction pollMessages/sendMessages/sumPartitionOffsets), CRAFT-07 (executionId ajoute aux logs), PRECISION (Javadoc executeConsume + pollMessages expliquant max.poll.records/toTake), CRAFT-08 (constantes OUTPUT_*). Tests platform-infrastructure OK.
 
 **Prochaine action** :
-Reviewer : revoir ISSUE-040 (DatabaseTaskExecutor). Puis Developer prend ISSUE-041 (Kafka Consumer/Producer TaskExecutors).
+Reviewer : @reviewer rereview — verifier les corrections APPLIED sur ISSUE-041. Toutes les recommendations sont APPLIED.
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/pom.xml — +spring-jdbc, +HikariCP, +spring-boot (ADR-013/014)
-✅ platform-infrastructure/src/main/java/.../executor/database/DatabaseTaskExecutor.java (refacto ADR-013)
-✅ platform-infrastructure/src/main/java/.../executor/database/DatasourceProvider.java (retrait @Component, ADR-014)
-🆕 platform-infrastructure/src/main/java/.../executor/database/PlatformDatasourcesProperties.java (ADR-014)
-🆕 platform-infrastructure/src/main/java/.../executor/database/DatasourceConfiguration.java (ADR-014)
-✅ platform-infrastructure/src/test/java/.../executor/database/DatabaseTaskExecutorIT.java (scriptExecuted, ADR-013)
-✅ platform-agent-runtime/src/test/.../restart/ScenarioRestartHandlerTest.java (imports inutilisés retirés)
-✅ progress.md — ADR-013/014 appliqués
-✅ interfaces-registry.md — PlatformDatasourcesProperties + DatasourceConfiguration ajoutés
+✅ platform-infrastructure/src/main/java/.../executor/kafka/KafkaConsumerTaskExecutor.java — CRAFT-05/CRAFT-07/PRECISION/CRAFT-08
+✅ platform-infrastructure/src/main/java/.../executor/kafka/KafkaProducerTaskExecutor.java — CRAFT-05/CRAFT-07/CRAFT-08
+✅ .claude/context/recommendations-tracking.md — 4 PENDING → APPLIED + historique
 ✅ session-state.md — ce fichier
 ```
 ```
@@ -61,14 +46,14 @@ _Aucun_
 ```
 SI REVIEWER :
   .claude/session-state.md                (ce fichier)
-  .claude/progress.md                     (confirmer ISSUE-040 IN REVIEW)
-  .claude/issues/ISSUE-040-database-task-executor.md
+  .claude/progress.md                     (confirmer ISSUE-041 IN REVIEW)
+  .claude/issues/ISSUE-041-kafka-task-executors.md
   .claude/agents/reviewer.md
 
-SI DEVELOPER (ISSUE-041) :
+SI DEVELOPER (ISSUE-042) :
   .claude/session-state.md
   .claude/progress.md
-  .claude/issues/ISSUE-041-kafka-task-executors.md
+  .claude/issues/ISSUE-042-mockserver-task-executor.md
   .claude/agents/developer.md
 ```
 
@@ -78,5 +63,7 @@ SI DEVELOPER (ISSUE-041) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-15 | Developer | ISSUE-041 | Recommandations PENDING → APPLIED (CRAFT-05/CRAFT-07/PRECISION/CRAFT-08) | Re-review ready |
+| 2026-06-15 | Developer | ISSUE-041 | KafkaConsumerTaskExecutor + KafkaProducerTaskExecutor + 22 ITs | IN REVIEW |
 | 2026-06-15 | Developer | ISSUE-040 | DatabaseTaskExecutor + DatasourceProvider + 12 ITs + failsafe setup | IN REVIEW |
 | 2026-06-15 | Reviewer | ISSUE-039 | Re-review CHANGES_REQUESTED, 2 CONFIRMED, commit | DONE |

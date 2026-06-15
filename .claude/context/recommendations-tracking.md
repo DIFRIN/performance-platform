@@ -262,6 +262,10 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-036] [2026-06-15] [DEFERRED→ISSUE-039] [DESIGN] toExecutionContext() Partial→ExecutionContext — workaround à formaliser dans ISSUE-039
 [ISSUE-039] [2026-06-15] [CONFIRMED] [CRAFT-02/CRAFT-08] getSupportedTaskNames() retourne Collections.unmodifiableSet (vue muable) au lieu de Set.copyOf (snapshot immuable) — Javadoc incorrecte
 [ISSUE-039] [2026-06-15] [CONFIRMED] [CRAFT-01] UnsupportedTaskTypeException contient "TaskType" (terme anti-glossaire) → renommer en UnsupportedTaskNameException
+[ISSUE-041] [2026-06-15] [CONFIRMED] [CRAFT-05] 6 methodes >40 lignes (execute/executeConsume/executeCount/execute/executeProduce) + KafkaConsumerTaskExecutor 322 lignes >300 — CC-02 justification + extraction pollMessages/sendMessages/sumPartitionOffsets
+[ISSUE-041] [2026-06-15] [CONFIRMED] [CRAFT-07] executionId absent des logs dans KafkaConsumerTaskExecutor et KafkaProducerTaskExecutor malgre ExecutionContext disponible
+[ISSUE-041] [2026-06-15] [CONFIRMED] [PRECISION] executeConsume() : toTake plafonne le compteur mais le KafkaConsumer a deja consomme tout le batch — semantique trompeuse (max.poll.records ou Javadoc)
+[ISSUE-041] [2026-06-15] [CONFIRMED] [CRAFT-08] Cles de sortie ("messagesConsumed", "lag", "messagesProduced", "messagesFailed") en string literals sans constantes
 
 ---
 
@@ -283,3 +287,7 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-15 | ISSUE-036 | [TEST-06] 2 Thread.sleep() résiduels | CONFIRMED |
 | 2026-06-15 | ISSUE-036 | [IMPORT-01] Import inutilisé TaskStatus | CONFIRMED |
 | 2026-06-15 | ISSUE-036 | [DESIGN] toExecutionContext() bridge à formaliser | DEFERRED→ISSUE-039 |
+| 2026-06-15 | ISSUE-041 | [CRAFT-05] 6 méthodes >40 lignes — CC-02 justification + extraction pollMessages/sendMessages/sumPartitionOffsets | CONFIRMED |
+| 2026-06-15 | ISSUE-041 | [CRAFT-07] executionId ajouté à tous les logs (threadé via ExecutionContext) | CONFIRMED |
+| 2026-06-15 | ISSUE-041 | [PRECISION] Javadoc executeConsume() + pollMessages() expliquant max.poll.records et toTake | CONFIRMED |
+| 2026-06-15 | ISSUE-041 | [CRAFT-08] Constantes OUTPUT_MESSAGES_CONSUMED/OUTPUT_LAG/OUTPUT_MESSAGES_PRODUCED/OUTPUT_MESSAGES_FAILED | CONFIRMED |
