@@ -166,7 +166,7 @@
 | `AgentRegistrationPort` / `TransportAgentRegistration` / `HeartbeatScheduler` / `RegistrationException` | ✅ STABLE | PDR-009 | ISSUE-034 |
 | `AgentRegistry` / `InMemoryAgentRegistry` / `AgentTtlMonitor` | ✅ STABLE | PDR-009 | ISSUE-035 |
 | `AgentRuntime` / `DistributedAgentRuntime` | ✅ STABLE | PDR-009 | ISSUE-036 |
-| `StatefulResourceCleaner` / `ScenarioRestartHandler` | 🔄 IN PROGRESS | PDR-009 | ISSUE-037 |
+| `StatefulResourceCleaner` / `ScenarioRestartHandler` | ✅ STABLE | PDR-009 | ISSUE-037 |
 | `LocalAgent` | ⬜ PLANNED | PDR-009 | ISSUE-038 |
 | `AgentAllocator` | ❌ REMOVED | ADR-008 | — |
 
