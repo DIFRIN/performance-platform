@@ -320,6 +320,7 @@
 | 2026-06-16 | ISSUE-043 | TODO → IN PROGRESS | Developer |
 | 2026-06-16 | ISSUE-043 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-16 | ISSUE-043 | IN REVIEW → APPROVED | Reviewer — 2 recommandations PENDING (CRAFT-05 CC-02 + extraction, TEST-06 Thread.sleep) |
+| 2026-06-16 | ISSUE-043 | APPROVED → DONE | Reviewer — re-review: 2 recommandations CONFIRMED (CRAFT-05/TEST-06) |
 
 ---
 

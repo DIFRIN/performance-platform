@@ -301,6 +301,5 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-16 | ISSUE-042 | [CRAFT-08] Constantes PARAM_DEPLOYMENT/ACTION/PORT/MAPPINGS_PATH/EXTERNAL_URL | APPLIED |
 | 2026-06-16 | ISSUE-042 | [CRAFT-08] Constante DEFAULT_EXECUTION_KEY | APPLIED |
 | 2026-06-16 | ISSUE-042 | [CRAFT-07] executionId ajoute aux logs mode EXTERNAL + handler erreur execute() | APPLIED |
-| 2026-06-16 | ISSUE-043 | [CRAFT-05] CC-02 justification Javadoc + extraction executeProcess/execute | APPLIED |
 | 2026-06-16 | ISSUE-043 | [CRAFT-05] CC-02 justification Javadoc + extraction executeProcess/execute | CONFIRMED |
 | 2026-06-16 | ISSUE-043 | [TEST-06] 2 Thread.sleep(500) → Awaitility avec temp files | CONFIRMED |

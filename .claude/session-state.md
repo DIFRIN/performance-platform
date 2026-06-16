@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-16
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-043 (ShellTaskExecutor)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-010 (Task Executors infra .executor) — IN PROGRESS
 
 ---
@@ -22,21 +22,15 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : 2 recommandations PENDING pour ISSUE-043 appliquees :
-  1. [CRAFT-05] CC-02 justification + extraction ShellParameters + buildProcessBuilder + ProcessOutput + collectProcessOutputs
-  2. [TEST-06] 2 Thread.sleep(500) → Awaitility await().until(Files.exists(signalFile)) avec temp files
-→ Tous les tests passent (mvn test -pl platform-infrastructure -Dtest=ShellTaskExecutorTest).
-→ Pret pour @reviewer rereview.
+Reviewer : re-review ISSUE-043 — 2 recommandations CONFIRMED (CRAFT-05/TEST-06) → commit.
 
 **Prochaine action** :
-Reviewer : relire .claude/issues/ISSUE-043-shell-task-executor.md, verifier que les 2 recommandations sont bien appliquees, puis CONFIRMED + commit.
+Developer : prendre la prochaine Issue WAITING (ISSUE-044 DockerTaskExecutor ou ISSUE-045 FilesystemTaskExecutor).
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/src/main/java/.../executor/shell/ShellTaskExecutor.java (CC-02 justification + 2 extractions)
-✅ platform-infrastructure/src/test/java/.../executor/shell/ShellTaskExecutorTest.java (Awaitility temp-file signals)
-✅ platform-infrastructure/pom.xml (awaitility test dependency)
-✅ .claude/context/recommendations-tracking.md — ISSUE-043 CRAFT-05 + TEST-06 PENDING → APPLIED
+✅ .claude/context/recommendations-tracking.md — ISSUE-043 CRAFT-05 + TEST-06 APPLIED → CONFIRMED
+✅ .claude/progress.md — ISSUE-043 APPROVED → DONE
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -48,11 +42,12 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-SI REVIEWER (ISSUE-043) :
+SI DEVELOPER (ISSUE-044 ou ISSUE-045) :
   .claude/session-state.md
+  CLAUDE.md
   .claude/progress.md
-  .claude/issues/ISSUE-043-shell-task-executor.md
-  .claude/agents/reviewer.md
+  .claude/issues/ISSUE-044-docker-task-executor.md (ou ISSUE-045)
+  .claude/agents/developer.md
 ```
 
 ---
@@ -61,6 +56,7 @@ SI REVIEWER (ISSUE-043) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-16 | Reviewer | ISSUE-043 | Re-review: 2 recommandations CONFIRMED (CRAFT-05/TEST-06), commit | DONE |
 | 2026-06-16 | Developer | ISSUE-043 | Recommandations PENDING → APPLIED (CRAFT-05 + TEST-06) | Re-review ready |
 | 2026-06-16 | Developer | ISSUE-043 | ShellTaskExecutor + 21 tests, IN REVIEW | IN REVIEW |
 | 2026-06-16 | Reviewer | ISSUE-042 | Re-review: 4 recommandations CONFIRMED, commit | DONE |
