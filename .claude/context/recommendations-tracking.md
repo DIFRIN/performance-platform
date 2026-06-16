@@ -270,6 +270,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-042] [2026-06-16] [CONFIRMED] [CRAFT-08] Cles de parametres ("deployment", "action", "port", "mappingsPath", "externalUrl") → constantes PARAM_DEPLOYMENT, PARAM_ACTION, PARAM_PORT, PARAM_MAPPINGS_PATH, PARAM_EXTERNAL_URL
 [ISSUE-042] [2026-06-16] [CONFIRMED] [CRAFT-08] Magic string "default" → constante DEFAULT_EXECUTION_KEY
 [ISSUE-042] [2026-06-16] [CONFIRMED] [CRAFT-07] executionId ajoute aux logs mode EXTERNAL + handler erreur execute()
+[ISSUE-043] [2026-06-16] [CONFIRMED] [CRAFT-05] CC-02 justification Javadoc pour classe 355 lignes >300 + extraction executeProcess() 83L >40 (stream reading block) + execute() 56L >40
+[ISSUE-043] [2026-06-16] [CONFIRMED] [TEST-06] 2 Thread.sleep(500) dans tests cleanup — remplacer par Awaitility ou CountDownLatch
 
 ---
 
@@ -299,3 +301,6 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-16 | ISSUE-042 | [CRAFT-08] Constantes PARAM_DEPLOYMENT/ACTION/PORT/MAPPINGS_PATH/EXTERNAL_URL | APPLIED |
 | 2026-06-16 | ISSUE-042 | [CRAFT-08] Constante DEFAULT_EXECUTION_KEY | APPLIED |
 | 2026-06-16 | ISSUE-042 | [CRAFT-07] executionId ajoute aux logs mode EXTERNAL + handler erreur execute() | APPLIED |
+| 2026-06-16 | ISSUE-043 | [CRAFT-05] CC-02 justification Javadoc + extraction executeProcess/execute | APPLIED |
+| 2026-06-16 | ISSUE-043 | [CRAFT-05] CC-02 justification Javadoc + extraction executeProcess/execute | CONFIRMED |
+| 2026-06-16 | ISSUE-043 | [TEST-06] 2 Thread.sleep(500) → Awaitility avec temp files | CONFIRMED |
