@@ -138,6 +138,14 @@
             <version>3.12.1</version>
         </dependency>
 
+        <!-- Awaitility (tests async) -->
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>4.2.2</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

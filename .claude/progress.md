@@ -147,7 +147,7 @@
 | ISSUE-030 | RabbitMQExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
 | ISSUE-031 | HttpExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028,013 |
 | ISSUE-032 | SocketExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
-| ISSUE-043 | ShellTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
+| ISSUE-043 | ShellTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-044 | DockerTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
 | ISSUE-045 | FilesystemTaskExecutor | PDR-010 | platform-infrastructure | S | TODO | ISSUE-039 |
 | ISSUE-046 | PluginLoader | PDR-011 | platform-infrastructure | L | TODO | ISSUE-011,039 |
@@ -317,6 +317,9 @@
 | 2026-06-15 | ISSUE-042 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-15 | ISSUE-042 | IN REVIEW → APPROVED | Reviewer — 4 recommandations PENDING (CRAFT-05/CRAFT-08x2/CRAFT-07) |
 | 2026-06-16 | ISSUE-042 | APPROVED → DONE | Reviewer — re-review: 4 recommandations CONFIRMED (CRAFT-05/CRAFT-08x2/CRAFT-07) |
+| 2026-06-16 | ISSUE-043 | TODO → IN PROGRESS | Developer |
+| 2026-06-16 | ISSUE-043 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-16 | ISSUE-043 | IN REVIEW → APPROVED | Reviewer — 2 recommandations PENDING (CRAFT-05 CC-02 + extraction, TEST-06 Thread.sleep) |
 
 ---
 
