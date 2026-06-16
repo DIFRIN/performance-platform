@@ -185,7 +185,7 @@
 | `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-041 |
 | `MockServerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-042 |
 | `ShellTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-043 |
-| `DockerTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-044 |
+| `DockerTaskExecutor` | 🔄 IN PROGRESS | PDR-010 | ISSUE-044 |
 | `FilesystemTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-045 |
 
 ## platform-infrastructure — `.plugin` (PDR-011)

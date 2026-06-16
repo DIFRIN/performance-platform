@@ -148,7 +148,7 @@
 | ISSUE-031 | HttpExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028,013 |
 | ISSUE-032 | SocketExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
 | ISSUE-043 | ShellTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
-| ISSUE-044 | DockerTaskExecutor | PDR-010 | platform-infrastructure | M | TODO | ISSUE-039 |
+| ISSUE-044 | DockerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-045 | FilesystemTaskExecutor | PDR-010 | platform-infrastructure | S | TODO | ISSUE-039 |
 | ISSUE-046 | PluginLoader | PDR-011 | platform-infrastructure | L | TODO | ISSUE-011,039 |
 | ISSUE-047 | PluginRegistry | PDR-011 | platform-infrastructure | M | TODO | ISSUE-046 |
@@ -321,6 +321,8 @@
 | 2026-06-16 | ISSUE-043 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-16 | ISSUE-043 | IN REVIEW → APPROVED | Reviewer — 2 recommandations PENDING (CRAFT-05 CC-02 + extraction, TEST-06 Thread.sleep) |
 | 2026-06-16 | ISSUE-043 | APPROVED → DONE | Reviewer — re-review: 2 recommandations CONFIRMED (CRAFT-05/TEST-06) |
+| 2026-06-16 | ISSUE-044 | TODO → IN PROGRESS | Developer |
+| 2026-06-16 | ISSUE-044 | IN PROGRESS → IN REVIEW | Developer — DockerTaskExecutor + FakeDockerClient + 24 tests |
 
 ---
 
