@@ -10,35 +10,25 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-19
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : _aucune_ — ISSUE-028 passe DONE, prochaine ISSUE-029
-**Prochaine Issue** : ISSUE-029 (Kafka transport) dans PDR-008
-**PDRs DONE** : PDR-010 (executor) + PDR-012 (persistence)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-029 (KafkaExecutionTransport)
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**PDR parent** : PDR-008 (Transport Implementations) — IN PROGRESS
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Developer : ISSUE-028 IN REVIEW — TransportType +CUSTOM, 4 properties records (@ConfigurationProperties), TransportConfiguration avec @Bean conditionnels (@ConditionalOnProperty), 14 tests binding. 105 tests OK.
+Developer : correction TEST-04 — les 3 tests null-check attendaient NullPointerException.class, remplaces par TransportException.class (convention coherente de la classe). mvn verify -P integration-tests OK (16 ITs passent).
 
 **Prochaine action** :
-Reviewer : lire .claude/issues/ISSUE-028-transport-properties-config.md et reviewer. Prochaine Issue developpement : ISSUE-029 (Kafka) qui depend de ISSUE-028 APPROVED.
+Reviewer : re-review ISSUE-029 — verifier CRAFT-08 + TEST-04 (TransportException corrige), puis CONFIRMED + commit.
 
 **Fichiers modifies** :
 ```
-✅ platform-transport/pom.xml — +spring-context, spring-boot, spring-boot-autoconfigure, spring-boot-test
-✅ platform-transport/.../TransportType.java — +CUSTOM
-✅ platform-transport/.../config/KafkaTransportProperties.java — record @ConfigurationProperties
-✅ platform-transport/.../config/RabbitMQTransportProperties.java — record @ConfigurationProperties
-✅ platform-transport/.../config/HttpTransportProperties.java — record @ConfigurationProperties
-✅ platform-transport/.../config/SocketTransportProperties.java — record @ConfigurationProperties
-✅ platform-transport/.../config/TransportConfiguration.java — @Configuration + @Bean conditionnels
-🔧 platform-transport/.../TransportInterfaceTest.java — assert modifie pour inclure CUSTOM
-✅ platform-transport/.../config/TransportConfigurationTest.java — 14 tests binding + selection beans
-✅ .claude/progress.md — ISSUE-028 TODO → IN PROGRESS → IN REVIEW
-✅ .claude/context/interfaces-registry.md — properties + TransportConfiguration IN PROGRESS
+✅ platform-transport/.../kafka/KafkaMessageCodec.java — TYPE_FIELD extraite (CRAFT-08)
+✅ platform-transport/.../kafka/KafkaExecutionTransportIT.java — 3 null-check tests (TransportException)
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -50,10 +40,12 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-SI REVIEWER (prochaine action attendue) :
+SI REVIEWER (ISSUE-029, re-review #2) :
   .claude/session-state.md
-  .claude/issues/ISSUE-028-transport-properties-config.md
+  .claude/progress.md
+  .claude/issues/ISSUE-029-kafka-transport.md
   .claude/agents/reviewer.md
+  .claude/context/recommendations-tracking.md
 ```
 
 ---
@@ -62,11 +54,8 @@ SI REVIEWER (prochaine action attendue) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
-| 2026-06-19 | Reviewer | ISSUE-053 | APPROVED: 0 bloquant, 0 recommandation. PDR-010 + PDR-012 DONE. Commit. | DONE |
-| 2026-06-19 | Developer | ISSUE-053 | PersistenceConfinementTest (5 regles ArchUnit), IN REVIEW | IN REVIEW |
-| 2026-06-19 | Reviewer | ISSUE-052 | Re-review: CRAFT-01 CONFIRMED (Javadoc corrigee), commit | DONE |
-| 2026-06-19 | Developer | ISSUE-052 | CRAFT-01 applique (Javadoc corrigee), re-review | APPROVED (re-review ready) |
-| 2026-06-19 | Reviewer | ISSUE-052 | APPROVED: 0 bloquant, 1 recommandation CRAFT-01 PENDING (Javadoc @Transactional) | APPROVED |
-| 2026-06-19 | Developer | ISSUE-052 | JpaExecutionRepository + Spring Data repos + 9 ITs, IN REVIEW | IN REVIEW |
-| 2026-06-19 | Reviewer | ISSUE-051 | APPROVED: 0 bloquant, 0 recommandation. Commit. | DONE |
-| 2026-06-19 | Developer | ISSUE-051 | Mappers domain↔entity + 27 tests, IN REVIEW | IN REVIEW |
+| 2026-06-19 | Developer | ISSUE-029 | TEST-04 corrige (NullPointerException → TransportException), re-review | APPROVED (re-review ready) |
+| 2026-06-19 | Reviewer | ISSUE-029 | Re-review: CRAFT-08 CONFIRMED, TEST-04 CHANGES_REQUESTED (mauvaise exception) | CHANGES_REQUESTED |
+| 2026-06-19 | Developer | ISSUE-029 | CRAFT-08 + TEST-04 appliques (TYPE_FIELD + null-check tests), re-review | APPROVED (re-review ready) |
+| 2026-06-19 | Reviewer | ISSUE-029 | APPROVED: 0 bloquant, 2 recommandations PENDING (CRAFT-08 + TEST-04) | APPROVED |
+| 2026-06-19 | Developer | ISSUE-029 | KafkaExecutionTransport + KafkaMessageCodec + 13 ITs, IN REVIEW | IN REVIEW |

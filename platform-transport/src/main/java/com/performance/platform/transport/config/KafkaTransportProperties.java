@@ -15,7 +15,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *     events-topic: "agents-events"
  *     signals-topic: "agents-signals"
  *     producer-acks: "all"
+ *     consumer-group: "${agent.id}"
  * </pre>
+ * <p>
+ * Le {@code consumerGroup} est obligatoire : chaque agent doit avoir un consumer group
+ * unique (egal a son {@code agentId}) pour recevoir tous les messages du topic tasks
+ * (ADR-009).
  */
 @ConfigurationProperties(prefix = "transport.kafka")
 public record KafkaTransportProperties(
@@ -23,5 +28,6 @@ public record KafkaTransportProperties(
         String tasksTopic,
         String eventsTopic,
         String signalsTopic,
-        String producerAcks
+        String producerAcks,
+        String consumerGroup
 ) {}
