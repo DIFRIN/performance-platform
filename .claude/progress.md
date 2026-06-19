@@ -368,6 +368,7 @@
 | 2026-06-19 | PDR-012 | IN PROGRESS → DONE | Reviewer — ISSUE-050..053 all DONE |
 | 2026-06-19 | ISSUE-028 | TODO → IN PROGRESS | Developer |
 | 2026-06-19 | ISSUE-028 | IN PROGRESS → IN REVIEW | Developer — TransportType +CUSTOM, 4 properties records, TransportConfiguration avec @Bean conditionnels, 14 tests binding |
+| 2026-06-19 | ISSUE-028 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 105 tests OK. |
 
 ---
 

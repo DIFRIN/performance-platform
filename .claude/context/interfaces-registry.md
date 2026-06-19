@@ -151,9 +151,9 @@
 | `InMemoryExecutionTransport` | ✅ STABLE | PDR-007 | ISSUE-027 |
 | `AgentLifecycleEvent` | ✅ STABLE | PDR-007 | ADR-012 |
 | `AgentLifecycleEventHandler` | ✅ STABLE | PDR-007 | ADR-012 |
-| Transport properties + `TransportConfiguration` | 🔄 IN PROGRESS | PDR-008 | ISSUE-028 |
-| `KafkaTransportProperties` / `RabbitMQTransportProperties` / `HttpTransportProperties` / `SocketTransportProperties` | 🔄 IN PROGRESS | PDR-008 | ISSUE-028 |
-| `TransportConfiguration` | 🔄 IN PROGRESS | PDR-008 | ISSUE-028 |
+| Transport properties + `TransportConfiguration` | ✅ STABLE | PDR-008 | ISSUE-028 |
+| `KafkaTransportProperties` / `RabbitMQTransportProperties` / `HttpTransportProperties` / `SocketTransportProperties` | ✅ STABLE | PDR-008 | ISSUE-028 |
+| `TransportConfiguration` | ✅ STABLE | PDR-008 | ISSUE-028 |
 | `KafkaExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-029 |
 | `RabbitMQExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-030 |
 | `HttpExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-031 |
