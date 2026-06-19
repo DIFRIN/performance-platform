@@ -178,10 +178,10 @@
 | `TaskExecutorRegistry` | ✅ STABLE | PDR-010 | ISSUE-039 |
 | `DefaultTaskExecutorRegistry` | ✅ STABLE | PDR-010 | ISSUE-039 |
 | `UnsupportedTaskNameException` | ✅ STABLE | PDR-010 | ISSUE-039 |
-| `DatabaseTaskExecutor` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 |
-| `DatasourceProvider` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 |
-| `PlatformDatasourcesProperties` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 (ADR-014) |
-| `DatasourceConfiguration` | 🔄 IN PROGRESS | PDR-010 | ISSUE-040 (ADR-014) |
+| `DatabaseTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-040 |
+| `DatasourceProvider` | ✅ STABLE | PDR-010 | ISSUE-040 |
+| `PlatformDatasourcesProperties` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014) |
+| `DatasourceConfiguration` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014) |
 | `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-041 |
 | `MockServerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-042 |
 | `ShellTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-043 |
@@ -206,7 +206,7 @@
 | `ExecutionStateJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
 | `TaskResultJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
 | `JpaExecutionRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
-| `PersistenceConfinementTest` (ArchUnit) | 🔄 IN PROGRESS | PDR-012 | ISSUE-053 |
+| `PersistenceConfinementTest` (ArchUnit) | ✅ STABLE | PDR-012 | ISSUE-053 |
 
 ## platform-infrastructure — `.publisher` (PDR-016)
 
