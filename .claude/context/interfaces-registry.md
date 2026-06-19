@@ -194,7 +194,7 @@
 |---|---|---|---|
 | `PluginLoader` / `PluginLoadResult` | ✅ STABLE | PDR-011 | ISSUE-046 |
 | `PluginRegistry` | ✅ STABLE | PDR-011 | ISSUE-047 |
-| `AnnotationScanner` / `PluginDescriptor` | ⬜ PLANNED | PDR-011 | ISSUE-048 |
+| `AnnotationScanner` / `PluginDescriptor` | 🔄 IN PROGRESS | PDR-011 | ISSUE-048 |
 
 ## platform-infrastructure — `.persistence` (PDR-012)
 
