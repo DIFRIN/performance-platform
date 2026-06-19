@@ -360,6 +360,7 @@
 | 2026-06-19 | ISSUE-052 | TODO → IN PROGRESS | Developer |
 | 2026-06-19 | ISSUE-052 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-19 | ISSUE-052 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation CRAFT-01 PENDING (Javadoc transactionalite) |
+| 2026-06-19 | ISSUE-052 | APPROVED → DONE | Reviewer — re-review: CRAFT-01 CONFIRMED (Javadoc delegation transactionnelle corrigee) |
 
 ---
 
