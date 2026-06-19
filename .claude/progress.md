@@ -145,7 +145,7 @@
 | ISSUE-028 | Transport properties + Configuration | PDR-008 | platform-transport | M | DONE | ISSUE-025 |
 | ISSUE-029 | KafkaExecutionTransport | PDR-008 | platform-transport | L | DONE | ISSUE-027,028 |
 | ISSUE-030 | RabbitMQExecutionTransport | PDR-008 | platform-transport | L | DONE | ISSUE-027,028 |
-| ISSUE-031 | HttpExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028,013 |
+| ISSUE-031 | HttpExecutionTransport | PDR-008 | platform-transport | L | DONE | ISSUE-027,028,013 |
 | ISSUE-032 | SocketExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
 | ISSUE-043 | ShellTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-044 | DockerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
@@ -376,7 +376,12 @@
 | 2026-06-19 | ISSUE-029 | APPROVED → DONE | Reviewer — re-review #2: CRAFT-08 CONFIRMED, TEST-04 CONFIRMED (TransportException), 105 tests OK, commit |
 | 2026-06-19 | ISSUE-030 | TODO → IN PROGRESS | Developer |
 | 2026-06-19 | ISSUE-030 | IN PROGRESS → IN REVIEW | Developer — RabbitMQExecutionTransport + MessageCodec + ConsumerManager + Subscription + 16 ITs |
+| 2026-06-19 | ISSUE-031 | TODO → IN PROGRESS | Developer |
+| 2026-06-19 | ISSUE-031 | IN PROGRESS → IN REVIEW | Developer — HttpExecutionTransport + HttpEventCallbackController + 34 tests |
 | 2026-06-19 | ISSUE-030 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 16 tests OK, CRAFT-08 @type constant appliqué, ack manuel correct |
+| 2026-06-19 | ISSUE-031 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05/CC-02: dispatchTask+broadcastSignal OK, classe 352L (>300) sans justification |
+| 2026-06-19 | ISSUE-031 | CHANGES_REQUESTED → IN REVIEW | Developer — CC-02 Javadoc x3 (classe + dispatchTask + broadcastSignal) |
+| 2026-06-19 | ISSUE-031 | IN REVIEW → DONE | Reviewer — re-review #2: APPROVED, CC-02 CONFIRMED x3, 139 tests OK |
 
 ---
 
