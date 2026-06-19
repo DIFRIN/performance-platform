@@ -60,7 +60,7 @@
 | PDR-009 | Agent Runtime | platform-agent-runtime | DONE | ISSUE-033..038 | PDR-001,002,004,007 |
 | PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | DONE | ISSUE-039..045 | PDR-001,003,004 |
 | PDR-011 | Plugin System (infra `.plugin`) | platform-infrastructure | DONE | ISSUE-046..049 | PDR-001,003,010 |
-| PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | IN PROGRESS | ISSUE-050..053 | PDR-001,004 |
+| PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | DONE | ISSUE-050..053 | PDR-001,004 |
 | PDR-013 | Gatling Injection | platform-injection-gatling | TODO | ISSUE-054..058 | PDR-001,003 |
 | PDR-014 | Assertion Framework | platform-assertion | TODO | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | TODO | ISSUE-065..069 | PDR-001,002,004,013,014 |
