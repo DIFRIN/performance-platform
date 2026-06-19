@@ -9,10 +9,10 @@
 
 ## Etat Courant
 
-**Date derniere session** : 2026-06-16
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-044 (DockerTaskExecutor)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Date derniere session** : 2026-06-19
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-045 (FilesystemTaskExecutor)
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
 **PDR parent** : PDR-010 (Task Executors infra .executor) — IN PROGRESS
 
 ---
@@ -22,21 +22,17 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Reviewer : ISSUE-044 APPROVED — DockerTaskExecutor + DockerClient + DefaultDockerClient + 23 tests OK, 0 bloquant, 0 recommandation, commit effectue.
+Developer : corrections PRECISION-01 (executionKey + pathsByExecution tracking) + CRAFT-07 (executionKey dans tous les logs) appliquees → 102 tests OK
 
 **Prochaine action** :
-Developer : prendre ISSUE-045 (FilesystemTaskExecutor) — prochaine Issue TODO dans PDR-010.
+Reviewer : re-review ISSUE-045 — verifier PRECISION-01 et CRAFT-07 appliquees, puis CONFIRMED + commit.
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/.../executor/docker/DockerClient.java (interface package-private)
-✅ platform-infrastructure/.../executor/docker/DefaultDockerClient.java (@Component, CLI via ProcessBuilder)
-✅ platform-infrastructure/.../executor/docker/DockerException.java (RuntimeException)
-✅ platform-infrastructure/.../executor/docker/DockerTaskExecutor.java (363L, @Preparation docker)
-✅ platform-infrastructure/.../executor/docker/DockerTaskExecutorTest.java (23 tests, FakeDockerClient)
-✅ .claude/progress.md — ISSUE-044 IN REVIEW → DONE
+✅ platform-infrastructure/.../executor/fs/FilesystemTaskExecutor.java — PRECISION-01 + CRAFT-07
+✅ .claude/context/recommendations-tracking.md — ISSUE-045 PRECISION-01 + CRAFT-07 PENDING → APPLIED
+✅ .claude/progress.md — ISSUE-045 CHANGES_REQUESTED → IN REVIEW
 ✅ .claude/session-state.md — ce fichier
-✅ .claude/context/interfaces-registry.md — DockerTaskExecutor IN PROGRESS → STABLE
 ```
 
 **Blocages** :
@@ -47,13 +43,12 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-SI DEVELOPER (ISSUE-045) :
+SI REVIEWER (ISSUE-045, re-review) :
   .claude/session-state.md
   .claude/progress.md
   .claude/issues/ISSUE-045-filesystem-task-executor.md
-  .claude/agents/developer.md
-  .claude/skills/task-executor-pattern.md
-  .claude/specifications/03-task-framework.md
+  .claude/agents/reviewer.md
+  .claude/context/recommendations-tracking.md
 ```
 
 ---
@@ -62,6 +57,9 @@ SI DEVELOPER (ISSUE-045) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-19 | Developer | ISSUE-045 | Corrections PRECISION-01 + CRAFT-07 appliquees, re-review | IN REVIEW |
+| 2026-06-19 | Reviewer | ISSUE-045 | CHANGES_REQUESTED: 1 bloquant (pathsByExecution non alimenté) + CRAFT-07 recommandé | CHANGES_REQUESTED |
+| 2026-06-18 | Developer | ISSUE-045 | FilesystemTaskExecutor + 20 tests @TempDir, IN REVIEW | IN REVIEW |
 | 2026-06-16 | Reviewer | ISSUE-044 | APPROVED: DockerTaskExecutor + 23 tests, 0 bloquant, commit | DONE |
 | 2026-06-16 | Developer | ISSUE-044 | DockerTaskExecutor + DockerClient + 23 tests, IN REVIEW | IN REVIEW |
 | 2026-06-16 | Reviewer | ISSUE-043 | Re-review: 2 recommandations CONFIRMED (CRAFT-05/TEST-06), commit | DONE |
