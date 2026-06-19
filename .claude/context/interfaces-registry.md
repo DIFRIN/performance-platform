@@ -244,7 +244,7 @@
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
 | `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` / `UnsupportedAssertionNameException` | ✅ STABLE | PDR-014 | ISSUE-059 |
-| `GatlingMetricAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-060 |
+| `GatlingMetricAssertionExecutor` / `MetricExtractor` | ✅ STABLE | PDR-014 | ISSUE-060 |
 | `DatabaseAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-061 |
 | `KafkaAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-062 |
 | `HttpMockAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-063 |

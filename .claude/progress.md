@@ -128,7 +128,7 @@
 | ISSUE-056 | GatlingResultParser | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-055 |
 | ISSUE-057 | GatlingTaskExecutor | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-055,056 |
 | ISSUE-059 | AssertionExecutorRegistry | PDR-014 | platform-assertion | S | DONE | ISSUE-011 |
-| ISSUE-060 | GatlingMetricAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059,056 |
+| ISSUE-060 | GatlingMetricAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059,056 |
 | ISSUE-061 | DatabaseAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
 | ISSUE-065 | Records CampaignReport + interfaces | PDR-015 | platform-reporting | M | TODO | ISSUE-006,013,002 |
 | ISSUE-066 | DefaultReportEngine + Verdict | PDR-015 | platform-reporting | M | TODO | ISSUE-065 |
@@ -402,6 +402,11 @@
 | 2026-06-20 | ISSUE-059 | APPROVED → DONE | Reviewer — re-review: SPEC-01 injection-gatling deferral CONFIRMED, PDR-014 IN PROGRESS |
 | 2026-06-20 | PDR-013 | TODO → DONE | Reviewer (ISSUE-054..058 all DONE) |
 | 2026-06-20 | PDR-014 | TODO → IN PROGRESS | Reviewer (ISSUE-059 DONE, ISSUE-060..064 remaining) |
+| 2026-06-20 | ISSUE-060 | TODO → IN PROGRESS | Developer — GatlingMetricAssertionExecutor + MetricExtractor |
+| 2026-06-20 | ISSUE-060 | IN PROGRESS → IN REVIEW | Developer — @Assertion name=gatling-metric, MetricExtractor 12 metriques, 27 tests OK |
+| 2026-06-20 | ISSUE-060 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (CRAFT-07 executionId logs, PRECISION import inutilise) |
+| 2026-06-20 | ISSUE-060 | APPROVED — recommandations APPLIED | Developer — executionId ajoute aux 2 logs + import TaskStatus supprime. 37 tests OK |
+| 2026-06-20 | ISSUE-060 | APPROVED → DONE | Reviewer — re-review: CRAFT-07 + PRECISION CONFIRMED, 37 tests OK |
 
 ---
 
@@ -410,4 +415,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (ISSUE-054 + ISSUE-059 re-review DONE, PDR-013 DONE, PDR-014 IN PROGRESS)
+**Dernière mise à jour** : 2026-06-20 (ISSUE-060 DONE — GatlingMetricAssertionExecutor, 37 tests OK)
