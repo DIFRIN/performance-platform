@@ -10,35 +10,29 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : Aucune (ISSUE-054 + ISSUE-059 DONE). Prochaine: ISSUE-060.
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : ISSUE-060 (GatlingMetricAssertionExecutor — DONE)
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
-**PDR parent** : PDR-013 (Gatling Injection — DONE) / PDR-014 (Assertion Framework — IN PROGRESS)
+**PDR parent** : PDR-014 (Assertion Framework — IN PROGRESS)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : re-review ISSUE-054 + ISSUE-059. Les 2 recommandations CONFIRMED.
-ISSUE-054: CC-02 Javadoc translateCustom() verifiee (ligne 258).
-ISSUE-059: pom.xml platform-assertion sans injection-gatling, deferral a ISSUE-060 confirme.
-PDR-013 (Gatling Injection) DONE. PDR-014 (Assertion Framework) IN PROGRESS.
-67 tests platform-injection-gatling OK, 10 tests platform-assertion OK.
+Reviewer : ISSUE-060 re-review CONFIRMED. CRAFT-07 (executionId logs) + PRECISION (import TaskStatus supprime) valides. 37 tests OK, BUILD SUCCESS.
 
 **Prochaine action** :
-Developer : ISSUE-060 (GatlingMetricAssertionExecutor). Depend de ISSUE-059 (DONE) et ISSUE-056 (DONE).
+Developer : ISSUE-061 (DatabaseAssertionExecutor).
 
 **Fichiers modifies** :
 ```
-✅ .claude/session-state.md — ce fichier (Reviewer re-review, ISSUE-054+059 DONE)
-✅ .claude/progress.md — ISSUE-054 + ISSUE-059 DONE, PDR-013 DONE, PDR-014 IN PROGRESS
-✅ .claude/context/recommendations-tracking.md — ISSUE-054 CRAFT-05 + ISSUE-059 SPEC-01 → CONFIRMED
-```
-Fichiers de code modifies par le Developer (deja verifies) :
-```
-✅ platform-injection-gatling/.../DefaultLoadModelTranslator.java — CC-02 Javadoc translateCustom() (ligne 258)
-✅ platform-assertion/pom.xml — pas de dependance injection-gatling (confirme deferral a ISSUE-060)
+✅ .claude/session-state.md — ce fichier
+✅ .claude/progress.md — ISSUE-060 TODO → IN PROGRESS → IN REVIEW
+✅ platform-assertion/pom.xml — +dependance platform-injection-gatling (ISSUE-059 deferral)
+✅ platform-assertion/.../gatling/MetricExtractor.java — cree
+✅ platform-assertion/.../gatling/GatlingMetricAssertionExecutor.java — cree
+✅ platform-assertion/.../gatling/GatlingMetricAssertionExecutorTest.java — cree (27 tests)
 ```
 
 **Blocages** :
@@ -67,3 +61,5 @@ _Aucun_
 | 2026-06-20 | Reviewer | ISSUE-054+059 | Dual review: ISSUE-054 APPROVED (LoadModelTranslator, 67 tests OK) + ISSUE-059 APPROVED (AssertionExecutorRegistry, 10 tests OK). 2 recommandations PENDING. | APPROVED |
 | 2026-06-20 | Developer | ISSUE-054+059 | Recommandations APPLIED: CC-02 translateCustom() + SPEC-01 deferral ISSUE-060. 67 tests OK. | Attente re-review |
 | 2026-06-20 | Reviewer | ISSUE-054+059 | Re-review: 2 recommandations CONFIRMED. PDR-013 DONE, PDR-014 IN PROGRESS. Commit. | DONE |
+| 2026-06-20 | Developer | ISSUE-060 | GatlingMetricAssertionExecutor + MetricExtractor + pom.xml injection-gatling. 37 tests OK → IN REVIEW | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-060 | APPROVED: 0 bloquant, 2 recommandations PENDING (CRAFT-07 executionId logs, PRECISION import inutilise) | APPROVED |

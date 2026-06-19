@@ -291,6 +291,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-057] [2026-06-20] [CONFIRMED] [CRAFT-05] GatlingTaskExecutor 330 lignes > 300 sans marqueur CC-02 dans la Javadoc de classe. Le pipeline extract→build→run→parse→assemble, les helpers de parametres, et le contrat StatefulResourceCleaner forment un ensemble cohesif inseparable. Ajouter une ligne CC-02 explicite dans la Javadoc de classe. Fichier : .../GatlingTaskExecutor.java (classe).
 [ISSUE-054] [2026-06-20] [CONFIRMED] [CRAFT-05] translateCustom() 41 lignes > 40 — CC-02 ajoute en prefixe Javadoc (pipeline cohesif: validation points, iteration segments, construction ramps). Fichier : .../load/DefaultLoadModelTranslator.java:258.
 [ISSUE-059] [2026-06-20] [CONFIRMED] [SPEC-01] pom.xml — dependance platform-injection-gatling deferred a ISSUE-060 (GatlingMetricAssertionExecutor). Confirme par Developer.
+[ISSUE-060] [2026-06-20] [CONFIRMED] [CRAFT-07] executionId ajoute aux logs structures (log.info ligne 119 + log.warn ligne 133). executionId=context.executionId().value(). Fichier : .../assertion/gatling/GatlingMetricAssertionExecutor.java.
+[ISSUE-060] [2026-06-20] [CONFIRMED] [PRECISION] Import inutilise TaskStatus supprime. Fichier : .../assertion/gatling/GatlingMetricAssertionExecutorTest.java.
 
 ---
 
