@@ -126,7 +126,7 @@
 | ISSUE-054 | LoadModelTranslator (8 types) | PDR-013 | platform-injection-gatling | L | IN REVIEW | ISSUE-006,011 |
 | ISSUE-055 | GatlingRunner | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-054 |
 | ISSUE-056 | GatlingResultParser | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-055 |
-| ISSUE-057 | GatlingTaskExecutor | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-055,056 |
+| ISSUE-057 | GatlingTaskExecutor | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-055,056 |
 | ISSUE-059 | AssertionExecutorRegistry | PDR-014 | platform-assertion | S | TODO | ISSUE-011 |
 | ISSUE-060 | GatlingMetricAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059,056 |
 | ISSUE-061 | DatabaseAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
@@ -391,6 +391,8 @@
 | 2026-06-20 | ISSUE-056 | IN PROGRESS → IN REVIEW | Developer — GatlingResultParser: correction p90Ms (interpolation), rawStats (types scalaires), 37 tests OK |
 | 2026-06-20 | ISSUE-056 | IN REVIEW → APPROVED | Reviewer — APPROVED: 0 bloquant, 1 recommandation PENDING (CRAFT-05 CC-02 parse() 72L>40) |
 | 2026-06-20 | ISSUE-056 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED (CC-02 Javadoc parse() ajoutee), 37 tests OK |
+| 2026-06-20 | ISSUE-057 | TODO → IN REVIEW | Developer — GatlingTaskExecutor (@Injection name="gatling"), 55 tests OK |
+| 2026-06-20 | ISSUE-057 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED (CC-02 Javadoc classe), 55 tests OK |
 
 ---
 

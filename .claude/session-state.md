@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-057 (GatlingTaskExecutor) — prochaine
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : ISSUE-058 (Protocoles Gatling sans gRPC)
+**Statut issue** : [ ] WAITING | [x] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
 **PDR parent** : PDR-013 (Gatling Injection)
 
 ---
@@ -20,18 +20,17 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : re-review ISSUE-056 (GatlingResultParser). CRAFT-05 CC-02 CONFIRMED (Javadoc parse() ajoutee). 37 tests OK. Commit + DONE.
+Reviewer (re-review) : ISSUE-057 (GatlingTaskExecutor) — CRAFT-05 CONFIRMED (CC-02 Javadoc classe), 55 tests OK, DONE.
 
 **Prochaine action** :
-Developer : prendre ISSUE-057 (GatlingTaskExecutor) → IN PROGRESS.
+Developer : ISSUE-058 (Protocoles Gatling sans gRPC), OU ISSUE-054 LoadModelTranslator si IN REVIEW termine.
 
 **Fichiers modifies** :
 ```
 ✅ .claude/session-state.md — ce fichier
-✅ .claude/progress.md — ISSUE-056 IN PROGRESS → IN REVIEW
-✅ .claude/context/interfaces-registry.md — GatlingResultParser entries → IN PROGRESS
-✅ platform-injection-gatling/.../result/DefaultGatlingResultParser.java — p90Ms interpolation + rawStats type-safe
-✅ platform-injection-gatling/.../result/DefaultGatlingResultParserTest.java — offset() fix + p90Ms assertions
+✅ .claude/progress.md — ISSUE-057 APPROVED → DONE
+✅ .claude/context/recommendations-tracking.md — CRAFT-05 APPLIED → CONFIRMED
+✅ .claude/context/interfaces-registry.md — GatlingTaskExecutor IN PROGRESS → STABLE
 ```
 
 **Blocages** :
@@ -52,3 +51,5 @@ _Aucun_
 | 2026-06-19 | Developer | ISSUE-032 | SocketExecutionTransport + SocketConnectionRegistry + 33 tests + TransportConfiguration update | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-055 | Re-review: 4 recommandations CONFIRMED (CRAFT-05/SPEC-01/ROBUSTNESS-01/TEST-04). 28 tests OK. | DONE |
 | 2026-06-20 | Developer | ISSUE-056 | Reprise: correction p90Ms (interpolation), rawStats (types scalaires), 37 tests OK → IN REVIEW | IN REVIEW |
+| 2026-06-20 | Developer | ISSUE-057 | GatlingTaskExecutor: @Injection name=gatling, stubs manuels (Mockito incompatible Java 25), 55 tests OK → IN REVIEW | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-057 | Re-review: CRAFT-05 CONFIRMED (CC-02 Javadoc classe), 55 tests OK → DONE | DONE |
