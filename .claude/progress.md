@@ -155,7 +155,7 @@
 | ISSUE-048 | Scanner d'annotations plugin | PDR-011 | platform-infrastructure | M | DONE | ISSUE-046 |
 | ISSUE-049 | ArchUnit séparation packages infra | PDR-011 | platform-infrastructure | S | DONE | ISSUE-039,046 |
 | ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | DONE | ISSUE-052 |
-| ISSUE-058 | Protocoles Gatling (sans gRPC) | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-057 |
+| ISSUE-058 | Gatling Protocols (no gRPC) | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-057 |
 | ISSUE-062 | KafkaAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
 | ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
 | ISSUE-064 | FileAssertionExecutor | PDR-014 | platform-assertion | S | TODO | ISSUE-059 |
@@ -393,6 +393,8 @@
 | 2026-06-20 | ISSUE-056 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED (CC-02 Javadoc parse() ajoutee), 37 tests OK |
 | 2026-06-20 | ISSUE-057 | TODO → IN REVIEW | Developer — GatlingTaskExecutor (@Injection name="gatling"), 55 tests OK |
 | 2026-06-20 | ISSUE-057 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED (CC-02 Javadoc classe), 55 tests OK |
+| 2026-06-20 | ISSUE-058 | TODO → IN REVIEW | Developer — ProtocolSupportInfo + pom.xml (HTTP/WS/Kafka/JMS, sans gRPC), 67 tests OK |
+| 2026-06-20 | ISSUE-058 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 67 tests OK, spec respectee |
 
 ---
 

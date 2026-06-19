@@ -237,6 +237,7 @@
 | `DefaultGatlingRunner` / `GatlingExecutionException` / `SimulationInjectionHolder` | ✅ STABLE | PDR-013 | ISSUE-055 |
 | `GatlingResultParser` / `DefaultGatlingResultParser` / `ResultParsingException` | ✅ STABLE | PDR-013 | ISSUE-056 |
 | `GatlingTaskExecutor` | ✅ STABLE | PDR-013 | ISSUE-057 |
+| `ProtocolSupportInfo` | ✅ STABLE | PDR-013 | ISSUE-058 |
 
 ## platform-assertion
 
