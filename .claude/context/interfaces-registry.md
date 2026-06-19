@@ -201,7 +201,7 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| Entities JPA + Flyway | ⬜ PLANNED | PDR-012 | ISSUE-050 |
+| `ExecutionStateEntity` / `TaskResultEntity` / `TaskResultId` (package-private) | ✅ STABLE | PDR-012 | ISSUE-050 |
 | `ExecutionStateMapper` / `TaskResultMapper` | ⬜ PLANNED | PDR-012 | ISSUE-051 |
 | `JpaExecutionRepository` | ⬜ PLANNED | PDR-012 | ISSUE-052 |
 
