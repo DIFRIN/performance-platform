@@ -289,6 +289,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-055] [2026-06-20] [CONFIRMED] [TEST-04] shouldThrowOnInvalidSimulationClass renforce — verifie GatlingExecutionException levee. Fichier : .../runner/DefaultGatlingRunnerTest.java.
 [ISSUE-056] [2026-06-20] [CONFIRMED] [CRAFT-05] parse() 72 lignes > 40 sans justification CC-02 — Javadoc CC-02 ajoutee expliquant le pipeline sequentiel cohesif (find→read→extract→rawStats→assemble). Fichier : .../result/DefaultGatlingResultParser.java:57-65.
 [ISSUE-057] [2026-06-20] [CONFIRMED] [CRAFT-05] GatlingTaskExecutor 330 lignes > 300 sans marqueur CC-02 dans la Javadoc de classe. Le pipeline extract→build→run→parse→assemble, les helpers de parametres, et le contrat StatefulResourceCleaner forment un ensemble cohesif inseparable. Ajouter une ligne CC-02 explicite dans la Javadoc de classe. Fichier : .../GatlingTaskExecutor.java (classe).
+[ISSUE-054] [2026-06-20] [CONFIRMED] [CRAFT-05] translateCustom() 41 lignes > 40 — CC-02 ajoute en prefixe Javadoc (pipeline cohesif: validation points, iteration segments, construction ramps). Fichier : .../load/DefaultLoadModelTranslator.java:258.
+[ISSUE-059] [2026-06-20] [CONFIRMED] [SPEC-01] pom.xml — dependance platform-injection-gatling deferred a ISSUE-060 (GatlingMetricAssertionExecutor). Confirme par Developer.
 
 ---
 

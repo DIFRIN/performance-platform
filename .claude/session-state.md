@@ -10,29 +10,35 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-058 (Gatling Protocols sans gRPC)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
-**PDR parent** : PDR-013 (Gatling Injection)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : Aucune (ISSUE-054 + ISSUE-059 DONE). Prochaine: ISSUE-060.
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**PDR parent** : PDR-013 (Gatling Injection — DONE) / PDR-014 (Assertion Framework — IN PROGRESS)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : ISSUE-058 APPROVED (0 bloquant, 0 recommandation). ProtocolSupportInfo + pom.xml CC-03 conformes, 67 tests OK. PDR-013: 5/5 Issues DONE.
+Reviewer : re-review ISSUE-054 + ISSUE-059. Les 2 recommandations CONFIRMED.
+ISSUE-054: CC-02 Javadoc translateCustom() verifiee (ligne 258).
+ISSUE-059: pom.xml platform-assertion sans injection-gatling, deferral a ISSUE-060 confirme.
+PDR-013 (Gatling Injection) DONE. PDR-014 (Assertion Framework) IN PROGRESS.
+67 tests platform-injection-gatling OK, 10 tests platform-assertion OK.
 
 **Prochaine action** :
-Reviewer : ISSUE-054 (LoadModelTranslator) toujours IN REVIEW — a traiter. Sinon, Developer : ISSUE-059 (AssertionExecutorRegistry) — prochaine Issue TODO dans PDR-014.
+Developer : ISSUE-060 (GatlingMetricAssertionExecutor). Depend de ISSUE-059 (DONE) et ISSUE-056 (DONE).
 
 **Fichiers modifies** :
 ```
-✅ .claude/session-state.md — ce fichier
-✅ .claude/progress.md — ISSUE-058 TODO → IN PROGRESS → IN REVIEW
-✅ .claude/context/interfaces-registry.md — ProtocolSupportInfo → IN PROGRESS
-✅ platform-injection-gatling/pom.xml — +gatling-jms, CC-03 comments, Kafka commenté (absent Maven Central)
-✅ platform-injection-gatling/.../protocol/ProtocolSupportInfo.java — cree
-✅ platform-injection-gatling/.../protocol/ProtocolSupportInfoTest.java — cree (12 tests)
+✅ .claude/session-state.md — ce fichier (Reviewer re-review, ISSUE-054+059 DONE)
+✅ .claude/progress.md — ISSUE-054 + ISSUE-059 DONE, PDR-013 DONE, PDR-014 IN PROGRESS
+✅ .claude/context/recommendations-tracking.md — ISSUE-054 CRAFT-05 + ISSUE-059 SPEC-01 → CONFIRMED
+```
+Fichiers de code modifies par le Developer (deja verifies) :
+```
+✅ platform-injection-gatling/.../DefaultLoadModelTranslator.java — CC-02 Javadoc translateCustom() (ligne 258)
+✅ platform-assertion/pom.xml — pas de dependance injection-gatling (confirme deferral a ISSUE-060)
 ```
 
 **Blocages** :
@@ -57,3 +63,7 @@ _Aucun_
 | 2026-06-20 | Developer | ISSUE-058 | ProtocolSupportInfo + pom.xml CC-03: 5 protocoles (HTTP/HTTPS/WS/Kafka/JMS), gRPC exclu, 67 tests OK → IN REVIEW | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-057 | Re-review: CRAFT-05 CONFIRMED (CC-02 Javadoc classe), 55 tests OK → DONE | DONE |
 | 2026-06-20 | Reviewer | ISSUE-058 | APPROVED: 0 bloquant, 0 recommandation. ProtocolSupportInfo + pom.xml CC-03, 67 tests OK | DONE |
+| 2026-06-20 | Developer | ISSUE-059 | platform-assertion module: AssertionExecutorRegistry + DefaultAssertionExecutorRegistry + UnsupportedAssertionNameException, 10 tests OK → IN REVIEW | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-054+059 | Dual review: ISSUE-054 APPROVED (LoadModelTranslator, 67 tests OK) + ISSUE-059 APPROVED (AssertionExecutorRegistry, 10 tests OK). 2 recommandations PENDING. | APPROVED |
+| 2026-06-20 | Developer | ISSUE-054+059 | Recommandations APPLIED: CC-02 translateCustom() + SPEC-01 deferral ISSUE-060. 67 tests OK. | Attente re-review |
+| 2026-06-20 | Reviewer | ISSUE-054+059 | Re-review: 2 recommandations CONFIRMED. PDR-013 DONE, PDR-014 IN PROGRESS. Commit. | DONE |

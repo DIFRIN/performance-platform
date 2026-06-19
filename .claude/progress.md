@@ -61,8 +61,8 @@
 | PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | DONE | ISSUE-039..045 | PDR-001,003,004 |
 | PDR-011 | Plugin System (infra `.plugin`) | platform-infrastructure | DONE | ISSUE-046..049 | PDR-001,003,010 |
 | PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | DONE | ISSUE-050..053 | PDR-001,004 |
-| PDR-013 | Gatling Injection | platform-injection-gatling | TODO | ISSUE-054..058 | PDR-001,003 |
-| PDR-014 | Assertion Framework | platform-assertion | TODO | ISSUE-059..064 | PDR-001,003,013 |
+| PDR-013 | Gatling Injection | platform-injection-gatling | DONE | ISSUE-054..058 | PDR-001,003 |
+| PDR-014 | Assertion Framework | platform-assertion | IN PROGRESS | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | TODO | ISSUE-065..069 | PDR-001,002,004,013,014 |
 | PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | TODO | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | TODO | ISSUE-074,075,076 | PDR-001,002 |
@@ -123,11 +123,11 @@
 | ISSUE-050 | Entities JPA + migrations Flyway | PDR-012 | platform-infrastructure | M | DONE | ISSUE-006,013 |
 | ISSUE-051 | Mappers domain↔entity | PDR-012 | platform-infrastructure | M | DONE | ISSUE-050 |
 | ISSUE-052 | JpaExecutionRepository | PDR-012 | platform-infrastructure | M | DONE | ISSUE-051,013 |
-| ISSUE-054 | LoadModelTranslator (8 types) | PDR-013 | platform-injection-gatling | L | IN REVIEW | ISSUE-006,011 |
+| ISSUE-054 | LoadModelTranslator (8 types) | PDR-013 | platform-injection-gatling | L | DONE | ISSUE-006,011 |
 | ISSUE-055 | GatlingRunner | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-054 |
 | ISSUE-056 | GatlingResultParser | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-055 |
 | ISSUE-057 | GatlingTaskExecutor | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-055,056 |
-| ISSUE-059 | AssertionExecutorRegistry | PDR-014 | platform-assertion | S | TODO | ISSUE-011 |
+| ISSUE-059 | AssertionExecutorRegistry | PDR-014 | platform-assertion | S | DONE | ISSUE-011 |
 | ISSUE-060 | GatlingMetricAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059,056 |
 | ISSUE-061 | DatabaseAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
 | ISSUE-065 | Records CampaignReport + interfaces | PDR-015 | platform-reporting | M | TODO | ISSUE-006,013,002 |
@@ -394,7 +394,14 @@
 | 2026-06-20 | ISSUE-057 | TODO → IN REVIEW | Developer — GatlingTaskExecutor (@Injection name="gatling"), 55 tests OK |
 | 2026-06-20 | ISSUE-057 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED (CC-02 Javadoc classe), 55 tests OK |
 | 2026-06-20 | ISSUE-058 | TODO → IN REVIEW | Developer — ProtocolSupportInfo + pom.xml (HTTP/WS/Kafka/JMS, sans gRPC), 67 tests OK |
+| 2026-06-20 | ISSUE-059 | TODO → IN REVIEW | Developer — platform-assertion module + AssertionExecutorRegistry, 10 tests OK |
 | 2026-06-20 | ISSUE-058 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 67 tests OK, spec respectee |
+| 2026-06-20 | ISSUE-054 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation: CRAFT-05 translateCustom() 41L marqueur CC-02 |
+| 2026-06-20 | ISSUE-059 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation: SPEC-01 pom.xml injection-gatling deferred a ISSUE-060 |
+| 2026-06-20 | ISSUE-054 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CC-02 translateCustom() CONFIRMED, 67 tests OK, PDR-013 DONE |
+| 2026-06-20 | ISSUE-059 | APPROVED → DONE | Reviewer — re-review: SPEC-01 injection-gatling deferral CONFIRMED, PDR-014 IN PROGRESS |
+| 2026-06-20 | PDR-013 | TODO → DONE | Reviewer (ISSUE-054..058 all DONE) |
+| 2026-06-20 | PDR-014 | TODO → IN PROGRESS | Reviewer (ISSUE-059 DONE, ISSUE-060..064 remaining) |
 
 ---
 
@@ -403,4 +410,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-19 (ISSUE-032 DONE — SocketExecutionTransport, PDR-008 DONE)
+**Dernière mise à jour** : 2026-06-20 (ISSUE-054 + ISSUE-059 re-review DONE, PDR-013 DONE, PDR-014 IN PROGRESS)

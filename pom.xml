@@ -30,6 +30,7 @@
         <module>platform-agent-runtime</module>
         <module>platform-infrastructure</module>
         <module>platform-injection-gatling</module>
+        <module>platform-assertion</module>
     </modules>
 
     <dependencyManagement>
