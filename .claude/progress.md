@@ -150,7 +150,7 @@
 | ISSUE-043 | ShellTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-044 | DockerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-045 | FilesystemTaskExecutor | PDR-010 | platform-infrastructure | S | DONE | ISSUE-039 |
-| ISSUE-046 | PluginLoader | PDR-011 | platform-infrastructure | L | TODO | ISSUE-011,039 |
+| ISSUE-046 | PluginLoader | PDR-011 | platform-infrastructure | L | DONE | ISSUE-011,039 |
 | ISSUE-047 | PluginRegistry | PDR-011 | platform-infrastructure | M | TODO | ISSUE-046 |
 | ISSUE-048 | Scanner d'annotations plugin | PDR-011 | platform-infrastructure | M | TODO | ISSUE-046 |
 | ISSUE-049 | ArchUnit séparation packages infra | PDR-011 | platform-infrastructure | S | TODO | ISSUE-039,046 |
@@ -330,6 +330,11 @@
 | 2026-06-19 | ISSUE-045 | IN REVIEW → CHANGES_REQUESTED | Reviewer — 1 bloquant: pathsByExecution non alimenté + CRAFT-07 executionId absent des logs |
 | 2026-06-16 | ISSUE-044 | IN REVIEW → DONE | Reviewer — APPROVED, 0 bloquant, 0 recommandation |
 | 2026-06-19 | ISSUE-045 | IN REVIEW → DONE | Reviewer — re-review: PRECISION-01 + CRAFT-07 CONFIRMED, 0 bloquant |
+| 2026-06-19 | ISSUE-046 | TODO → IN PROGRESS | Developer |
+| 2026-06-19 | PDR-011 | TODO → IN PROGRESS | Developer (ISSUE-046 started) |
+| 2026-06-19 | ISSUE-046 | IN PROGRESS → IN REVIEW | Developer — PluginLoader + DefaultPluginLoader + 16 tests |
+| 2026-06-19 | ISSUE-046 | IN REVIEW → APPROVED | Reviewer — APPROVED, 0 bloquant, 1 recommandation PENDING (CRAFT-05) |
+| 2026-06-19 | ISSUE-046 | APPROVED (CRAFT-05 APPLIED) | Developer — CC-02 justification Javadoc sur load/loadExecutorsFromJar/tryLoadClass, re-review |
 
 ---
 
