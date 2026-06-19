@@ -154,10 +154,10 @@
 | Transport properties + `TransportConfiguration` | ✅ STABLE | PDR-008 | ISSUE-028 |
 | `KafkaTransportProperties` / `RabbitMQTransportProperties` / `HttpTransportProperties` / `SocketTransportProperties` | ✅ STABLE | PDR-008 | ISSUE-028 |
 | `TransportConfiguration` | ✅ STABLE | PDR-008 | ISSUE-028 |
-| `KafkaExecutionTransport` | 🔄 IN PROGRESS | PDR-008 | ISSUE-029 |
-| `KafkaMessageCodec` | 🔄 IN PROGRESS | PDR-008 | ISSUE-029 |
-| `KafkaConsumerManager` | 🔄 IN PROGRESS | PDR-008 | ISSUE-029 |
-| `KafkaSubscription` | 🔄 IN PROGRESS | PDR-008 | ISSUE-029 |
+| `KafkaExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-029 |
+| `KafkaMessageCodec` | ✅ STABLE | PDR-008 | ISSUE-029 |
+| `KafkaConsumerManager` | ✅ STABLE | PDR-008 | ISSUE-029 |
+| `KafkaSubscription` | ✅ STABLE | PDR-008 | ISSUE-029 |
 | `RabbitMQExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-030 |
 | `HttpExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-031 |
 | `SocketExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-032 |

@@ -373,6 +373,7 @@
 | 2026-06-19 | ISSUE-029 | IN PROGRESS → IN REVIEW | Developer — KafkaExecutionTransport + KafkaMessageCodec + 13 ITs Testcontainers |
 | 2026-06-19 | ISSUE-029 | IN REVIEW → APPROVED | Reviewer — APPROVED: 0 bloquant, 2 recommandations PENDING (CRAFT-08 @type constant, TEST-04 null-check tests) |
 | 2026-06-19 | ISSUE-029 | APPROVED (CRAFT-08 + TEST-04 APPLIED) | Developer — TYPE_FIELD constante + 3 null-check tests, re-review |
+| 2026-06-19 | ISSUE-029 | APPROVED → DONE | Reviewer — re-review #2: CRAFT-08 CONFIRMED, TEST-04 CONFIRMED (TransportException), 105 tests OK, commit |
 
 ---
 
