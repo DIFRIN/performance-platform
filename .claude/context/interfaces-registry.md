@@ -236,7 +236,7 @@
 | `GatlingRunner` / `GatlingRunConfig` | ✅ STABLE | PDR-013 | ISSUE-055 |
 | `DefaultGatlingRunner` / `GatlingExecutionException` / `SimulationInjectionHolder` | ✅ STABLE | PDR-013 | ISSUE-055 |
 | `GatlingResultParser` / `DefaultGatlingResultParser` / `ResultParsingException` | ✅ STABLE | PDR-013 | ISSUE-056 |
-| `GatlingTaskExecutor` | ⬜ PLANNED | PDR-013 | ISSUE-057 |
+| `GatlingTaskExecutor` | ✅ STABLE | PDR-013 | ISSUE-057 |
 
 ## platform-assertion
 
