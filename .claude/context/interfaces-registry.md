@@ -195,7 +195,7 @@
 | `PluginLoader` / `PluginLoadResult` | ✅ STABLE | PDR-011 | ISSUE-046 |
 | `PluginRegistry` | ✅ STABLE | PDR-011 | ISSUE-047 |
 | `AnnotationScanner` / `PluginDescriptor` | ✅ STABLE | PDR-011 | ISSUE-048 |
-| `InfrastructurePackageSeparationTest` (ArchUnit) | 🔄 IN PROGRESS | PDR-011 | ISSUE-049 |
+| `InfrastructurePackageSeparationTest` (ArchUnit) | ✅ STABLE | PDR-011 | ISSUE-049 |
 
 ## platform-infrastructure — `.persistence` (PDR-012)
 
