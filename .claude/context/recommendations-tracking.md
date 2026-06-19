@@ -305,5 +305,5 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-16 | ISSUE-042 | [CRAFT-07] executionId ajoute aux logs mode EXTERNAL + handler erreur execute() | APPLIED |
 | 2026-06-16 | ISSUE-043 | [CRAFT-05] CC-02 justification Javadoc + extraction executeProcess/execute | CONFIRMED |
 | 2026-06-16 | ISSUE-043 | [TEST-06] 2 Thread.sleep(500) → Awaitility avec temp files | CONFIRMED |
-| 2026-06-19 | ISSUE-045 | [PRECISION-01] pathsByExecution non alimenté — extraction executionKey + tracking dans executeCreate()/executeUpload() | APPLIED |
-| 2026-06-19 | ISSUE-045 | [CRAFT-07] executionId absent des logs — ajouter executionKey dans tous les log.info/log.error | APPLIED |
+| 2026-06-19 | ISSUE-045 | [PRECISION-01] pathsByExecution non alimenté — extraction executionKey + tracking dans executeCreate()/executeUpload() | CONFIRMED |
+| 2026-06-19 | ISSUE-045 | [CRAFT-07] executionId absent des logs — ajouter executionKey dans tous les log.info/log.error | CONFIRMED |

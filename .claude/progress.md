@@ -329,6 +329,7 @@
 | 2026-06-19 | ISSUE-045 | CHANGES_REQUESTED → IN REVIEW | Developer — corrections appliquees (PRECISION-01/CRAFT-07), re-review |
 | 2026-06-19 | ISSUE-045 | IN REVIEW → CHANGES_REQUESTED | Reviewer — 1 bloquant: pathsByExecution non alimenté + CRAFT-07 executionId absent des logs |
 | 2026-06-16 | ISSUE-044 | IN REVIEW → DONE | Reviewer — APPROVED, 0 bloquant, 0 recommandation |
+| 2026-06-19 | ISSUE-045 | IN REVIEW → DONE | Reviewer — re-review: PRECISION-01 + CRAFT-07 CONFIRMED, 0 bloquant |
 
 ---
 
