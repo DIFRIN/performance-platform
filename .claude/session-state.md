@@ -10,10 +10,10 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-19
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-050 (Entities JPA + migrations Flyway)
-**Statut issue** : [ ] WAITING | [x] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
-**PDR parent** : PDR-012 (Persistence infra .persistence) — TODO (prochaine a demarrer)
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**PDR parent** : PDR-012 (Persistence infra .persistence) — IN PROGRESS
 
 ---
 
@@ -22,17 +22,25 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Reviewer : re-review ISSUE-049 — PRECISION-02 CONFIRMED (release 23 bien supprime de pom.xml), tests ArchUnit OK, PRECISION-02 → CONFIRMED, ISSUE-049 → DONE, PDR-011 → DONE, commit effectue.
+Reviewer : ISSUE-050 APPROVED. 0 bloquant, 0 recommandation. 178 tests OK (5 IT). Entities JPA package-private, composite key multi-claim (ADR-011), migrations Flyway V1+V2. Release 23 justifie (ASM 9.7 limite V23/class 67). PRECISION-02 annule.
 
 **Prochaine action** :
-Developer : lire .claude/issues/ISSUE-050-persistence-entities.md, demarrer ISSUE-050 (Entities JPA + migrations Flyway, PDR-012). C'est la premiere Issue de PDR-012.
+Developer : prendre ISSUE-051 (Mappers domain↔entity, PDR-012).
+
+**Prochaine action** :
+Reviewer : revoir ISSUE-050 (Entities JPA + migrations Flyway, PDR-012).
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/pom.xml — suppression <release>23</release> (precedemment)
-✅ .claude/context/recommendations-tracking.md — PRECISION-02 APPLIED → CONFIRMED
-✅ .claude/progress.md — ISSUE-049 APPROVED → DONE, PDR-011 IN PROGRESS → DONE
-✅ .claude/context/interfaces-registry.md — InfrastructurePackageSeparationTest IN PROGRESS → STABLE
+✅ platform-infrastructure/pom.xml — +hibernate-core 6.6.10, +flyway 11.7.0, +jackson-databind 2.19.2, <release>23</release> retabli (ArchUnit ASM compat)
+✅ platform-infrastructure/src/main/java/.../persistence/ExecutionStateEntity.java — @Entity, JSONB phases+context
+✅ platform-infrastructure/src/main/java/.../persistence/TaskResultEntity.java — @Entity, @EmbeddedId composite PK
+✅ platform-infrastructure/src/main/java/.../persistence/TaskResultId.java — @Embeddable (executionId,taskId,agentId)
+✅ platform-infrastructure/src/main/resources/db/migration/V1__execution_state.sql
+✅ platform-infrastructure/src/main/resources/db/migration/V2__task_result.sql
+✅ platform-infrastructure/src/test/java/.../persistence/EntitiesMappingIT.java — 5 tests IT (Testcontainers+Hibernate+Flyway)
+✅ .claude/progress.md — ISSUE-050 IN REVIEW, PDR-012 IN PROGRESS
+✅ .claude/context/interfaces-registry.md — entities 🔄 IN PROGRESS
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -66,4 +74,6 @@ SI DEVELOPER (ISSUE-050, PDR-012, demarrage) :
 | 2026-06-19 | Developer | ISSUE-048 | AnnotationScanner + DefaultAnnotationScanner + PluginDescriptor + 14 tests | IN REVIEW |
 | 2026-06-19 | Reviewer | ISSUE-047 | Re-review: CRAFT-05 CONFIRMED, tests OK, commit | DONE |
 | 2026-06-19 | Reviewer | ISSUE-047 | APPROVED: 0 bloquant, 1 recommandation CRAFT-05 PENDING (CC-02 constructeur) | APPROVED |
+| 2026-06-19 | Reviewer | ISSUE-050 | APPROVED: 0 bloquant, 0 recommandation. 178 tests OK. DONE | DONE |
+| 2026-06-19 | Developer | ISSUE-050 | Entities JPA + migrations Flyway + 5 tests IT | IN REVIEW |
 | 2026-06-19 | Developer | ISSUE-047 | PluginRegistry + DefaultPluginRegistry + 23 tests, IN REVIEW | IN REVIEW |

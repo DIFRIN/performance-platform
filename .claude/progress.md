@@ -60,7 +60,7 @@
 | PDR-009 | Agent Runtime | platform-agent-runtime | DONE | ISSUE-033..038 | PDR-001,002,004,007 |
 | PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | IN PROGRESS | ISSUE-039..045 | PDR-001,003,004 |
 | PDR-011 | Plugin System (infra `.plugin`) | platform-infrastructure | DONE | ISSUE-046..049 | PDR-001,003,010 |
-| PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | TODO | ISSUE-050..053 | PDR-001,004 |
+| PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | IN PROGRESS | ISSUE-050..053 | PDR-001,004 |
 | PDR-013 | Gatling Injection | platform-injection-gatling | TODO | ISSUE-054..058 | PDR-001,003 |
 | PDR-014 | Assertion Framework | platform-assertion | TODO | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | TODO | ISSUE-065..069 | PDR-001,002,004,013,014 |
@@ -120,7 +120,7 @@
 | ISSUE-040 | DatabaseTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-041 | Kafka Consumer/Producer TaskExecutors | PDR-010 | platform-infrastructure | L | DONE | ISSUE-039 |
 | ISSUE-042 | MockServerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
-| ISSUE-050 | Entities JPA + migrations Flyway | PDR-012 | platform-infrastructure | M | TODO | ISSUE-006,013 |
+| ISSUE-050 | Entities JPA + migrations Flyway | PDR-012 | platform-infrastructure | M | DONE | ISSUE-006,013 |
 | ISSUE-051 | Mappers domain↔entity | PDR-012 | platform-infrastructure | M | TODO | ISSUE-050 |
 | ISSUE-052 | JpaExecutionRepository | PDR-012 | platform-infrastructure | M | TODO | ISSUE-051,013 |
 | ISSUE-054 | LoadModelTranslator (8 types) | PDR-013 | platform-injection-gatling | L | TODO | ISSUE-006,011 |
@@ -350,6 +350,10 @@
 | 2026-06-19 | ISSUE-049 | APPROVED (PRECISION-02 APPLIED) | Developer — suppression <release>23</release> pom.xml, re-review |
 | 2026-06-19 | ISSUE-049 | APPROVED → DONE | Reviewer — re-review: PRECISION-02 CONFIRMED, tous les tests OK |
 | 2026-06-19 | PDR-011 | IN PROGRESS → DONE | Reviewer (ISSUE-046..049 all DONE) |
+| 2026-06-19 | ISSUE-050 | TODO → IN PROGRESS | Developer |
+| 2026-06-19 | PDR-012 | TODO → IN PROGRESS | Developer (ISSUE-050 started) |
+| 2026-06-19 | ISSUE-050 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-19 | ISSUE-050 | IN REVIEW → DONE | Reviewer (APPROVED, 0 bloquant, 0 recommandation) |
 
 ---
 
