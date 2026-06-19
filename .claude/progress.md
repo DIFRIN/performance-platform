@@ -56,7 +56,7 @@
 | PDR-005 | Scenario DSL | platform-scenario-dsl | DONE | ISSUE-015..018 | PDR-001, PDR-004 |
 | PDR-006 | Execution Engine | platform-execution-engine | DONE | ISSUE-019..024 | PDR-001,002,004,005,007 |
 | PDR-007 | Transport Layer Core | platform-transport | DONE | ISSUE-025,026,027 | PDR-001, PDR-002 |
-| PDR-008 | Transport Implementations | platform-transport | TODO | ISSUE-028..032 | PDR-001,002,007 |
+| PDR-008 | Transport Implementations | platform-transport | DONE | ISSUE-028..032 | PDR-001,002,007 |
 | PDR-009 | Agent Runtime | platform-agent-runtime | DONE | ISSUE-033..038 | PDR-001,002,004,007 |
 | PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | DONE | ISSUE-039..045 | PDR-001,003,004 |
 | PDR-011 | Plugin System (infra `.plugin`) | platform-infrastructure | DONE | ISSUE-046..049 | PDR-001,003,010 |
@@ -146,7 +146,7 @@
 | ISSUE-029 | KafkaExecutionTransport | PDR-008 | platform-transport | L | DONE | ISSUE-027,028 |
 | ISSUE-030 | RabbitMQExecutionTransport | PDR-008 | platform-transport | L | DONE | ISSUE-027,028 |
 | ISSUE-031 | HttpExecutionTransport | PDR-008 | platform-transport | L | DONE | ISSUE-027,028,013 |
-| ISSUE-032 | SocketExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
+| ISSUE-032 | SocketExecutionTransport | PDR-008 | platform-transport | L | DONE | ISSUE-027,028 |
 | ISSUE-043 | ShellTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-044 | DockerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-045 | FilesystemTaskExecutor | PDR-010 | platform-infrastructure | S | DONE | ISSUE-039 |
@@ -382,6 +382,11 @@
 | 2026-06-19 | ISSUE-031 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05/CC-02: dispatchTask+broadcastSignal OK, classe 352L (>300) sans justification |
 | 2026-06-19 | ISSUE-031 | CHANGES_REQUESTED → IN REVIEW | Developer — CC-02 Javadoc x3 (classe + dispatchTask + broadcastSignal) |
 | 2026-06-19 | ISSUE-031 | IN REVIEW → DONE | Reviewer — re-review #2: APPROVED, CC-02 CONFIRMED x3, 139 tests OK |
+| 2026-06-19 | ISSUE-032 | TODO → IN PROGRESS | Developer |
+| 2026-06-19 | ISSUE-032 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-19 | ISSUE-032 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (PRECISION-01/TEST-06) |
+| 2026-06-19 | ISSUE-032 | APPROVED → DONE | Reviewer — re-review: PRECISION-01 + TEST-06 CONFIRMED, 0 bloquant, 33 tests OK |
+| 2026-06-19 | PDR-008 | TODO → DONE | Reviewer (ISSUE-028..032 all DONE) |
 
 ---
 
@@ -390,4 +395,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-19 (ISSUE-049 DONE — ArchUnit separation packages infra, PDR-011 DONE)
+**Dernière mise à jour** : 2026-06-19 (ISSUE-032 DONE — SocketExecutionTransport, PDR-008 DONE)

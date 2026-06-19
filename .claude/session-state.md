@@ -11,25 +11,29 @@
 
 **Date derniere session** : 2026-06-19
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-031 (HttpExecutionTransport)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
-**PDR parent** : PDR-008 (Transport Implementations)
+**Issue active** : ISSUE-032 (SocketExecutionTransport)
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**PDR parent** : PDR-008 (Transport Implementations) — DONE
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : re-review #2 ISSUE-031 — APPROVED. CC-02 CONFIRMED x3 (classe + dispatchTask + broadcastSignal), 139 tests OK (34 HTTP + 105 autres). Commit effectue.
+Reviewer : re-review ISSUE-032 — PRECISION-01 + TEST-06 CONFIRMED, 33 socket tests OK, 172 total platform-transport. Committed.
 
 **Prochaine action** :
-Developer : prendre la prochaine Issue TODO (ISSUE-032 SocketExecutionTransport — debloquee, ISSUE-028 OK).
+Developer : lire progress.md pour trouver la prochaine Issue TODO (PDR-008 DONE — prochaine: ISSUE-054 Gatling, PDR-013).
 
 **Fichiers modifies** :
 ```
 ✅ .claude/session-state.md — ce fichier
-✅ .claude/progress.md — ISSUE-031 DONE
-✅ .claude/context/interfaces-registry.md — HttpExecutionTransport + HttpEventCallbackController → STABLE
+✅ .claude/progress.md — ISSUE-032 IN REVIEW
+✅ .claude/context/interfaces-registry.md — SocketExecutionTransport + SocketConnectionRegistry → IN PROGRESS
+✅ platform-transport/.../socket/SocketConnectionRegistry.java — cree
+✅ platform-transport/.../socket/SocketExecutionTransport.java — cree
+✅ platform-transport/.../socket/SocketExecutionTransportTest.java — cree (33 tests)
+✅ platform-transport/.../config/TransportConfiguration.java — squelette remplace par impl reelle
 ```
 
 **Blocages** :
@@ -47,3 +51,4 @@ _Aucun_
 | 2026-06-19 | Developer | ISSUE-031 | CRAFT-05 partiel (CC-02 dispatchTask + broadcastSignal), re-review | IN REVIEW |
 | 2026-06-19 | Reviewer | ISSUE-031 | CHANGES_REQUESTED: CRAFT-05 (methodes >40L sans CC-02) | CHANGES_REQUESTED |
 | 2026-06-19 | Developer | ISSUE-031 | HttpExecutionTransport + HttpEventCallbackController + 34 tests | IN REVIEW |
+| 2026-06-19 | Developer | ISSUE-032 | SocketExecutionTransport + SocketConnectionRegistry + 33 tests + TransportConfiguration update | IN REVIEW |

@@ -281,6 +281,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-052] [2026-06-19] [CONFIRMED] [CRAFT-01] Javadoc JpaExecutionRepository ligne 29-30 : "All public methods are transactional" incorrect — @Transactional retire intentionnellement (proxy Spring 7.0). Les transactions sont deleguees aux repos Spring Data sous-jacents, chaque appel etant atomique individuellement. Remplacer par Javadoc expliquant la delegation transactionnelle. Fichier : JpaExecutionRepository.java:29-30.
 [ISSUE-029] [2026-06-19] [CONFIRMED] [CRAFT-08] Magic string "@type" repete 5 fois dans KafkaMessageCodec (lignes 75, 89, 106, 134, 147). Extraire en constante privee TYPE_FIELD = "@type". Fichier : platform-transport/.../kafka/KafkaMessageCodec.java.
 [ISSUE-029] [2026-06-19] [CONFIRMED] [TEST-04] Absence de tests unitaires pour les null-checks de parametres publics de KafkaExecutionTransport. Ajouter 2-3 cas shouldThrowOnNull*(Request/Handler). Fichier : platform-transport/.../kafka/KafkaExecutionTransportIT.java.
+[ISSUE-032] [2026-06-19] [CONFIRMED] [PRECISION-01] Javadoc obsoleted dans TransportConfiguration — corrige : "implementations completes (ISSUE-029, 030, 031, 032)". Fichier : platform-transport/.../config/TransportConfiguration.java.
+[ISSUE-032] [2026-06-19] [CONFIRMED] [TEST-06] 3 Thread.sleep(200) dans SocketExecutionTransportTest → remplaces par Awaitility await().atMost(...).pollDelay(...). Fichier : platform-transport/.../socket/SocketExecutionTransportTest.java.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **PDR** : PDR-008
 **Module** : `platform-transport`
-**Statut** : WAITING
+**Statut** : IN REVIEW
 **Priorité** : P2
 **Bloquée par** : ISSUE-027, ISSUE-028
 **Estime** : L
