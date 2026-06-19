@@ -193,7 +193,7 @@
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
 | `PluginLoader` / `PluginLoadResult` | ✅ STABLE | PDR-011 | ISSUE-046 |
-| `PluginRegistry` | ⬜ PLANNED | PDR-011 | ISSUE-047 |
+| `PluginRegistry` | 🔄 IN PROGRESS | PDR-011 | ISSUE-047 |
 | `AnnotationScanner` / `PluginDescriptor` | ⬜ PLANNED | PDR-011 | ISSUE-048 |
 
 ## platform-infrastructure — `.persistence` (PDR-012)

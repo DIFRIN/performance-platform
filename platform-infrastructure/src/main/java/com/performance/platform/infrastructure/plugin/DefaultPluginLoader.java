@@ -70,7 +70,7 @@ public class DefaultPluginLoader implements PluginLoader {
 
         if (!pluginsEnabled) {
             log.info("action=plugins_disabled message=Plugin loading is disabled via platform.plugins.enabled=false");
-            return new PluginLoadResult(0, 0, List.of(), List.of());
+            return new PluginLoadResult(0, 0, List.of(), List.of(), List.of());
         }
 
         log.info("action=plugin_loading_start pluginDirectory={}", pluginDirectory.toAbsolutePath());
@@ -84,8 +84,10 @@ public class DefaultPluginLoader implements PluginLoader {
         if (jarFiles.isEmpty()) {
             log.info("action=no_plugins_found pluginDirectory={} message=No JAR files found, startup continues normally",
                     pluginDirectory.toAbsolutePath());
-            return new PluginLoadResult(0, 0, allWarnings, allErrors);
+            return new PluginLoadResult(0, 0, List.of(), allWarnings, allErrors);
         }
+
+        List<TaskExecutor> allExecutors = new ArrayList<>();
 
         for (Path jarPath : jarFiles) {
             String jarName = jarPath.getFileName().toString();
@@ -96,6 +98,7 @@ public class DefaultPluginLoader implements PluginLoader {
                 // JAR successfully opened and scanned — count it as loaded
                 jarsLoaded++;
                 executorsRegistered += executors.size();
+                allExecutors.addAll(executors);
                 if (executors.isEmpty() && !hasErrorsForJar(allErrors, jarName)) {
                     log.info("action=jar_no_executors jar={} message=No annotated TaskExecutor found", jarName);
                 }
@@ -115,7 +118,7 @@ public class DefaultPluginLoader implements PluginLoader {
         }
 
         PluginLoadResult result = new PluginLoadResult(jarsLoaded, executorsRegistered,
-                allWarnings, allErrors);
+                allExecutors, allWarnings, allErrors);
 
         log.info("action=plugin_loading_complete jarsLoaded={} executorsRegistered={} warnings={} errors={}",
                 jarsLoaded, executorsRegistered, allWarnings.size(), allErrors.size());

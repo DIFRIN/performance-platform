@@ -14,6 +14,18 @@ public class UnsupportedTaskNameException extends RuntimeException {
     }
 
     /**
+     * Constructeur avec message personnalise.
+     * Utile quand le contexte inclut la phase (PluginRegistry) ou d'autres metadonnees.
+     *
+     * @param message  le message d'erreur detaille
+     * @param taskName le nom de tache pour lequel aucun executor n'a ete trouve
+     */
+    public UnsupportedTaskNameException(String message, String taskName) {
+        super(message);
+        this.taskName = taskName;
+    }
+
+    /**
      * @return le taskName pour lequel aucun executor n'a ete trouve
      */
     public String getTaskName() {

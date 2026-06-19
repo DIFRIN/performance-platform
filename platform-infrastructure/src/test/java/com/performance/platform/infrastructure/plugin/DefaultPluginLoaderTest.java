@@ -1,6 +1,7 @@
 package com.performance.platform.infrastructure.plugin;
 
 import com.performance.platform.plugin.TaskExecutor;
+import com.performance.platform.infrastructure.plugin.testfixture.ValidPreparationPlugin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -222,6 +223,7 @@ class DefaultPluginLoaderTest {
         @DisplayName("warnings list is unmodifiable")
         void warningsListIsUnmodifiable() {
             PluginLoadResult result = new PluginLoadResult(0, 0,
+                    java.util.List.of(),
                     java.util.List.of(new PluginWarning("test.jar", "warning message")),
                     java.util.List.of());
 
@@ -233,6 +235,7 @@ class DefaultPluginLoaderTest {
         void errorsListIsUnmodifiable() {
             PluginLoadResult result = new PluginLoadResult(0, 0,
                     java.util.List.of(),
+                    java.util.List.of(),
                     java.util.List.of(PluginError.of("test.jar", "error message")));
 
             assertThat(result.errors()).isUnmodifiable();
@@ -241,18 +244,21 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("lists are defensive copies — mutations do not affect record")
         void defensiveCopyOnConstruction() {
+            var mutableExecutors = new java.util.ArrayList<com.performance.platform.plugin.TaskExecutor>();
             var mutableWarnings = new java.util.ArrayList<PluginWarning>();
             mutableWarnings.add(new PluginWarning("a.jar", "warning"));
             var mutableErrors = new java.util.ArrayList<PluginError>();
             mutableErrors.add(PluginError.of("b.jar", "error"));
 
-            PluginLoadResult result = new PluginLoadResult(1, 2, mutableWarnings, mutableErrors);
+            PluginLoadResult result = new PluginLoadResult(1, 2, mutableExecutors, mutableWarnings, mutableErrors);
 
             // Mutate original lists
+            mutableExecutors.add(null);
             mutableWarnings.clear();
             mutableErrors.clear();
 
             // Record should be unaffected
+            assertThat(result.externalExecutors()).isEmpty();
             assertThat(result.warnings()).hasSize(1);
             assertThat(result.errors()).hasSize(1);
         }
@@ -260,7 +266,7 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("rejects negative jarsLoaded")
         void rejectsNegativeJarsLoaded() {
-            assertThatThrownBy(() -> new PluginLoadResult(-1, 0, java.util.List.of(), java.util.List.of()))
+            assertThatThrownBy(() -> new PluginLoadResult(-1, 0, java.util.List.of(), java.util.List.of(), java.util.List.of()))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("jarsLoaded");
         }
@@ -268,9 +274,20 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("rejects negative executorsRegistered")
         void rejectsNegativeExecutorsRegistered() {
-            assertThatThrownBy(() -> new PluginLoadResult(0, -1, java.util.List.of(), java.util.List.of()))
+            assertThatThrownBy(() -> new PluginLoadResult(0, -1, java.util.List.of(), java.util.List.of(), java.util.List.of()))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("executorsRegistered");
+        }
+
+        @Test
+        @DisplayName("externalExecutors list is unmodifiable")
+        void externalExecutorsListIsUnmodifiable() {
+            PluginLoadResult result = new PluginLoadResult(0, 0,
+                    java.util.List.of(new ValidPreparationPlugin()),
+                    java.util.List.of(),
+                    java.util.List.of());
+
+            assertThat(result.externalExecutors()).isUnmodifiable();
         }
     }
 

@@ -275,6 +275,7 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-045] [2026-06-19] [CONFIRMED] [PRECISION-01] pathsByExecution non alimenté — extraction executionKey dans execute() + tracking dans executeCreate()/executeUpload()
 [ISSUE-045] [2026-06-19] [CONFIRMED] [CRAFT-07] executionId absent des logs — ajoute executionKey a tous les log.info/log.error
 [ISSUE-046] [2026-06-19] [CONFIRMED] [CRAFT-05] 3 methodes >40L (load/loadExecutorsFromJar/tryLoadClass) sans justification CC-02 — ajouter commentaire Javadoc
+[ISSUE-047] [2026-06-19] [CONFIRMED] [CRAFT-05] Constructeur DefaultPluginRegistry 58 lignes (>40) sans justification CC-02 — ajouter commentaire Javadoc expliquant le flux d'initialisation cohesif
 
 ---
 
@@ -308,3 +309,4 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-16 | ISSUE-043 | [TEST-06] 2 Thread.sleep(500) → Awaitility avec temp files | CONFIRMED |
 | 2026-06-19 | ISSUE-045 | [PRECISION-01] pathsByExecution non alimenté — extraction executionKey + tracking dans executeCreate()/executeUpload() | CONFIRMED |
 | 2026-06-19 | ISSUE-045 | [CRAFT-07] executionId absent des logs — ajouter executionKey dans tous les log.info/log.error | CONFIRMED |
+| 2026-06-19 | ISSUE-047 | [CRAFT-05] CC-02 justification Javadoc constructeur DefaultPluginRegistry | CONFIRMED |

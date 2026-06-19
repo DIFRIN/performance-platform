@@ -1,5 +1,7 @@
 package com.performance.platform.infrastructure.plugin;
 
+import com.performance.platform.plugin.TaskExecutor;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,12 +10,15 @@ import java.util.List;
  * Resultat du chargement des plugins par le {@link PluginLoader}.
  *
  * @param jarsLoaded          nombre de fichiers JAR traites
- * @param executorsRegistered nombre de {@link com.performance.platform.plugin.TaskExecutor} instancies avec succes
+ * @param executorsRegistered nombre de {@link TaskExecutor} instancies avec succes
+ * @param externalExecutors   les instances de {@link TaskExecutor} chargees depuis les plugins
  * @param warnings            avertissements non-bloquants (collisions, annotations invalides...)
  * @param errors              erreurs non-bloquantes (JAR corrompu, classe non-instanciable...)
  */
 public record PluginLoadResult(int jarsLoaded, int executorsRegistered,
-                               List<PluginWarning> warnings, List<PluginError> errors) {
+                               List<TaskExecutor> externalExecutors,
+                               List<PluginWarning> warnings,
+                               List<PluginError> errors) {
 
     public PluginLoadResult {
         if (jarsLoaded < 0) {
@@ -23,6 +28,7 @@ public record PluginLoadResult(int jarsLoaded, int executorsRegistered,
             throw new IllegalArgumentException("executorsRegistered must be >= 0, was: " + executorsRegistered);
         }
         // Defensive copy — immutability
+        externalExecutors = Collections.unmodifiableList(new ArrayList<>(externalExecutors));
         warnings = Collections.unmodifiableList(new ArrayList<>(warnings));
         errors = Collections.unmodifiableList(new ArrayList<>(errors));
     }
