@@ -11,7 +11,7 @@
 
 **Date derniere session** : 2026-06-19
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-029 (KafkaExecutionTransport)
+**Issue active** : ISSUE-030 (RabbitMQExecutionTransport) — DONE
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-008 (Transport Implementations) — IN PROGRESS
 
@@ -20,16 +20,21 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : re-review #2 — CRAFT-08 CONFIRMED, TEST-04 CONFIRMED (TransportException dans les 3 assertions null-check). 105 tests unitaires OK. Commit effectue. ISSUE-029 DONE.
+Reviewer — ISSUE-030 APPROVED: 0 bloquant, 0 recommandation. 16 ITs OK, CRAFT-08 @type const applique, ack manuel correct. Commit effectue.
 
 **Prochaine action** :
-Developer : prendre la prochaine issue TODO (ISSUE-030 RabbitMQExecutionTransport ou autre issue P2 debloquee).
+Developer : prendre la prochaine Issue TODO non bloquee (ISSUE-031 HttpExecutionTransport) ou, si PDR-008 est termine (ISSUE-030+031+032 DONE), passer au PDR suivant.
+@developer
 
 **Fichiers modifies** :
 ```
-✅ platform-transport/.../kafka/KafkaMessageCodec.java — TYPE_FIELD extraite (CRAFT-08)
-✅ platform-transport/.../kafka/KafkaExecutionTransportIT.java — 3 null-check tests (TransportException)
-✅ .claude/session-state.md — ce fichier
+✅ platform-transport/.../rabbitmq/RabbitMQExecutionTransport.java
+✅ platform-transport/.../rabbitmq/RabbitMQMessageCodec.java
+✅ platform-transport/.../rabbitmq/RabbitMQConsumerManager.java
+✅ platform-transport/.../rabbitmq/RabbitMQSubscription.java
+✅ platform-transport/.../rabbitmq/RabbitMQExecutionTransportIT.java
+✅ platform-transport/pom.xml — +com.rabbitmq:amqp-client +org.testcontainers:rabbitmq
+✅ platform-transport/.../config/TransportConfiguration.java — @Lazy retire, vraie impl
 ```
 
 **Blocages** :
@@ -40,11 +45,11 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-SI DEVELOPER (prochaine issue PDR-008) :
+SI DEVELOPER :
   .claude/session-state.md
   .claude/progress.md
-  .claude/issues/ISSUE-030-rabbitmq-transport.md (ou prochaine TODO P2)
   .claude/agents/developer.md
+  .claude/issues/ISSUE-031-http-transport.md
 ```
 
 ---
@@ -53,9 +58,5 @@ SI DEVELOPER (prochaine issue PDR-008) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
-| 2026-06-19 | Reviewer | ISSUE-029 | Re-review #2: CRAFT-08 CONFIRMED, TEST-04 CONFIRMED (TransportException), 105 tests OK | DONE |
-| 2026-06-19 | Developer | ISSUE-029 | TEST-04 corrige (NullPointerException → TransportException), re-review | APPROVED (re-review ready) |
-| 2026-06-19 | Reviewer | ISSUE-029 | Re-review: CRAFT-08 CONFIRMED, TEST-04 CHANGES_REQUESTED (mauvaise exception) | CHANGES_REQUESTED |
-| 2026-06-19 | Developer | ISSUE-029 | CRAFT-08 + TEST-04 appliques (TYPE_FIELD + null-check tests), re-review | APPROVED (re-review ready) |
-| 2026-06-19 | Reviewer | ISSUE-029 | APPROVED: 0 bloquant, 2 recommandations PENDING (CRAFT-08 + TEST-04) | APPROVED |
-| 2026-06-19 | Developer | ISSUE-029 | KafkaExecutionTransport + KafkaMessageCodec + 13 ITs, IN REVIEW | IN REVIEW |
+| 2026-06-19 | Developer | ISSUE-030 | Implementation RabbitMQExecutionTransport + 16 ITs OK, IN REVIEW | IN REVIEW |
+| 2026-06-19 | Reviewer | ISSUE-030 | Review APPROVED: 0 bloquant, 0 recommandation. Commit. | DONE |
