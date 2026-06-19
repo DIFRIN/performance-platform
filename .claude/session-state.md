@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-19
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-046 (PluginLoader)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-011 (Plugin System infra .plugin) — IN PROGRESS
 
 ---
@@ -22,15 +22,15 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : recommandation CRAFT-05 appliquee — justification CC-02 ajoutee en Javadoc sur load() ~62L, loadExecutorsFromJar() ~47L, tryLoadClass() ~53L dans DefaultPluginLoader.java. 124 tests OK.
+Reviewer : re-review ISSUE-046 — CRAFT-05 CONFIRMED (3 justifications CC-02 bien presentes et pertinentes). Tests OK. Commit effectue.
 
 **Prochaine action** :
-Reviewer : re-review ISSUE-046 — verifier CRAFT-05 appliquee (3 justifications CC-02), puis CONFIRMED + commit.
+Developer : prendre la prochaine Issue TODO debloquee dans progress.md (ISSUE-047 PluginRegistry, depend de ISSUE-046).
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/.../plugin/DefaultPluginLoader.java — CC-02 justification Javadoc x3
-✅ .claude/context/recommendations-tracking.md — ISSUE-046 CRAFT-05 PENDING → APPLIED
+✅ .claude/context/recommendations-tracking.md — ISSUE-046 CRAFT-05 APPLIED → CONFIRMED
+✅ .claude/progress.md — ISSUE-046 APPROVED → DONE
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -42,12 +42,14 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-SI REVIEWER (ISSUE-046, re-review) :
+SI DEVELOPER :
   .claude/session-state.md
+  CLAUDE.md
   .claude/progress.md
-  .claude/issues/ISSUE-046-plugin-loader.md
-  .claude/agents/reviewer.md
+  .claude/issues/ISSUE-047.md (prochaine issue)
+  .claude/agents/developer.md
   .claude/context/recommendations-tracking.md
+  .claude/specifications/03-task-framework.md (section plugin)
 ```
 
 ---
@@ -56,6 +58,7 @@ SI REVIEWER (ISSUE-046, re-review) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-19 | Reviewer | ISSUE-046 | Re-review: CRAFT-05 CONFIRMED, tests OK, commit | DONE |
 | 2026-06-19 | Developer | ISSUE-046 | CRAFT-05 applique (CC-02 Javadoc x3), re-review | APPROVED (re-review ready) |
 | 2026-06-19 | Reviewer | ISSUE-046 | APPROVED : 0 bloquant, 1 recommandation CRAFT-05 PENDING | APPROVED |
 | 2026-06-19 | Developer | ISSUE-046 | PluginLoader + DefaultPluginLoader + 16 tests, IN REVIEW | IN REVIEW |
