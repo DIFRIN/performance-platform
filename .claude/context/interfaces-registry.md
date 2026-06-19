@@ -164,7 +164,8 @@
 | `RabbitMQSubscription` | ✅ STABLE | PDR-008 | ISSUE-030 |
 | `HttpExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-031 |
 | `HttpEventCallbackController` | ✅ STABLE | PDR-008 | ISSUE-031 |
-| `SocketExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-032 |
+| `SocketExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-032 |
+| `SocketConnectionRegistry` | ✅ STABLE | PDR-008 | ISSUE-032 |
 | `TaskMessage` | ❌ REPLACED | ADR-008 | — (→ `TaskExecutionRequest`) |
 | `GrpcExecutionTransport` | ❌ REMOVED | — | — (gRPC non implémenté) |
 

@@ -6,13 +6,13 @@ import com.performance.platform.transport.http.HttpExecutionTransport;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 import com.performance.platform.transport.kafka.KafkaExecutionTransport;
 import com.performance.platform.transport.rabbitmq.RabbitMQExecutionTransport;
+import com.performance.platform.transport.socket.SocketExecutionTransport;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 
 /**
  * Configuration automatique du transport.
@@ -21,9 +21,8 @@ import org.springframework.context.annotation.Lazy;
  * expose les {@code @Bean} conditionnels. Le {@code Bean} IN_MEMORY
  * est l'implementation par defaut ({@code matchIfMissing = true}).
  *
- * <p>Les transports KAFKA et RABBITMQ sont des {@code @Bean} explicites.
- * HTTP est un {@code @Component} auto-decouvert (ISSUE-031).
- * SOCKET est un squelette marque {@link Lazy @Lazy} (complete par ISSUE-032).
+ * <p>Les transports KAFKA, RABBITMQ, HTTP, et SOCKET sont des
+ * implementations completes (ISSUE-029, 030, 031, 032).
  *
  * <p><strong>TransportType IN_MEMORY</strong> est le defaut pour le mode LOCAL
  * et les tests. Les transports reels sont selectionnes via
@@ -91,13 +90,16 @@ public class TransportConfiguration {
     }
 
     /**
-     * Transport SOCKET — squelette, complete par ISSUE-032.
+     * Transport SOCKET — implementation complete (ISSUE-032).
+     * <p>
+     * Connexions TCP persistantes. Detection automatique du role :
+     * bind reussi = orchestrateur, port deja utilise = agent.
+     * Best-effort (pas de garantie at-least-once). Reconnexion
+     * automatique cote agent.
      */
     @Bean
-    @Lazy
     @ConditionalOnProperty(name = "transport.type", havingValue = "SOCKET")
     public ExecutionTransport socketExecutionTransport(SocketTransportProperties props) {
-        throw new UnsupportedOperationException(
-                "Socket transport not yet implemented — ISSUE-032");
+        return new SocketExecutionTransport(props);
     }
 }
