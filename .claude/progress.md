@@ -335,6 +335,7 @@
 | 2026-06-19 | ISSUE-046 | IN PROGRESS → IN REVIEW | Developer — PluginLoader + DefaultPluginLoader + 16 tests |
 | 2026-06-19 | ISSUE-046 | IN REVIEW → APPROVED | Reviewer — APPROVED, 0 bloquant, 1 recommandation PENDING (CRAFT-05) |
 | 2026-06-19 | ISSUE-046 | APPROVED (CRAFT-05 APPLIED) | Developer — CC-02 justification Javadoc sur load/loadExecutorsFromJar/tryLoadClass, re-review |
+| 2026-06-19 | ISSUE-046 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED, 0 bloquant |
 
 ---
 

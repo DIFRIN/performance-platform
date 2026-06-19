@@ -192,7 +192,7 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `PluginLoader` / `PluginLoadResult` | 🔄 IN PROGRESS | PDR-011 | ISSUE-046 |
+| `PluginLoader` / `PluginLoadResult` | ✅ STABLE | PDR-011 | ISSUE-046 |
 | `PluginRegistry` | ⬜ PLANNED | PDR-011 | ISSUE-047 |
 | `AnnotationScanner` / `PluginDescriptor` | ⬜ PLANNED | PDR-011 | ISSUE-048 |
 
