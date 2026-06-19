@@ -158,7 +158,10 @@
 | `KafkaMessageCodec` | ✅ STABLE | PDR-008 | ISSUE-029 |
 | `KafkaConsumerManager` | ✅ STABLE | PDR-008 | ISSUE-029 |
 | `KafkaSubscription` | ✅ STABLE | PDR-008 | ISSUE-029 |
-| `RabbitMQExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-030 |
+| `RabbitMQExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-030 |
+| `RabbitMQMessageCodec` | ✅ STABLE | PDR-008 | ISSUE-030 |
+| `RabbitMQConsumerManager` | ✅ STABLE | PDR-008 | ISSUE-030 |
+| `RabbitMQSubscription` | ✅ STABLE | PDR-008 | ISSUE-030 |
 | `HttpExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-031 |
 | `SocketExecutionTransport` | ⬜ PLANNED | PDR-008 | ISSUE-032 |
 | `TaskMessage` | ❌ REPLACED | ADR-008 | — (→ `TaskExecutionRequest`) |

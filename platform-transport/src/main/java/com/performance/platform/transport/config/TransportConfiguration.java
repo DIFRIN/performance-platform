@@ -1,9 +1,9 @@
 package com.performance.platform.transport.config;
 
 import com.performance.platform.transport.ExecutionTransport;
-import com.performance.platform.transport.TransportType;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 import com.performance.platform.transport.kafka.KafkaExecutionTransport;
+import com.performance.platform.transport.rabbitmq.RabbitMQExecutionTransport;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -18,9 +18,9 @@ import org.springframework.context.annotation.Lazy;
  * expose les {@code @Bean} conditionnels. Le {@code Bean} IN_MEMORY
  * est l'implementation par defaut ({@code matchIfMissing = true}).
  *
- * <p>Les {@code Bean} KAFKA / RABBITMQ / HTTP / SOCKET sont des squelettes
- * qui seront completes dans ISSUE-029 a ISSUE-032. Ils sont marques
- * {@link Lazy @Lazy} pour eviter un crash au demarrage.
+ * <p>Les transports KAFKA et RABBITMQ sont complets (ISSUE-029, ISSUE-030).
+ * HTTP et SOCKET sont des squelettes marques {@link Lazy @Lazy}
+ * (completes par ISSUE-031 et ISSUE-032).
  *
  * <p><strong>TransportType IN_MEMORY</strong> est le defaut pour le mode LOCAL
  * et les tests. Les transports reels sont selectionnes via
@@ -60,14 +60,16 @@ public class TransportConfiguration {
     }
 
     /**
-     * Transport RABBITMQ — squelette, complete par ISSUE-030.
+     * Transport RABBITMQ — implementation complete (ISSUE-030).
+     * <p>
+     * Utilise des exchanges FANOUT pour le broadcast des tasks/signals/events.
+     * Chaque agent cree une file exclusive auto-delete.
+     * Ack manuel (at-least-once). I/O sur Virtual Threads.
      */
     @Bean
-    @Lazy
     @ConditionalOnProperty(name = "transport.type", havingValue = "RABBITMQ")
     public ExecutionTransport rabbitMQExecutionTransport(RabbitMQTransportProperties props) {
-        throw new UnsupportedOperationException(
-                "RabbitMQ transport not yet implemented — ISSUE-030");
+        return new RabbitMQExecutionTransport(props);
     }
 
     /**
