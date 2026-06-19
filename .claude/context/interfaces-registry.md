@@ -201,11 +201,12 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `ExecutionStateEntity` / `TaskResultEntity` / `TaskResultId` (package-private) | ✅ STABLE | PDR-012 | ISSUE-050 |
+| `ExecutionStateEntity` / `TaskResultEntity` / `TaskResultId` | ✅ STABLE | PDR-012 | ISSUE-050 |
 | `ExecutionStateMapper` / `TaskResultMapper` | ✅ STABLE | PDR-012 | ISSUE-051 |
-| `ExecutionStateJpaRepository` | 🔄 IN PROGRESS | PDR-012 | ISSUE-052 |
-| `TaskResultJpaRepository` | 🔄 IN PROGRESS | PDR-012 | ISSUE-052 |
+| `ExecutionStateJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
+| `TaskResultJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
 | `JpaExecutionRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
+| `PersistenceConfinementTest` (ArchUnit) | 🔄 IN PROGRESS | PDR-012 | ISSUE-053 |
 
 ## platform-infrastructure — `.publisher` (PDR-016)
 

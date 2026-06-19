@@ -58,7 +58,7 @@
 | PDR-007 | Transport Layer Core | platform-transport | DONE | ISSUE-025,026,027 | PDR-001, PDR-002 |
 | PDR-008 | Transport Implementations | platform-transport | TODO | ISSUE-028..032 | PDR-001,002,007 |
 | PDR-009 | Agent Runtime | platform-agent-runtime | DONE | ISSUE-033..038 | PDR-001,002,004,007 |
-| PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | IN PROGRESS | ISSUE-039..045 | PDR-001,003,004 |
+| PDR-010 | Task Executors (infra `.executor`) | platform-infrastructure | DONE | ISSUE-039..045 | PDR-001,003,004 |
 | PDR-011 | Plugin System (infra `.plugin`) | platform-infrastructure | DONE | ISSUE-046..049 | PDR-001,003,010 |
 | PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | IN PROGRESS | ISSUE-050..053 | PDR-001,004 |
 | PDR-013 | Gatling Injection | platform-injection-gatling | TODO | ISSUE-054..058 | PDR-001,003 |
@@ -154,7 +154,7 @@
 | ISSUE-047 | PluginRegistry | PDR-011 | platform-infrastructure | M | DONE | ISSUE-046 |
 | ISSUE-048 | Scanner d'annotations plugin | PDR-011 | platform-infrastructure | M | DONE | ISSUE-046 |
 | ISSUE-049 | ArchUnit séparation packages infra | PDR-011 | platform-infrastructure | S | DONE | ISSUE-039,046 |
-| ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | TODO | ISSUE-052 |
+| ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | IN REVIEW | ISSUE-052 |
 | ISSUE-058 | Protocoles Gatling (sans gRPC) | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-057 |
 | ISSUE-062 | KafkaAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
 | ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
@@ -361,6 +361,8 @@
 | 2026-06-19 | ISSUE-052 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-19 | ISSUE-052 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation CRAFT-01 PENDING (Javadoc transactionalite) |
 | 2026-06-19 | ISSUE-052 | APPROVED → DONE | Reviewer — re-review: CRAFT-01 CONFIRMED (Javadoc delegation transactionnelle corrigee) |
+| 2026-06-19 | ISSUE-053 | TODO → IN PROGRESS | Developer |
+| 2026-06-19 | ISSUE-053 | IN PROGRESS → IN REVIEW | Developer — PersistenceConfinementTest (5 regles ArchUnit JPA confiné + @Entity leak) |
 
 ---
 
