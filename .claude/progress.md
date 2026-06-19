@@ -151,7 +151,7 @@
 | ISSUE-044 | DockerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-045 | FilesystemTaskExecutor | PDR-010 | platform-infrastructure | S | DONE | ISSUE-039 |
 | ISSUE-046 | PluginLoader | PDR-011 | platform-infrastructure | L | DONE | ISSUE-011,039 |
-| ISSUE-047 | PluginRegistry | PDR-011 | platform-infrastructure | M | TODO | ISSUE-046 |
+| ISSUE-047 | PluginRegistry | PDR-011 | platform-infrastructure | M | DONE | ISSUE-046 |
 | ISSUE-048 | Scanner d'annotations plugin | PDR-011 | platform-infrastructure | M | TODO | ISSUE-046 |
 | ISSUE-049 | ArchUnit séparation packages infra | PDR-011 | platform-infrastructure | S | TODO | ISSUE-039,046 |
 | ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | TODO | ISSUE-052 |
@@ -336,6 +336,10 @@
 | 2026-06-19 | ISSUE-046 | IN REVIEW → APPROVED | Reviewer — APPROVED, 0 bloquant, 1 recommandation PENDING (CRAFT-05) |
 | 2026-06-19 | ISSUE-046 | APPROVED (CRAFT-05 APPLIED) | Developer — CC-02 justification Javadoc sur load/loadExecutorsFromJar/tryLoadClass, re-review |
 | 2026-06-19 | ISSUE-046 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED, 0 bloquant |
+| 2026-06-19 | ISSUE-047 | TODO → IN PROGRESS | Developer |
+| 2026-06-19 | ISSUE-047 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-19 | ISSUE-047 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation CRAFT-05 PENDING (CC-02 constructeur) |
+| 2026-06-19 | ISSUE-047 | APPROVED (CRAFT-05 APPLIED) | Developer — CC-02 justification Javadoc constructeur DefaultPluginRegistry, re-review |
 
 ---
 
