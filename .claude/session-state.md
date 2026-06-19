@@ -10,11 +10,11 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-19
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : _aucune_ — ISSUE-028 IN REVIEW
-**Prochaine Issue** : ISSUE-029 (Kafka transport) dans PDR-008 (apres APPROVED de ISSUE-028)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : _aucune_ — ISSUE-028 passe DONE, prochaine ISSUE-029
+**Prochaine Issue** : ISSUE-029 (Kafka transport) dans PDR-008
 **PDRs DONE** : PDR-010 (executor) + PDR-012 (persistence)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 
 ---
 
