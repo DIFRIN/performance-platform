@@ -278,6 +278,7 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-047] [2026-06-19] [CONFIRMED] [CRAFT-05] Constructeur DefaultPluginRegistry 58 lignes (>40) sans justification CC-02 — ajouter commentaire Javadoc expliquant le flux d'initialisation cohesif
 [ISSUE-049] [2026-06-19] [OVERRIDDEN] [PRECISION-02] Override <release>23</release> inutile dans platform-infrastructure/pom.xml — ArchUnit 1.3.0 gere le bytecode Java 25 sans probleme (verifie experimentalement). Supprimer le bloc <configuration><release>23</release></configuration> du maven-compiler-plugin.
 [ISSUE-050] [2026-06-19] [CORRECTION] PRECISION-02 ANNULE — analyse ASM : ArchUnit 1.3.0 bundle ASM 9.7.x (Opcodes V23 max = class 67). Java 25 produit class version 69, non supporte. Release 23 est necessaire. Retabli dans ISSUE-050 avec justification documentee.
+[ISSUE-052] [2026-06-19] [CONFIRMED] [CRAFT-01] Javadoc JpaExecutionRepository ligne 29-30 : "All public methods are transactional" incorrect — @Transactional retire intentionnellement (proxy Spring 7.0). Les transactions sont deleguees aux repos Spring Data sous-jacents, chaque appel etant atomique individuellement. Remplacer par Javadoc expliquant la delegation transactionnelle. Fichier : JpaExecutionRepository.java:29-30.
 
 ---
 

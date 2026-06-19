@@ -203,7 +203,9 @@
 |---|---|---|---|
 | `ExecutionStateEntity` / `TaskResultEntity` / `TaskResultId` (package-private) | ✅ STABLE | PDR-012 | ISSUE-050 |
 | `ExecutionStateMapper` / `TaskResultMapper` | ✅ STABLE | PDR-012 | ISSUE-051 |
-| `JpaExecutionRepository` | ⬜ PLANNED | PDR-012 | ISSUE-052 |
+| `ExecutionStateJpaRepository` | 🔄 IN PROGRESS | PDR-012 | ISSUE-052 |
+| `TaskResultJpaRepository` | 🔄 IN PROGRESS | PDR-012 | ISSUE-052 |
+| `JpaExecutionRepository` | 🔄 IN PROGRESS | PDR-012 | ISSUE-052 |
 
 ## platform-infrastructure — `.publisher` (PDR-016)
 
