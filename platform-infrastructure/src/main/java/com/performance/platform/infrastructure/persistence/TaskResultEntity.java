@@ -20,15 +20,16 @@ import java.util.Objects;
  * supports the multi-claim pattern where multiple agents produce
  * results for the same task within one execution (ADR-011).
  *
- * <p>Package-private — not exposed outside the {@code .persistence} package.
- * Mapper layer (ISSUE-051) converts between this entity and the domain
- * {@link com.performance.platform.domain.task.TaskResult} record.</p>
+ * <p>Technically public to allow access from the {@code .persistence.mapper}
+ * subpackage, but conceptually confined to the {@code .persistence} package
+ * tree. The mapper layer (ISSUE-051) converts between this entity and the
+ * domain {@link com.performance.platform.domain.task.TaskResult} record.</p>
  *
  * <p>{@code outputs} is stored as JSONB using Hibernate 6 native JSON support.</p>
  */
 @Entity
 @Table(name = "task_result")
-class TaskResultEntity {
+public class TaskResultEntity {
 
     @EmbeddedId
     private TaskResultId id;
@@ -45,23 +46,23 @@ class TaskResultEntity {
     private Instant completedAt;
 
     /** JPA-only constructor. */
-    TaskResultEntity() {}
+    public TaskResultEntity() {}
 
-    TaskResultEntity(TaskResultId id, TaskStatus status,
-                     Map<String, Object> outputs, Instant completedAt) {
+    public TaskResultEntity(TaskResultId id, TaskStatus status,
+                            Map<String, Object> outputs, Instant completedAt) {
         this.id = Objects.requireNonNull(id, "id required");
         this.status = Objects.requireNonNull(status, "status required");
         this.outputs = outputs == null ? Map.of() : Map.copyOf(outputs);
         this.completedAt = completedAt;
     }
 
-    TaskResultId id() { return id; }
-    String executionId() { return id.executionId(); }
-    String taskId() { return id.taskId(); }
-    String agentId() { return id.agentId(); }
-    TaskStatus status() { return status; }
-    Map<String, Object> outputs() { return outputs; }
-    Instant completedAt() { return completedAt; }
+    public TaskResultId id() { return id; }
+    public String executionId() { return id.executionId(); }
+    public String taskId() { return id.taskId(); }
+    public String agentId() { return id.agentId(); }
+    public TaskStatus status() { return status; }
+    public Map<String, Object> outputs() { return outputs; }
+    public Instant completedAt() { return completedAt; }
 
     @Override
     public String toString() {

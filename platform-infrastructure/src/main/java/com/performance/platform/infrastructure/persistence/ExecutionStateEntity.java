@@ -19,16 +19,17 @@ import java.util.Objects;
  * Stores the global status, per-phase statuses (JSONB), and
  * execution context snapshot (JSONB).
  *
- * <p>Package-private — not exposed outside the {@code .persistence} package.
- * Mapper layer (ISSUE-051) converts between this entity and the domain
- * {@link com.performance.platform.domain.execution.ExecutionState} record.</p>
+ * <p>Technically public to allow access from the {@code .persistence.mapper}
+ * subpackage, but conceptually confined to the {@code .persistence} package
+ * tree. The mapper layer (ISSUE-051) converts between this entity and the
+ * domain {@link com.performance.platform.domain.execution.ExecutionState} record.</p>
  *
  * <p>JSONB columns ({@code phases}, {@code context}) leverage Hibernate 6
  * native JSON support with Jackson on the classpath.</p>
  */
 @Entity
 @Table(name = "execution_state")
-class ExecutionStateEntity {
+public class ExecutionStateEntity {
 
     @Id
     @Column(name = "id", nullable = false, length = 255)
@@ -56,11 +57,11 @@ class ExecutionStateEntity {
     private Instant updatedAt;
 
     /** JPA-only constructor. */
-    ExecutionStateEntity() {}
+    public ExecutionStateEntity() {}
 
-    ExecutionStateEntity(String id, String scenarioId, ExecutionStatus status,
-                         Map<String, String> phases, Map<String, Object> context,
-                         Instant startedAt, Instant updatedAt) {
+    public ExecutionStateEntity(String id, String scenarioId, ExecutionStatus status,
+                                Map<String, String> phases, Map<String, Object> context,
+                                Instant startedAt, Instant updatedAt) {
         this.id = Objects.requireNonNull(id, "id required");
         this.scenarioId = Objects.requireNonNull(scenarioId, "scenarioId required");
         this.status = Objects.requireNonNull(status, "status required");
@@ -70,13 +71,13 @@ class ExecutionStateEntity {
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt required");
     }
 
-    String id() { return id; }
-    String scenarioId() { return scenarioId; }
-    ExecutionStatus status() { return status; }
-    Map<String, String> phases() { return phases; }
-    Map<String, Object> context() { return context; }
-    Instant startedAt() { return startedAt; }
-    Instant updatedAt() { return updatedAt; }
+    public String id() { return id; }
+    public String scenarioId() { return scenarioId; }
+    public ExecutionStatus status() { return status; }
+    public Map<String, String> phases() { return phases; }
+    public Map<String, Object> context() { return context; }
+    public Instant startedAt() { return startedAt; }
+    public Instant updatedAt() { return updatedAt; }
 
     @Override
     public String toString() {

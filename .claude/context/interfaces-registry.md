@@ -202,7 +202,7 @@
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
 | `ExecutionStateEntity` / `TaskResultEntity` / `TaskResultId` (package-private) | ✅ STABLE | PDR-012 | ISSUE-050 |
-| `ExecutionStateMapper` / `TaskResultMapper` | ⬜ PLANNED | PDR-012 | ISSUE-051 |
+| `ExecutionStateMapper` / `TaskResultMapper` | ✅ STABLE | PDR-012 | ISSUE-051 |
 | `JpaExecutionRepository` | ⬜ PLANNED | PDR-012 | ISSUE-052 |
 
 ## platform-infrastructure — `.publisher` (PDR-016)
