@@ -29,6 +29,7 @@
         <module>platform-transport</module>
         <module>platform-agent-runtime</module>
         <module>platform-infrastructure</module>
+        <module>platform-injection-gatling</module>
     </modules>
 
     <dependencyManagement>

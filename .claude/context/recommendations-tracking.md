@@ -283,6 +283,10 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-029] [2026-06-19] [CONFIRMED] [TEST-04] Absence de tests unitaires pour les null-checks de parametres publics de KafkaExecutionTransport. Ajouter 2-3 cas shouldThrowOnNull*(Request/Handler). Fichier : platform-transport/.../kafka/KafkaExecutionTransportIT.java.
 [ISSUE-032] [2026-06-19] [CONFIRMED] [PRECISION-01] Javadoc obsoleted dans TransportConfiguration — corrige : "implementations completes (ISSUE-029, 030, 031, 032)". Fichier : platform-transport/.../config/TransportConfiguration.java.
 [ISSUE-032] [2026-06-19] [CONFIRMED] [TEST-06] 3 Thread.sleep(200) dans SocketExecutionTransportTest → remplaces par Awaitility await().atMost(...).pollDelay(...). Fichier : platform-transport/.../socket/SocketExecutionTransportTest.java.
+[ISSUE-055] [2026-06-20] [CONFIRMED] [CRAFT-05] DefaultGatlingRunner.run() 50 lignes > 40 — CC-02 Javadoc ajoute expliquant le pipeline sequentiel coherent. Fichier : .../runner/DefaultGatlingRunner.java.
+[ISSUE-055] [2026-06-20] [CONFIRMED] [SPEC-01] GatlingRunner.run() — throws GatlingExecutionException ajoute a la signature. Fichier : .../runner/GatlingRunner.java.
+[ISSUE-055] [2026-06-20] [CONFIRMED] [ROBUSTNESS-01] Proprietes systeme restaurees dans finally (sauvegarde + restauration). Fichier : .../runner/DefaultGatlingRunner.java.
+[ISSUE-055] [2026-06-20] [CONFIRMED] [TEST-04] shouldThrowOnInvalidSimulationClass renforce — verifie GatlingExecutionException levee. Fichier : .../runner/DefaultGatlingRunnerTest.java.
 
 ---
 

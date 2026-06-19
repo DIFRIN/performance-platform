@@ -123,8 +123,8 @@
 | ISSUE-050 | Entities JPA + migrations Flyway | PDR-012 | platform-infrastructure | M | DONE | ISSUE-006,013 |
 | ISSUE-051 | Mappers domain↔entity | PDR-012 | platform-infrastructure | M | DONE | ISSUE-050 |
 | ISSUE-052 | JpaExecutionRepository | PDR-012 | platform-infrastructure | M | DONE | ISSUE-051,013 |
-| ISSUE-054 | LoadModelTranslator (8 types) | PDR-013 | platform-injection-gatling | L | TODO | ISSUE-006,011 |
-| ISSUE-055 | GatlingRunner | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-054 |
+| ISSUE-054 | LoadModelTranslator (8 types) | PDR-013 | platform-injection-gatling | L | IN REVIEW | ISSUE-006,011 |
+| ISSUE-055 | GatlingRunner | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-054 |
 | ISSUE-056 | GatlingResultParser | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-055 |
 | ISSUE-057 | GatlingTaskExecutor | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-055,056 |
 | ISSUE-059 | AssertionExecutorRegistry | PDR-014 | platform-assertion | S | TODO | ISSUE-011 |
@@ -387,6 +387,7 @@
 | 2026-06-19 | ISSUE-032 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (PRECISION-01/TEST-06) |
 | 2026-06-19 | ISSUE-032 | APPROVED → DONE | Reviewer — re-review: PRECISION-01 + TEST-06 CONFIRMED, 0 bloquant, 33 tests OK |
 | 2026-06-19 | PDR-008 | TODO → DONE | Reviewer (ISSUE-028..032 all DONE) |
+| 2026-06-20 | ISSUE-055 | APPLIED → CONFIRMED | Reviewer — re-review: 4 recommandations CONFIRMED (CRAFT-05/SPEC-01/ROBUSTNESS-01/TEST-04). 28 tests OK. |
 
 ---
 

@@ -231,8 +231,10 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `LoadModelTranslator` | ⬜ PLANNED | PDR-013 | ISSUE-054 |
-| `GatlingRunner` / `GatlingRunConfig` | ⬜ PLANNED | PDR-013 | ISSUE-055 |
+| `LoadModelTranslator` | 🔄 IN PROGRESS | PDR-013 | ISSUE-054 |
+| `DefaultLoadModelTranslator` | 🔄 IN PROGRESS | PDR-013 | ISSUE-054 |
+| `GatlingRunner` / `GatlingRunConfig` | ✅ STABLE | PDR-013 | ISSUE-055 |
+| `DefaultGatlingRunner` / `GatlingExecutionException` / `SimulationInjectionHolder` | ✅ STABLE | PDR-013 | ISSUE-055 |
 | `GatlingResultParser` | ⬜ PLANNED | PDR-013 | ISSUE-056 |
 | `GatlingTaskExecutor` | ⬜ PLANNED | PDR-013 | ISSUE-057 |
 
