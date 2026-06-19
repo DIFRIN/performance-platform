@@ -154,7 +154,7 @@
 | ISSUE-047 | PluginRegistry | PDR-011 | platform-infrastructure | M | DONE | ISSUE-046 |
 | ISSUE-048 | Scanner d'annotations plugin | PDR-011 | platform-infrastructure | M | DONE | ISSUE-046 |
 | ISSUE-049 | ArchUnit séparation packages infra | PDR-011 | platform-infrastructure | S | DONE | ISSUE-039,046 |
-| ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | IN REVIEW | ISSUE-052 |
+| ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | DONE | ISSUE-052 |
 | ISSUE-058 | Protocoles Gatling (sans gRPC) | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-057 |
 | ISSUE-062 | KafkaAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
 | ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
