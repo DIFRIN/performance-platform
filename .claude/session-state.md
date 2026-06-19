@@ -11,26 +11,34 @@
 
 **Date derniere session** : 2026-06-19
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : _aucune_ — ISSUE-053 DONE, PDR-012 DONE
-**Prochaine Issue** : ISSUE-028 (Transport properties) dans PDR-008
-**PDRs DONE ce tour** : PDR-010 (executor) + PDR-012 (persistence)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**Issue active** : _aucune_ — ISSUE-028 IN REVIEW
+**Prochaine Issue** : ISSUE-029 (Kafka transport) dans PDR-008 (apres APPROVED de ISSUE-028)
+**PDRs DONE** : PDR-010 (executor) + PDR-012 (persistence)
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : ISSUE-053 APPROVED (0 bloquant, 0 recommandation). 5 regles ArchUnit + 215 tests infra OK. PDR-010 + PDR-012 → DONE. Commit effectue.
+Developer : ISSUE-028 IN REVIEW — TransportType +CUSTOM, 4 properties records (@ConfigurationProperties), TransportConfiguration avec @Bean conditionnels (@ConditionalOnProperty), 14 tests binding. 105 tests OK.
 
 **Prochaine action** :
-Developer : lire progress.md, prendre ISSUE-028 (Transport properties) — premiere Issue TODO debloquee (P2, PDR-008, depend de ISSUE-025 qui est DONE).
+Reviewer : lire .claude/issues/ISSUE-028-transport-properties-config.md et reviewer. Prochaine Issue developpement : ISSUE-029 (Kafka) qui depend de ISSUE-028 APPROVED.
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/src/test/.../arch/PersistenceConfinementTest.java — 5 regles ArchUnit (APPROVED)
-✅ .claude/progress.md — ISSUE-053 DONE, PDR-010 DONE, PDR-012 DONE
-✅ .claude/context/interfaces-registry.md — PersistenceConfinementTest STABLE, DatabaseTaskExecutor + dependances STABLE
+✅ platform-transport/pom.xml — +spring-context, spring-boot, spring-boot-autoconfigure, spring-boot-test
+✅ platform-transport/.../TransportType.java — +CUSTOM
+✅ platform-transport/.../config/KafkaTransportProperties.java — record @ConfigurationProperties
+✅ platform-transport/.../config/RabbitMQTransportProperties.java — record @ConfigurationProperties
+✅ platform-transport/.../config/HttpTransportProperties.java — record @ConfigurationProperties
+✅ platform-transport/.../config/SocketTransportProperties.java — record @ConfigurationProperties
+✅ platform-transport/.../config/TransportConfiguration.java — @Configuration + @Bean conditionnels
+🔧 platform-transport/.../TransportInterfaceTest.java — assert modifie pour inclure CUSTOM
+✅ platform-transport/.../config/TransportConfigurationTest.java — 14 tests binding + selection beans
+✅ .claude/progress.md — ISSUE-028 TODO → IN PROGRESS → IN REVIEW
+✅ .claude/context/interfaces-registry.md — properties + TransportConfiguration IN PROGRESS
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -42,13 +50,10 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-SI DEVELOPER (prochaine action attendue) :
+SI REVIEWER (prochaine action attendue) :
   .claude/session-state.md
-  .claude/progress.md
-  .claude/issues/ISSUE-028-transport-properties.md
-  .claude/agents/developer.md
-  .claude/specifications/05-transport-layer.md
-  .claude/adr/ADR-006-runtime-config-priority.md
+  .claude/issues/ISSUE-028-transport-properties-config.md
+  .claude/agents/reviewer.md
 ```
 
 ---
