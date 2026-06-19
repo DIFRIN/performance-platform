@@ -23,7 +23,7 @@
 Reviewer : ISSUE-058 APPROVED (0 bloquant, 0 recommandation). ProtocolSupportInfo + pom.xml CC-03 conformes, 67 tests OK. PDR-013: 5/5 Issues DONE.
 
 **Prochaine action** :
-Developer : ISSUE-059 (AssertionExecutorRegistry) — prochaine Issue TODO dans PDR-014.
+Reviewer : ISSUE-054 (LoadModelTranslator) toujours IN REVIEW — a traiter. Sinon, Developer : ISSUE-059 (AssertionExecutorRegistry) — prochaine Issue TODO dans PDR-014.
 
 **Fichiers modifies** :
 ```
