@@ -363,6 +363,9 @@
 | 2026-06-19 | ISSUE-052 | APPROVED → DONE | Reviewer — re-review: CRAFT-01 CONFIRMED (Javadoc delegation transactionnelle corrigee) |
 | 2026-06-19 | ISSUE-053 | TODO → IN PROGRESS | Developer |
 | 2026-06-19 | ISSUE-053 | IN PROGRESS → IN REVIEW | Developer — PersistenceConfinementTest (5 regles ArchUnit JPA confiné + @Entity leak) |
+| 2026-06-19 | ISSUE-053 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 5 regles ArchUnit + 215 tests OK |
+| 2026-06-19 | PDR-010 | IN PROGRESS → DONE | Reviewer — ISSUE-039..045 all DONE |
+| 2026-06-19 | PDR-012 | IN PROGRESS → DONE | Reviewer — ISSUE-050..053 all DONE |
 
 ---
 
