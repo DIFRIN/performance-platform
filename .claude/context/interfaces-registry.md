@@ -231,8 +231,8 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `LoadModelTranslator` | 🔄 IN PROGRESS | PDR-013 | ISSUE-054 |
-| `DefaultLoadModelTranslator` | 🔄 IN PROGRESS | PDR-013 | ISSUE-054 |
+| `LoadModelTranslator` | ✅ STABLE | PDR-013 | ISSUE-054 |
+| `DefaultLoadModelTranslator` | ✅ STABLE | PDR-013 | ISSUE-054 |
 | `GatlingRunner` / `GatlingRunConfig` | ✅ STABLE | PDR-013 | ISSUE-055 |
 | `DefaultGatlingRunner` / `GatlingExecutionException` / `SimulationInjectionHolder` | ✅ STABLE | PDR-013 | ISSUE-055 |
 | `GatlingResultParser` / `DefaultGatlingResultParser` / `ResultParsingException` | ✅ STABLE | PDR-013 | ISSUE-056 |
@@ -243,7 +243,7 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `AssertionExecutorRegistry` | ⬜ PLANNED | PDR-014 | ISSUE-059 |
+| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` / `UnsupportedAssertionNameException` | ✅ STABLE | PDR-014 | ISSUE-059 |
 | `GatlingMetricAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-060 |
 | `DatabaseAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-061 |
 | `KafkaAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-062 |

@@ -255,7 +255,10 @@ public class DefaultLoadModelTranslator implements LoadModelTranslator {
     // === CUSTOM ===
 
     /**
-     * Interpolation lineaire entre les points specifies.
+     * CC-02: pipeline cohesif — validation points, iteration segments,
+     * construction ramps. L'extraction fragmenterait la logique
+     * d'interpolation lineaire.
+     * <p>Interpolation lineaire entre les points specifies.
      * Chaque segment est un ramp entre deux points consecutifs.
      * <p>Params: {@code points} (List of Map) — chaque point a
      * {@code timeSeconds} (Number) et {@code usersPerSec} (Number).
