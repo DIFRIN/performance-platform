@@ -311,3 +311,4 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-19 | ISSUE-045 | [PRECISION-01] pathsByExecution non alimenté — extraction executionKey + tracking dans executeCreate()/executeUpload() | CONFIRMED |
 | 2026-06-19 | ISSUE-045 | [CRAFT-07] executionId absent des logs — ajouter executionKey dans tous les log.info/log.error | CONFIRMED |
 | 2026-06-19 | ISSUE-047 | [CRAFT-05] CC-02 justification Javadoc constructeur DefaultPluginRegistry | CONFIRMED |
+| 2026-06-19 | ISSUE-049 | [PRECISION-02] Release 23 override inutile pom.xml | CONFIRMED |

@@ -10,10 +10,10 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-19
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-049 (ArchUnit separation packages infra)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
-**PDR parent** : PDR-011 (Plugin System infra .plugin) — IN PROGRESS (derniere Issue)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : ISSUE-050 (Entities JPA + migrations Flyway)
+**Statut issue** : [ ] WAITING | [x] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**PDR parent** : PDR-012 (Persistence infra .persistence) — TODO (prochaine a demarrer)
 
 ---
 
@@ -22,15 +22,17 @@
 > Section la plus importante. Remplie par l'agent en fin de session.
 
 **Derniere action** :
-Developer : recommandation PRECISION-02 appliquee — suppression du bloc `<configuration><release>23</release></configuration>` du maven-compiler-plugin dans platform-infrastructure/pom.xml. Tests OK sans le release override.
+Reviewer : re-review ISSUE-049 — PRECISION-02 CONFIRMED (release 23 bien supprime de pom.xml), tests ArchUnit OK, PRECISION-02 → CONFIRMED, ISSUE-049 → DONE, PDR-011 → DONE, commit effectue.
 
 **Prochaine action** :
-Reviewer : re-review ISSUE-049 — verifier PRECISION-02 appliquee (suppression release 23), puis CONFIRMED + commit + PDR-011 DONE.
+Developer : lire .claude/issues/ISSUE-050-persistence-entities.md, demarrer ISSUE-050 (Entities JPA + migrations Flyway, PDR-012). C'est la premiere Issue de PDR-012.
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/pom.xml — suppression <release>23</release>
-✅ .claude/context/recommendations-tracking.md — ISSUE-049 PRECISION-02 PENDING → APPLIED
+✅ platform-infrastructure/pom.xml — suppression <release>23</release> (precedemment)
+✅ .claude/context/recommendations-tracking.md — PRECISION-02 APPLIED → CONFIRMED
+✅ .claude/progress.md — ISSUE-049 APPROVED → DONE, PDR-011 IN PROGRESS → DONE
+✅ .claude/context/interfaces-registry.md — InfrastructurePackageSeparationTest IN PROGRESS → STABLE
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -42,13 +44,12 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-SI REVIEWER (ISSUE-049, re-review) :
+SI DEVELOPER (ISSUE-050, PDR-012, demarrage) :
   .claude/session-state.md
   .claude/progress.md
-  .claude/issues/ISSUE-049-infrastructure-package-archunit.md
-  .claude/agents/reviewer.md
-  .claude/context/recommendations-tracking.md
-  platform-infrastructure/pom.xml
+  .claude/issues/ISSUE-050-persistence-entities.md
+  .claude/agents/developer.md
+  .claude/specifications/03-task-framework.md (si pertinent)
 ```
 
 ---
@@ -57,6 +58,7 @@ SI REVIEWER (ISSUE-049, re-review) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-19 | Reviewer | ISSUE-049 | Re-review: PRECISION-02 CONFIRMED, tests OK, PDR-011 DONE | DONE |
 | 2026-06-19 | Developer | ISSUE-049 | PRECISION-02 applique (suppression release 23 pom.xml), re-review | APPROVED (re-review ready) |
 | 2026-06-19 | Reviewer | ISSUE-049 | APPROVED: 0 bloquant, 1 recommandation PRECISION-02 PENDING (release 23 inutile) | APPROVED |
 | 2026-06-19 | Developer | ISSUE-049 | InfrastructurePackageSeparationTest + 14 regles ArchUnit | IN REVIEW |

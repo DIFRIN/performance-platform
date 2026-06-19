@@ -348,6 +348,8 @@
 | 2026-06-19 | ISSUE-049 | IN PROGRESS → IN REVIEW | Developer — InfrastructurePackageSeparationTest + 14 regles ArchUnit + release 23 (ASM compat) |
 | 2026-06-19 | ISSUE-049 | IN REVIEW → APPROVED | Reviewer — APPROVED: 0 bloquant, 1 recommandation PRECISION-02 PENDING (release 23 unnecessary) |
 | 2026-06-19 | ISSUE-049 | APPROVED (PRECISION-02 APPLIED) | Developer — suppression <release>23</release> pom.xml, re-review |
+| 2026-06-19 | ISSUE-049 | APPROVED → DONE | Reviewer — re-review: PRECISION-02 CONFIRMED, tous les tests OK |
+| 2026-06-19 | PDR-011 | IN PROGRESS → DONE | Reviewer (ISSUE-046..049 all DONE) |
 
 ---
 
@@ -356,4 +358,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-16 (ISSUE-044 DONE — DockerTaskExecutor)
+**Dernière mise à jour** : 2026-06-19 (ISSUE-049 DONE — ArchUnit separation packages infra, PDR-011 DONE)
