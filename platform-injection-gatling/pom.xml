@@ -36,11 +36,30 @@
             <version>3.11.2</version>
         </dependency>
 
-        <!-- Gatling HTTP (HttpProtocolBuilder, futur) -->
+        <!-- CC-03: Gatling HTTP — includes HTTP/HTTPS + WebSocket protocols.
+             Core protocol for REST API, web app, and real-time bidirectional testing. -->
         <dependency>
             <groupId>io.gatling</groupId>
             <artifactId>gatling-http</artifactId>
             <version>3.11.2</version>
+        </dependency>
+
+        <!-- CC-03: Gatling Kafka — NOT AVAILABLE as io.gatling:gatling-kafka
+             for Gatling 3.11.x. The community plugin (ru.tinkoff:gatling-kafka-plugin)
+             targets Gatling 3.8+ but has not been validated for 3.11.2.
+             Kafka protocol support is declared in ProtocolSupportInfo but
+             the DSL dependency must be provided externally by end-users
+             who need Kafka load-injection. Tracking: future upgrade to
+             Gatling 3.12+ may include official gatling-kafka artifact. -->
+
+        <!-- CC-03: Gatling JMS — enterprise messaging protocol support
+             (ActiveMQ, Artemis, IBM MQ). Required for JMS queue/topic
+             load-injection scenarios. -->
+        <dependency>
+            <groupId>io.gatling</groupId>
+            <artifactId>gatling-jms</artifactId>
+            <version>3.11.2</version>
+            <optional>true</optional>
         </dependency>
 
         <!-- Gatling Charts (generation rapports HTML) -->
