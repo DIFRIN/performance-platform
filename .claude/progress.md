@@ -343,6 +343,7 @@
 | 2026-06-19 | ISSUE-047 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED, 0 bloquant |
 | 2026-06-19 | ISSUE-048 | TODO → IN PROGRESS | Developer |
 | 2026-06-19 | ISSUE-048 | IN PROGRESS → IN REVIEW | Developer — AnnotationScanner + DefaultAnnotationScanner + PluginDescriptor + 14 tests |
+| 2026-06-19 | ISSUE-048 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 15 tests OK, spec respectee, craft clean |
 
 ---
 
