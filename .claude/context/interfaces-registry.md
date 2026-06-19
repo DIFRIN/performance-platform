@@ -205,7 +205,7 @@
 | `ExecutionStateMapper` / `TaskResultMapper` | ✅ STABLE | PDR-012 | ISSUE-051 |
 | `ExecutionStateJpaRepository` | 🔄 IN PROGRESS | PDR-012 | ISSUE-052 |
 | `TaskResultJpaRepository` | 🔄 IN PROGRESS | PDR-012 | ISSUE-052 |
-| `JpaExecutionRepository` | 🔄 IN PROGRESS | PDR-012 | ISSUE-052 |
+| `JpaExecutionRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
 
 ## platform-infrastructure — `.publisher` (PDR-016)
 

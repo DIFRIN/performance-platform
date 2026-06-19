@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-19
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-052 (JpaExecutionRepository)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : ISSUE-052 (JpaExecutionRepository) — DONE
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-012 (Persistence infra .persistence) — IN PROGRESS
 
 ---
@@ -20,15 +20,16 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Developer : recommandation CRAFT-01 appliquee — Javadoc corrigee dans JpaExecutionRepository.java (lignes 29-30) : "All public methods are transactional" remplace par "Transaction management is delegated to the underlying Spring Data repositories". 210 tests OK.
+Reviewer : re-review ISSUE-052 — CRAFT-01 CONFIRMED (Javadoc delegation transactionnelle corrigee), tests OK, commit effectue.
 
 **Prochaine action** :
-Reviewer : re-review ISSUE-052 — verifier CRAFT-01 appliquee (Javadoc corrigee), puis CONFIRMED + commit.
+Developer : prendre la prochaine Issue TODO debloquee (ISSUE-053 — ArchUnit JPA confiné, bloque par ISSUE-052 maintenant DONE)
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/.../persistence/JpaExecutionRepository.java — Javadoc corrigee (CRAFT-01)
-✅ .claude/context/recommendations-tracking.md — ISSUE-052 CRAFT-01 PENDING → APPLIED
+✅ .claude/context/recommendations-tracking.md — ISSUE-052 CRAFT-01 APPLIED → CONFIRMED
+✅ .claude/progress.md — ISSUE-052 APPROVED → DONE
+✅ .claude/context/interfaces-registry.md — JpaExecutionRepository IN PROGRESS → STABLE
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -40,12 +41,11 @@ _Aucun_
 ## Fichiers a Charger a la Prochaine Session
 
 ```
-SI REVIEWER (ISSUE-052, re-review) :
+SI DEVELOPER (prochaine Issue) :
   .claude/session-state.md
   .claude/progress.md
-  .claude/issues/ISSUE-052-jpa-execution-repository.md
-  .claude/agents/reviewer.md
-  .claude/context/recommendations-tracking.md
+  .claude/issues/ISSUE-053-archunit-jpa-confined.md
+  .claude/agents/developer.md
 ```
 
 ---
@@ -54,6 +54,7 @@ SI REVIEWER (ISSUE-052, re-review) :
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-19 | Reviewer | ISSUE-052 | Re-review: CRAFT-01 CONFIRMED (Javadoc corrigee), commit | DONE |
 | 2026-06-19 | Developer | ISSUE-052 | CRAFT-01 applique (Javadoc corrigee), re-review | APPROVED (re-review ready) |
 | 2026-06-19 | Reviewer | ISSUE-052 | APPROVED: 0 bloquant, 1 recommandation CRAFT-01 PENDING (Javadoc @Transactional) | APPROVED |
 | 2026-06-19 | Developer | ISSUE-052 | JpaExecutionRepository + Spring Data repos + 9 ITs, IN REVIEW | IN REVIEW |
