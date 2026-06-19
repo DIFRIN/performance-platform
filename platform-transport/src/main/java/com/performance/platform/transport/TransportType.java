@@ -11,5 +11,6 @@ public enum TransportType {
     RABBITMQ,
     HTTP,
     SOCKET,
-    IN_MEMORY
+    IN_MEMORY,
+    CUSTOM
 }

@@ -142,7 +142,7 @@
 |---|---|---|---|---|---|---|
 | ISSUE-017 | LoadModelRegistry | PDR-005 | platform-scenario-dsl | S | DONE | ISSUE-015 |
 | ISSUE-018 | ScenarioParsingUseCase | PDR-005 | platform-scenario-dsl | S | DONE | ISSUE-015,016 |
-| ISSUE-028 | Transport properties + Configuration | PDR-008 | platform-transport | M | TODO | ISSUE-025 |
+| ISSUE-028 | Transport properties + Configuration | PDR-008 | platform-transport | M | DONE | ISSUE-025 |
 | ISSUE-029 | KafkaExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
 | ISSUE-030 | RabbitMQExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
 | ISSUE-031 | HttpExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028,013 |
@@ -366,6 +366,8 @@
 | 2026-06-19 | ISSUE-053 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 5 regles ArchUnit + 215 tests OK |
 | 2026-06-19 | PDR-010 | IN PROGRESS → DONE | Reviewer — ISSUE-039..045 all DONE |
 | 2026-06-19 | PDR-012 | IN PROGRESS → DONE | Reviewer — ISSUE-050..053 all DONE |
+| 2026-06-19 | ISSUE-028 | TODO → IN PROGRESS | Developer |
+| 2026-06-19 | ISSUE-028 | IN PROGRESS → IN REVIEW | Developer — TransportType +CUSTOM, 4 properties records, TransportConfiguration avec @Bean conditionnels, 14 tests binding |
 
 ---
 

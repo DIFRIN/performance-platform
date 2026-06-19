@@ -490,7 +490,8 @@ class TransportInterfaceTest {
                     TransportType.RABBITMQ,
                     TransportType.HTTP,
                     TransportType.SOCKET,
-                    TransportType.IN_MEMORY
+                    TransportType.IN_MEMORY,
+                    TransportType.CUSTOM
             );
         }
 
