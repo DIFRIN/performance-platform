@@ -122,7 +122,7 @@
 | ISSUE-042 | MockServerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-050 | Entities JPA + migrations Flyway | PDR-012 | platform-infrastructure | M | DONE | ISSUE-006,013 |
 | ISSUE-051 | Mappers domain↔entity | PDR-012 | platform-infrastructure | M | DONE | ISSUE-050 |
-| ISSUE-052 | JpaExecutionRepository | PDR-012 | platform-infrastructure | M | TODO | ISSUE-051,013 |
+| ISSUE-052 | JpaExecutionRepository | PDR-012 | platform-infrastructure | M | DONE | ISSUE-051,013 |
 | ISSUE-054 | LoadModelTranslator (8 types) | PDR-013 | platform-injection-gatling | L | TODO | ISSUE-006,011 |
 | ISSUE-055 | GatlingRunner | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-054 |
 | ISSUE-056 | GatlingResultParser | PDR-013 | platform-injection-gatling | M | TODO | ISSUE-055 |
@@ -357,6 +357,9 @@
 | 2026-06-19 | ISSUE-051 | TODO → IN PROGRESS | Developer |
 | 2026-06-19 | ISSUE-051 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-19 | ISSUE-051 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 32 tests OK |
+| 2026-06-19 | ISSUE-052 | TODO → IN PROGRESS | Developer |
+| 2026-06-19 | ISSUE-052 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-19 | ISSUE-052 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation CRAFT-01 PENDING (Javadoc transactionalite) |
 
 ---
 

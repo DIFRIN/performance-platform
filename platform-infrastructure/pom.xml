@@ -71,11 +71,26 @@
             <version>6.6.10.Final</version>
         </dependency>
 
+        <!-- Jakarta Persistence API 3.2 (override transitive 3.1.0 from Hibernate;
+             Spring 7.0 calls PersistenceConfiguration for @PersistenceContext) -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+
         <!-- Jackson (JSONB serialization pour Hibernate 6) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.19.2</version>
+        </dependency>
+
+        <!-- Spring Data JPA (JpaRepository, @EnableJpaRepositories) -->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-jpa</artifactId>
+            <version>4.0.6</version>
         </dependency>
 
         <!-- Flyway (migrations PostgreSQL) -->
