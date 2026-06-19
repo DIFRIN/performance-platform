@@ -27,7 +27,8 @@ class TransportConfigurationTest {
                 "transport.kafka.tasks-topic=agents-tasks",
                 "transport.kafka.events-topic=agents-events",
                 "transport.kafka.signals-topic=agents-signals",
-                "transport.kafka.producer-acks=1"
+                "transport.kafka.producer-acks=1",
+                "transport.kafka.consumer-group=agent-001"
         ).run(ctx -> {
             var props = ctx.getBean(KafkaTransportProperties.class);
             assertThat(props.bootstrapServers()).isEqualTo("broker1:9092,broker2:9092");
@@ -35,6 +36,7 @@ class TransportConfigurationTest {
             assertThat(props.eventsTopic()).isEqualTo("agents-events");
             assertThat(props.signalsTopic()).isEqualTo("agents-signals");
             assertThat(props.producerAcks()).isEqualTo("1");
+            assertThat(props.consumerGroup()).isEqualTo("agent-001");
         });
     }
 
@@ -50,6 +52,7 @@ class TransportConfigurationTest {
             assertThat(props.eventsTopic()).isNull();
             assertThat(props.signalsTopic()).isNull();
             assertThat(props.producerAcks()).isNull();
+            assertThat(props.consumerGroup()).isNull();
         });
     }
 
@@ -176,7 +179,7 @@ class TransportConfigurationTest {
     }
 
     @Test
-    void shouldRegisterKafkaSkeletonWhenTypeKafka() {
+    void shouldRegisterKafkaTransportWhenTypeKafka() {
         runner.withPropertyValues("transport.type=KAFKA")
                 .run(ctx -> {
                     assertThat(ctx.containsBean("kafkaExecutionTransport")).isTrue();

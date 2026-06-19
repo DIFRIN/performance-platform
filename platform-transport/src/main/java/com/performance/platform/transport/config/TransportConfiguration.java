@@ -3,6 +3,7 @@ package com.performance.platform.transport.config;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.TransportType;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
+import com.performance.platform.transport.kafka.KafkaExecutionTransport;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -48,14 +49,14 @@ public class TransportConfiguration {
     }
 
     /**
-     * Transport KAFKA — squelette, complete par ISSUE-029.
+     * Transport KAFKA — implementation complete (ISSUE-029).
+     * <p>
+     * Utilise un consumer group unique par agent (ADR-009) pour le broadcast.
      */
     @Bean
-    @Lazy
     @ConditionalOnProperty(name = "transport.type", havingValue = "KAFKA")
     public ExecutionTransport kafkaExecutionTransport(KafkaTransportProperties props) {
-        throw new UnsupportedOperationException(
-                "Kafka transport not yet implemented — ISSUE-029");
+        return new KafkaExecutionTransport(props);
     }
 
     /**

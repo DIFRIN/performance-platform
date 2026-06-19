@@ -279,6 +279,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-049] [2026-06-19] [OVERRIDDEN] [PRECISION-02] Override <release>23</release> inutile dans platform-infrastructure/pom.xml — ArchUnit 1.3.0 gere le bytecode Java 25 sans probleme (verifie experimentalement). Supprimer le bloc <configuration><release>23</release></configuration> du maven-compiler-plugin.
 [ISSUE-050] [2026-06-19] [CORRECTION] PRECISION-02 ANNULE — analyse ASM : ArchUnit 1.3.0 bundle ASM 9.7.x (Opcodes V23 max = class 67). Java 25 produit class version 69, non supporte. Release 23 est necessaire. Retabli dans ISSUE-050 avec justification documentee.
 [ISSUE-052] [2026-06-19] [CONFIRMED] [CRAFT-01] Javadoc JpaExecutionRepository ligne 29-30 : "All public methods are transactional" incorrect — @Transactional retire intentionnellement (proxy Spring 7.0). Les transactions sont deleguees aux repos Spring Data sous-jacents, chaque appel etant atomique individuellement. Remplacer par Javadoc expliquant la delegation transactionnelle. Fichier : JpaExecutionRepository.java:29-30.
+[ISSUE-029] [2026-06-19] [CONFIRMED] [CRAFT-08] Magic string "@type" repete 5 fois dans KafkaMessageCodec (lignes 75, 89, 106, 134, 147). Extraire en constante privee TYPE_FIELD = "@type". Fichier : platform-transport/.../kafka/KafkaMessageCodec.java.
+[ISSUE-029] [2026-06-19] [CONFIRMED] [TEST-04] Absence de tests unitaires pour les null-checks de parametres publics de KafkaExecutionTransport. Ajouter 2-3 cas shouldThrowOnNull*(Request/Handler). Fichier : platform-transport/.../kafka/KafkaExecutionTransportIT.java.
 
 ---
 
@@ -314,3 +316,5 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-19 | ISSUE-045 | [CRAFT-07] executionId absent des logs — ajouter executionKey dans tous les log.info/log.error | CONFIRMED |
 | 2026-06-19 | ISSUE-047 | [CRAFT-05] CC-02 justification Javadoc constructeur DefaultPluginRegistry | CONFIRMED |
 | 2026-06-19 | ISSUE-049 | [PRECISION-02] Release 23 override inutile pom.xml | CONFIRMED |
+| 2026-06-19 | ISSUE-029 | [CRAFT-08] Magic string "@type" repete 5 fois dans KafkaMessageCodec — extraire constante TYPE_FIELD | APPLIED |
+| 2026-06-19 | ISSUE-029 | [TEST-04] Ajouter tests null-checks parametres publics KafkaExecutionTransport (shouldThrowOnNull*) | APPLIED |
