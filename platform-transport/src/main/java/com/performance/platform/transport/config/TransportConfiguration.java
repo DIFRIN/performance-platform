@@ -1,10 +1,13 @@
 package com.performance.platform.transport.config;
 
+import com.performance.platform.application.ports.out.AgentRegistryPort;
 import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.http.HttpExecutionTransport;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 import com.performance.platform.transport.kafka.KafkaExecutionTransport;
 import com.performance.platform.transport.rabbitmq.RabbitMQExecutionTransport;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -18,9 +21,9 @@ import org.springframework.context.annotation.Lazy;
  * expose les {@code @Bean} conditionnels. Le {@code Bean} IN_MEMORY
  * est l'implementation par defaut ({@code matchIfMissing = true}).
  *
- * <p>Les transports KAFKA et RABBITMQ sont complets (ISSUE-029, ISSUE-030).
- * HTTP et SOCKET sont des squelettes marques {@link Lazy @Lazy}
- * (completes par ISSUE-031 et ISSUE-032).
+ * <p>Les transports KAFKA et RABBITMQ sont des {@code @Bean} explicites.
+ * HTTP est un {@code @Component} auto-decouvert (ISSUE-031).
+ * SOCKET est un squelette marque {@link Lazy @Lazy} (complete par ISSUE-032).
  *
  * <p><strong>TransportType IN_MEMORY</strong> est le defaut pour le mode LOCAL
  * et les tests. Les transports reels sont selectionnes via
@@ -73,14 +76,18 @@ public class TransportConfiguration {
     }
 
     /**
-     * Transport HTTP — squelette, complete par ISSUE-031.
+     * Transport HTTP — implementation complete (ISSUE-031).
+     * <p>
+     * POST les {@code TaskExecutionRequest} aux agents capables via leur
+     * {@code httpCallbackUrl}. Le {@code AgentRegistryPort} est optionnel
+     * via {@code ObjectProvider} pour permettre les tests unitaires Spring
+     * sans registre d'agents. En production, le registre est toujours present.
      */
     @Bean
-    @Lazy
     @ConditionalOnProperty(name = "transport.type", havingValue = "HTTP")
-    public ExecutionTransport httpExecutionTransport(HttpTransportProperties props) {
-        throw new UnsupportedOperationException(
-                "HTTP transport not yet implemented — ISSUE-031");
+    public ExecutionTransport httpExecutionTransport(HttpTransportProperties props,
+            ObjectProvider<AgentRegistryPort> registryProvider) {
+        return new HttpExecutionTransport(props, registryProvider.getIfAvailable());
     }
 
     /**
