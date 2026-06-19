@@ -11,10 +11,11 @@ import java.util.Objects;
  * Supports multi-claim pattern (ADR-011) — multiple agents can produce
  * independent results for the same {@code taskId} within one execution.
  *
- * <p>Package-private — not exposed outside the {@code .persistence} package.</p>
+ * <p>Technically public to allow access from the {@code .persistence.mapper}
+ * subpackage, but conceptually confined to the {@code .persistence} package tree.</p>
  */
 @Embeddable
-class TaskResultId implements Serializable {
+public class TaskResultId implements Serializable {
 
     @Column(name = "execution_id", nullable = false, length = 255)
     private String executionId;
@@ -26,17 +27,17 @@ class TaskResultId implements Serializable {
     private String agentId;
 
     /** JPA-only constructor. */
-    TaskResultId() {}
+    public TaskResultId() {}
 
-    TaskResultId(String executionId, String taskId, String agentId) {
+    public TaskResultId(String executionId, String taskId, String agentId) {
         this.executionId = Objects.requireNonNull(executionId, "executionId required");
         this.taskId = Objects.requireNonNull(taskId, "taskId required");
         this.agentId = Objects.requireNonNull(agentId, "agentId required");
     }
 
-    String executionId() { return executionId; }
-    String taskId() { return taskId; }
-    String agentId() { return agentId; }
+    public String executionId() { return executionId; }
+    public String taskId() { return taskId; }
+    public String agentId() { return agentId; }
 
     @Override
     public boolean equals(Object o) {
