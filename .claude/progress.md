@@ -340,6 +340,7 @@
 | 2026-06-19 | ISSUE-047 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-19 | ISSUE-047 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation CRAFT-05 PENDING (CC-02 constructeur) |
 | 2026-06-19 | ISSUE-047 | APPROVED (CRAFT-05 APPLIED) | Developer — CC-02 justification Javadoc constructeur DefaultPluginRegistry, re-review |
+| 2026-06-19 | ISSUE-047 | APPROVED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED, 0 bloquant |
 
 ---
 
