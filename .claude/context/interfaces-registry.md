@@ -186,7 +186,7 @@
 | `MockServerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-042 |
 | `ShellTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-043 |
 | `DockerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-044 |
-| `FilesystemTaskExecutor` | ⬜ PLANNED | PDR-010 | ISSUE-045 |
+| `FilesystemTaskExecutor` | 🔄 IN PROGRESS | PDR-010 | ISSUE-045 |
 
 ## platform-infrastructure — `.plugin` (PDR-011)
 

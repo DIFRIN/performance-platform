@@ -149,7 +149,7 @@
 | ISSUE-032 | SocketExecutionTransport | PDR-008 | platform-transport | L | TODO | ISSUE-027,028 |
 | ISSUE-043 | ShellTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
 | ISSUE-044 | DockerTaskExecutor | PDR-010 | platform-infrastructure | M | DONE | ISSUE-039 |
-| ISSUE-045 | FilesystemTaskExecutor | PDR-010 | platform-infrastructure | S | TODO | ISSUE-039 |
+| ISSUE-045 | FilesystemTaskExecutor | PDR-010 | platform-infrastructure | S | DONE | ISSUE-039 |
 | ISSUE-046 | PluginLoader | PDR-011 | platform-infrastructure | L | TODO | ISSUE-011,039 |
 | ISSUE-047 | PluginRegistry | PDR-011 | platform-infrastructure | M | TODO | ISSUE-046 |
 | ISSUE-048 | Scanner d'annotations plugin | PDR-011 | platform-infrastructure | M | TODO | ISSUE-046 |
@@ -323,6 +323,11 @@
 | 2026-06-16 | ISSUE-043 | APPROVED → DONE | Reviewer — re-review: 2 recommandations CONFIRMED (CRAFT-05/TEST-06) |
 | 2026-06-16 | ISSUE-044 | TODO → IN PROGRESS | Developer |
 | 2026-06-16 | ISSUE-044 | IN PROGRESS → IN REVIEW | Developer — DockerTaskExecutor + FakeDockerClient + 23 tests |
+| 2026-06-18 | ISSUE-045 | TODO → IN PROGRESS | Developer |
+| 2026-06-18 | ISSUE-045 | IN PROGRESS → IN REVIEW | Developer — FilesystemTaskExecutor + 20 tests @TempDir |
+| 2026-06-19 | ISSUE-045 | IN REVIEW → CHANGES_REQUESTED | Reviewer — PRECISION-01 (pathsByExecution) + CRAFT-07 (logs) |
+| 2026-06-19 | ISSUE-045 | CHANGES_REQUESTED → IN REVIEW | Developer — corrections appliquees (PRECISION-01/CRAFT-07), re-review |
+| 2026-06-19 | ISSUE-045 | IN REVIEW → CHANGES_REQUESTED | Reviewer — 1 bloquant: pathsByExecution non alimenté + CRAFT-07 executionId absent des logs |
 | 2026-06-16 | ISSUE-044 | IN REVIEW → DONE | Reviewer — APPROVED, 0 bloquant, 0 recommandation |
 
 ---

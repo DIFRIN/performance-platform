@@ -272,6 +272,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-042] [2026-06-16] [CONFIRMED] [CRAFT-07] executionId ajoute aux logs mode EXTERNAL + handler erreur execute()
 [ISSUE-043] [2026-06-16] [CONFIRMED] [CRAFT-05] CC-02 justification Javadoc pour classe 355 lignes >300 + extraction executeProcess() 83L >40 (stream reading block) + execute() 56L >40
 [ISSUE-043] [2026-06-16] [CONFIRMED] [TEST-06] 2 Thread.sleep(500) dans tests cleanup — remplacer par Awaitility ou CountDownLatch
+[ISSUE-045] [2026-06-19] [CONFIRMED] [PRECISION-01] pathsByExecution non alimenté — extraction executionKey dans execute() + tracking dans executeCreate()/executeUpload()
+[ISSUE-045] [2026-06-19] [CONFIRMED] [CRAFT-07] executionId absent des logs — ajoute executionKey a tous les log.info/log.error
 
 ---
 
@@ -303,3 +305,5 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-16 | ISSUE-042 | [CRAFT-07] executionId ajoute aux logs mode EXTERNAL + handler erreur execute() | APPLIED |
 | 2026-06-16 | ISSUE-043 | [CRAFT-05] CC-02 justification Javadoc + extraction executeProcess/execute | CONFIRMED |
 | 2026-06-16 | ISSUE-043 | [TEST-06] 2 Thread.sleep(500) → Awaitility avec temp files | CONFIRMED |
+| 2026-06-19 | ISSUE-045 | [PRECISION-01] pathsByExecution non alimenté — extraction executionKey + tracking dans executeCreate()/executeUpload() | APPLIED |
+| 2026-06-19 | ISSUE-045 | [CRAFT-07] executionId absent des logs — ajouter executionKey dans tous les log.info/log.error | APPLIED |
