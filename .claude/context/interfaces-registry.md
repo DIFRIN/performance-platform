@@ -288,6 +288,7 @@
 | `SecurityConfiguration` + config profiles | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `application.yaml` (common config) | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `application-{local,orchestrator,agent}.yaml` | ✅ STABLE | PDR-018 | ISSUE-081 |
+| `LocalFlowE2ETest` + `e2e-local.yaml` | ✅ STABLE | PDR-018 | ISSUE-082 |
 
 ## platform-deployment
 

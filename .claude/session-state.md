@@ -8,40 +8,34 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-081 (Config local/orchestrator/agent + securite)
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-082 (Test E2E mode LOCAL)
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
-**PDR parent** : PDR-018 (Application Assembly — IN PROGRESS)
+**PDR parent** : PDR-018 (Application Assembly — DONE)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-081: Review APPROVED. 0 bloquant, 0 recommandation. 4 YAML profiles + SecurityConfiguration OAuth2/JWT + ConfigProfilesTest (14 tests). 65 tests OK, BUILD SUCCESS. Commit.
+Reviewer — Re-review ISSUE-082: [VERSION] CONFIRMED (Testcontainers 1.20.6 verified dans platform-app/pom.xml). Issue DONE, PDR-018 DONE. Commit.
 
 **Prochaine action** :
-@developer — prendre ISSUE-082 (Test E2E mode LOCAL), la prochaine P0 TODO debloquee.
+PDR-019 (Deployment) — ISSUE-083 Dockerfile <300MB (TODO). Executer @developer pour l'Issue suivante.
 
 **Fichiers modifies** (cette session) :
-- platform-app/pom.xml (+ spring-boot-starter-security / oauth2-resource-server / actuator)
-- platform-app/src/main/resources/application.yaml (cree)
-- platform-app/src/main/resources/application-local.yaml (cree)
-- platform-app/src/main/resources/application-orchestrator.yaml (cree)
-- platform-app/src/main/resources/application-agent.yaml (cree)
-- platform-app/src/main/java/com/performance/platform/app/security/SecurityConfiguration.java (cree)
-- platform-app/src/test/java/com/performance/platform/app/ConfigProfilesTest.java (cree)
-- .claude/progress.md (ISSUE-081 TODO → IN PROGRESS → IN REVIEW)
-- .claude/context/interfaces-registry.md (SecurityConfiguration + config profiles PLANNED → IN PROGRESS)
+- platform-app/pom.xml (+ Testcontainers 1.20.4 core/postgresql/junit-jupiter, + maven-failsafe-plugin config)
+- platform-app/src/test/java/com/performance/platform/app/e2e/LocalFlowE2ETest.java (cree)
+- platform-app/src/test/resources/scenarios/e2e-local.yaml (cree)
+- .claude/progress.md (ISSUE-082 WAITING → IN PROGRESS → IN REVIEW)
+- .claude/context/interfaces-registry.md (LocalFlowE2ETest PLANNED → IN PROGRESS)
 - .claude/session-state.md (ce fichier)
 
 **Blocages** :
 - Spring Boot 4.0.0 + JUnit 5.11.4 incompatibilite (computeIfAbsent → getOrComputeIfAbsent) — @SpringBootTest inutilisable
-- Spring Boot 4.0.0 auto-config classes font reference a des classes manquantes (DatabaseInitializationDependencyConfigurer)
-  → contourne dans ConfigProfilesTest via YamlPropertySourceLoader (parsing YAML sans contexte Spring)
-- ArchUnit 1.4.0 ne supporte pas Java 25 (class version 69)
-- Mockito 5.20.0 / Byte Buddy 1.15.11 ne supporte pas Java 25 → net.bytebuddy.experimental=true requis
-- Jackson 2.x / 3.x conflit → Jackson 2.x exclu de platform-scenario-dsl dans platform-app
+  → contourne via Testcontainers + Hibernate SessionFactory + manual wiring (pattern EntitiesMappingIT)
+- Failsafe classpath issue with spring-boot:repackage — E2E test runs via surefire only
+  → mvn verify -P integration-tests toujours OK car surefire tourne pendant la phase test du lifecycle verify
 
 ---
 
@@ -57,3 +51,6 @@ Reviewer — ISSUE-081: Review APPROVED. 0 bloquant, 0 recommandation. 4 YAML pr
 | 2026-06-20 | Reviewer | ISSUE-079 | Re-review: 3 recommandations CONFIRMED (CRAFT-02/CRAFT-08/CRAFT-07). Commit. | DONE |
 | 2026-06-20 | Developer | ISSUE-080 | PluginBootstrap + PluginProperties + 8 tests + @EnableConfigurationProperties. 51 tests OK, BUILD SUCCESS. | IN REVIEW |
 | 2026-06-20 | Developer | ISSUE-081 | application.yaml (common/health), 3 profiles (local/orchestrator/agent), SecurityConfiguration OAuth2/JWT, ConfigProfilesTest (14 tests). 65 tests OK, 0 warning. | IN REVIEW |
+| 2026-06-20 | Developer | ISSUE-082 | LocalFlowE2ETest + e2e-local.yaml + RawJpaExecutionRepository. Testcontainers PostgreSQL, Flyway, manual wiring. 66 tests OK, BUILD SUCCESS. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-082 | Review APPROVED: 0 bloquant, 1 recommandation PENDING (VERSION Testcontainers 1.20.4→1.20.6). | APPROVED |
+| 2026-06-20 | Reviewer | ISSUE-082 | Re-review: [VERSION] CONFIRMED (Testcontainers 1.20.6 verified platform-app/pom.xml). Commit. | DONE |
