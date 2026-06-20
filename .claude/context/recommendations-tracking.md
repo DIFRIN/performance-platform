@@ -300,6 +300,16 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-062] [2026-06-20] [CONFIRMED] [CRAFT-05] evaluate() 93 lignes (>40) avec CC-02 en Javadoc de classe uniquement. CC-02 deplace de la Javadoc classe vers la Javadoc methode evaluate() — conforme au pattern ISSUE-055/056/057. 63 tests OK. Fichier : .../assertion/kafka/KafkaAssertionExecutor.java.
 
+[ISSUE-064] [2026-06-20] [CONFIRMED] [CRAFT-05] Classe 306 lignes (>300) sans marqueur CC-02 dans Javadoc classe. Les 5 checks + helpers parametres + SHA-256 + builders resultat forment un ensemble cohesif inseparable. Ajouter ligne CC-02 dans la Javadoc de classe. Fichier : .../assertion/file/FileAssertionExecutor.java (classe).
+
+[ISSUE-064] [2026-06-20] [CONFIRMED] [CRAFT-05] evaluateChecksum() 53 lignes (>40) sans marqueur CC-02 dans Javadoc. Pipeline cohesif : verification existence → extraction/validation checksum → calcul SHA-256 → comparaison → construction resultat. Ajouter Javadoc CC-02. Fichier : .../assertion/file/FileAssertionExecutor.java:165-217.
+
+[ISSUE-064] [2026-06-20] [CONFIRMED] [CRAFT-05] evaluateSize() 41 lignes (>40) sans marqueur CC-02 dans Javadoc. Pipeline cohesif : verification existence → extraction sizeBytes → lecture taille fichier → evaluation operateur → construction resultat. Ajouter Javadoc CC-02. Fichier : .../assertion/file/FileAssertionExecutor.java:222-262.
+
+[ISSUE-064] [2026-06-20] [CONFIRMED] [TEST-04] Chemin expectedHex.isBlank() (ligne 184) non couvert — pas de test pour checksum="sha256:" (prefix avec hex vide). Ajouter shouldErrorOnBlankChecksumHex dans ChecksumCheck. Fichier : .../assertion/file/FileAssertionExecutorTest.java.
+
+[ISSUE-064] [2026-06-20] [CONFIRMED] [TEST-04] Chemin getRequiredDoubleParam type check (ligne 310-316) non couvert — pas de test pour sizeBytes non-numerique (ex: String "not-a-number"). Ajouter shouldErrorOnNonNumericSizeBytes dans SizeCheck. Fichier : .../assertion/file/FileAssertionExecutorTest.java.
+
 ---
 
 ## Historique

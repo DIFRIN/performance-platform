@@ -157,8 +157,8 @@
 | ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | DONE | ISSUE-052 |
 | ISSUE-058 | Gatling Protocols (no gRPC) | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-057 |
 | ISSUE-062 | KafkaAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059 |
-| ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
-| ISSUE-064 | FileAssertionExecutor | PDR-014 | platform-assertion | S | TODO | ISSUE-059 |
+| ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | IN REVIEW | ISSUE-059 |
+| ISSUE-064 | FileAssertionExecutor | PDR-014 | platform-assertion | S | DONE | ISSUE-059 |
 | ISSUE-067 | HtmlReportRenderer + JsonReportRenderer | PDR-015 | platform-reporting | M | TODO | ISSUE-065 |
 | ISSUE-068 | PdfReportRenderer | PDR-015 | platform-reporting | S | TODO | ISSUE-067 |
 | ISSUE-069 | ReportFileWriter | PDR-015 | platform-reporting | M | TODO | ISSUE-067,068 |
@@ -415,6 +415,7 @@
 | 2026-06-20 | ISSUE-061 | APPROVED → DONE | Reviewer — re-review: [TEST-04] CONFIRMED, 54 tests OK (37 unit + 17 IT) |
 | 2026-06-20 | ISSUE-062 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING [CRAFT-05] CC-02 method-level evaluate() |
 | 2026-06-20 | ISSUE-062 | APPROVED → DONE | Reviewer — re-review: [CRAFT-05] CONFIRMED (CC-02 evaluate()), 63 tests OK |
+| 2026-06-20 | ISSUE-064 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-07 BLOQUANT: 4 logs executionId incorrect (TaskId au lieu d'ExecutionId) |
 
 ---
 
