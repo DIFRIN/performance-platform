@@ -62,7 +62,7 @@
 | PDR-011 | Plugin System (infra `.plugin`) | platform-infrastructure | DONE | ISSUE-046..049 | PDR-001,003,010 |
 | PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | DONE | ISSUE-050..053 | PDR-001,004 |
 | PDR-013 | Gatling Injection | platform-injection-gatling | DONE | ISSUE-054..058 | PDR-001,003 |
-| PDR-014 | Assertion Framework | platform-assertion | IN PROGRESS | ISSUE-059..064 | PDR-001,003,013 |
+| PDR-014 | Assertion Framework | platform-assertion | DONE | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | DONE | ISSUE-065..069 | PDR-001,002,004,013,014 |
 | PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | TODO | ISSUE-074,075,076 | PDR-001,002 |
@@ -157,7 +157,7 @@
 | ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | DONE | ISSUE-052 |
 | ISSUE-058 | Gatling Protocols (no gRPC) | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-057 |
 | ISSUE-062 | KafkaAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059 |
-| ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | IN REVIEW | ISSUE-059 |
+| ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059 |
 | ISSUE-064 | FileAssertionExecutor | PDR-014 | platform-assertion | S | DONE | ISSUE-059 |
 | ISSUE-067 | HtmlReportRenderer + JsonReportRenderer | PDR-015 | platform-reporting | M | DONE | ISSUE-065 |
 | ISSUE-068 | PdfReportRenderer | PDR-015 | platform-reporting | S | DONE | ISSUE-067 |
@@ -456,6 +456,9 @@
 | 2026-06-20 | ISSUE-073 | IN REVIEW → APPROVED | Reviewer — APPROVED: 0 bloquant, 1 recommandation [PRECISION] PENDING (logDir inutilisé runGit). 286 tests OK. |
 | 2026-06-20 | ISSUE-073 | APPROVED → DONE | Reviewer — re-review: [PRECISION] CONFIRMED. Commit. |
 | 2026-06-20 | PDR-016 | IN PROGRESS → DONE | Reviewer (ISSUE-070..073 all DONE) |
+| 2026-06-20 | ISSUE-063 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05: classe 379L >300 sans CC-02 classe (CC-02 sur evaluate() present mais manquant classe). 124 tests OK. |
+| 2026-06-20 | ISSUE-063 | CHANGES_REQUESTED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED (CC-02 classe). 124 tests OK. Commit. |
+| 2026-06-20 | PDR-014 | IN PROGRESS → DONE | Reviewer (ISSUE-059..064 all DONE) |
 
 ---
 

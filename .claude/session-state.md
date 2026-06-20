@@ -13,17 +13,17 @@
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : —
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
-**PDR parent** : PDR-016 (Report Publishers — DONE)
+**PDR parent** : PDR-014 (Assertion Framework — DONE)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : re-review ISSUE-073 CONFIRMED — [PRECISION] logDir supprime, 20 tests OK, PDR-016 DONE.
+Reviewer : re-review ISSUE-063 CONFIRMED — CRAFT-05 CC-02 classe OK, PDR-014 DONE.
 
 **Prochaine action** :
-Developer : ISSUE-063 (HttpMockAssertionExecutor) — IN REVIEW. Ou PDR-017 (Observability) — prochaine phase.
+Developer : PDR-017 (Observability) — ISSUE-074 TODO.
 
 **Fichiers modifies** (cette session) :
 - `.claude/progress.md` — ISSUE-073 IN REVIEW → APPROVED
@@ -63,3 +63,5 @@ _Aucun_
 | 2026-06-20 | Developer | ISSUE-073 | GitReportPublisher + 20 tests, 286 total OK. | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-073 | APPROVED: 0 bloquant, 1 recommandation [PRECISION] logDir inutilise. 286 tests OK. | APPROVED |
 | 2026-06-20 | Reviewer | ISSUE-073 | Re-review CONFIRMED: [PRECISION] logDir supprime. Commit. PDR-016 DONE. | DONE |
+| 2026-06-20 | Reviewer | ISSUE-063 | CHANGES_REQUESTED: CRAFT-05 classe 379L >300 sans CC-02 classe. 124 tests OK. | CHANGES_REQUESTED |
+| 2026-06-20 | Reviewer | ISSUE-063 | Re-review CONFIRMED: CRAFT-05 CC-02 classe OK. Commit. PDR-014 DONE. | DONE |
