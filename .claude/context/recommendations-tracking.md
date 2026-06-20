@@ -368,6 +368,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-084] [2026-06-20] [CONFIRMED] [SPEC-02] `AGENT_TAGS` absent des environnements agent-1 et agent-2. La spec 09-deployment.md section 2 montre `AGENT_TAGS: europe,standard` et `AGENT_TAGS: europe,high-memory`. ADR-008 confirme que les tags sont des metadonnees d'observabilite. Ajouter `AGENT_TAGS: "dev,standard"` pour agent-1 et `AGENT_TAGS: "dev,high-memory"` pour agent-2. Fichier : platform-deployment/docker/docker-compose.yaml lignes 99-106, 121-128. → Verifie: agent-1 AGENT_TAGS="dev,standard" (ligne 106), agent-2 AGENT_TAGS="dev,high-memory" (ligne 131).
 
+[ISSUE-085] [2026-06-20] [CONFIRMED] [PRECISION] Terminologie "headless" incorrecte dans les commentaires des services `perf-kafka-service` et `perf-postgres-service` de service.yaml. Ces services sont des placeholders pour services externes (managed Kafka/PostgreSQL), pas des headless services K8s (qui requierent `clusterIP: None`). Remplacer "(headless placeholder)" par "(external service placeholder)" dans les deux commentaires d'en-tete (lignes 29 et 48). Fichier : platform-deployment/kubernetes/service.yaml.
+
 ## Historique
 
 | Date | Issue | Recommandation | Statut |
