@@ -354,6 +354,12 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-07] Logs ApiExceptionHandler sans contexte (executionId absent). Pour handleExecution et handleReportGeneration, l'executionId pourrait etre extrait de l'exception si disponible. Fichier : platform-app/.../api/ApiExceptionHandler.java.
 
+---
+
+[ISSUE-080] [2026-06-20] [CONFIRMED] [CRAFT-01/DOC] PluginProperties Javadoc ligne 17 : "Si enabled est absent, la valeur par defaut est true" — mais le champ boolean primitif sans traitement dans le constructeur compact a pour defaut JVM false. Si l'intention est true, utiliser Boolean wrapper + null-check dans le constructeur compact. Sinon, corriger la Javadoc (true → false). Fichier : platform-app/.../plugin/PluginProperties.java:17.
+
+[ISSUE-080] [2026-06-20] [CONFIRMED] [NAMING] Test shouldNotCrashWhenLoaderThrowsException — nom trompeur. Le test verifie que l'exception est PROPAGEE, pas qu'elle est absorbee. Le nom suggere l'inverse. Renommer en shouldPropagateLoaderException. Fichier : platform-app/.../plugin/PluginBootstrapTest.java:106.
+
 ## Historique
 
 | Date | Issue | Recommandation | Statut |

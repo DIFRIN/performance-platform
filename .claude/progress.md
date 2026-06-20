@@ -169,7 +169,7 @@
 | ISSUE-074 | ExecutionMetrics (Micrometer) | PDR-017 | platform-observability | M | DONE | ISSUE-001 |
 | ISSUE-075 | ObservabilityEventListener | PDR-017 | platform-observability | M | DONE | ISSUE-074,008 |
 | ISSUE-076 | Logging JSON + ObservabilityConfiguration | PDR-017 | platform-observability | S | DONE | ISSUE-074 |
-| ISSUE-080 | PluginBootstrap | PDR-018 | platform-app | S | TODO | ISSUE-077,047 |
+| ISSUE-080 | PluginBootstrap | PDR-018 | platform-app | S | DONE | ISSUE-077,047 |
 | ISSUE-081 | Config local/orchestrator/agent + sécurité | PDR-018 | platform-app | M | TODO | ISSUE-078 |
 | ISSUE-082 | Test E2E mode LOCAL | PDR-018 | platform-app | L | TODO | ISSUE-079,080,081,038,066 |
 | ISSUE-083 | Dockerfile (<300MB) | PDR-019 | platform-deployment | M | TODO | ISSUE-077 |
@@ -479,6 +479,10 @@
 | 2026-06-20 | ISSUE-079 | IN PROGRESS → IN REVIEW | Developer — ScenarioController + 2 DTOs + ApiExceptionHandler + 11 tests. 43 total OK, BUILD SUCCESS |
 | 2026-06-20 | ISSUE-079 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 3 recommandations PENDING (CRAFT-02/CRAFT-08/CRAFT-07) |
 | 2026-06-20 | ISSUE-079 | APPROVED → DONE | Reviewer — re-review: 3 recommandations CONFIRMED (CRAFT-02/CRAFT-08/CRAFT-07) |
+| 2026-06-20 | ISSUE-080 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-080 | IN PROGRESS → IN REVIEW | Developer — PluginBootstrap + PluginProperties + 8 tests, 51 total OK, BUILD SUCCESS |
+| 2026-06-20 | ISSUE-080 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (CRAFT-01/DOC + NAMING) |
+| 2026-06-20 | ISSUE-080 | APPROVED → DONE | Reviewer — re-review: 2 recommandations CONFIRMED (CRAFT-01/DOC Javadoc true→false + NAMING shouldPropagateLoaderException). 51 tests OK. |
 
 ---
 

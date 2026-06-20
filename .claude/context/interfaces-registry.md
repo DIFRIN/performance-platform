@@ -283,7 +283,8 @@
 | `ScenarioController` | ✅ STABLE | PDR-018 | ISSUE-079 |
 | `SubmitResponse` / `ExecutionStatusResponse` (DTOs) | ✅ STABLE | PDR-018 | ISSUE-079 |
 | `ApiExceptionHandler` | ✅ STABLE | PDR-018 | ISSUE-079 |
-| `PluginBootstrap` | ⬜ PLANNED | PDR-018 | ISSUE-080 |
+| `PluginBootstrap` | ✅ STABLE | PDR-018 | ISSUE-080 |
+| `PluginProperties` | ✅ STABLE | PDR-018 | ISSUE-080 |
 | `SecurityConfiguration` + config profiles | ⬜ PLANNED | PDR-018 | ISSUE-081 |
 
 ## platform-deployment
