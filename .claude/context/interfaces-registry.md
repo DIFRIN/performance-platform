@@ -285,7 +285,9 @@
 | `ApiExceptionHandler` | ✅ STABLE | PDR-018 | ISSUE-079 |
 | `PluginBootstrap` | ✅ STABLE | PDR-018 | ISSUE-080 |
 | `PluginProperties` | ✅ STABLE | PDR-018 | ISSUE-080 |
-| `SecurityConfiguration` + config profiles | ⬜ PLANNED | PDR-018 | ISSUE-081 |
+| `SecurityConfiguration` + config profiles | ✅ STABLE | PDR-018 | ISSUE-081 |
+| `application.yaml` (common config) | ✅ STABLE | PDR-018 | ISSUE-081 |
+| `application-{local,orchestrator,agent}.yaml` | ✅ STABLE | PDR-018 | ISSUE-081 |
 
 ## platform-deployment
 

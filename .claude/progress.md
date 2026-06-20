@@ -170,7 +170,7 @@
 | ISSUE-075 | ObservabilityEventListener | PDR-017 | platform-observability | M | DONE | ISSUE-074,008 |
 | ISSUE-076 | Logging JSON + ObservabilityConfiguration | PDR-017 | platform-observability | S | DONE | ISSUE-074 |
 | ISSUE-080 | PluginBootstrap | PDR-018 | platform-app | S | DONE | ISSUE-077,047 |
-| ISSUE-081 | Config local/orchestrator/agent + sécurité | PDR-018 | platform-app | M | TODO | ISSUE-078 |
+| ISSUE-081 | Config local/orchestrator/agent + sécurité | PDR-018 | platform-app | M | DONE | ISSUE-078 |
 | ISSUE-082 | Test E2E mode LOCAL | PDR-018 | platform-app | L | TODO | ISSUE-079,080,081,038,066 |
 | ISSUE-083 | Dockerfile (<300MB) | PDR-019 | platform-deployment | M | TODO | ISSUE-077 |
 | ISSUE-084 | docker-compose dev local | PDR-019 | platform-deployment | S | TODO | ISSUE-083 |
@@ -483,6 +483,9 @@
 | 2026-06-20 | ISSUE-080 | IN PROGRESS → IN REVIEW | Developer — PluginBootstrap + PluginProperties + 8 tests, 51 total OK, BUILD SUCCESS |
 | 2026-06-20 | ISSUE-080 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (CRAFT-01/DOC + NAMING) |
 | 2026-06-20 | ISSUE-080 | APPROVED → DONE | Reviewer — re-review: 2 recommandations CONFIRMED (CRAFT-01/DOC Javadoc true→false + NAMING shouldPropagateLoaderException). 51 tests OK. |
+| 2026-06-20 | ISSUE-081 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-081 | IN PROGRESS → IN REVIEW | Developer — application.yaml, local/orchestrator/agent profiles, SecurityConfiguration OAuth2/JWT, ConfigProfilesTest (14 tests). 65 tests OK, BUILD SUCCESS. 0 warning. |
+| 2026-06-20 | ISSUE-081 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 65 tests OK, BUILD SUCCESS. |
 
 ---
 
