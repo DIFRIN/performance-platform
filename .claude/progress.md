@@ -63,7 +63,7 @@
 | PDR-012 | Persistence (infra `.persistence`) | platform-infrastructure | DONE | ISSUE-050..053 | PDR-001,004 |
 | PDR-013 | Gatling Injection | platform-injection-gatling | DONE | ISSUE-054..058 | PDR-001,003 |
 | PDR-014 | Assertion Framework | platform-assertion | IN PROGRESS | ISSUE-059..064 | PDR-001,003,013 |
-| PDR-015 | Reporting Engine | platform-reporting | TODO | ISSUE-065..069 | PDR-001,002,004,013,014 |
+| PDR-015 | Reporting Engine | platform-reporting | DONE | ISSUE-065..069 | PDR-001,002,004,013,014 |
 | PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | TODO | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | TODO | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | TODO | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
@@ -161,7 +161,7 @@
 | ISSUE-064 | FileAssertionExecutor | PDR-014 | platform-assertion | S | DONE | ISSUE-059 |
 | ISSUE-067 | HtmlReportRenderer + JsonReportRenderer | PDR-015 | platform-reporting | M | DONE | ISSUE-065 |
 | ISSUE-068 | PdfReportRenderer | PDR-015 | platform-reporting | S | DONE | ISSUE-067 |
-| ISSUE-069 | ReportFileWriter | PDR-015 | platform-reporting | M | TODO | ISSUE-067,068 |
+| ISSUE-069 | ReportFileWriter | PDR-015 | platform-reporting | M | DONE | ISSUE-067,068 |
 | ISSUE-070 | MultiPublisherDispatcher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-065,013 |
 | ISSUE-071 | ConfluenceReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
 | ISSUE-072 | S3ReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
@@ -430,6 +430,11 @@
 | 2026-06-20 | ISSUE-068 | IN PROGRESS → IN REVIEW | Developer — PdfReportRenderer + 11 tests, 73 total OK, %%EOF trailer validé
 | 2026-06-20 | ISSUE-068 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING [TEST-04] shouldWrapConversionErrors trompeur (happy path, pas erreur). 73 tests OK. |
 | 2026-06-20 | ISSUE-068 | APPROVED → DONE | Reviewer — re-review: [TEST-04] CONFIRMED (2 tests erreur avec stubs anonymes). 74 tests OK. |
+| 2026-06-20 | ISSUE-069 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-069 | IN PROGRESS → IN REVIEW | Developer — ReportFileWriter + ReportProperties + 20 tests, 92 total OK |
+| 2026-06-20 | ISSUE-069 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (CRAFT-07 executionId logs, CRAFT-08 magic strings) |
+| 2026-06-20 | ISSUE-069 | APPROVED → DONE | Reviewer — re-review: CRAFT-07 + CRAFT-08 CONFIRMED, 92 tests OK |
+| 2026-06-20 | PDR-015 | IN PROGRESS → DONE | Reviewer (ISSUE-065..069 all DONE) |
 
 ---
 
@@ -438,4 +443,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (ISSUE-068 DONE — PdfReportRenderer re-review [TEST-04] CONFIRMED)
+**Dernière mise à jour** : 2026-06-20 (ISSUE-069 IN REVIEW — Developer)

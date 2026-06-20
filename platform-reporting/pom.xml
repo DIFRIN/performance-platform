@@ -45,6 +45,13 @@
             <version>1.0.10</version>
         </dependency>
 
+        <!-- Spring Boot : @ConfigurationProperties (ReportProperties) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- Tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
