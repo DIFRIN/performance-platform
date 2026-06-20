@@ -130,7 +130,7 @@
 | ISSUE-059 | AssertionExecutorRegistry | PDR-014 | platform-assertion | S | DONE | ISSUE-011 |
 | ISSUE-060 | GatlingMetricAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059,056 |
 | ISSUE-061 | DatabaseAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059 |
-| ISSUE-065 | Records CampaignReport + interfaces | PDR-015 | platform-reporting | M | TODO | ISSUE-006,013,002 |
+| ISSUE-065 | Records CampaignReport + interfaces | PDR-015 | platform-reporting | M | DONE | ISSUE-006,013,002 |
 | ISSUE-066 | DefaultReportEngine + Verdict | PDR-015 | platform-reporting | M | TODO | ISSUE-065 |
 | ISSUE-077 | SpringBoot main + Modulith + assemblage | PDR-018 | platform-app | M | TODO | ISSUE-023,039,052 |
 | ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | TODO | ISSUE-077 |
@@ -416,6 +416,9 @@
 | 2026-06-20 | ISSUE-062 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING [CRAFT-05] CC-02 method-level evaluate() |
 | 2026-06-20 | ISSUE-062 | APPROVED → DONE | Reviewer — re-review: [CRAFT-05] CONFIRMED (CC-02 evaluate()), 63 tests OK |
 | 2026-06-20 | ISSUE-064 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-07 BLOQUANT: 4 logs executionId incorrect (TaskId au lieu d'ExecutionId) |
+| 2026-06-20 | ISSUE-065 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-065 | IN PROGRESS → IN REVIEW | Developer — platform-reporting module, CampaignReport + 5 records + 3 interfaces (ReportEngine/Renderer/Publisher ⚡) + 2 exceptions + PublicationTarget, 17 tests OK |
+| 2026-06-20 | ISSUE-065 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 17 tests OK, spec respectee, PublicationTarget dans platform-reporting (ARCH-11), records immuables copies defensives |
 
 ---
 
@@ -424,4 +427,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (ISSUE-062 DONE — KafkaAssertionExecutor, re-review [CRAFT-05] CONFIRMED)
+**Dernière mise à jour** : 2026-06-20 (ISSUE-065 DONE — platform-reporting module, CampaignReport + interfaces)
