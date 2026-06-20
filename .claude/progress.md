@@ -129,7 +129,7 @@
 | ISSUE-057 | GatlingTaskExecutor | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-055,056 |
 | ISSUE-059 | AssertionExecutorRegistry | PDR-014 | platform-assertion | S | DONE | ISSUE-011 |
 | ISSUE-060 | GatlingMetricAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059,056 |
-| ISSUE-061 | DatabaseAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
+| ISSUE-061 | DatabaseAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059 |
 | ISSUE-065 | Records CampaignReport + interfaces | PDR-015 | platform-reporting | M | TODO | ISSUE-006,013,002 |
 | ISSUE-066 | DefaultReportEngine + Verdict | PDR-015 | platform-reporting | M | TODO | ISSUE-065 |
 | ISSUE-077 | SpringBoot main + Modulith + assemblage | PDR-018 | platform-app | M | TODO | ISSUE-023,039,052 |
@@ -407,6 +407,10 @@
 | 2026-06-20 | ISSUE-060 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (CRAFT-07 executionId logs, PRECISION import inutilise) |
 | 2026-06-20 | ISSUE-060 | APPROVED — recommandations APPLIED | Developer — executionId ajoute aux 2 logs + import TaskStatus supprime. 37 tests OK |
 | 2026-06-20 | ISSUE-060 | APPROVED → DONE | Reviewer — re-review: CRAFT-07 + PRECISION CONFIRMED, 37 tests OK |
+| 2026-06-20 | ISSUE-061 | TODO → IN PROGRESS | Developer — DatabaseAssertionExecutor + ApplicationContext DataSource lookup |
+| 2026-06-20 | ISSUE-061 | IN PROGRESS → IN REVIEW | Developer — @Assertion name=database, Virtual Threads JDBC, 17 ITs Testcontainers PostgreSQL OK |
+| 2026-06-20 | ISSUE-061 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING [TEST-04] shouldErrorOnEmptyResult inefficace |
+| 2026-06-20 | ISSUE-061 | APPROVED → DONE | Reviewer — re-review: [TEST-04] CONFIRMED, 54 tests OK (37 unit + 17 IT) |
 
 ---
 
@@ -415,4 +419,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (ISSUE-060 DONE — GatlingMetricAssertionExecutor, 37 tests OK)
+**Dernière mise à jour** : 2026-06-20 (ISSUE-061 DONE — DatabaseAssertionExecutor, re-review [TEST-04] CONFIRMED)

@@ -296,6 +296,10 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 ---
 
+[ISSUE-061] [2026-06-20] [CONFIRMED] [TEST-04] Test shouldErrorOnEmptyResult corrige — requete non-agregee (SELECT value FROM metrics) sur table vide apres DELETE couvre bien le chemin rs.next() == false. 54 tests OK. Fichier : .../assertion/database/DatabaseAssertionExecutorIT.java.
+
+---
+
 ## Historique
 
 | Date | Issue | Recommandation | Statut |

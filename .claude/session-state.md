@@ -11,7 +11,7 @@
 
 **Date derniere session** : 2026-06-20
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-060 (GatlingMetricAssertionExecutor — DONE)
+**Issue active** : ISSUE-061 (DatabaseAssertionExecutor — DONE)
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-014 (Assertion Framework — IN PROGRESS)
 
@@ -20,26 +20,23 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : ISSUE-060 re-review CONFIRMED. CRAFT-07 (executionId logs) + PRECISION (import TaskStatus supprime) valides. 37 tests OK, BUILD SUCCESS.
+Reviewer : ISSUE-061 re-review. Recommandation [TEST-04] CONFIRMED — shouldErrorOnEmptyResult corrige (SELECT value FROM metrics apres DELETE, couvre rs.next()==false). 54 tests OK (37 unit + 17 IT). BUILD SUCCESS. Commit.
 
 **Prochaine action** :
-Developer : ISSUE-061 (DatabaseAssertionExecutor).
+Developer : ISSUE-062 (KafkaAssertionExecutor).
 
 **Fichiers modifies** :
 ```
 ✅ .claude/session-state.md — ce fichier
-✅ .claude/progress.md — ISSUE-060 TODO → IN PROGRESS → IN REVIEW
-✅ platform-assertion/pom.xml — +dependance platform-injection-gatling (ISSUE-059 deferral)
-✅ platform-assertion/.../gatling/MetricExtractor.java — cree
-✅ platform-assertion/.../gatling/GatlingMetricAssertionExecutor.java — cree
-✅ platform-assertion/.../gatling/GatlingMetricAssertionExecutorTest.java — cree (27 tests)
+✅ .claude/progress.md — ISSUE-061 APPROVED → DONE
+✅ .claude/context/recommendations-tracking.md — [TEST-04] APPLIED → CONFIRMED
+✅ .claude/context/interfaces-registry.md — DatabaseAssertionExecutor IN PROGRESS → STABLE
 ```
 
 **Blocages** :
 _Aucun_
 
 ---
-
 ## Historique Sessions (1 ligne par session)
 
 | Date | Agent | Issue | Action | Resultat |
@@ -63,3 +60,5 @@ _Aucun_
 | 2026-06-20 | Reviewer | ISSUE-054+059 | Re-review: 2 recommandations CONFIRMED. PDR-013 DONE, PDR-014 IN PROGRESS. Commit. | DONE |
 | 2026-06-20 | Developer | ISSUE-060 | GatlingMetricAssertionExecutor + MetricExtractor + pom.xml injection-gatling. 37 tests OK → IN REVIEW | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-060 | APPROVED: 0 bloquant, 2 recommandations PENDING (CRAFT-07 executionId logs, PRECISION import inutilise) | APPROVED |
+| 2026-06-20 | Developer | ISSUE-061 | DatabaseAssertionExecutor + ITs Testcontainers. 54 tests OK (37 unit + 17 IT) → IN REVIEW | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-061 | APPROVED: 0 bloquant, 1 recommandation PENDING [TEST-04] shouldErrorOnEmptyResult inefficace. 37 unit + 17 IT OK. | APPROVED |
