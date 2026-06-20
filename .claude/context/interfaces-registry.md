@@ -248,7 +248,7 @@
 | `GatlingMetricAssertionExecutor` / `MetricExtractor` | ✅ STABLE | PDR-014 | ISSUE-060 |
 | `DatabaseAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-061 |
 | `KafkaAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-062 |
-| `HttpMockAssertionExecutor` | 🔄 IN PROGRESS | PDR-014 | ISSUE-063 |
+| `HttpMockAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-063 |
 | `FileAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-064 |
 
 ## platform-reporting
