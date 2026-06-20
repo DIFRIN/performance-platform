@@ -41,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KafkaTaskExecutorsIT {
 
     @Container
+    @SuppressWarnings("deprecation")
     static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
 
     private static KafkaConsumerTaskExecutor consumerExecutor;

@@ -1,7 +1,6 @@
 package com.performance.platform.transport.http;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import com.performance.platform.application.ports.out.AgentRegistryPort;
 import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
@@ -27,7 +26,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.io.OutputStream;
+
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.time.Instant;
@@ -50,7 +49,6 @@ class HttpExecutionTransportTest {
     private HttpTransportProperties props;
     private StubAgentRegistry registry;
     private HttpExecutionTransport transport;
-    private ObjectMapper objectMapper;
 
     private ExecutionId executionId;
     private ScenarioId scenarioId;
@@ -80,7 +78,6 @@ class HttpExecutionTransportTest {
         registry = new StubAgentRegistry();
         transport = new HttpExecutionTransport(props, registry);
         transport.connect();
-        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
         executionId = ExecutionId.generate();
         scenarioId = ScenarioId.of("scenario-1");

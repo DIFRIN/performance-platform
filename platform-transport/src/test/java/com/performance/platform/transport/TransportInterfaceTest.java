@@ -119,8 +119,6 @@ class TransportInterfaceTest {
     static class NoOpTransport implements ExecutionTransport {
         private boolean connected = false;
         private final List<ExecutionEvent> publishedEvents = new CopyOnWriteArrayList<>();
-        private final List<TaskExecutionRequest> receivedTasks = new CopyOnWriteArrayList<>();
-        private final List<AgentSignal> receivedSignals = new CopyOnWriteArrayList<>();
 
         @Override
         public void dispatchTask(TaskExecutionRequest request) {

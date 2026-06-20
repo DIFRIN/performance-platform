@@ -37,7 +37,7 @@ import com.performance.platform.engine.availability.AgentAvailabilityChecker;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.transport.ExecutionTransport;
-import com.performance.platform.transport.Subscription;
+
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 import org.slf4j.Logger;
@@ -122,9 +122,6 @@ public class RemoteExecutionEngine implements ExecutionEngine {
     /** Suivi en memoire des executions actives. Cle : executionId.value(). */
     private final Map<String, ActiveExecution> activeExecutions = new ConcurrentHashMap<>();
 
-    /** Souscription globale aux events de transport. */
-    private final Subscription transportSubscription;
-
     public RemoteExecutionEngine(
             ExecutionPlanBuilder planBuilder,
             AgentAvailabilityChecker availabilityChecker,
@@ -140,7 +137,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         this.executionRepository = executionRepository;
         this.config = config;
         this.eventPublisher = eventPublisher;
-        this.transportSubscription = transport.subscribe(this::onTransportEvent);
+        transport.subscribe(this::onTransportEvent);
     }
 
     // ==================== ExecutionEngine API ====================
@@ -505,8 +502,6 @@ public class RemoteExecutionEngine implements ExecutionEngine {
     }
 
     private void handleTaskWorkInProgress(ExecutionEvent event, PendingDispatch pending) {
-        // Reset le timeout de completion — l'agent est vivant
-        pending.lastProgressTime = System.currentTimeMillis();
         log.debug("action=task_progress messageId={} agentId={} executionId={}",
                 pending.messageId.value(),
                 event.agentId() != null ? event.agentId().value() : "unknown",
@@ -701,7 +696,6 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         final MessageId messageId;
         final TaskId taskId;
         final Map<AgentId, TaskResult> results = new ConcurrentHashMap<>();
-        volatile long lastProgressTime = System.currentTimeMillis();
 
         PendingDispatch(MessageId messageId, TaskId taskId) {
             this.messageId = messageId;

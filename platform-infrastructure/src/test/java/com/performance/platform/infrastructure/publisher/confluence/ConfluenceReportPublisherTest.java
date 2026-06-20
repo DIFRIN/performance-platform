@@ -11,7 +11,7 @@ import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.injection.InjectionResult;
 import com.performance.platform.domain.report.Verdict;
-import com.performance.platform.domain.task.TaskResult;
+
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.reporting.PublicationException;
 import com.performance.platform.reporting.PublicationTarget;
@@ -37,7 +37,6 @@ import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;

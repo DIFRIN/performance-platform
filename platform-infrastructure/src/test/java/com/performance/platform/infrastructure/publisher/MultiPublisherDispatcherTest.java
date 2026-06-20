@@ -2,7 +2,6 @@ package com.performance.platform.infrastructure.publisher;
 
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
-import com.performance.platform.application.ports.out.ReportPublisherPort;
 import com.performance.platform.domain.event.ReportPublished;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionState;

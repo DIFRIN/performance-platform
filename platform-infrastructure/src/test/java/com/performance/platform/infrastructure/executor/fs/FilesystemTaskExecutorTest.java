@@ -46,12 +46,6 @@ class FilesystemTaskExecutorTest {
                 ScenarioId.of("scenario-001"));
     }
 
-    private static ExecutionContext contextWithId(String execId) {
-        return ExecutionContext.initial(
-                ExecutionId.of(execId),
-                ScenarioId.of("scenario-001"));
-    }
-
     private Path resolve(String subPath) {
         return tempDir.resolve(subPath);
     }

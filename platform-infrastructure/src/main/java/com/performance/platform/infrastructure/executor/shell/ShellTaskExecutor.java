@@ -358,7 +358,6 @@ public class ShellTaskExecutor implements TaskExecutor, StatefulResourceCleaner 
         return defaultValue;
     }
 
-    @SuppressWarnings("unchecked")
     private static List<String> parseStringList(Object rawValue) {
         if (rawValue instanceof List<?> list) {
             return list.stream()
@@ -369,7 +368,6 @@ public class ShellTaskExecutor implements TaskExecutor, StatefulResourceCleaner 
         return List.of();
     }
 
-    @SuppressWarnings("unchecked")
     private static Map<String, String> parseStringMap(Object rawValue) {
         if (rawValue instanceof Map<?, ?> map) {
             return map.entrySet().stream()
@@ -381,7 +379,6 @@ public class ShellTaskExecutor implements TaskExecutor, StatefulResourceCleaner 
         return Map.of();
     }
 
-    @SuppressWarnings("unchecked")
     private static List<Integer> parseIntList(Object rawValue, List<Integer> defaultValue) {
         if (rawValue instanceof List<?> list && !list.isEmpty()) {
             return list.stream()

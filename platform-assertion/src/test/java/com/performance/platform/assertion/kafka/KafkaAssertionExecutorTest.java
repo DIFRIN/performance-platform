@@ -3,7 +3,7 @@ package com.performance.platform.assertion.kafka;
 import com.performance.platform.domain.assertion.AssertionOperator;
 import com.performance.platform.domain.assertion.AssertionResult;
 import com.performance.platform.domain.assertion.AssertionStatus;
-import com.performance.platform.domain.assertion.Evidence;
+
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;

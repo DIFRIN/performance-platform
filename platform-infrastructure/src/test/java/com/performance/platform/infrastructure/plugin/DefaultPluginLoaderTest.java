@@ -1,6 +1,5 @@
 package com.performance.platform.infrastructure.plugin;
 
-import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.infrastructure.plugin.testfixture.ValidPreparationPlugin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
