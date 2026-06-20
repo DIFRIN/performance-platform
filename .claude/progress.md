@@ -164,7 +164,7 @@
 | ISSUE-069 | ReportFileWriter | PDR-015 | platform-reporting | M | DONE | ISSUE-067,068 |
 | ISSUE-070 | MultiPublisherDispatcher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-065,013 |
 | ISSUE-071 | ConfluenceReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
-| ISSUE-072 | S3ReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
+| ISSUE-072 | S3ReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-073 | GitReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
 | ISSUE-074 | ExecutionMetrics (Micrometer) | PDR-017 | platform-observability | M | TODO | ISSUE-001 |
 | ISSUE-075 | ObservabilityEventListener | PDR-017 | platform-observability | M | TODO | ISSUE-074,008 |
@@ -446,6 +446,11 @@
 | 2026-06-20 | ISSUE-070 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING (CONFIG-01 prefixe configuration). 11 tests OK, ArchUnit 17/17 OK. |
 | 2026-06-20 | ISSUE-070 | APPROVED → DONE | Reviewer — re-review: CONFIG-01 CONFIRMED (Javadoc PublishersProperties prefixe platform.publishers vs reporting.*). 11 tests OK, ArchUnit 17/17 OK. |
 | 2026-06-20 | ISSUE-071 | CHANGES_REQUESTED (re-review) → DONE | Reviewer — re-review: 3 recommandations CONFIRMED (CRAFT-05 CC-02 classe + CC-02 publish() + CRAFT-08 KEY_*). 15 tests OK, 241 total, BUILD SUCCESS. |
+| 2026-06-20 | ISSUE-072 | TODO → IN PROGRESS | Developer — S3ReportPublisher |
+| 2026-06-20 | ISSUE-072 | IN PROGRESS → IN REVIEW | Developer — S3ReportPublisher + 24 tests WireMock, 265 total OK, BUILD SUCCESS |
+| 2026-06-20 | ISSUE-072 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05: awsSign() 48L sans CC-02 method-level |
+| 2026-06-20 | ISSUE-072 | CHANGES_REQUESTED → IN REVIEW (re-review) | Developer — 3 APPLIED: CRAFT-05 CC-02 awsSign() + SPEC-01 @Component + TEST-04 shouldThrowWhenAwsEnvVarsNotSet. 25 tests OK. |
+| 2026-06-20 | ISSUE-072 | IN REVIEW (re-review) → DONE | Reviewer — 3 recommandations CONFIRMED (CRAFT-05/SPEC-01/TEST-04). 25 tests OK. Commit. |
 
 ---
 
