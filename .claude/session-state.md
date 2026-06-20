@@ -11,7 +11,7 @@
 
 **Date derniere session** : 2026-06-20
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-070 (MultiPublisherDispatcher)
+**Issue active** : ISSUE-071 (ConfluenceReportPublisher)
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-016 (Report Publishers — IN PROGRESS)
 
@@ -20,20 +20,21 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : Re-review ISSUE-070 — CONFIG-01 CONFIRMED (Javadoc PublishersProperties satisfaisant, explique prefixe platform.publishers vs reporting.* avec reference PlatformDatasourcesProperties).
-- 11 tests OK, ArchUnit 17/17 OK. Commit + DONE.
+Reviewer : re-review ISSUE-071 — 3 recommandations CONFIRMED.
+- CRAFT-05: CC-02 Javadoc classe (pipeline cohesif Confluence) CONFIRMED
+- CRAFT-05: CC-02 Javadoc publish() (pipeline sequentiel) CONFIRMED
+- CRAFT-08: 4 constantes KEY_URL/KEY_SPACE_KEY/KEY_TOKEN/KEY_PARENT_PAGE_ID CONFIRMED
+- 15 tests OK, 241 total, BUILD SUCCESS. Commit + DONE.
 
 **Prochaine action** :
-Developer : ISSUE-071 (ConfluenceReportPublisher) — prochaine TODO dans PDR-016.
+Developer : prendre la prochaine Issue TODO debloquee (ISSUE-072 S3ReportPublisher ou ISSUE-063 HttpMockAssertionExecutor).
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/pom.xml — ajout dependance platform-reporting
-✅ platform-infrastructure/src/main/java/.../publisher/MultiPublisherDispatcher.java — cree
-✅ platform-infrastructure/src/main/java/.../publisher/PublishersProperties.java — cree
-✅ platform-infrastructure/src/test/java/.../publisher/MultiPublisherDispatcherTest.java — cree
-✅ .claude/progress.md — ISSUE-070 IN REVIEW, PDR-016 IN PROGRESS
-✅ .claude/context/interfaces-registry.md — MultiPublisherDispatcher + PublishersProperties IN PROGRESS
+✅ platform-infrastructure/src/main/java/.../publisher/confluence/ConfluenceReportPublisher.java — cree
+✅ platform-infrastructure/src/test/java/.../publisher/confluence/ConfluenceReportPublisherTest.java — cree
+✅ .claude/progress.md — ISSUE-071 IN REVIEW
+✅ .claude/context/interfaces-registry.md — ConfluenceReportPublisher IN PROGRESS
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -60,3 +61,7 @@ _Aucun_
 | 2026-06-20 | Tester | PDR-015 | Integration tests: 62 new (contract+E2E+engine IT), 154 total OK, BUILD SUCCESS. | TESTS DONE |
 | 2026-06-20 | Tester | PDR-005..014 | E2E/Contract tests: 84 new (Scenario DSL:24, Execution Engine:14, Transport:21, Agent:7, Gatling:9, Assertion:9). 0 failure. | TESTS DONE |
 | 2026-06-20 | Developer | ISSUE-070 | MultiPublisherDispatcher + PublishersProperties + 11 tests, 226 total OK, BUILD SUCCESS. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-070 | Review APPROVED: 0 bloquant, 1 recommandation [CONFIG-01] PENDING. | APPROVED |
+| 2026-06-20 | Developer | ISSUE-070 | [CONFIG-01] APPLIED: Javadoc prefixe platform.publishers vs reporting.* | -> re-review |
+| 2026-06-20 | Reviewer | ISSUE-070 | Re-review CONFIRMED: CONFIG-01 OK. Commit. | DONE |
+| 2026-06-20 | Developer | ISSUE-071 | ConfluenceReportPublisher + 15 tests WireMock, 241 total OK, BUILD SUCCESS. | IN REVIEW |
