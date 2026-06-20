@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.performance</groupId>
+        <artifactId>performance-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>platform-observability</artifactId>
+    <name>Platform Observability</name>
+    <description>Observability — métriques Micrometer, tracing OpenTelemetry, logging JSON structuré</description>
+
+    <dependencies>
+        <!-- Domain records (ExecutionId, TaskId, Phase) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Micrometer core (MeterRegistry, Timer, Counter) -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <version>1.14.0</version>
+        </dependency>
+
+        <!-- SLF4J (logging structuré) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.16</version>
+        </dependency>
+
+        <!-- Spring Boot (pour @Component) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
+        <!-- Tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>2.0.16</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.26.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

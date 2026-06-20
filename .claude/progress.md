@@ -462,6 +462,7 @@
 | 2026-06-20 | ISSUE-074 | TODO → IN PROGRESS | Developer — platform-observability: ExecutionMetrics + MicrometerExecutionMetrics + 23 tests |
 | 2026-06-20 | ISSUE-074 | IN PROGRESS → IN REVIEW | Developer — 23 tests OK, 0 warning, BUILD SUCCESS |
 | 2026-06-20 | PDR-017 | TODO → IN PROGRESS | Developer (ISSUE-074 started) |
+| 2026-06-20 | ISSUE-074 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 23 tests OK. Commit. |
 
 ---
 
