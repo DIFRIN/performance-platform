@@ -60,7 +60,7 @@ public class HtmlReportRenderer implements ReportRenderer {
                     .replace("${verdict}", report.verdict().name())
                     .replace("${verdictCssClass}", verdictCssClass(report.verdict()))
                     .replace("${verdictReason}", report.verdictReason() != null
-                            ? " &mdash; " + escapeHtml(report.verdictReason()) : "")
+                            ? " — " + escapeHtml(report.verdictReason()) : "")
                     .replace("${jvmVersion}", escapeHtml(report.environment().jvmVersion()))
                     .replace("${agentIds}", String.join(", ", report.environment().agentIds()))
                     .replace("${totalTasks}", String.valueOf(report.executionSummary().totalTasks()))

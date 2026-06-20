@@ -316,6 +316,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-066] [2026-06-20] [CONFIRMED] [CRAFT-05] buildExecutionSummary() 47 lignes (>40) — CC-02 ajoute dans Javadoc methode. Iteration cohesives prep→injection→assertion pour compteurs et durees agregees. Ajouter CC-02 dans la Javadoc de methode. Fichier : .../engine/DefaultReportEngine.java:239-241.
 
+[ISSUE-068] [2026-06-20] [CONFIRMED] [TEST-04] Test shouldWrapConversionErrors() trompeur — remplace par 2 vrais tests d'erreur : shouldRethrowRenderExceptionAsIs (stub HtmlReportRenderer qui lance RenderException → rethrown as-is) et shouldWrapGenericExceptionInRenderException (stub HtmlReportRenderer qui lance RuntimeException → wrapped in RenderException). Stubs manuels (anonymous subclass) car Mockito incompatible Java 25 sur cette classe. 74 tests OK. Fichier : .../render/PdfReportRendererTest.java.
+
 ---
 
 ## Historique
@@ -352,3 +354,4 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-19 | ISSUE-049 | [PRECISION-02] Release 23 override inutile pom.xml | CONFIRMED |
 | 2026-06-19 | ISSUE-029 | [CRAFT-08] Magic string "@type" repete 5 fois dans KafkaMessageCodec — extraire constante TYPE_FIELD | APPLIED |
 | 2026-06-19 | ISSUE-029 | [TEST-04] Ajouter tests null-checks parametres publics KafkaExecutionTransport (shouldThrowOnNull*) | APPLIED |
+| 2026-06-20 | ISSUE-068 | [TEST-04] Test shouldWrapConversionErrors → 2 tests erreur avec stubs anonymes (Mockito incompatible Java 25) | APPLIED |
