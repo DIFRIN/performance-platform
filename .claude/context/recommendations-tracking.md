@@ -322,6 +322,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-069] [2026-06-20] [CONFIRMED] [CRAFT-08] Magic strings sans constantes : "reports" (ligne 70, defaut outputDirectory), "campaign." (ligne 116, prefixe nom fichier), "gatling" (ligne 133, nom sous-repertoire Gatling). Extraire en private static final String DEFAULT_OUTPUT_DIRECTORY / REPORT_FILE_PREFIX / GATLING_SUBDIR. Fichier : platform-reporting/.../output/ReportFileWriter.java.
 
+[ISSUE-070] [2026-06-20] [CONFIRMED] [CONFIG-01] Prefixe de configuration `platform.publishers` diverge de la spec qui montre `reporting.publishers`. Bien que coherent avec la convention `platform.*` pour les proprietes infrastructure (cf. PlatformDatasourcesProperties), l'utilisateur doit savoir que output settings utilisent `reporting.*` et publisher settings `platform.publishers.*`. Ajouter un commentaire Javadoc sur PublishersProperties expliquant la relation avec reporting.* et la raison du prefixe separe. Fichier : platform-infrastructure/.../publisher/PublishersProperties.java (classe).
+
 ---
 
 ## Historique

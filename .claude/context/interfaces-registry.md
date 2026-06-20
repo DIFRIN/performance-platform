@@ -222,7 +222,8 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `MultiPublisherDispatcher` | ⬜ PLANNED | PDR-016 | ISSUE-070 |
+| `MultiPublisherDispatcher` | ✅ STABLE | PDR-016 | ISSUE-070 |
+| `PublishersProperties` | ✅ STABLE | PDR-016 | ISSUE-070 |
 | `ConfluenceReportPublisher` | ⬜ PLANNED | PDR-016 | ISSUE-071 |
 | `S3ReportPublisher` | ⬜ PLANNED | PDR-016 | ISSUE-072 |
 | `GitReportPublisher` | ⬜ PLANNED | PDR-016 | ISSUE-073 |

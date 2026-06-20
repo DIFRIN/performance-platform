@@ -36,6 +36,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Reporting engine (ReportEngine, ReportPublisher, CampaignReport) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-reporting</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring Context (@Component, injection constructeur) -->
         <dependency>
             <groupId>org.springframework</groupId>

@@ -64,7 +64,7 @@
 | PDR-013 | Gatling Injection | platform-injection-gatling | DONE | ISSUE-054..058 | PDR-001,003 |
 | PDR-014 | Assertion Framework | platform-assertion | IN PROGRESS | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | DONE | ISSUE-065..069 | PDR-001,002,004,013,014 |
-| PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | TODO | ISSUE-070..073 | PDR-001,004,015 |
+| PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | IN PROGRESS | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | TODO | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | TODO | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
 | PDR-019 | Deployment | platform-deployment | TODO | ISSUE-083,084,085 | PDR-018 |
@@ -162,7 +162,7 @@
 | ISSUE-067 | HtmlReportRenderer + JsonReportRenderer | PDR-015 | platform-reporting | M | DONE | ISSUE-065 |
 | ISSUE-068 | PdfReportRenderer | PDR-015 | platform-reporting | S | DONE | ISSUE-067 |
 | ISSUE-069 | ReportFileWriter | PDR-015 | platform-reporting | M | DONE | ISSUE-067,068 |
-| ISSUE-070 | MultiPublisherDispatcher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-065,013 |
+| ISSUE-070 | MultiPublisherDispatcher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-065,013 |
 | ISSUE-071 | ConfluenceReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
 | ISSUE-072 | S3ReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
 | ISSUE-073 | GitReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
@@ -435,6 +435,13 @@
 | 2026-06-20 | ISSUE-069 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (CRAFT-07 executionId logs, CRAFT-08 magic strings) |
 | 2026-06-20 | ISSUE-069 | APPROVED → DONE | Reviewer — re-review: CRAFT-07 + CRAFT-08 CONFIRMED, 92 tests OK |
 | 2026-06-20 | PDR-015 | IN PROGRESS → DONE | Reviewer (ISSUE-065..069 all DONE) |
+| 2026-06-20 | PDR-015 | — → TESTS DONE | Tester — Integration tests: 62 new (contract/e2e/engine), 154 total. Contract: ReportRenderer (HTML/JSON/PDF), E2E: ReportingPipeline (14 scenarios), Integration: DefaultReportEngine (21 scenarios). BUILD SUCCESS. |
+| 2026-06-20 | PDR-005,006,007,008,009,010,013,014 | — → E2E TESTS | Tester — E2E/Contract tests: 84 new across 6 modules (Scenario DSL: 24, Execution Engine: 14, Transport Contract: 21, Agent Runtime: 7, Gatling Pipeline: 9, Assertion Pipeline: 9). All pass. BUILD SUCCESS. |
+| 2026-06-20 | ISSUE-070 | TODO → IN PROGRESS | Developer — MultiPublisherDispatcher + PublishersProperties |
+| 2026-06-20 | ISSUE-070 | IN PROGRESS → IN REVIEW | Developer — MultiPublisherDispatcher + PublishersProperties + 11 tests |
+| 2026-06-20 | ISSUE-070 | APPROVED (CONFIG-01 APPLIED) | Developer — Javadoc PublishersProperties prefixe platform.publishers vs reporting.* |
+| 2026-06-20 | ISSUE-070 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING (CONFIG-01 prefixe configuration). 11 tests OK, ArchUnit 17/17 OK. |
+| 2026-06-20 | ISSUE-070 | APPROVED → DONE | Reviewer — re-review: CONFIG-01 CONFIRMED (Javadoc PublishersProperties prefixe platform.publishers vs reporting.*). 11 tests OK, ArchUnit 17/17 OK. |
 
 ---
 
@@ -443,4 +450,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (ISSUE-069 IN REVIEW — Developer)
+**Dernière mise à jour** : 2026-06-20 (Tester — PDR-015 integration tests DONE)
