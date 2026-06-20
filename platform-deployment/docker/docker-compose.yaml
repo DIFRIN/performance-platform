@@ -1,0 +1,168 @@
+# =============================================================================
+# Performance Engineering Platform — Dev Local (Distributed Mode)
+# =============================================================================
+# Usage:
+#   docker compose -f platform-deployment/docker/docker-compose.yaml build
+#   docker compose -f platform-deployment/docker/docker-compose.yaml up -d
+#   docker compose -f platform-deployment/docker/docker-compose.yaml down
+#
+# Services: orchestrator + agent-1 + agent-2 + kafka (KRaft) + postgres
+#
+# Mode/role/transport via env vars (ADR-006 priority).
+# No gRPC — transport KAFKA only.
+# =============================================================================
+
+services:
+
+  # ---- PostgreSQL 16 (Alpine) ----
+  postgres:
+    image: postgres:16-alpine
+    container_name: perf-postgres
+    environment:
+      POSTGRES_DB: performance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d performance"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - perf-net
+
+  # ---- Kafka (KRaft — single-node, no Zookeeper) ----
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: perf-kafka
+    environment:
+      CLUSTER_ID: "perf-platform-dev"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - perf-net
+
+  # ---- WireMock Standalone (HTTP mock for SUT) ----
+  wiremock:
+    image: wiremock/wiremock:3.12.1
+    container_name: perf-wiremock
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./wiremock:/home/wiremock
+    command: --port 8080 --verbose
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/__admin/mappings || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - perf-net
+
+  # ---- Orchestrator (MODE=ORCHESTRATOR, RUNTIME_MODE=DISTRIBUTED, TRANSPORT=KAFKA) ----
+  orchestrator:
+    build:
+      context: ../../
+      dockerfile: platform-deployment/docker/Dockerfile
+    container_name: perf-orchestrator
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: ORCHESTRATOR
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: orchestrator
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      DB_URL: "jdbc:postgresql://postgres:5432/performance"
+      DB_USERNAME: "postgres"
+      DB_PASSWORD: "changeme"
+      PLATFORM_SECURITY_ENABLED: "false"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - perf-net
+
+  # ---- Agent 1 (MODE=AGENT) ----
+  agent-1:
+    build:
+      context: ../../
+      dockerfile: platform-deployment/docker/Dockerfile
+    container_name: perf-agent-1
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: AGENT
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: agent
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      AGENT_ID: "agent-1"
+      AGENT_TAGS: "dev,standard"
+      PLATFORM_SECURITY_ENABLED: "false"
+    ports:
+      - "8081:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - perf-net
+
+  # ---- Agent 2 (MODE=AGENT) ----
+  agent-2:
+    build:
+      context: ../../
+      dockerfile: platform-deployment/docker/Dockerfile
+    container_name: perf-agent-2
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: AGENT
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: agent
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      AGENT_ID: "agent-2"
+      AGENT_TAGS: "dev,high-memory"
+      PLATFORM_SECURITY_ENABLED: "false"
+    ports:
+      - "8082:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - perf-net
+
+# ---- Infrastructure ----
+networks:
+  perf-net:
+    driver: bridge
+
+volumes:
+  postgres_data:

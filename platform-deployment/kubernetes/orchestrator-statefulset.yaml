@@ -1,0 +1,96 @@
+# =============================================================================
+# Performance Engineering Platform — Orchestrator StatefulSet
+# =============================================================================
+# Deployed as StatefulSet (replicas: 1) to maintain stable identity for the
+# orchestrator. Uses a persistent volume for execution state and checkpoints.
+#
+# Apply: kubectl apply -f orchestrator-statefulset.yaml
+# =============================================================================
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: performance-orchestrator
+  labels:
+    app: performance-orchestrator
+    component: orchestrator
+spec:
+  replicas: 1
+  serviceName: performance-orchestrator
+  selector:
+    matchLabels:
+      app: performance-orchestrator
+  template:
+    metadata:
+      labels:
+        app: performance-orchestrator
+        component: orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: performance-platform:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # ---- Runtime mode / role (ADR-006: env var prioritaire) ----
+            - name: RUNTIME_MODE
+              value: "DISTRIBUTED"
+            - name: MODE
+              value: "ORCHESTRATOR"
+            - name: TRANSPORT_TYPE
+              value: "KAFKA"
+            # ---- Spring profile ----
+            - name: SPRING_PROFILES_ACTIVE
+              value: "orchestrator"
+            # ---- Kafka bootstrap (from ConfigMap) ----
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: perf-platform-config
+                  key: kafka.bootstrap-servers
+            # ---- Database URL / user (from ConfigMap) ----
+            - name: DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: perf-platform-config
+                  key: db.url
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: perf-platform-config
+                  key: db.username
+            # ---- Database password (from Secret — CNF-03) ----
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: perf-db-secret
+                  key: password
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          # ---- CD-02: Readiness probe ----
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # ---- CD-02: Liveness probe ----
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      restartPolicy: Always

@@ -1,0 +1,16 @@
+# Invalid: duplicate step IDs
+scenario:
+  id: duplicate-ids
+  name: Duplicate Step IDs
+  version: 1.0.0
+  execution:
+    mode: LOCAL
+  steps:
+    - id: same-id
+      task: database
+      phase: PREPARATION
+      timeout: 30s
+    - id: same-id
+      task: shell
+      phase: PREPARATION
+      timeout: 30s

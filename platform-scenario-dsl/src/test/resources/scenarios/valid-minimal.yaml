@@ -1,0 +1,14 @@
+scenario:
+  id: minimal-valid
+  name: Minimal Valid Scenario
+  version: 1.0.0
+  execution:
+    mode: LOCAL
+  steps:
+    - id: single-step
+      task: database
+      phase: PREPARATION
+      parameters:
+        operation: PURGE
+        datasource: testdb
+      timeout: 30s

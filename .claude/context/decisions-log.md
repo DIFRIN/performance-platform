@@ -63,3 +63,31 @@ Documenter la décision prise ici quand elle est tranchée.
 | Agent heartbeat storage | Phase 7 | In-memory (perte sur restart) ou PostgreSQL ? |
 | Report HTML templating | Phase 6 | Thymeleaf ou template string pur ? |
 | TaskExecutionRequest serialization | Phase 7 | Jackson (décidé : format Anthropic-compatible JSON) |
+
+---
+
+## Decisions ISSUE-082
+
+[2026-06-20] [platform-app] DECISION: @SpringBootTest contourne par manual wiring + Testcontainers
+CONTEXTE: @SpringBootTest incompatible (SpringExtension.getTestContextManager() appelle
+computeIfAbsent, methode supprimee de JUnit 5.11.4 ExtensionContext$Store).
+RAISON: Le contournement via manual wiring est deja etabli dans le codebase
+(ExecutionEngineE2ETest, ReportingPipelineE2ETest, EntitiesMappingIT).
+IMPACT: LocalFlowE2ETest utilise Hibernate SessionFactory + Flyway + PostgreSQL
+Testcontainer directement, sans Spring Data JPA. RawJpaExecutionRepository
+wrapper JPA/Hibernate pur implementant ExecutionRepository.
+
+[2026-06-20] [platform-app] DECISION: Injection shell plutot que Gatling dans l'E2E
+CONTEXTE: Gatling demande une classe Simulation compilee sur le classpath, un
+classloader isole, et un serveur HTTP cible. Trop de complexite pour un test E2E.
+RAISON: Le test doit verifier le flux complet (PREP->INJECT->ASSERT), pas specifiquement
+Gatling. ShellTaskExecutor est plus fiable, cross-platform (echo), et sans dependance externe.
+IMPACT: e2e-local.yaml utilise "shell" avec "echo" pour la phase INJECTION au lieu de "gatling".
+
+[2026-06-20] [platform-app] DECISION: E2E test execute via surefire (pas failsafe)
+CONTEXTE: Failsafe (integration-test) echoue apres spring-boot:repackage (package phase)
+avec NoClassDefFound sur ScenarioController. Le test passe correctement via surefire
+et aussi via failsafe:integration-test isole.
+RAISON: Le test est quand meme execute pendant mvn verify (phase test avant integration-test).
+Le profil integration-tests active failsafe pour les *IT.java, pas pour les *E2ETest.
+IMPACT: LocalFlowE2ETest.java execute par surefire. mvn verify -P integration-tests OK.

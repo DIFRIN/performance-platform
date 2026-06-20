@@ -1,0 +1,64 @@
+# =============================================================================
+# Performance Engineering Platform — Services
+# =============================================================================
+# Cluster-internal services for orchestrator and supporting infrastructure.
+# No external exposure (Ingress/LoadBalancer not included — deploy separately).
+#
+# Apply: kubectl apply -f service.yaml
+# =============================================================================
+
+---
+# ---- Orchestrator Service ----
+apiVersion: v1
+kind: Service
+metadata:
+  name: perf-orchestrator-service
+  labels:
+    app: performance-orchestrator
+spec:
+  selector:
+    app: performance-orchestrator
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
+
+---
+# ---- Kafka Bootstrap Service (external service placeholder) ----
+# In production, deploy a proper Kafka cluster. This external service
+# is referenced by ConfigMap kafka.bootstrap-servers so agents/orchestrator
+# can resolve the Kafka broker address.
+apiVersion: v1
+kind: Service
+metadata:
+  name: perf-kafka-service
+  labels:
+    app: performance-kafka
+spec:
+  ports:
+    - name: kafka
+      port: 29092
+      targetPort: 29092
+      protocol: TCP
+  type: ClusterIP
+
+---
+# ---- PostgreSQL Service (external service placeholder) ----
+# In production, use a managed PostgreSQL (RDS, Cloud SQL). This external
+# service is referenced by ConfigMap db.url so the orchestrator can resolve
+# the database address.
+apiVersion: v1
+kind: Service
+metadata:
+  name: perf-postgres-service
+  labels:
+    app: performance-postgres
+spec:
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  type: ClusterIP

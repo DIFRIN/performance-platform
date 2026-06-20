@@ -1,0 +1,100 @@
+scenario:
+  id: device-check-perf
+  name: Device Check Performance Test (100k devices)
+  version: 1.0.0
+  execution:
+    mode: DISTRIBUTED
+  tags: [performance, device-check, kafka, wiremock]
+  metadata:
+    description: >
+      Full performance test: populate 100k devices in PostgreSQL,
+      produce 100k Kafka messages, consume each, check device existence
+      in DB, call HTTP PUT to WireMock, and assert exact counts.
+
+  steps:
+    # ── PREPARATION ─────────────────────────────────────
+    - id: prep-populate-devices
+      task: device-population
+      phase: PREPARATION
+      parameters:
+        operation: PURGE
+        datasource: perf-db
+        table: devices
+      timeout: 30s
+
+    - id: prep-insert-devices
+      task: device-population
+      phase: PREPARATION
+      dependsOn: [prep-populate-devices]
+      parameters:
+        operation: POPULATE
+        datasource: perf-db
+        table: devices
+        count: 100000
+        batchSize: 5000
+      timeout: 5m
+
+    # ── INJECTION ───────────────────────────────────────
+    - id: inject-produce-messages
+      task: kafka-producer
+      phase: INJECTION
+      dependsOn: [prep-insert-devices]
+      parameters:
+        operation: PRODUCE
+        topic: device-check-input
+        bootstrapServers: kafka:29092
+        messageCount: 100000
+        messageTemplate: '{"device_id":"DEV-{index}","timestamp":{timestamp}}'
+        batchSize: 1000
+      timeout: 5m
+
+    - id: inject-process-devices
+      task: device-check
+      phase: INJECTION
+      dependsOn: [inject-produce-messages]
+      requiredContexts: [inject-produce-messages]
+      parameters:
+        topic: device-check-input
+        bootstrapServers: kafka:29092
+        groupId: device-check-consumer
+        maxMessages: 100000
+        datasource: perf-db
+        table: devices
+        deviceIdColumn: device_id
+        mockUrl: http://wiremock:8080
+        mockEndpoint: /api/devices
+      timeout: 10m
+
+    # ── ASSERTION ───────────────────────────────────────
+    - id: assert-kafka-consumed
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [inject-process-devices]
+      parameters:
+        metric: consumedCount
+        refTaskId: inject-process-devices
+        operator: EQ
+        value: 100000
+      timeout: 10s
+
+    - id: assert-wiremock-requests
+      task: wiremock
+      phase: ASSERTION
+      dependsOn: [inject-process-devices]
+      requiredContexts: [inject-process-devices]
+      parameters:
+        mockUrl: http://wiremock:8080
+        operator: EQ
+        expectedCount: 100000
+      timeout: 10s
+
+    - id: assert-db-devices
+      task: database
+      phase: ASSERTION
+      dependsOn: [prep-insert-devices]
+      parameters:
+        datasource: perf-db
+        query: SELECT COUNT(*) FROM devices WHERE status = 'active'
+        operator: EQ
+        value: 100000
+      timeout: 10s

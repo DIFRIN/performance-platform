@@ -1,0 +1,20 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "PUT",
+        "urlPathPattern": "/api/devices/.*"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "result": "ok",
+          "message": "Device processed"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    }
+  ]
+}

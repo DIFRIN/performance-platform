@@ -1,0 +1,12 @@
+# Invalid: bad semver version
+scenario:
+  id: bad-version-scenario
+  name: Bad Version
+  version: not-a-semver
+  execution:
+    mode: LOCAL
+  steps:
+    - id: single-step
+      task: database
+      phase: PREPARATION
+      timeout: 30s
