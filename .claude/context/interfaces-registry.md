@@ -225,7 +225,7 @@
 | `MultiPublisherDispatcher` | ✅ STABLE | PDR-016 | ISSUE-070 |
 | `PublishersProperties` | ✅ STABLE | PDR-016 | ISSUE-070 |
 | `ConfluenceReportPublisher` | ✅ STABLE | PDR-016 | ISSUE-071 |
-| `S3ReportPublisher` | ⬜ PLANNED | PDR-016 | ISSUE-072 |
+| `S3ReportPublisher` | ✅ STABLE | PDR-016 | ISSUE-072 |
 | `GitReportPublisher` | ⬜ PLANNED | PDR-016 | ISSUE-073 |
 
 ## platform-injection-gatling

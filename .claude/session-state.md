@@ -11,7 +11,7 @@
 
 **Date derniere session** : 2026-06-20
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-071 (ConfluenceReportPublisher)
+**Issue active** : ISSUE-072 (S3ReportPublisher)
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-016 (Report Publishers — IN PROGRESS)
 
@@ -20,23 +20,48 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : re-review ISSUE-071 — 3 recommandations CONFIRMED.
-- CRAFT-05: CC-02 Javadoc classe (pipeline cohesif Confluence) CONFIRMED
-- CRAFT-05: CC-02 Javadoc publish() (pipeline sequentiel) CONFIRMED
-- CRAFT-08: 4 constantes KEY_URL/KEY_SPACE_KEY/KEY_TOKEN/KEY_PARENT_PAGE_ID CONFIRMED
-- 15 tests OK, 241 total, BUILD SUCCESS. Commit + DONE.
+Reviewer : re-review ISSUE-072 CONFIRMED. 3 recommandations (CRAFT-05 CC-02 awsSign() + SPEC-01 @Component + TEST-04 shouldThrowWhenAwsEnvVarsNotSet) appliquees correctement. 25 tests OK. Commit.
 
 **Prochaine action** :
-Developer : prendre la prochaine Issue TODO debloquee (ISSUE-072 S3ReportPublisher ou ISSUE-063 HttpMockAssertionExecutor).
+Developer : reprendre ISSUE-063 (HttpMockAssertionExecutor) IN REVIEW, ou ISSUE-073 (GitReportPublisher) TODO.
+
+**Fichiers modifies** :
+- `.claude/context/recommendations-tracking.md` — ISSUE-072: 3 APPLIED → CONFIRMED
+- `.claude/progress.md` — ISSUE-072: IN REVIEW (re-review) → DONE
+- `.claude/session-state.md` — ce fichier
 
 **Fichiers modifies** :
 ```
-✅ platform-infrastructure/src/main/java/.../publisher/confluence/ConfluenceReportPublisher.java — cree
-✅ platform-infrastructure/src/test/java/.../publisher/confluence/ConfluenceReportPublisherTest.java — cree
-✅ .claude/progress.md — ISSUE-071 IN REVIEW
-✅ .claude/context/interfaces-registry.md — ConfluenceReportPublisher IN PROGRESS
-✅ .claude/session-state.md — ce fichier
+✅ platform-assertion/.../database/DatabaseAssertionExecutorIT.java — @SuppressWarnings("resource") PostgreSQLContainer
+✅ platform-assertion/.../file/FileAssertionExecutorTest.java — import NoSuchAlgorithmException retire
+✅ platform-assertion/.../gatling/GatlingMetricAssertionExecutorTest.java — import Evidence retire
+✅ platform-assertion/.../kafka/KafkaAssertionExecutorTest.java — import Evidence retire
+✅ platform-execution-engine/.../e2e/ExecutionEngineE2ETest.java — imports TaskStatus, duplicate Duration/Instant retires, field persistedStates retire
+✅ platform-infrastructure/.../docker/DockerTaskExecutor.java — imports TaskStatus, Instant, List + @SuppressWarnings retires
+✅ platform-infrastructure/.../kafka/KafkaConsumerTaskExecutor.java — import Duration retire
+✅ platform-infrastructure/.../kafka/KafkaProducerTaskExecutor.java — import Duration retire
+✅ platform-infrastructure/.../shell/ShellTaskExecutor.java — 3 @SuppressWarnings("unchecked") retires
+✅ platform-infrastructure/.../mapper/ExecutionStateMapper.java — @SuppressWarnings("unchecked") + cast redondant retires
+✅ platform-infrastructure/.../mapper/TaskResultMapper.java — imports TaskStatus, HashMap retires
+✅ platform-infrastructure/.../database/DatabaseTaskExecutorIT.java — @SuppressWarnings("resource") PostgreSQLContainer
+✅ platform-infrastructure/.../kafka/KafkaTaskExecutorsIT.java — @SuppressWarnings("deprecation") KafkaContainer
+✅ platform-infrastructure/.../fs/FilesystemTaskExecutorTest.java — method contextWithId retiree (deja fait)
+✅ platform-infrastructure/.../mapper/TaskResultMapperTest.java — variables execId/agentId inutilisees retirees (x2)
+✅ platform-infrastructure/.../plugin/DefaultPluginLoaderTest.java — faux positif (TaskExecutor utilise)
+✅ platform-infrastructure/.../plugin/.../NoNoArgConstructorPlugin.java — field someField retire (deja fait)
+✅ platform-infrastructure/.../publisher/confluence/ConfluenceReportPublisherTest.java — import TaskResult retire
+✅ platform-infrastructure/.../publisher/MultiPublisherDispatcherTest.java — import ReportPublisherPort (deja fait)
+✅ platform-infrastructure/.../publisher/s3/S3ReportPublisherTest.java — import TaskResult retire
+✅ platform-injection-gatling/.../GatlingTaskExecutor.java — 2 @SuppressWarnings("unchecked") retires
+✅ platform-injection-gatling/.../GatlingTaskExecutorTest.java — import AtomicReference retire
+✅ platform-injection-gatling/.../MinimalSimulation.java — import atOnceUsers retire
+✅ platform-transport/.../http/HttpExecutionTransport.java — imports IOException, Map retires
+✅ platform-transport/.../kafka/KafkaConsumerManager.java — imports Subscription, ConsumerRecords, ConcurrentHashMap, CopyOnWriteArrayList retires
+✅ platform-transport/.../contract/ExecutionTransportContractTest.java — 5 imports retires + 2 variables sub deduquees
+✅ platform-transport/.../http/HttpExecutionTransportTest.java — import OutputStream retire
+✅ platform-transport/.../kafka/KafkaExecutionTransportIT.java — @SuppressWarnings("deprecation") KafkaContainer
 ```
+Warnings IDE corriges : 47 sur 47. Tous les tests passent (assertion, execution-engine, infrastructure, injection-gatling, transport).
 
 **Blocages** :
 _Aucun_

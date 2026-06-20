@@ -330,6 +330,12 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-071] [2026-06-20] [CONFIRMED] [CRAFT-08] 4 constantes package-visible KEY_URL/KEY_SPACE_KEY/KEY_TOKEN/KEY_PARENT_PAGE_ID extraites et referencees dans le test via ConfluenceReportPublisher.KEY_*. Fichiers : ConfluenceReportPublisher.java (lignes 62-65) + ConfluenceReportPublisherTest.java.
 
+[ISSUE-072] [2026-06-20] [CONFIRMED] [CRAFT-05] awsSign() 48 lignes (>40) sans CC-02 dans sa propre Javadoc. Le class-level CC-02 mentionne les helpers AWS mais le pattern etabli (ISSUE-062) exige CC-02 method-level pour chaque methode >40L. Ajouter bloc CC-02 dans la Javadoc de awsSign() expliquant le pipeline protocolaire AWS SigV4 cohesif (canonical request → string to sign → signing key → signature → authorization). Fichier : .../publisher/s3/S3ReportPublisher.java:474-521.
+
+[ISSUE-072] [2026-06-20] [CONFIRMED] [SPEC-01] @ConditionalOnProperty(name = "reporting.publishers", value = "S3") absent (spec ISSUE-072). Code a @Component uniquement, coherent avec ISSUE-071. Ajouter commentaire Javadoc expliquant que l'activation est deleguee au MultiPublisherDispatcher. Fichier : .../publisher/s3/S3ReportPublisher.java:78.
+
+[ISSUE-072] [2026-06-20] [CONFIRMED] [TEST-04] resolveCredentials() (lecture env vars AWS) non testee. Tests injectent AwsCredentials via constructeur, contournant cette methode. Ajouter shouldThrowWhenAwsEnvVarsNotSet verifiant IllegalStateException. Fichier : .../publisher/s3/S3ReportPublisherTest.java.
+
 ---
 
 ## Historique
