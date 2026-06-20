@@ -9,7 +9,7 @@
 
 **Date derniere session** : 2026-06-20
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-083 (Dockerfile <300MB)
+**Issue active** : ISSUE-085 (manifests Kubernetes — prochaine)
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-019 (Deployment — IN PROGRESS)
 
@@ -18,19 +18,15 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-083 re-review: [PRECISION] CONFIRMED — suppression ligne `!platform-app/target/performance-platform.jar` + commentaire documentant le chemin du JAR de sortie. Issue DONE.
+Reviewer — Re-review ISSUE-084 : 2 recommandations CONFIRMED (SPEC-01 depends_on orchestrator + SPEC-02 AGENT_TAGS). Commit effectue. ISSUE-084 DONE.
 
 **Prochaine action** :
-Developer doit demarrer ISSUE-084 (docker-compose dev local).
+Developer doit prendre ISSUE-085 (manifests Kubernetes).
 
 **Fichiers modifies** (cette session) :
-- platform-deployment/pom.xml (cree)
-- platform-deployment/docker/Dockerfile (cree)
-- platform-deployment/docker/.dockerignore (cree, modifie: correction [PRECISION])
-- pom.xml (+ module platform-deployment)
-- .claude/progress.md (ISSUE-083 TODO → IN PROGRESS → IN REVIEW → APPROVED → DONE, PDR-019 TODO → IN PROGRESS)
-- .claude/context/interfaces-registry.md (Dockerfile PLANNED → IN PROGRESS → STABLE)
-- .claude/context/recommendations-tracking.md ([PRECISION] APPLIED → CONFIRMED)
+- platform-deployment/docker/docker-compose.yaml (cree)
+- .claude/progress.md (ISSUE-084 TODO → IN PROGRESS → IN REVIEW)
+- .claude/context/interfaces-registry.md (docker-compose PLANNED → IN PROGRESS)
 - .claude/session-state.md (ce fichier)
 
 **Blocages** :
@@ -60,3 +56,4 @@ Developer doit demarrer ISSUE-084 (docker-compose dev local).
 | 2026-06-20 | Developer | ISSUE-083 | platform-deployment: pom.xml + Dockerfile multi-stage + .dockerignore. Maven BUILD SUCCESS, 0 warning. | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-083 | Review APPROVED: 0 bloquant, 1 recommandation PRECISION PENDING | APPROVED |
 | 2026-06-20 | Reviewer | ISSUE-083 | Re-review: [PRECISION] CONFIRMED (suppression !platform-app/target/performance-platform.jar + commentaire). Commit. | DONE |
+| 2026-06-20 | Developer | ISSUE-084 | platform-deployment/docker/docker-compose.yaml (5 services: postgres, kafka KRaft, orchestrator, agent-1, agent-2). IN REVIEW. | IN REVIEW |

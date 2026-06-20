@@ -364,6 +364,10 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-083] [2026-06-20] [CONFIRMED] [PRECISION] Exception `.dockerignore` inutile `!platform-app/target/performance-platform.jar` ligne 26. Le Dockerfile multi-stage compile depuis les sources (stage build) et copie le JAR via `COPY --from=build`, pas depuis le contexte de build hote. L'exception re-inclut un fichier qui n'est jamais lu depuis le contexte — code mort. Supprimer la ligne 26 et eventuellement la remplacer par un commentaire documentant le chemin du JAR de sortie. Fichier : platform-deployment/docker/.dockerignore:26.
 
+[ISSUE-084] [2026-06-20] [CONFIRMED] [SPEC-01] `depends_on` des agents (agent-1, agent-2) ne reference pas `orchestrator`. La spec 09-deployment.md section 2 montre `depends_on: [kafka, orchestrator]` pour les agents. Ajouter `orchestrator` avec `condition: service_started` dans le bloc `depends_on` des deux agents. Fichier : platform-deployment/docker/docker-compose.yaml lignes 109-112, 130-133. → Verifie: agent-1 depends_on orchestrator service_started (ligne 113-114), agent-2 depends_on orchestrator service_started (ligne 138-139).
+
+[ISSUE-084] [2026-06-20] [CONFIRMED] [SPEC-02] `AGENT_TAGS` absent des environnements agent-1 et agent-2. La spec 09-deployment.md section 2 montre `AGENT_TAGS: europe,standard` et `AGENT_TAGS: europe,high-memory`. ADR-008 confirme que les tags sont des metadonnees d'observabilite. Ajouter `AGENT_TAGS: "dev,standard"` pour agent-1 et `AGENT_TAGS: "dev,high-memory"` pour agent-2. Fichier : platform-deployment/docker/docker-compose.yaml lignes 99-106, 121-128. → Verifie: agent-1 AGENT_TAGS="dev,standard" (ligne 106), agent-2 AGENT_TAGS="dev,high-memory" (ligne 131).
+
 ## Historique
 
 | Date | Issue | Recommandation | Statut |
