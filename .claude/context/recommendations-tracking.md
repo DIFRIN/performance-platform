@@ -298,6 +298,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-061] [2026-06-20] [CONFIRMED] [TEST-04] Test shouldErrorOnEmptyResult corrige — requete non-agregee (SELECT value FROM metrics) sur table vide apres DELETE couvre bien le chemin rs.next() == false. 54 tests OK. Fichier : .../assertion/database/DatabaseAssertionExecutorIT.java.
 
+[ISSUE-062] [2026-06-20] [CONFIRMED] [CRAFT-05] evaluate() 93 lignes (>40) avec CC-02 en Javadoc de classe uniquement. CC-02 deplace de la Javadoc classe vers la Javadoc methode evaluate() — conforme au pattern ISSUE-055/056/057. 63 tests OK. Fichier : .../assertion/kafka/KafkaAssertionExecutor.java.
+
 ---
 
 ## Historique

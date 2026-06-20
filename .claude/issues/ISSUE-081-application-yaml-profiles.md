@@ -11,7 +11,7 @@
 
 ## Objectif
 
-Créer les 3 fichiers de configuration YAML et la configuration de sécurité OAuth2/JWT + health
+Créer les 3 fichiers de configuration YAML + health
 checks.
 
 ## Fichiers à Créer
@@ -34,7 +34,7 @@ platform-app/src/test/java/com/performance/platform/app/
 - LOCAL : `runtime.mode=LOCAL`, `transport.type=IN_MEMORY`.
 - ORCHESTRATOR/AGENT : `runtime.mode=DISTRIBUTED` + rôle.
 - Datasources, transport, reporting configurés ; secrets via env (jamais en clair, CNF-03).
-- API REST sécurisée OAuth2/JWT (CNF-03).
+- API REST sécurisée
 - Health `/actuator/health/{readiness,liveness}` exposés (CD-02).
 - Pas de config GRPC (transport gRPC non implémenté).
 

@@ -246,7 +246,7 @@
 | `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` / `UnsupportedAssertionNameException` | ✅ STABLE | PDR-014 | ISSUE-059 |
 | `GatlingMetricAssertionExecutor` / `MetricExtractor` | ✅ STABLE | PDR-014 | ISSUE-060 |
 | `DatabaseAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-061 |
-| `KafkaAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-062 |
+| `KafkaAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-062 |
 | `HttpMockAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-063 |
 | `FileAssertionExecutor` | ⬜ PLANNED | PDR-014 | ISSUE-064 |
 
