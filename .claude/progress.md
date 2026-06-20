@@ -167,7 +167,7 @@
 | ISSUE-072 | S3ReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-073 | GitReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-074 | ExecutionMetrics (Micrometer) | PDR-017 | platform-observability | M | DONE | ISSUE-001 |
-| ISSUE-075 | ObservabilityEventListener | PDR-017 | platform-observability | M | TODO | ISSUE-074,008 |
+| ISSUE-075 | ObservabilityEventListener | PDR-017 | platform-observability | M | DONE | ISSUE-074,008 |
 | ISSUE-076 | Logging JSON + ObservabilityConfiguration | PDR-017 | platform-observability | S | TODO | ISSUE-074 |
 | ISSUE-080 | PluginBootstrap | PDR-018 | platform-app | S | TODO | ISSUE-077,047 |
 | ISSUE-081 | Config local/orchestrator/agent + sécurité | PDR-018 | platform-app | M | TODO | ISSUE-078 |
@@ -463,6 +463,9 @@
 | 2026-06-20 | ISSUE-074 | IN PROGRESS → IN REVIEW | Developer — 23 tests OK, 0 warning, BUILD SUCCESS |
 | 2026-06-20 | PDR-017 | TODO → IN PROGRESS | Developer (ISSUE-074 started) |
 | 2026-06-20 | ISSUE-074 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 23 tests OK. Commit. |
+| 2026-06-20 | ISSUE-075 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-075 | IN PROGRESS → IN REVIEW | Developer — ObservabilityEventListener + 15 tests, 38 total OK, BUILD SUCCESS |
+| 2026-06-20 | ISSUE-075 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 38 tests OK. |
 
 ---
 

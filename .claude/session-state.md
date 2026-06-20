@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : —
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-076
+**Statut issue** : [ ] WAITING | [x] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
 **PDR parent** : PDR-017 (Observability — IN PROGRESS)
 
 ---
@@ -20,14 +20,16 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : ISSUE-074 APPROVED — 0 bloquant, 0 recommandation. Commit.
+Reviewer : ISSUE-075 APPROVED (0 bloquant, 0 recommandation). 38 tests OK. Commit effectue.
 
 **Prochaine action** :
-Developer : ISSUE-075 (ObservabilityEventListener) — TODO.
+Developer : prendre ISSUE-076 (Logging JSON + ObservabilityConfiguration).
 
 **Fichiers modifies** (cette session) :
-- `.claude/progress.md` — ISSUE-073 IN REVIEW → APPROVED
-- `.claude/context/recommendations-tracking.md` — [PRECISION] PENDING ajoutee
+- `platform-observability/src/main/java/.../listener/ObservabilityEventListener.java` ✅ cree
+- `platform-observability/src/test/java/.../listener/ObservabilityEventListenerTest.java` ✅ cree
+- `.claude/progress.md` — ISSUE-075 IN REVIEW → DONE
+- `.claude/context/interfaces-registry.md` — ObservabilityEventListener 🔄 → ✅ STABLE
 - `.claude/session-state.md` — ce fichier
 
 **Blocages** :
@@ -67,3 +69,5 @@ _Aucun_
 | 2026-06-20 | Reviewer | ISSUE-063 | Re-review CONFIRMED: CRAFT-05 CC-02 classe OK. Commit. PDR-014 DONE. | DONE |
 | 2026-06-20 | Developer | ISSUE-074 | ExecutionMetrics + MicrometerExecutionMetrics + 23 tests. platform-observability cree. | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-074 | APPROVED: 0 bloquant, 0 recommandation. 23 tests OK. Commit. | DONE |
+| 2026-06-20 | Developer | ISSUE-075 | ObservabilityEventListener + 15 tests, 38 total OK, BUILD SUCCESS. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-075 | Review APPROVED: 0 bloquant, 0 recommandation. 38 tests OK. | DONE |
