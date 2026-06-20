@@ -67,7 +67,7 @@
 | PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | DONE | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | DONE | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
-| PDR-019 | Deployment | platform-deployment | IN PROGRESS | ISSUE-083,084,085 | PDR-018 |
+| PDR-019 | Deployment | platform-deployment | DONE | ISSUE-083,084,085 | PDR-018 |
 
 ---
 
@@ -174,7 +174,7 @@
 | ISSUE-082 | Test E2E mode LOCAL | PDR-018 | platform-app | L | DONE | ISSUE-079,080,081,038,066 |
 | ISSUE-083 | Dockerfile (<300MB) | PDR-019 | platform-deployment | M | DONE | ISSUE-077 |
 | ISSUE-084 | docker-compose dev local | PDR-019 | platform-deployment | S | DONE | ISSUE-083 |
-| ISSUE-085 | Manifests Kubernetes | PDR-019 | platform-deployment | M | TODO | ISSUE-083 |
+| ISSUE-085 | Manifests Kubernetes | PDR-019 | platform-deployment | M | DONE | ISSUE-083 |
 
 ---
 
@@ -499,6 +499,11 @@
 | 2026-06-20 | ISSUE-084 | TODO → IN PROGRESS | Developer |
 | 2026-06-20 | ISSUE-084 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (SPEC-01 depends_on orchestrator, SPEC-02 AGENT_TAGS) |
 | 2026-06-20 | ISSUE-084 | APPROVED → DONE | Reviewer — re-review: 2 recommandations CONFIRMED (SPEC-01 + SPEC-02). Commit. |
+| 2026-06-20 | ISSUE-085 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-085 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-20 | ISSUE-085 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING ([PRECISION] terminologie "headless" dans service.yaml) |
+| 2026-06-20 | ISSUE-085 | APPROVED → DONE | Reviewer — re-review: [PRECISION] CONFIRMED (headless→external service placeholder), PDR-019 DONE |
+| 2026-06-20 | PDR-019 | IN PROGRESS → DONE | Reviewer (ISSUE-083,084,085 all DONE) |
 
 ---
 
@@ -507,4 +512,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-083 DONE)
+**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-085 DONE, PDR-019 DONE, PROJET TERMINÉ 🎉)

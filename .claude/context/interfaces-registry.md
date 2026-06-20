@@ -296,7 +296,7 @@
 |---|---|---|---|
 | Dockerfile + .dockerignore | ✅ STABLE | PDR-019 | ISSUE-083 |
 | docker-compose | ✅ STABLE | PDR-019 | ISSUE-084 |
-| Manifests K8s | ⬜ PLANNED | PDR-019 | ISSUE-085 |
+| Manifests K8s | ✅ STABLE | PDR-019 | ISSUE-085 |
 
 ---
 

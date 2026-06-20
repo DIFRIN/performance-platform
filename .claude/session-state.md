@@ -9,32 +9,37 @@
 
 **Date derniere session** : 2026-06-20
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-085 (manifests Kubernetes — prochaine)
+**Issue active** : ISSUE-085 (manifests Kubernetes)
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
-**PDR parent** : PDR-019 (Deployment — IN PROGRESS)
+**PDR parent** : PDR-019 (Deployment — DONE)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — Re-review ISSUE-084 : 2 recommandations CONFIRMED (SPEC-01 depends_on orchestrator + SPEC-02 AGENT_TAGS). Commit effectue. ISSUE-084 DONE.
+Reviewer — ISSUE-085 DONE : re-review [PRECISION] CONFIRMED (headless→external service placeholder service.yaml lignes 29 et 48). PDR-019 DONE. Tous les PDRs (1-19) sont DONE. Projet termine.
 
 **Prochaine action** :
-Developer doit prendre ISSUE-085 (manifests Kubernetes).
+Aucune — toutes les Issues (001-085) sont DONE. Informer l'humain que le projet est termine.
 
 **Fichiers modifies** (cette session) :
-- platform-deployment/docker/docker-compose.yaml (cree)
-- .claude/progress.md (ISSUE-084 TODO → IN PROGRESS → IN REVIEW)
-- .claude/context/interfaces-registry.md (docker-compose PLANNED → IN PROGRESS)
+- platform-deployment/kubernetes/orchestrator-statefulset.yaml (cree)
+- platform-deployment/kubernetes/agent-deployment.yaml (cree)
+- platform-deployment/kubernetes/agent-hpa.yaml (cree)
+- platform-deployment/kubernetes/configmap.yaml (cree)
+- platform-deployment/kubernetes/secret-template.yaml (cree)
+- platform-deployment/kubernetes/service.yaml (cree)
+- .claude/progress.md (ISSUE-085 TODO → IN PROGRESS → IN REVIEW → APPROVED)
+- .claude/context/interfaces-registry.md (Manifests K8s IN PROGRESS — non STABLE car recommandation PENDING)
+- .claude/context/recommendations-tracking.md (ISSUE-085 [PRECISION] PENDING)
 - .claude/session-state.md (ce fichier)
 
 **Blocages** :
-- docker build non verifiable dans cet environnement (Docker absent). Le Reviewer ou un environnement CI devra valider les criteres de build (image < 300MB, healthcheck OK, mode var env).
+- kubectl apply --dry-run=client non verifiable dans cet environnement (pas de cluster K8s). La review structurelle est terminee (APPROVED) ; validation syntaxique K8s deferree au CI.
+- Docker absent — meme blocage que ISSUE-083/ISSUE-084.
 - Spring Boot 4.0.0 + JUnit 5.11.4 incompatibilite (computeIfAbsent → getOrComputeIfAbsent) — @SpringBootTest inutilisable (connu, non bloque pour ce module)
-  → contourne via Testcontainers + Hibernate SessionFactory + manual wiring (pattern EntitiesMappingIT)
 - Failsafe classpath issue with spring-boot:repackage — E2E test runs via surefire only (connu, non bloque pour ce module)
-  → mvn verify -P integration-tests toujours OK car surefire tourne pendant la phase test du lifecycle verify
 
 ---
 
@@ -57,3 +62,6 @@ Developer doit prendre ISSUE-085 (manifests Kubernetes).
 | 2026-06-20 | Reviewer | ISSUE-083 | Review APPROVED: 0 bloquant, 1 recommandation PRECISION PENDING | APPROVED |
 | 2026-06-20 | Reviewer | ISSUE-083 | Re-review: [PRECISION] CONFIRMED (suppression !platform-app/target/performance-platform.jar + commentaire). Commit. | DONE |
 | 2026-06-20 | Developer | ISSUE-084 | platform-deployment/docker/docker-compose.yaml (5 services: postgres, kafka KRaft, orchestrator, agent-1, agent-2). IN REVIEW. | IN REVIEW |
+| 2026-06-20 | Developer | ISSUE-085 | 6 manifests K8s (orchestrator-statefulset, agent-deployment, agent-hpa, configmap, secret-template, service). YAML valide, 0 gRPC, probes OK, HPA 2-20 CPU 70%. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-085 | Review APPROVED: 0 bloquant, 1 recommandation [PRECISION] PENDING (terminologie "headless" service.yaml). DB_USERNAME verifie conforme application-orchestrator.yaml:41. | APPROVED |
+| 2026-06-20 | Reviewer | ISSUE-085 | Re-review: [PRECISION] CONFIRMED (headless→external service placeholder). PDR-019 DONE. Projet termine. | DONE |
