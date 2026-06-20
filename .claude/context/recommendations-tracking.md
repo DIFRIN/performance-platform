@@ -360,6 +360,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-080] [2026-06-20] [CONFIRMED] [NAMING] Test shouldNotCrashWhenLoaderThrowsException — nom trompeur. Le test verifie que l'exception est PROPAGEE, pas qu'elle est absorbee. Le nom suggere l'inverse. Renommer en shouldPropagateLoaderException. Fichier : platform-app/.../plugin/PluginBootstrapTest.java:106.
 
+[ISSUE-082] [2026-06-20] [CONFIRMED] [VERSION] Testcontainers 1.20.4 → 1.20.6 pour alignement inter-modules. platform-assertion, platform-infrastructure, platform-transport utilisent 1.20.6. Mettre a jour les 3 entrees <version> dans platform-app/pom.xml (testcontainers, postgresql, junit-jupiter). Fichier : platform-app/pom.xml:143,149,155.
+
 ## Historique
 
 | Date | Issue | Recommandation | Statut |

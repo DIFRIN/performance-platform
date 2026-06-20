@@ -135,6 +135,26 @@
             <version>${spring-modulith.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Testcontainers (E2E tests with real PostgreSQL) -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.20.6</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.20.6</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.20.6</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -154,6 +174,10 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
