@@ -173,7 +173,7 @@
 | ISSUE-081 | Config local/orchestrator/agent + sécurité | PDR-018 | platform-app | M | DONE | ISSUE-078 |
 | ISSUE-082 | Test E2E mode LOCAL | PDR-018 | platform-app | L | DONE | ISSUE-079,080,081,038,066 |
 | ISSUE-083 | Dockerfile (<300MB) | PDR-019 | platform-deployment | M | DONE | ISSUE-077 |
-| ISSUE-084 | docker-compose dev local | PDR-019 | platform-deployment | S | TODO | ISSUE-083 |
+| ISSUE-084 | docker-compose dev local | PDR-019 | platform-deployment | S | DONE | ISSUE-083 |
 | ISSUE-085 | Manifests Kubernetes | PDR-019 | platform-deployment | M | TODO | ISSUE-083 |
 
 ---
@@ -496,6 +496,9 @@
 | 2026-06-20 | ISSUE-083 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-20 | ISSUE-083 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING ([PRECISION] exception .dockerignore inutile) |
 | 2026-06-20 | ISSUE-083 | APPROVED → DONE | Reviewer — re-review: [PRECISION] CONFIRMED (suppression !platform-app/target/performance-platform.jar + commentaire chemin JAR) |
+| 2026-06-20 | ISSUE-084 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-084 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (SPEC-01 depends_on orchestrator, SPEC-02 AGENT_TAGS) |
+| 2026-06-20 | ISSUE-084 | APPROVED → DONE | Reviewer — re-review: 2 recommandations CONFIRMED (SPEC-01 + SPEC-02). Commit. |
 
 ---
 

@@ -294,8 +294,8 @@
 
 | Livrable | Statut | PDR | Issue |
 |---|---|---|---|
-| Dockerfile | ⬜ PLANNED | PDR-019 | ISSUE-083 |
-| docker-compose | ⬜ PLANNED | PDR-019 | ISSUE-084 |
+| Dockerfile + .dockerignore | ✅ STABLE | PDR-019 | ISSUE-083 |
+| docker-compose | ✅ STABLE | PDR-019 | ISSUE-084 |
 | Manifests K8s | ⬜ PLANNED | PDR-019 | ISSUE-085 |
 
 ---
