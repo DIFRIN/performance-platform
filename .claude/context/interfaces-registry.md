@@ -272,7 +272,7 @@
 |---|---|---|---|
 | `ExecutionMetrics` / `MicrometerExecutionMetrics` | ✅ STABLE | PDR-017 | ISSUE-074 |
 | `ObservabilityEventListener` | ✅ STABLE | PDR-017 | ISSUE-075 |
-| `ObservabilityConfiguration` / `ExecutionContextMdcFilter` | ⬜ PLANNED | PDR-017 | ISSUE-076 |
+| `ObservabilityConfiguration` / `ExecutionContextMdcFilter` | ✅ STABLE | PDR-017 | ISSUE-076 |
 
 ## platform-app
 
