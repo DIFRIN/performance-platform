@@ -65,7 +65,7 @@
 | PDR-014 | Assertion Framework | platform-assertion | DONE | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | DONE | ISSUE-065..069 | PDR-001,002,004,013,014 |
 | PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE | ISSUE-070..073 | PDR-001,004,015 |
-| PDR-017 | Observability | platform-observability | IN PROGRESS | ISSUE-074,075,076 | PDR-001,002 |
+| PDR-017 | Observability | platform-observability | DONE | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | TODO | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
 | PDR-019 | Deployment | platform-deployment | TODO | ISSUE-083,084,085 | PDR-018 |
 
@@ -168,7 +168,7 @@
 | ISSUE-073 | GitReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-074 | ExecutionMetrics (Micrometer) | PDR-017 | platform-observability | M | DONE | ISSUE-001 |
 | ISSUE-075 | ObservabilityEventListener | PDR-017 | platform-observability | M | DONE | ISSUE-074,008 |
-| ISSUE-076 | Logging JSON + ObservabilityConfiguration | PDR-017 | platform-observability | S | TODO | ISSUE-074 |
+| ISSUE-076 | Logging JSON + ObservabilityConfiguration | PDR-017 | platform-observability | S | DONE | ISSUE-074 |
 | ISSUE-080 | PluginBootstrap | PDR-018 | platform-app | S | TODO | ISSUE-077,047 |
 | ISSUE-081 | Config local/orchestrator/agent + sécurité | PDR-018 | platform-app | M | TODO | ISSUE-078 |
 | ISSUE-082 | Test E2E mode LOCAL | PDR-018 | platform-app | L | TODO | ISSUE-079,080,081,038,066 |
@@ -466,6 +466,10 @@
 | 2026-06-20 | ISSUE-075 | TODO → IN PROGRESS | Developer |
 | 2026-06-20 | ISSUE-075 | IN PROGRESS → IN REVIEW | Developer — ObservabilityEventListener + 15 tests, 38 total OK, BUILD SUCCESS |
 | 2026-06-20 | ISSUE-075 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 38 tests OK. |
+| 2026-06-20 | ISSUE-076 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-076 | IN PROGRESS → IN REVIEW | Developer — ObservabilityConfiguration + ExecutionContextMdcFilter + logback-spring.xml + 19 tests, 57 total OK, BUILD SUCCESS |
+| 2026-06-20 | ISSUE-076 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 57 tests OK. Commit. |
+| 2026-06-20 | PDR-017 | IN PROGRESS → DONE | Reviewer (ISSUE-074,075,076 all DONE) |
 
 ---
 
@@ -474,4 +478,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-073 DONE, PDR-016 DONE)
+**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-076 DONE, PDR-017 DONE)
