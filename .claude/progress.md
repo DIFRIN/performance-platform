@@ -64,7 +64,7 @@
 | PDR-013 | Gatling Injection | platform-injection-gatling | DONE | ISSUE-054..058 | PDR-001,003 |
 | PDR-014 | Assertion Framework | platform-assertion | IN PROGRESS | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | DONE | ISSUE-065..069 | PDR-001,002,004,013,014 |
-| PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | IN PROGRESS | ISSUE-070..073 | PDR-001,004,015 |
+| PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | TODO | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | TODO | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
 | PDR-019 | Deployment | platform-deployment | TODO | ISSUE-083,084,085 | PDR-018 |
@@ -165,7 +165,7 @@
 | ISSUE-070 | MultiPublisherDispatcher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-065,013 |
 | ISSUE-071 | ConfluenceReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-072 | S3ReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
-| ISSUE-073 | GitReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
+| ISSUE-073 | GitReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-074 | ExecutionMetrics (Micrometer) | PDR-017 | platform-observability | M | TODO | ISSUE-001 |
 | ISSUE-075 | ObservabilityEventListener | PDR-017 | platform-observability | M | TODO | ISSUE-074,008 |
 | ISSUE-076 | Logging JSON + ObservabilityConfiguration | PDR-017 | platform-observability | S | TODO | ISSUE-074 |
@@ -451,6 +451,11 @@
 | 2026-06-20 | ISSUE-072 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05: awsSign() 48L sans CC-02 method-level |
 | 2026-06-20 | ISSUE-072 | CHANGES_REQUESTED → IN REVIEW (re-review) | Developer — 3 APPLIED: CRAFT-05 CC-02 awsSign() + SPEC-01 @Component + TEST-04 shouldThrowWhenAwsEnvVarsNotSet. 25 tests OK. |
 | 2026-06-20 | ISSUE-072 | IN REVIEW (re-review) → DONE | Reviewer — 3 recommandations CONFIRMED (CRAFT-05/SPEC-01/TEST-04). 25 tests OK. Commit. |
+| 2026-06-20 | ISSUE-073 | TODO → IN PROGRESS | Developer — GitReportPublisher |
+| 2026-06-20 | ISSUE-073 | IN PROGRESS → IN REVIEW | Developer — GitReportPublisher + 20 tests, 286 total OK, BUILD SUCCESS |
+| 2026-06-20 | ISSUE-073 | IN REVIEW → APPROVED | Reviewer — APPROVED: 0 bloquant, 1 recommandation [PRECISION] PENDING (logDir inutilisé runGit). 286 tests OK. |
+| 2026-06-20 | ISSUE-073 | APPROVED → DONE | Reviewer — re-review: [PRECISION] CONFIRMED. Commit. |
+| 2026-06-20 | PDR-016 | IN PROGRESS → DONE | Reviewer (ISSUE-070..073 all DONE) |
 
 ---
 
@@ -459,4 +464,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-071 DONE)
+**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-073 DONE, PDR-016 DONE)
