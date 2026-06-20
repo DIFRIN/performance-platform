@@ -11,7 +11,7 @@
 
 **Date derniere session** : 2026-06-20
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : _aucune_ — ISSUE-066 DONE
+**Issue active** : ISSUE-067 (HtmlReportRenderer + JsonReportRenderer — DONE)
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-015 (Reporting Engine — IN PROGRESS)
 
@@ -20,17 +20,21 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : ISSUE-066 re-review CONFIRMED — 3 recommandations CRAFT-05 CONFIRMED (CC-02 Javadoc classe + generate() + buildExecutionSummary()). 41 tests OK. Commit effectue.
+Reviewer : ISSUE-067 — APPROVED, 0 bloquant, 0 recommandation. 62 tests OK, spec respectee, craft clean.
 
 **Prochaine action** :
-System Designer ou Developer : selectionner la prochaine Issue. P1: ISSUE-077 (SpringBoot main, bloque par 023,039,052). P2 reporting: ISSUE-067 (HtmlReportRenderer/JsonReportRenderer), ISSUE-068 (PdfReportRenderer), ISSUE-069 (ReportFileWriter).
+Developer : ISSUE-068 (PdfReportRenderer) ou ISSUE-069 (ReportFileWriter).
 
 **Fichiers modifies** :
 ```
-✅ .../engine/DefaultReportEngine.java — 3 CC-02 Javadoc markers confirmes
-✅ .claude/context/recommendations-tracking.md — 3 APPLIED → CONFIRMED
-✅ .claude/progress.md — ISSUE-066 APPROVED → DONE
-✅ .claude/context/interfaces-registry.md — IN PROGRESS → STABLE
+✅ platform-reporting/pom.xml — ajout jackson-datatype-jsr310
+✅ platform-reporting/.../render/HtmlReportRenderer.java — @Component, ReportFormat.HTML
+✅ platform-reporting/.../render/JsonReportRenderer.java — @Component, ReportFormat.JSON
+✅ platform-reporting/.../resources/templates/campaign-report.html — template HTML
+✅ platform-reporting/.../render/HtmlReportRendererTest.java — 10 tests
+✅ platform-reporting/.../render/JsonReportRendererTest.java — 10 tests
+✅ .claude/progress.md — ISSUE-067 IN REVIEW
+✅ .claude/context/interfaces-registry.md — HtmlReportRenderer/JsonReportRenderer IN PROGRESS
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -43,5 +47,6 @@ _Aucun_
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
 | 2026-06-20 | Developer | ISSUE-065 | platform-reporting: CampaignReport + 5 records + 3 interfaces ⚡ + 17 tests | DONE |
-| 2026-06-20 | Developer | ISSUE-066 | DefaultReportEngine + VerdictCalculator + 3 CRAFT-05 APPLIED, 41 tests OK | RE-REVIEW |
-| 2026-06-20 | Reviewer | ISSUE-066 | Re-review: 3 recommandations CRAFT-05 CONFIRMED, 41 tests OK | DONE |
+| 2026-06-20 | Developer | ISSUE-066 | DefaultReportEngine + VerdictCalculator + re-review CRAFT-05 | DONE |
+| 2026-06-20 | Developer | ISSUE-067 | HtmlReportRenderer + JsonReportRenderer + template HTML, 21 tests, 62 total | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-067 | Review APPROVED: 0 bloquant, 0 recommandation. 62 tests OK, craft clean. | DONE |

@@ -159,7 +159,7 @@
 | ISSUE-062 | KafkaAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059 |
 | ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | IN REVIEW | ISSUE-059 |
 | ISSUE-064 | FileAssertionExecutor | PDR-014 | platform-assertion | S | DONE | ISSUE-059 |
-| ISSUE-067 | HtmlReportRenderer + JsonReportRenderer | PDR-015 | platform-reporting | M | TODO | ISSUE-065 |
+| ISSUE-067 | HtmlReportRenderer + JsonReportRenderer | PDR-015 | platform-reporting | M | DONE | ISSUE-065 |
 | ISSUE-068 | PdfReportRenderer | PDR-015 | platform-reporting | S | TODO | ISSUE-067 |
 | ISSUE-069 | ReportFileWriter | PDR-015 | platform-reporting | M | TODO | ISSUE-067,068 |
 | ISSUE-070 | MultiPublisherDispatcher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-065,013 |
@@ -420,9 +420,12 @@
 | 2026-06-20 | ISSUE-066 | TODO → IN PROGRESS | Developer |
 | 2026-06-20 | ISSUE-066 | IN PROGRESS → IN REVIEW | Developer — DefaultReportEngine + VerdictCalculator, 24 tests OK (41 total) |
 | 2026-06-20 | ISSUE-066 | IN REVIEW → RE-REVIEW | Developer — 3 recommandations CRAFT-05 APPLIED (CC-02 Javadoc classe + generate() + buildExecutionSummary()) |
+| 2026-06-20 | ISSUE-067 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-067 | IN PROGRESS → IN REVIEW | Developer — HtmlReportRenderer + JsonReportRenderer + template HTML, 21 tests OK (62 total) |
 | 2026-06-20 | ISSUE-065 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 17 tests OK, spec respectee, PublicationTarget dans platform-reporting (ARCH-11), records immuables copies defensives |
 | 2026-06-20 | ISSUE-066 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 3 recommandations PENDING (CRAFT-05 CC-02 classe 329L + generate() 50L + buildExecutionSummary() 47L). 41 tests OK. |
 | 2026-06-20 | ISSUE-066 | RE-REVIEW → DONE | Reviewer — 3 recommandations CONFIRMED (CC-02 Javadoc classe + generate() + buildExecutionSummary()). 41 tests OK. |
+| 2026-06-20 | ISSUE-067 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 62 tests OK, spec respectee, craft clean. |
 
 ---
 
