@@ -1,0 +1,93 @@
+# =============================================================================
+# Performance Engineering Platform — Profil ORCHESTRATOR
+# =============================================================================
+# Active avec: spring.profiles.active=orchestrator
+# ou via env var MODE=ORCHESTRATOR (ADR-006: env prioritaire).
+#
+# Mode DISTRIBUTED, role ORCHESTRATOR.
+# Transport: typiquement KAFKA (configurable via TRANSPORT_TYPE env var).
+# Securite: OAuth2/JWT activee (API REST securisee).
+# =============================================================================
+
+runtime:
+  mode: DISTRIBUTED
+  role: ORCHESTRATOR
+
+# ---- Transport distribue ----
+# Par defaut KAFKA. Surchargeable via TRANSPORT_TYPE env var
+# (KAFKA / RABBITMQ / HTTP / SOCKET).
+transport:
+  type: KAFKA
+
+  # ---- Transport Kafka specifics ----
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer-group: orchestrator
+    tasks-topic: platform-tasks
+    events-topic: platform-events
+    signals-topic: platform-signals
+    producer-acks: all
+
+# ---- Infrastructure plateforme ----
+platform:
+  security:
+    enabled: true
+
+  # Datasource PostgreSQL (production)
+  # CNF-03: credentials via env vars.
+  datasources:
+    default:
+      url: ${DB_URL:jdbc:postgresql://localhost:5432/performance}
+      username: ${DB_USERNAME:postgres}
+      password: ${DB_PASSWORD:changeme}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 20
+        minimum-idle: 5
+        connection-timeout: 30000
+
+  # Publishers
+  # Exemple: activer la publication Confluence
+  # publishers:
+  #   - target: CONFLUENCE
+  #     properties:
+  #       url: ${CONFLUENCE_URL}
+  #       space-key: ${CONFLUENCE_SPACE_KEY}
+  #       token: ${CONFLUENCE_TOKEN}
+
+# ---- Securite OAuth2/JWT ----
+# Configurer l'issuer URI via env var OAUTH2_ISSUER_URI.
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:}
+
+# ---- Reporting ----
+reporting:
+  output-directory: ${REPORTING_OUTPUT_DIR:/var/lib/performance-platform/reports}
+  formats:
+    - HTML
+    - PDF
+    - JSON
+
+# ---- Observability ----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes.enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.performance.platform: INFO

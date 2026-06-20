@@ -1,0 +1,65 @@
+# =============================================================================
+# Performance Engineering Platform — Profil AGENT
+# =============================================================================
+# Active avec: spring.profiles.active=agent
+# ou via env var MODE=AGENT (ADR-006: env prioritaire).
+#
+# Mode DISTRIBUTED, role AGENT.
+# Transport: typiquement KAFKA (configurable via TRANSPORT_TYPE env var).
+# Securite: OAuth2/JWT activee.
+# L'agent n'a pas de datasource propre par defaut. Si un agent
+# a besoin d'une datasource locale, configurer sous platform.datasources.*.
+# =============================================================================
+
+runtime:
+  mode: DISTRIBUTED
+  role: AGENT
+
+# ---- Transport distribue ----
+transport:
+  type: KAFKA
+
+  # ---- Transport Kafka specifics ----
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer-group: ${AGENT_ID:agent}-${random.uuid}  # ADR-009: consumer group unique par agent
+    tasks-topic: platform-tasks
+    events-topic: platform-events
+    signals-topic: platform-signals
+    producer-acks: all
+
+# ---- Infrastructure plateforme ----
+platform:
+  security:
+    enabled: true
+
+  # Agent — pas de datasource propre par defaut.
+  # Les agents injectent la charge; la persistence est cote orchestrateur.
+  datasources: {}
+
+# ---- Securite OAuth2/JWT ----
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:}
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:}
+
+# ---- Reporting desactive cote agent ----
+# L'agent n'execute pas de reporting.
+
+# ---- Observability ----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes.enabled: true
+
+logging:
+  level:
+    com.performance.platform: INFO
