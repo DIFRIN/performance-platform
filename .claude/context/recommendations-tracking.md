@@ -318,6 +318,10 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-068] [2026-06-20] [CONFIRMED] [TEST-04] Test shouldWrapConversionErrors() trompeur — remplace par 2 vrais tests d'erreur : shouldRethrowRenderExceptionAsIs (stub HtmlReportRenderer qui lance RenderException → rethrown as-is) et shouldWrapGenericExceptionInRenderException (stub HtmlReportRenderer qui lance RuntimeException → wrapped in RenderException). Stubs manuels (anonymous subclass) car Mockito incompatible Java 25 sur cette classe. 74 tests OK. Fichier : .../render/PdfReportRendererTest.java.
 
+[ISSUE-069] [2026-06-20] [CONFIRMED] [CRAFT-07] executionId absent des logs dans les methodes privees writeRenderOutputs() (no_renderer_for_format, format_written) et copyGatlingDirectories() (gatling_dir_missing, gatling_copied, gatling_copy_interrupted, gatling_copy_failed). Passer executionId en parametre a ces methodes ou le stocker comme variable locale dans write() et l'inclure dans chaque log interne. Fichier : platform-reporting/.../output/ReportFileWriter.java.
+
+[ISSUE-069] [2026-06-20] [CONFIRMED] [CRAFT-08] Magic strings sans constantes : "reports" (ligne 70, defaut outputDirectory), "campaign." (ligne 116, prefixe nom fichier), "gatling" (ligne 133, nom sous-repertoire Gatling). Extraire en private static final String DEFAULT_OUTPUT_DIRECTORY / REPORT_FILE_PREFIX / GATLING_SUBDIR. Fichier : platform-reporting/.../output/ReportFileWriter.java.
+
 ---
 
 ## Historique

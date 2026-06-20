@@ -261,8 +261,9 @@
 | `RenderException` / `PublicationException` | ✅ STABLE | PDR-015 | ISSUE-065 |
 | `DefaultReportEngine` / `VerdictCalculator` | ✅ STABLE | PDR-015 | ISSUE-066 |
 | `HtmlReportRenderer` / `JsonReportRenderer` | ✅ STABLE | PDR-015 | ISSUE-067 |
-| `PdfReportRenderer` | ⬜ PLANNED | PDR-015 | ISSUE-068 |
-| `ReportFileWriter` | ⬜ PLANNED | PDR-015 | ISSUE-069 |
+| `PdfReportRenderer` | ✅ STABLE | PDR-015 | ISSUE-068 |
+| `ReportFileWriter` | ✅ STABLE | PDR-015 | ISSUE-069 |
+| `ReportProperties` | ✅ STABLE | PDR-015 | ISSUE-069 |
 
 ## platform-observability
 

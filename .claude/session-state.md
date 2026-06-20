@@ -10,25 +10,27 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-069 (ReportFileWriter)
-**Statut issue** : [ ] WAITING | [x] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
-**PDR parent** : PDR-015 (Reporting Engine — IN PROGRESS)
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
+**PDR parent** : PDR-015 (Reporting Engine — DONE)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : re-review ISSUE-068 — [TEST-04] CONFIRMED (2 tests erreur avec stubs anonymes : shouldRethrowRenderExceptionAsIs + shouldWrapGenericExceptionInRenderException). 74 tests OK. Commit effectue.
+Reviewer : re-review ISSUE-069 — CRAFT-07 + CRAFT-08 CONFIRMED. 92 tests OK, BUILD SUCCESS. Commit DONE. PDR-015 complete (ISSUE-065..069 all DONE).
 
 **Prochaine action** :
-Developer : prendre ISSUE-069 (ReportFileWriter) — TODO, aucune dependance bloquante. Lire `.claude/issues/ISSUE-069.md`.
+Developer : prendre la prochaine Issue TODO (ISSUE-063 HttpMockAssertionExecutor IN REVIEW, ISSUE-070 MultiPublisherDispatcher TODO).
 
 **Fichiers modifies** :
 ```
-✅ .claude/context/recommendations-tracking.md — [TEST-04] APPLIED → CONFIRMED
-✅ .claude/progress.md — ISSUE-068 APPROVED → DONE
+✅ platform-reporting/.../output/ReportFileWriter.java — CRAFT-07/CRAFT-08 CONFIRMED
+✅ .claude/context/recommendations-tracking.md — [CRAFT-07] APPLIED→CONFIRMED, [CRAFT-08] APPLIED→CONFIRMED
+✅ .claude/progress.md — ISSUE-069 APPROVED→DONE, PDR-015 IN PROGRESS→DONE
+✅ .claude/context/interfaces-registry.md — ReportFileWriter + ReportProperties IN PROGRESS→STABLE
 ✅ .claude/session-state.md — ce fichier
 ```
 
@@ -48,3 +50,7 @@ _Aucun_
 | 2026-06-20 | Reviewer | ISSUE-068 | Review APPROVED: 0 bloquant, 1 recommandation [TEST-04] PENDING. 73 tests OK. | APPROVED |
 | 2026-06-20 | Developer | ISSUE-068 | [TEST-04] APPLIED: 2 tests erreur avec stubs anonymes (Mockito incompatible Java 25). 74 tests OK. | → re-review |
 | 2026-06-20 | Reviewer | ISSUE-068 | Re-review CONFIRMED: [TEST-04] 2 tests erreur corrects, 74 tests OK. Commit. | DONE |
+| 2026-06-20 | Developer | ISSUE-069 | ReportFileWriter + ReportProperties + spring-boot dep + 20 tests, 92 total OK. 0 warning. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-069 | Review APPROVED: 0 bloquant, 2 recommandations PENDING (CRAFT-07 executionId logs, CRAFT-08 magic strings). 92 tests OK. | APPROVED |
+| 2026-06-20 | Developer | ISSUE-069 | CRAFT-07 + CRAFT-08 APPLIED: executionId dans tous les logs internes + 3 constantes extraites. 92 tests OK. → re-review | → re-review |
+| 2026-06-20 | Reviewer | ISSUE-069 | Re-review CONFIRMED: CRAFT-07 executionId logs + CRAFT-08 3 constantes. 92 tests OK. Commit. PDR-015 DONE. | DONE |
