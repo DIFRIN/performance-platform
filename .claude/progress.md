@@ -133,7 +133,7 @@
 | ISSUE-065 | Records CampaignReport + interfaces | PDR-015 | platform-reporting | M | DONE | ISSUE-006,013,002 |
 | ISSUE-066 | DefaultReportEngine + Verdict | PDR-015 | platform-reporting | M | DONE | ISSUE-065 |
 | ISSUE-077 | SpringBoot main + Modulith + assemblage | PDR-018 | platform-app | M | DONE | ISSUE-023,039,052 |
-| ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | TODO | ISSUE-077 |
+| ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | DONE | ISSUE-077 |
 | ISSUE-079 | API REST | PDR-018 | platform-app | M | TODO | ISSUE-077,018 |
 
 ### 🟡 P2 — Normales
@@ -473,6 +473,8 @@
 | 2026-06-20 | ISSUE-077 | IN PROGRESS → IN REVIEW | Developer — platform-app: pom.xml (11 modules) + PerformancePlatformApplication + 4 tests, fat JAR 131 MB, BUILD SUCCESS |
 | 2026-06-20 | ISSUE-077 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. Commit. |
 | 2026-06-20 | PDR-017 | IN PROGRESS → DONE | Reviewer (ISSUE-074,075,076 all DONE) |
+| 2026-06-20 | ISSUE-078 | IN REVIEW → RE-REVIEW | Developer — [TEST-04] APPLIED: System.getenv() → environment.getProperty() + 3 tests priorite. 27 tests OK. |
+| 2026-06-20 | ISSUE-078 | RE-REVIEW → DONE | Reviewer — re-review: [TEST-04] CONFIRMED. 27 tests OK, BUILD SUCCESS. |
 
 ---
 
