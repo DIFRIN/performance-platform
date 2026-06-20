@@ -376,9 +376,7 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("extractMetadata should extract from meta entry")
         void shouldExtractMetadata() {
-            ExecutionId execId = ExecutionId.generate();
             TaskId taskId = TaskId.of("task-extract");
-            AgentId agentId = AgentId.generate();
 
             TaskResult original = new TaskResult(
                     taskId, "extract-me", TaskStatus.SUCCESS,
@@ -408,9 +406,7 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("stripMetadata should remove _meta_ key")
         void shouldStripMetadata() {
-            ExecutionId execId = ExecutionId.generate();
             TaskId taskId = TaskId.of("task-strip2");
-            AgentId agentId = AgentId.generate();
 
             TaskResult original = TaskResult.success(
                     taskId, "strip-me", Duration.ofMillis(10), Map.of("a", "b"));

@@ -13,11 +13,8 @@ import com.performance.platform.plugin.TaskExecutor;
 @Preparation(name = "no-arg-missing-plugin", version = "1.0.0")
 public class NoNoArgConstructorPlugin implements TaskExecutor {
 
-    private final String someField;
-
     // Only constructor requires an argument — no no-arg constructor
-    public NoNoArgConstructorPlugin(String someField) {
-        this.someField = someField;
+    public NoNoArgConstructorPlugin(String unused) {
     }
 
     @Override

@@ -4,7 +4,7 @@ import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.domain.task.TaskStatus;
+
 import com.performance.platform.infrastructure.persistence.TaskResultEntity;
 import com.performance.platform.infrastructure.persistence.TaskResultId;
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;

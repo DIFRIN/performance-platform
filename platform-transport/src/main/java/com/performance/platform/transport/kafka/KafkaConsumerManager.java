@@ -4,12 +4,12 @@ import com.performance.platform.transport.AgentLifecycleEvent;
 import com.performance.platform.transport.AgentLifecycleEventHandler;
 import com.performance.platform.transport.AgentSignalHandler;
 import com.performance.platform.transport.ExecutionEventHandler;
-import com.performance.platform.transport.Subscription;
+
 import com.performance.platform.transport.TaskRequestHandler;
 import com.performance.platform.transport.message.ExecutionEvent;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
+
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;

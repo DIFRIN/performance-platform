@@ -155,8 +155,7 @@ public class ExecutionStateMapper {
             for (var taskEntry : rawStore.entrySet()) {
                 Map<String, TaskResult> agentMap = new HashMap<>();
                 for (var agentEntry : taskEntry.getValue().entrySet()) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> resultMap = (Map<String, Object>) agentEntry.getValue();
+                    Map<String, Object> resultMap = agentEntry.getValue();
                     agentMap.put(agentEntry.getKey(), mapToTaskResult(resultMap));
                 }
                 store.put(taskEntry.getKey(), agentMap);
@@ -180,7 +179,6 @@ public class ExecutionStateMapper {
         Map<String, Object> outputs = (Map<String, Object>) map.getOrDefault("outputs", Map.of());
 
         String errorMessage = (String) map.get("errorMessage");
-        String causeMessage = (String) map.get("causeMessage");
         Throwable cause = (errorMessage != null)
                 ? new RuntimeException(errorMessage)
                 : null;

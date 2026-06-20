@@ -36,6 +36,7 @@ import static org.awaitility.Awaitility.await;
 class KafkaExecutionTransportIT {
 
     @Container
+    @SuppressWarnings("deprecation")
     static KafkaContainer kafka =
             new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.8.0"));
 

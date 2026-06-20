@@ -4,7 +4,6 @@ import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.plugin.Preparation;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
@@ -13,9 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -331,7 +328,6 @@ public class DockerTaskExecutor implements TaskExecutor, StatefulResourceCleaner
         return defaultValue;
     }
 
-    @SuppressWarnings("unchecked")
     private static Map<String, String> parseStringMap(Object rawValue) {
         if (rawValue instanceof Map<?, ?> map) {
             return map.entrySet().stream()

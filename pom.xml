@@ -32,6 +32,7 @@
         <module>platform-injection-gatling</module>
         <module>platform-assertion</module>
         <module>platform-reporting</module>
+        <module>platform-observability</module>
     </modules>
 
     <dependencyManagement>

@@ -63,7 +63,6 @@ public class LocalExecutionEngine implements ExecutionEngine {
     private static final Logger log = LoggerFactory.getLogger(LocalExecutionEngine.class);
 
     private final ExecutionPlanBuilder planBuilder;
-    private final RetryExecutor retryExecutor;
     private final ExecutionRepository executionRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskExecutorLookup taskExecutorLookup;
@@ -83,7 +82,6 @@ public class LocalExecutionEngine implements ExecutionEngine {
             ApplicationEventPublisher eventPublisher,
             TaskExecutorLookup taskExecutorLookup) {
         this.planBuilder = planBuilder;
-        this.retryExecutor = retryExecutor;
         this.executionRepository = executionRepository;
         this.eventPublisher = eventPublisher;
         this.taskExecutorLookup = taskExecutorLookup;

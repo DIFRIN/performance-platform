@@ -65,7 +65,7 @@
 | PDR-014 | Assertion Framework | platform-assertion | DONE | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | DONE | ISSUE-065..069 | PDR-001,002,004,013,014 |
 | PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE | ISSUE-070..073 | PDR-001,004,015 |
-| PDR-017 | Observability | platform-observability | TODO | ISSUE-074,075,076 | PDR-001,002 |
+| PDR-017 | Observability | platform-observability | IN PROGRESS | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | TODO | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
 | PDR-019 | Deployment | platform-deployment | TODO | ISSUE-083,084,085 | PDR-018 |
 
@@ -166,7 +166,7 @@
 | ISSUE-071 | ConfluenceReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-072 | S3ReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-073 | GitReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
-| ISSUE-074 | ExecutionMetrics (Micrometer) | PDR-017 | platform-observability | M | TODO | ISSUE-001 |
+| ISSUE-074 | ExecutionMetrics (Micrometer) | PDR-017 | platform-observability | M | DONE | ISSUE-001 |
 | ISSUE-075 | ObservabilityEventListener | PDR-017 | platform-observability | M | TODO | ISSUE-074,008 |
 | ISSUE-076 | Logging JSON + ObservabilityConfiguration | PDR-017 | platform-observability | S | TODO | ISSUE-074 |
 | ISSUE-080 | PluginBootstrap | PDR-018 | platform-app | S | TODO | ISSUE-077,047 |
@@ -459,6 +459,9 @@
 | 2026-06-20 | ISSUE-063 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05: classe 379L >300 sans CC-02 classe (CC-02 sur evaluate() present mais manquant classe). 124 tests OK. |
 | 2026-06-20 | ISSUE-063 | CHANGES_REQUESTED → DONE | Reviewer — re-review: CRAFT-05 CONFIRMED (CC-02 classe). 124 tests OK. Commit. |
 | 2026-06-20 | PDR-014 | IN PROGRESS → DONE | Reviewer (ISSUE-059..064 all DONE) |
+| 2026-06-20 | ISSUE-074 | TODO → IN PROGRESS | Developer — platform-observability: ExecutionMetrics + MicrometerExecutionMetrics + 23 tests |
+| 2026-06-20 | ISSUE-074 | IN PROGRESS → IN REVIEW | Developer — 23 tests OK, 0 warning, BUILD SUCCESS |
+| 2026-06-20 | PDR-017 | TODO → IN PROGRESS | Developer (ISSUE-074 started) |
 
 ---
 
