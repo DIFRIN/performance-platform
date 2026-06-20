@@ -156,7 +156,7 @@
 | ISSUE-049 | ArchUnit séparation packages infra | PDR-011 | platform-infrastructure | S | DONE | ISSUE-039,046 |
 | ISSUE-053 | ArchUnit JPA confiné | PDR-012 | platform-infrastructure | S | DONE | ISSUE-052 |
 | ISSUE-058 | Gatling Protocols (no gRPC) | PDR-013 | platform-injection-gatling | M | DONE | ISSUE-057 |
-| ISSUE-062 | KafkaAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
+| ISSUE-062 | KafkaAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059 |
 | ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | TODO | ISSUE-059 |
 | ISSUE-064 | FileAssertionExecutor | PDR-014 | platform-assertion | S | TODO | ISSUE-059 |
 | ISSUE-067 | HtmlReportRenderer + JsonReportRenderer | PDR-015 | platform-reporting | M | TODO | ISSUE-065 |
@@ -408,9 +408,13 @@
 | 2026-06-20 | ISSUE-060 | APPROVED — recommandations APPLIED | Developer — executionId ajoute aux 2 logs + import TaskStatus supprime. 37 tests OK |
 | 2026-06-20 | ISSUE-060 | APPROVED → DONE | Reviewer — re-review: CRAFT-07 + PRECISION CONFIRMED, 37 tests OK |
 | 2026-06-20 | ISSUE-061 | TODO → IN PROGRESS | Developer — DatabaseAssertionExecutor + ApplicationContext DataSource lookup |
+| 2026-06-20 | ISSUE-062 | IN PROGRESS → IN REVIEW | Developer — @Assertion name=kafka, consumedCount/producedCount/lag, 63 tests OK |
+| 2026-06-20 | ISSUE-062 | TODO → IN PROGRESS | Developer |
 | 2026-06-20 | ISSUE-061 | IN PROGRESS → IN REVIEW | Developer — @Assertion name=database, Virtual Threads JDBC, 17 ITs Testcontainers PostgreSQL OK |
 | 2026-06-20 | ISSUE-061 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING [TEST-04] shouldErrorOnEmptyResult inefficace |
 | 2026-06-20 | ISSUE-061 | APPROVED → DONE | Reviewer — re-review: [TEST-04] CONFIRMED, 54 tests OK (37 unit + 17 IT) |
+| 2026-06-20 | ISSUE-062 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING [CRAFT-05] CC-02 method-level evaluate() |
+| 2026-06-20 | ISSUE-062 | APPROVED → DONE | Reviewer — re-review: [CRAFT-05] CONFIRMED (CC-02 evaluate()), 63 tests OK |
 
 ---
 
@@ -419,4 +423,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (ISSUE-061 DONE — DatabaseAssertionExecutor, re-review [TEST-04] CONFIRMED)
+**Dernière mise à jour** : 2026-06-20 (ISSUE-062 DONE — KafkaAssertionExecutor, re-review [CRAFT-05] CONFIRMED)
