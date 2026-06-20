@@ -134,7 +134,7 @@
 | ISSUE-066 | DefaultReportEngine + Verdict | PDR-015 | platform-reporting | M | DONE | ISSUE-065 |
 | ISSUE-077 | SpringBoot main + Modulith + assemblage | PDR-018 | platform-app | M | DONE | ISSUE-023,039,052 |
 | ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | DONE | ISSUE-077 |
-| ISSUE-079 | API REST | PDR-018 | platform-app | M | TODO | ISSUE-077,018 |
+| ISSUE-079 | API REST | PDR-018 | platform-app | M | DONE | ISSUE-077,018 |
 
 ### 🟡 P2 — Normales
 
@@ -475,6 +475,10 @@
 | 2026-06-20 | PDR-017 | IN PROGRESS → DONE | Reviewer (ISSUE-074,075,076 all DONE) |
 | 2026-06-20 | ISSUE-078 | IN REVIEW → RE-REVIEW | Developer — [TEST-04] APPLIED: System.getenv() → environment.getProperty() + 3 tests priorite. 27 tests OK. |
 | 2026-06-20 | ISSUE-078 | RE-REVIEW → DONE | Reviewer — re-review: [TEST-04] CONFIRMED. 27 tests OK, BUILD SUCCESS. |
+| 2026-06-20 | ISSUE-079 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-079 | IN PROGRESS → IN REVIEW | Developer — ScenarioController + 2 DTOs + ApiExceptionHandler + 11 tests. 43 total OK, BUILD SUCCESS |
+| 2026-06-20 | ISSUE-079 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 3 recommandations PENDING (CRAFT-02/CRAFT-08/CRAFT-07) |
+| 2026-06-20 | ISSUE-079 | APPROVED → DONE | Reviewer — re-review: 3 recommandations CONFIRMED (CRAFT-02/CRAFT-08/CRAFT-07) |
 
 ---
 
