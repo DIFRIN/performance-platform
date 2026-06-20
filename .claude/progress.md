@@ -131,7 +131,7 @@
 | ISSUE-060 | GatlingMetricAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059,056 |
 | ISSUE-061 | DatabaseAssertionExecutor | PDR-014 | platform-assertion | M | DONE | ISSUE-059 |
 | ISSUE-065 | Records CampaignReport + interfaces | PDR-015 | platform-reporting | M | DONE | ISSUE-006,013,002 |
-| ISSUE-066 | DefaultReportEngine + Verdict | PDR-015 | platform-reporting | M | TODO | ISSUE-065 |
+| ISSUE-066 | DefaultReportEngine + Verdict | PDR-015 | platform-reporting | M | DONE | ISSUE-065 |
 | ISSUE-077 | SpringBoot main + Modulith + assemblage | PDR-018 | platform-app | M | TODO | ISSUE-023,039,052 |
 | ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | TODO | ISSUE-077 |
 | ISSUE-079 | API REST | PDR-018 | platform-app | M | TODO | ISSUE-077,018 |
@@ -417,8 +417,12 @@
 | 2026-06-20 | ISSUE-062 | APPROVED → DONE | Reviewer — re-review: [CRAFT-05] CONFIRMED (CC-02 evaluate()), 63 tests OK |
 | 2026-06-20 | ISSUE-064 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-07 BLOQUANT: 4 logs executionId incorrect (TaskId au lieu d'ExecutionId) |
 | 2026-06-20 | ISSUE-065 | TODO → IN PROGRESS | Developer |
-| 2026-06-20 | ISSUE-065 | IN PROGRESS → IN REVIEW | Developer — platform-reporting module, CampaignReport + 5 records + 3 interfaces (ReportEngine/Renderer/Publisher ⚡) + 2 exceptions + PublicationTarget, 17 tests OK |
+| 2026-06-20 | ISSUE-066 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | ISSUE-066 | IN PROGRESS → IN REVIEW | Developer — DefaultReportEngine + VerdictCalculator, 24 tests OK (41 total) |
+| 2026-06-20 | ISSUE-066 | IN REVIEW → RE-REVIEW | Developer — 3 recommandations CRAFT-05 APPLIED (CC-02 Javadoc classe + generate() + buildExecutionSummary()) |
 | 2026-06-20 | ISSUE-065 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 17 tests OK, spec respectee, PublicationTarget dans platform-reporting (ARCH-11), records immuables copies defensives |
+| 2026-06-20 | ISSUE-066 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 3 recommandations PENDING (CRAFT-05 CC-02 classe 329L + generate() 50L + buildExecutionSummary() 47L). 41 tests OK. |
+| 2026-06-20 | ISSUE-066 | RE-REVIEW → DONE | Reviewer — 3 recommandations CONFIRMED (CC-02 Javadoc classe + generate() + buildExecutionSummary()). 41 tests OK. |
 
 ---
 
