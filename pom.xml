@@ -33,6 +33,7 @@
         <module>platform-assertion</module>
         <module>platform-reporting</module>
         <module>platform-observability</module>
+        <module>platform-app</module>
     </modules>
 
     <dependencyManagement>

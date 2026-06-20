@@ -278,7 +278,7 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `PerformancePlatformApplication` | ⬜ PLANNED | PDR-018 | ISSUE-077 |
+| `PerformancePlatformApplication` | ✅ STABLE | PDR-018 | ISSUE-077 |
 | `RuntimeModeResolver` / `RuntimeRole` | ⬜ PLANNED | PDR-018 | ISSUE-078 |
 | `ScenarioController` | ⬜ PLANNED | PDR-018 | ISSUE-079 |
 | `PluginBootstrap` | ⬜ PLANNED | PDR-018 | ISSUE-080 |

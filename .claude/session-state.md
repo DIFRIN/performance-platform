@@ -10,35 +10,29 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-076
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [x] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
-**PDR parent** : PDR-017 (Observability — DONE)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-078
+**Statut issue** : [ ] WAITING | [x] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**PDR parent** : PDR-018 (Application Assembly — IN PROGRESS)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : ISSUE-076 APPROVED (0 bloquant, 0 recommandation) — 57 tests OK, BUILD SUCCESS. PDR-017 DONE.
+Reviewer : ISSUE-077 APPROVED/DONE — 0 bloquant, 0 recommandation. 4 tests OK, fat JAR 131 MB, BUILD SUCCESS.
 
 **Prochaine action** :
-Developer ou System Designer : ISSUE-077 (Application Assembly) — PDR-018 prochaine phase.
-Ou Tester : tests integration/contract PDR-017.
+Developer : ISSUE-078 (RuntimeModeResolver — env var prioritaire ADR-006).
 
 **Fichiers modifies** (cette session) :
-- `platform-observability/src/main/java/.../config/ObservabilityConfiguration.java` ✅ cree (Developer)
-- `platform-observability/src/main/java/.../config/ExecutionContextMdcFilter.java` ✅ cree (Developer)
-- `platform-observability/src/main/resources/logback-spring.xml` ✅ cree (Developer)
-- `platform-observability/src/test/java/.../config/ExecutionContextMdcFilterTest.java` ✅ cree (Developer)
-- `platform-observability/pom.xml` — slf4j-nop → logback-classic (test, pour MDC) ✅ modifie (Developer)
-- `.claude/progress.md` — ISSUE-076 TODO → IN PROGRESS → IN REVIEW → DONE
-- `.claude/progress.md` — PDR-017 IN PROGRESS → DONE
-- `.claude/context/interfaces-registry.md` — ObservabilityConfiguration/ExecutionContextMdcFilter 🔄 → ✅
+- `.claude/progress.md` — ISSUE-077 IN REVIEW → DONE
+- `.claude/context/interfaces-registry.md` — PerformancePlatformApplication 🔄 → ✅ STABLE
 - `.claude/session-state.md` — ce fichier
 
 **Blocages** :
-_Aucun_
+- Spring Boot 4.0.0 + JUnit 5.12 incompatibilite (computeIfAbsent → getOrComputeIfAbsent) — contourne via tests sans @SpringBootTest
+- ArchUnit 1.4.0 ne supporte pas Java 25 (class version 69) — verification Modulith limitee a la detection de modules
 
 ---
 ## Historique Sessions (1 ligne par session)
@@ -78,3 +72,5 @@ _Aucun_
 | 2026-06-20 | Reviewer | ISSUE-075 | Review APPROVED: 0 bloquant, 0 recommandation. 38 tests OK. | DONE |
 | 2026-06-20 | Developer | ISSUE-076 | ObservabilityConfiguration + ExecutionContextMdcFilter + logback-spring.xml + 19 tests, 57 total OK. | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-076 | Review APPROVED: 0 bloquant, 0 recommandation. 57 tests OK, BUILD SUCCESS. PDR-017 DONE. Commit. | DONE |
+| 2026-06-20 | Developer | ISSUE-077 | platform-app: pom.xml (11 modules) + @SpringBootApplication + @Modulith + 4 tests, fat JAR 131 MB. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-077 | Review APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. Commit. Next: ISSUE-078. | DONE |
