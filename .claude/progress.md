@@ -67,7 +67,7 @@
 | PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | DONE | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | DONE | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
-| PDR-019 | Deployment | platform-deployment | TODO | ISSUE-083,084,085 | PDR-018 |
+| PDR-019 | Deployment | platform-deployment | IN PROGRESS | ISSUE-083,084,085 | PDR-018 |
 
 ---
 
@@ -172,7 +172,7 @@
 | ISSUE-080 | PluginBootstrap | PDR-018 | platform-app | S | DONE | ISSUE-077,047 |
 | ISSUE-081 | Config local/orchestrator/agent + sécurité | PDR-018 | platform-app | M | DONE | ISSUE-078 |
 | ISSUE-082 | Test E2E mode LOCAL | PDR-018 | platform-app | L | DONE | ISSUE-079,080,081,038,066 |
-| ISSUE-083 | Dockerfile (<300MB) | PDR-019 | platform-deployment | M | TODO | ISSUE-077 |
+| ISSUE-083 | Dockerfile (<300MB) | PDR-019 | platform-deployment | M | DONE | ISSUE-077 |
 | ISSUE-084 | docker-compose dev local | PDR-019 | platform-deployment | S | TODO | ISSUE-083 |
 | ISSUE-085 | Manifests Kubernetes | PDR-019 | platform-deployment | M | TODO | ISSUE-083 |
 
@@ -491,6 +491,11 @@
 | 2026-06-20 | ISSUE-082 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING (VERSION: Testcontainers 1.20.4 → 1.20.6) |
 | 2026-06-20 | ISSUE-082 | APPROVED → DONE | Reviewer — re-review: [VERSION] CONFIRMED (Testcontainers 1.20.6). 66 tests OK. Commit. |
 | 2026-06-20 | PDR-018 | IN PROGRESS → DONE | Reviewer (ISSUE-077..082 all DONE) |
+| 2026-06-20 | ISSUE-083 | TODO → IN PROGRESS | Developer |
+| 2026-06-20 | PDR-019 | TODO → IN PROGRESS | Developer (ISSUE-083 started) |
+| 2026-06-20 | ISSUE-083 | IN PROGRESS → IN REVIEW | Developer |
+| 2026-06-20 | ISSUE-083 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING ([PRECISION] exception .dockerignore inutile) |
+| 2026-06-20 | ISSUE-083 | APPROVED → DONE | Reviewer — re-review: [PRECISION] CONFIRMED (suppression !platform-app/target/performance-platform.jar + commentaire chemin JAR) |
 
 ---
 
@@ -499,4 +504,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-082 DONE, PDR-018 DONE)
+**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-083 DONE)
