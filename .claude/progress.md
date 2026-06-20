@@ -163,7 +163,7 @@
 | ISSUE-068 | PdfReportRenderer | PDR-015 | platform-reporting | S | DONE | ISSUE-067 |
 | ISSUE-069 | ReportFileWriter | PDR-015 | platform-reporting | M | DONE | ISSUE-067,068 |
 | ISSUE-070 | MultiPublisherDispatcher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-065,013 |
-| ISSUE-071 | ConfluenceReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
+| ISSUE-071 | ConfluenceReportPublisher | PDR-016 | platform-infrastructure | M | DONE | ISSUE-070 |
 | ISSUE-072 | S3ReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
 | ISSUE-073 | GitReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
 | ISSUE-074 | ExecutionMetrics (Micrometer) | PDR-017 | platform-observability | M | TODO | ISSUE-001 |
@@ -440,8 +440,12 @@
 | 2026-06-20 | ISSUE-070 | TODO → IN PROGRESS | Developer — MultiPublisherDispatcher + PublishersProperties |
 | 2026-06-20 | ISSUE-070 | IN PROGRESS → IN REVIEW | Developer — MultiPublisherDispatcher + PublishersProperties + 11 tests |
 | 2026-06-20 | ISSUE-070 | APPROVED (CONFIG-01 APPLIED) | Developer — Javadoc PublishersProperties prefixe platform.publishers vs reporting.* |
+| 2026-06-20 | ISSUE-071 | TODO → IN PROGRESS | Developer — ConfluenceReportPublisher |
+| 2026-06-20 | ISSUE-071 | IN PROGRESS → IN REVIEW | Developer — ConfluenceReportPublisher + 15 tests WireMock |
+| 2026-06-20 | ISSUE-071 | CHANGES_REQUESTED → corrections APPLIED | Developer — CRAFT-05 CC-02 classe + publish() + CRAFT-08 KEY_* constantes |
 | 2026-06-20 | ISSUE-070 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING (CONFIG-01 prefixe configuration). 11 tests OK, ArchUnit 17/17 OK. |
 | 2026-06-20 | ISSUE-070 | APPROVED → DONE | Reviewer — re-review: CONFIG-01 CONFIRMED (Javadoc PublishersProperties prefixe platform.publishers vs reporting.*). 11 tests OK, ArchUnit 17/17 OK. |
+| 2026-06-20 | ISSUE-071 | CHANGES_REQUESTED (re-review) → DONE | Reviewer — re-review: 3 recommandations CONFIRMED (CRAFT-05 CC-02 classe + CC-02 publish() + CRAFT-08 KEY_*). 15 tests OK, 241 total, BUILD SUCCESS. |
 
 ---
 
@@ -450,4 +454,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (Tester — PDR-015 integration tests DONE)
+**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-071 DONE)

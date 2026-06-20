@@ -324,6 +324,12 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-070] [2026-06-20] [CONFIRMED] [CONFIG-01] Prefixe de configuration `platform.publishers` diverge de la spec qui montre `reporting.publishers`. Bien que coherent avec la convention `platform.*` pour les proprietes infrastructure (cf. PlatformDatasourcesProperties), l'utilisateur doit savoir que output settings utilisent `reporting.*` et publisher settings `platform.publishers.*`. Ajouter un commentaire Javadoc sur PublishersProperties expliquant la relation avec reporting.* et la raison du prefixe separe. Fichier : platform-infrastructure/.../publisher/PublishersProperties.java (classe).
 
+[ISSUE-071] [2026-06-20] [CONFIRMED] [CRAFT-05] CC-02 Javadoc classe (pipeline cohesif Confluence: validation→buildConfluencePayload→buildStorageBody→HTTP POST→reponse/erreur, helpers escapeJson/escapeHtml/formatDuration/verdictColor indissociables). Fichier : .../confluence/ConfluenceReportPublisher.java (classe, lignes 43-51).
+
+[ISSUE-071] [2026-06-20] [CONFIRMED] [CRAFT-05] CC-02 Javadoc publish() (pipeline cohesif: requireProperty→buildConfluencePayload→HTTP POST→gestion reponse/erreur). Fichier : .../confluence/ConfluenceReportPublisher.java (publish(), lignes 90-96).
+
+[ISSUE-071] [2026-06-20] [CONFIRMED] [CRAFT-08] 4 constantes package-visible KEY_URL/KEY_SPACE_KEY/KEY_TOKEN/KEY_PARENT_PAGE_ID extraites et referencees dans le test via ConfluenceReportPublisher.KEY_*. Fichiers : ConfluenceReportPublisher.java (lignes 62-65) + ConfluenceReportPublisherTest.java.
+
 ---
 
 ## Historique
