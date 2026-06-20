@@ -1,9 +1,12 @@
 package com.performance.platform;
 
+import com.performance.platform.app.plugin.PluginProperties;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.modulith.Modulith;
 
 /**
@@ -22,6 +25,7 @@ import org.springframework.modulith.Modulith;
  */
 @SpringBootApplication
 @Modulith
+@EnableConfigurationProperties(PluginProperties.class)
 public class PerformancePlatformApplication {
 
     private static final Logger log = LoggerFactory.getLogger(PerformancePlatformApplication.class);

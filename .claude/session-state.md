@@ -8,9 +8,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-080 (PluginBootstrap)
-**Statut issue** : [ ] WAITING | [x] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-018 (Application Assembly — IN PROGRESS)
 
 ---
@@ -18,14 +18,15 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — re-review ISSUE-079 : 3 recommandations CONFIRMED (CRAFT-02 defensive copy ExecutionStatusResponse, CRAFT-08 constante STATUS_ACCEPTED, CRAFT-07 executionId dans ExecutionException/ReportGenerationException/ApiExceptionHandler). Commit effectue. 43 tests OK. Next: ISSUE-080 PluginBootstrap.
+Reviewer — re-review: 2 recommandations ISSUE-080 CONFIRMED (CRAFT-01/DOC + NAMING). Commit effectue. Prochaine issue: ISSUE-081 (Config local/orchestrator/agent + securite).
 
 **Prochaine action** :
-@developer — prendre ISSUE-080 PluginBootstrap (PDR-018). TODO, dependances ISSUE-077 + ISSUE-047 DONE. Lire .claude/issues/ISSUE-080.md.
+@developer — prendre ISSUE-081 (TODO, dependances ISSUE-078 DONE), marquer IN PROGRESS.
 
 **Fichiers modifies** (cette session) :
-- `.claude/context/recommendations-tracking.md` (3 reco ISSUE-079 CONFIRMED)
-- `.claude/progress.md` (ISSUE-079 → DONE)
+- `.claude/context/recommendations-tracking.md` (ISSUE-080 APPLIED → CONFIRMED)
+- `.claude/progress.md` (ISSUE-080 APPROVED → DONE + transition log)
+- `.claude/context/interfaces-registry.md` (PluginBootstrap/PluginProperties IN PROGRESS → STABLE)
 - `.claude/session-state.md` (ce fichier)
 
 **Blocages** :
@@ -45,3 +46,4 @@ Reviewer — re-review ISSUE-079 : 3 recommandations CONFIRMED (CRAFT-02 defensi
 | 2026-06-20 | Developer | ISSUE-079 | ScenarioController + 2 DTOs + ApiExceptionHandler + 11 tests. 43 total OK, BUILD SUCCESS. Jackson 2.x excluded, bytebuddy experimental. | IN REVIEW |
 | 2026-06-20 | Developer | ISSUE-079 | 3 recommandations APPLIED (CRAFT-02, CRAFT-08, CRAFT-07). Tests OK. Awaiting re-review. | — |
 | 2026-06-20 | Reviewer | ISSUE-079 | Re-review: 3 recommandations CONFIRMED (CRAFT-02/CRAFT-08/CRAFT-07). Commit. | DONE |
+| 2026-06-20 | Developer | ISSUE-080 | PluginBootstrap + PluginProperties + 8 tests + @EnableConfigurationProperties. 51 tests OK, BUILD SUCCESS. | IN REVIEW |
