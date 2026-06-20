@@ -310,6 +310,12 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-064] [2026-06-20] [CONFIRMED] [TEST-04] Chemin getRequiredDoubleParam type check (ligne 310-316) non couvert — pas de test pour sizeBytes non-numerique (ex: String "not-a-number"). Ajouter shouldErrorOnNonNumericSizeBytes dans SizeCheck. Fichier : .../assertion/file/FileAssertionExecutorTest.java.
 
+[ISSUE-066] [2026-06-20] [CONFIRMED] [CRAFT-05] Classe DefaultReportEngine 329 lignes (>300) — CC-02 ajoute dans Javadoc classe. Pipeline de generation cohesif (classifyTasks → buildPreparationEntries → buildInjectionEntries → buildAssertionEntries → VerdictCalculator → buildExecutionSummary → buildEnvironmentInfo → buildVerdictReason). Ajouter ligne CC-02 dans la Javadoc de classe. Fichier : .../engine/DefaultReportEngine.java (classe, ligne 41-50).
+
+[ISSUE-066] [2026-06-20] [CONFIRMED] [CRAFT-05] generate() 50 lignes (>40) — CC-02 ajoute dans Javadoc methode. Pipeline cohesif d'assemblage du CampaignReport (classification → construction entries → verdict → summary → environment → report final). Ajouter CC-02 dans la Javadoc de methode. Fichier : .../engine/DefaultReportEngine.java:91-96.
+
+[ISSUE-066] [2026-06-20] [CONFIRMED] [CRAFT-05] buildExecutionSummary() 47 lignes (>40) — CC-02 ajoute dans Javadoc methode. Iteration cohesives prep→injection→assertion pour compteurs et durees agregees. Ajouter CC-02 dans la Javadoc de methode. Fichier : .../engine/DefaultReportEngine.java:239-241.
+
 ---
 
 ## Historique
