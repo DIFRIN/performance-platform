@@ -340,6 +340,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-073] [2026-06-20] [CONFIRMED] [PRECISION] Parametre `logDir` inutilise dans `runGit(Path logDir, Path workDir, String... command)`. Le parametre n'est jamais reference dans le corps de la methode. Supprimer `logDir` de la signature de `runGit()` et mettre a jour les 4 appelants (`gitClone`, `gitAdd`, `gitCommit`, `gitPush`). Fichier : platform-infrastructure/.../publisher/git/GitReportPublisher.java:239.
 
+[ISSUE-078] [2026-06-20] [CONFIRMED] [TEST-04] Chemin prioritaire `System.getenv("RUNTIME_MODE")`/`MODE`/`TRANSPORT_TYPE` non couvert par les tests. Remplacer `System.getenv()` par `environment.getProperty()` dans `resolveMode()`/`resolveRole()`/`resolveTransportType()`. Ajouter 3 tests de priorite (env var override property) via `MockEnvironment.withProperty()`. Fichiers : platform-app/.../runtime/RuntimeModeResolver.java + RuntimeModeResolverTest.java.
+
 ---
 
 [ISSUE-063] [2026-06-20] [CONFIRMED] [CRAFT-05] Classe 379 lignes (>300) sans marqueur CC-02 dans la Javadoc de classe. La methode evaluate() a son CC-02 (lignes 101-105) mais la classe elle-meme manque le marqueur. Ajouter bloc CC-02 dans la Javadoc de classe expliquant le pipeline cohesif d'evaluation WireMock (resolution parametres → validation metrique → resolution URL → HTTP /__admin/requests/count → extraction count → evaluation operateur → construction resultat). Pattern etabli : ISSUE-062, ISSUE-064, ISSUE-071. Fichier : platform-assertion/.../httpmock/HttpMockAssertionExecutor.java:32-46.
