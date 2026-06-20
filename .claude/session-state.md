@@ -11,57 +11,24 @@
 
 **Date derniere session** : 2026-06-20
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-072 (S3ReportPublisher)
+**Issue active** : —
 **Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
-**PDR parent** : PDR-016 (Report Publishers — IN PROGRESS)
+**PDR parent** : PDR-016 (Report Publishers — DONE)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer : re-review ISSUE-072 CONFIRMED. 3 recommandations (CRAFT-05 CC-02 awsSign() + SPEC-01 @Component + TEST-04 shouldThrowWhenAwsEnvVarsNotSet) appliquees correctement. 25 tests OK. Commit.
+Reviewer : re-review ISSUE-073 CONFIRMED — [PRECISION] logDir supprime, 20 tests OK, PDR-016 DONE.
 
 **Prochaine action** :
-Developer : reprendre ISSUE-063 (HttpMockAssertionExecutor) IN REVIEW, ou ISSUE-073 (GitReportPublisher) TODO.
+Developer : ISSUE-063 (HttpMockAssertionExecutor) — IN REVIEW. Ou PDR-017 (Observability) — prochaine phase.
 
-**Fichiers modifies** :
-- `.claude/context/recommendations-tracking.md` — ISSUE-072: 3 APPLIED → CONFIRMED
-- `.claude/progress.md` — ISSUE-072: IN REVIEW (re-review) → DONE
+**Fichiers modifies** (cette session) :
+- `.claude/progress.md` — ISSUE-073 IN REVIEW → APPROVED
+- `.claude/context/recommendations-tracking.md` — [PRECISION] PENDING ajoutee
 - `.claude/session-state.md` — ce fichier
-
-**Fichiers modifies** :
-```
-✅ platform-assertion/.../database/DatabaseAssertionExecutorIT.java — @SuppressWarnings("resource") PostgreSQLContainer
-✅ platform-assertion/.../file/FileAssertionExecutorTest.java — import NoSuchAlgorithmException retire
-✅ platform-assertion/.../gatling/GatlingMetricAssertionExecutorTest.java — import Evidence retire
-✅ platform-assertion/.../kafka/KafkaAssertionExecutorTest.java — import Evidence retire
-✅ platform-execution-engine/.../e2e/ExecutionEngineE2ETest.java — imports TaskStatus, duplicate Duration/Instant retires, field persistedStates retire
-✅ platform-infrastructure/.../docker/DockerTaskExecutor.java — imports TaskStatus, Instant, List + @SuppressWarnings retires
-✅ platform-infrastructure/.../kafka/KafkaConsumerTaskExecutor.java — import Duration retire
-✅ platform-infrastructure/.../kafka/KafkaProducerTaskExecutor.java — import Duration retire
-✅ platform-infrastructure/.../shell/ShellTaskExecutor.java — 3 @SuppressWarnings("unchecked") retires
-✅ platform-infrastructure/.../mapper/ExecutionStateMapper.java — @SuppressWarnings("unchecked") + cast redondant retires
-✅ platform-infrastructure/.../mapper/TaskResultMapper.java — imports TaskStatus, HashMap retires
-✅ platform-infrastructure/.../database/DatabaseTaskExecutorIT.java — @SuppressWarnings("resource") PostgreSQLContainer
-✅ platform-infrastructure/.../kafka/KafkaTaskExecutorsIT.java — @SuppressWarnings("deprecation") KafkaContainer
-✅ platform-infrastructure/.../fs/FilesystemTaskExecutorTest.java — method contextWithId retiree (deja fait)
-✅ platform-infrastructure/.../mapper/TaskResultMapperTest.java — variables execId/agentId inutilisees retirees (x2)
-✅ platform-infrastructure/.../plugin/DefaultPluginLoaderTest.java — faux positif (TaskExecutor utilise)
-✅ platform-infrastructure/.../plugin/.../NoNoArgConstructorPlugin.java — field someField retire (deja fait)
-✅ platform-infrastructure/.../publisher/confluence/ConfluenceReportPublisherTest.java — import TaskResult retire
-✅ platform-infrastructure/.../publisher/MultiPublisherDispatcherTest.java — import ReportPublisherPort (deja fait)
-✅ platform-infrastructure/.../publisher/s3/S3ReportPublisherTest.java — import TaskResult retire
-✅ platform-injection-gatling/.../GatlingTaskExecutor.java — 2 @SuppressWarnings("unchecked") retires
-✅ platform-injection-gatling/.../GatlingTaskExecutorTest.java — import AtomicReference retire
-✅ platform-injection-gatling/.../MinimalSimulation.java — import atOnceUsers retire
-✅ platform-transport/.../http/HttpExecutionTransport.java — imports IOException, Map retires
-✅ platform-transport/.../kafka/KafkaConsumerManager.java — imports Subscription, ConsumerRecords, ConcurrentHashMap, CopyOnWriteArrayList retires
-✅ platform-transport/.../contract/ExecutionTransportContractTest.java — 5 imports retires + 2 variables sub deduquees
-✅ platform-transport/.../http/HttpExecutionTransportTest.java — import OutputStream retire
-✅ platform-transport/.../kafka/KafkaExecutionTransportIT.java — @SuppressWarnings("deprecation") KafkaContainer
-```
-Warnings IDE corriges : 47 sur 47. Tous les tests passent (assertion, execution-engine, infrastructure, injection-gatling, transport).
 
 **Blocages** :
 _Aucun_
@@ -90,3 +57,9 @@ _Aucun_
 | 2026-06-20 | Developer | ISSUE-070 | [CONFIG-01] APPLIED: Javadoc prefixe platform.publishers vs reporting.* | -> re-review |
 | 2026-06-20 | Reviewer | ISSUE-070 | Re-review CONFIRMED: CONFIG-01 OK. Commit. | DONE |
 | 2026-06-20 | Developer | ISSUE-071 | ConfluenceReportPublisher + 15 tests WireMock, 241 total OK, BUILD SUCCESS. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-071 | Re-review CONFIRMED: CRAFT-05 CC-02 + CRAFT-08 KEY_*. Commit. PDR-016 IN PROGRESS. | DONE |
+| 2026-06-20 | Developer | ISSUE-072 | S3ReportPublisher + 24 tests WireMock, 265 total OK. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-072 | Re-review CONFIRMED: CRAFT-05 CC-02/SPEC-01/TEST-04. Commit. | DONE |
+| 2026-06-20 | Developer | ISSUE-073 | GitReportPublisher + 20 tests, 286 total OK. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-073 | APPROVED: 0 bloquant, 1 recommandation [PRECISION] logDir inutilise. 286 tests OK. | APPROVED |
+| 2026-06-20 | Reviewer | ISSUE-073 | Re-review CONFIRMED: [PRECISION] logDir supprime. Commit. PDR-016 DONE. | DONE |
