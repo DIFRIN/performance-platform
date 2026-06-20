@@ -160,7 +160,7 @@
 | ISSUE-063 | HttpMockAssertionExecutor | PDR-014 | platform-assertion | M | IN REVIEW | ISSUE-059 |
 | ISSUE-064 | FileAssertionExecutor | PDR-014 | platform-assertion | S | DONE | ISSUE-059 |
 | ISSUE-067 | HtmlReportRenderer + JsonReportRenderer | PDR-015 | platform-reporting | M | DONE | ISSUE-065 |
-| ISSUE-068 | PdfReportRenderer | PDR-015 | platform-reporting | S | TODO | ISSUE-067 |
+| ISSUE-068 | PdfReportRenderer | PDR-015 | platform-reporting | S | DONE | ISSUE-067 |
 | ISSUE-069 | ReportFileWriter | PDR-015 | platform-reporting | M | TODO | ISSUE-067,068 |
 | ISSUE-070 | MultiPublisherDispatcher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-065,013 |
 | ISSUE-071 | ConfluenceReportPublisher | PDR-016 | platform-infrastructure | M | TODO | ISSUE-070 |
@@ -426,6 +426,10 @@
 | 2026-06-20 | ISSUE-066 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 3 recommandations PENDING (CRAFT-05 CC-02 classe 329L + generate() 50L + buildExecutionSummary() 47L). 41 tests OK. |
 | 2026-06-20 | ISSUE-066 | RE-REVIEW → DONE | Reviewer — 3 recommandations CONFIRMED (CC-02 Javadoc classe + generate() + buildExecutionSummary()). 41 tests OK. |
 | 2026-06-20 | ISSUE-067 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 62 tests OK, spec respectee, craft clean. |
+| 2026-06-20 | ISSUE-068 | TODO → IN PROGRESS | Developer
+| 2026-06-20 | ISSUE-068 | IN PROGRESS → IN REVIEW | Developer — PdfReportRenderer + 11 tests, 73 total OK, %%EOF trailer validé
+| 2026-06-20 | ISSUE-068 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING [TEST-04] shouldWrapConversionErrors trompeur (happy path, pas erreur). 73 tests OK. |
+| 2026-06-20 | ISSUE-068 | APPROVED → DONE | Reviewer — re-review: [TEST-04] CONFIRMED (2 tests erreur avec stubs anonymes). 74 tests OK. |
 
 ---
 
@@ -434,4 +438,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 19
 **Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (ISSUE-065 DONE — platform-reporting module, CampaignReport + interfaces)
+**Dernière mise à jour** : 2026-06-20 (ISSUE-068 DONE — PdfReportRenderer re-review [TEST-04] CONFIRMED)
