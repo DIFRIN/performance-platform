@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-074 (ExecutionMetrics)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [x] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [ ] DONE
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : —
+**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
 **PDR parent** : PDR-017 (Observability — IN PROGRESS)
 
 ---
@@ -20,10 +20,10 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Developer : ISSUE-074 implemente — ExecutionMetrics interface + MicrometerExecutionMetrics + 23 tests, 0 warning, BUILD SUCCESS.
+Reviewer : ISSUE-074 APPROVED — 0 bloquant, 0 recommandation. Commit.
 
 **Prochaine action** :
-Reviewer : review ISSUE-074 (ExecutionMetrics Micrometer).
+Developer : ISSUE-075 (ObservabilityEventListener) — TODO.
 
 **Fichiers modifies** (cette session) :
 - `.claude/progress.md` — ISSUE-073 IN REVIEW → APPROVED
@@ -66,3 +66,4 @@ _Aucun_
 | 2026-06-20 | Reviewer | ISSUE-063 | CHANGES_REQUESTED: CRAFT-05 classe 379L >300 sans CC-02 classe. 124 tests OK. | CHANGES_REQUESTED |
 | 2026-06-20 | Reviewer | ISSUE-063 | Re-review CONFIRMED: CRAFT-05 CC-02 classe OK. Commit. PDR-014 DONE. | DONE |
 | 2026-06-20 | Developer | ISSUE-074 | ExecutionMetrics + MicrometerExecutionMetrics + 23 tests. platform-observability cree. | IN REVIEW |
+| 2026-06-20 | Reviewer | ISSUE-074 | APPROVED: 0 bloquant, 0 recommandation. 23 tests OK. Commit. | DONE |

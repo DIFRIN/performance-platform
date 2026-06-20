@@ -270,7 +270,7 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `ExecutionMetrics` / `MicrometerExecutionMetrics` | 🔄 IN PROGRESS | PDR-017 | ISSUE-074 |
+| `ExecutionMetrics` / `MicrometerExecutionMetrics` | ✅ STABLE | PDR-017 | ISSUE-074 |
 | `ObservabilityEventListener` | ⬜ PLANNED | PDR-017 | ISSUE-075 |
 | `ObservabilityConfiguration` / `ExecutionContextMdcFilter` | ⬜ PLANNED | PDR-017 | ISSUE-076 |
 
