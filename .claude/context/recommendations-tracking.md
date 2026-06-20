@@ -346,6 +346,14 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-063] [2026-06-20] [CONFIRMED] [CRAFT-05] Classe 379 lignes (>300) sans marqueur CC-02 dans la Javadoc de classe. La methode evaluate() a son CC-02 (lignes 101-105) mais la classe elle-meme manque le marqueur. Ajouter bloc CC-02 dans la Javadoc de classe expliquant le pipeline cohesif d'evaluation WireMock (resolution parametres → validation metrique → resolution URL → HTTP /__admin/requests/count → extraction count → evaluation operateur → construction resultat). Pattern etabli : ISSUE-062, ISSUE-064, ISSUE-071. Fichier : platform-assertion/.../httpmock/HttpMockAssertionExecutor.java:32-46.
 
+---
+
+[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-02] ExecutionStatusResponse.phaseStatuses sans defensive copy dans le constructeur compact. Ajouter `phaseStatuses = phaseStatuses == null ? Map.of() : Map.copyOf(phaseStatuses);`. Fichier : platform-app/.../api/dto/ExecutionStatusResponse.java.
+
+[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-08] Magic string "ACCEPTED" a la ligne 70 de ScenarioController. Extraire en constante `STATUS_ACCEPTED`. Fichier : platform-app/.../api/ScenarioController.java:70.
+
+[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-07] Logs ApiExceptionHandler sans contexte (executionId absent). Pour handleExecution et handleReportGeneration, l'executionId pourrait etre extrait de l'exception si disponible. Fichier : platform-app/.../api/ApiExceptionHandler.java.
+
 ## Historique
 
 | Date | Issue | Recommandation | Statut |

@@ -35,6 +35,13 @@
             <groupId>com.performance</groupId>
             <artifactId>platform-scenario-dsl</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <!-- Exclude Jackson 2.x: Spring Boot 4 uses Jackson 3.x (tools.jackson) -->
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.performance</groupId>
@@ -77,7 +84,12 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Spring Boot Starter (Web + Actuator) -->
+        <!-- Spring Boot Starter (Web + Core) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring-boot.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
