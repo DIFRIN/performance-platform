@@ -1,0 +1,11 @@
+# Invalid: missing phase
+scenario:
+  id: no-phase-scenario
+  name: No Phase
+  version: 1.0.0
+  execution:
+    mode: LOCAL
+  steps:
+    - id: step-no-phase
+      task: database
+      timeout: 30s

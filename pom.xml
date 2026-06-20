@@ -34,6 +34,7 @@
         <module>platform-reporting</module>
         <module>platform-observability</module>
         <module>platform-app</module>
+        <module>platform-deployment</module>
     </modules>
 
     <dependencyManagement>

@@ -1,0 +1,34 @@
+scenario:
+  id: e2e-local
+  name: E2E Local Flow
+  version: 1.0.0
+  execution:
+    mode: LOCAL
+  steps:
+    - id: prep-create-dir
+      task: filesystem
+      phase: PREPARATION
+      parameters:
+        operation: CREATE
+        path: /tmp/e2e-test-output
+      timeout: 10s
+    - id: inject-echo-data
+      task: shell
+      phase: INJECTION
+      dependsOn: [prep-create-dir]
+      requiredContexts: [prep-create-dir]
+      parameters:
+        command: echo
+        args: ["E2E local flow test data"]
+        workingDirectory: /tmp/e2e-test-output
+        timeout: 10
+      timeout: 15s
+    - id: assert-output-dir-exists
+      task: file
+      phase: ASSERTION
+      dependsOn: [inject-echo-data]
+      requiredContexts: [inject-echo-data]
+      parameters:
+        path: /tmp/e2e-test-output
+        check: EXISTS
+      timeout: 10s

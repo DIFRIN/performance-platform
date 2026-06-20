@@ -1,0 +1,7 @@
+# Invalid: missing id field
+scenario:
+  name: Missing ID Scenario
+  version: 1.0.0
+  execution:
+    mode: LOCAL
+  steps: []

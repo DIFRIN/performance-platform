@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+        Configuration Logback JSON structuré pour la plateforme.
+        CNF-04: Format de log avec contexte MDC automatique.
+
+        Quand logstash-logback-encoder est sur le classpath, le
+        LogstashEncoder produit des lignes JSON avec les champs MDC
+        (executionId, scenarioId, taskId, agentId, phase) injectes
+        automatiquement.
+
+        Sans logstash-logback-encoder, ce fichier est ignore —
+        Spring Boot utilise son format texte par defaut.
+    -->
+
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>executionId</includeMdcKeyName>
+            <includeMdcKeyName>scenarioId</includeMdcKeyName>
+            <includeMdcKeyName>taskId</includeMdcKeyName>
+            <includeMdcKeyName>agentId</includeMdcKeyName>
+            <includeMdcKeyName>phase</includeMdcKeyName>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <message>message</message>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <level>level</level>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE_JSON" />
+    </root>
+</configuration>

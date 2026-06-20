@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.performance</groupId>
+        <artifactId>performance-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>platform-deployment</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Platform Deployment</name>
+    <description>
+        Artefacts de deploiement : Dockerfile multi-stage, docker-compose dev local, manifests Kubernetes.
+        Aucun code Java metier — uniquement infrastructure de deploiement.
+    </description>
+
+    <!-- Ce module ne contient pas de source Java.
+         Il regroupe les artefacts de deployement (Docker, K8s) utilises par la CI/CD.
+         Le packaging pom exclut ce module du cycle de compilation standard. -->
+
+</project>

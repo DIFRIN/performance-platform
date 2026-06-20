@@ -1,0 +1,101 @@
+scenario:
+  id: full-scenario
+  name: Full Feature Scenario
+  version: 2.3.1
+  tags: [performance, regression, nightly]
+  metadata:
+    owner: team-a
+    jira: PERF-456
+    environment: staging
+  execution:
+    mode: LOCAL
+    taskAvailabilityTimeoutSeconds: 120
+  steps:
+    - id: purge-customer-db
+      task: database
+      phase: PREPARATION
+      parameters:
+        operation: PURGE
+        datasource: customer-db
+        tables: [customers, orders]
+      timeout: 60s
+    - id: seed-test-data
+      task: database
+      phase: PREPARATION
+      requiredContexts: [purge-customer-db]
+      dependsOn: [purge-customer-db]
+      parameters:
+        operation: EXECUTE
+        datasource: customer-db
+        script: classpath:fixtures/seed-customers.sql
+      timeout: 120s
+    - id: start-mock-server
+      task: mockserver
+      phase: PREPARATION
+      parameters:
+        action: START
+        expectations:
+          - method: GET
+            path: /api/customers
+            responseStatus: 200
+            responseBody: '{"customers":[]}'
+      timeout: 30s
+    - id: customer-api-load
+      task: gatling
+      phase: INJECTION
+      requiredContexts: [seed-test-data, start-mock-server]
+      dependsOn: [seed-test-data, start-mock-server]
+      parameters:
+        simulation: com.example.CustomerApiSimulation
+        loadModel: ramp-load
+        protocol: HTTP
+      timeout: 10m
+      retryPolicy:
+        maxAttempts: 2
+        initialDelay: 5s
+        multiplier: 2.0
+        maxDelay: 30s
+    - id: check-p95-latency
+      task: gatling-metric
+      phase: ASSERTION
+      requiredContexts: [customer-api-load]
+      dependsOn: [customer-api-load]
+      parameters:
+        metric: p95Ms
+        operator: LESS_THAN
+        threshold: 500
+        sourceTaskId: customer-api-load
+      timeout: 10s
+    - id: check-error-rate
+      task: gatling-metric
+      phase: ASSERTION
+      requiredContexts: [customer-api-load]
+      dependsOn: [customer-api-load]
+      parameters:
+        metric: errorRate
+        operator: LESS_THAN
+        threshold: 0.01
+        sourceTaskId: customer-api-load
+      timeout: 10s
+    - id: verify-db-row-count
+      task: database
+      phase: ASSERTION
+      requiredContexts: [customer-api-load]
+      dependsOn: [customer-api-load]
+      parameters:
+        operation: ASSERT
+        datasource: customer-db
+        query: SELECT COUNT(*) FROM requests_log
+        operator: GREATER_THAN
+        expected: 0
+      timeout: 10s
+loadModels:
+  ramp-load:
+      type: RAMP
+      stages:
+        - duration: 2m
+          usersPerSecond: 10
+        - duration: 5m
+          usersPerSecond: 100
+        - duration: 3m
+          usersPerSecond: 10

@@ -1,0 +1,25 @@
+# =============================================================================
+# Performance Engineering Platform — ConfigMap
+# =============================================================================
+# Application configuration shared across orchestrator and agents.
+# Sensitive values MUST live in Secrets (perf-db-secret), not here (CNF-03).
+#
+# Apply: kubectl apply -f configmap.yaml
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: perf-platform-config
+  labels:
+    app: performance-platform
+data:
+  # ---- Kafka ----
+  kafka.bootstrap-servers: "perf-kafka-service:29092"
+
+  # ---- Database (non-sensitive parts only) ----
+  db.url: "jdbc:postgresql://perf-postgres-service:5432/performance"
+  db.username: "postgres"
+
+  # ---- Security (non-sensitive) ----
+  platform.security.enabled: "true"

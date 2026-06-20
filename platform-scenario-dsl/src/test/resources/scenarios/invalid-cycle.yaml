@@ -1,0 +1,23 @@
+# Invalid: cycle in dependsOn
+scenario:
+  id: cyclic-scenario
+  name: Cyclic Dependencies
+  version: 1.0.0
+  execution:
+    mode: LOCAL
+  steps:
+    - id: step-a
+      task: database
+      phase: PREPARATION
+      dependsOn: [step-c]
+      timeout: 30s
+    - id: step-b
+      task: database
+      phase: PREPARATION
+      dependsOn: [step-a]
+      timeout: 30s
+    - id: step-c
+      task: database
+      phase: PREPARATION
+      dependsOn: [step-b]
+      timeout: 30s

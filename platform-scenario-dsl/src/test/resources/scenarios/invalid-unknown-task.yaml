@@ -1,0 +1,12 @@
+# Invalid: unknown task type
+scenario:
+  id: unknown-task-scenario
+  name: Unknown Task Type
+  version: 1.0.0
+  execution:
+    mode: LOCAL
+  steps:
+    - id: weird-step
+      task: completely-unknown-task-xyz
+      phase: PREPARATION
+      timeout: 30s

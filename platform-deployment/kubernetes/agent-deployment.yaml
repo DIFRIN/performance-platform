@@ -1,0 +1,87 @@
+# =============================================================================
+# Performance Engineering Platform — Agent Deployment
+# =============================================================================
+# Deployment for agent pods (replicas: 2). Agents are stateless and scaled
+# via HorizontalPodAutoscaler (see agent-hpa.yaml).
+# Each agent auto-discovers its AGENT_ID from the pod name (downward API).
+#
+# Apply: kubectl apply -f agent-deployment.yaml
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: performance-agent
+  labels:
+    app: performance-agent
+    component: agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: performance-agent
+  template:
+    metadata:
+      labels:
+        app: performance-agent
+        component: agent
+    spec:
+      containers:
+        - name: agent
+          image: performance-platform:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # ---- Runtime mode / role (ADR-006: env var prioritaire) ----
+            - name: RUNTIME_MODE
+              value: "DISTRIBUTED"
+            - name: MODE
+              value: "AGENT"
+            - name: TRANSPORT_TYPE
+              value: "KAFKA"
+            # ---- Spring profile ----
+            - name: SPRING_PROFILES_ACTIVE
+              value: "agent"
+            # ---- Agent identity (downward API — pod name) ----
+            - name: AGENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            # ---- Agent tags for observability (ADR-008) ----
+            - name: AGENT_TAGS
+              value: "k8s,standard"
+            # ---- Kafka bootstrap (from ConfigMap) ----
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: perf-platform-config
+                  key: kafka.bootstrap-servers
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          # ---- CD-02: Readiness probe ----
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # ---- CD-02: Liveness probe ----
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      restartPolicy: Always

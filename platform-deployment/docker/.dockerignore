@@ -1,0 +1,62 @@
+# .dockerignore — Performance Engineering Platform
+#
+# Ce fichier doit etre place a la racine du projet (contexte de build Docker).
+# Il est fourni ici dans platform-deployment/docker/ comme reference ;
+# copiez-le ou symlinkez-le a la racine avant de lancer docker build :
+#   cp platform-deployment/docker/.dockerignore .dockerignore
+#   docker build -f platform-deployment/docker/Dockerfile -t performance-platform:latest .
+
+# === Git ===
+.git
+.gitignore
+.gitattributes
+
+# === IDE ===
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# === Maven (build outputs locaux) ===
+target/
+*.class
+*.jar
+# Le JAR est construit par le stage "build" du Dockerfile multi-stage.
+# COPY --from=build copie le JAR, pas depuis le contexte de build hôte.
+# Chemin de sortie Maven : platform-app/target/performance-platform.jar
+
+# === Docker ===
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# === CI/CD ===
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+
+# === Documentation ===
+*.md
+docs/
+
+# === Fichiers temporaires ===
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# === Repertoire .claude (hors contexte build) ===
+.claude/
+
+# === Kubernetes manifests (pas dans l'image) ===
+platform-deployment/kubernetes/
+
+# === Tests (non necessaires dans le build Docker) ===
+src/test/
+
+# === Node/Frontend (si present) ===
+node_modules/
+package-lock.json
