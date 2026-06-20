@@ -362,6 +362,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-082] [2026-06-20] [CONFIRMED] [VERSION] Testcontainers 1.20.4 → 1.20.6 pour alignement inter-modules. platform-assertion, platform-infrastructure, platform-transport utilisent 1.20.6. Mettre a jour les 3 entrees <version> dans platform-app/pom.xml (testcontainers, postgresql, junit-jupiter). Fichier : platform-app/pom.xml:143,149,155.
 
+[ISSUE-083] [2026-06-20] [CONFIRMED] [PRECISION] Exception `.dockerignore` inutile `!platform-app/target/performance-platform.jar` ligne 26. Le Dockerfile multi-stage compile depuis les sources (stage build) et copie le JAR via `COPY --from=build`, pas depuis le contexte de build hote. L'exception re-inclut un fichier qui n'est jamais lu depuis le contexte — code mort. Supprimer la ligne 26 et eventuellement la remplacer par un commentaire documentant le chemin du JAR de sortie. Fichier : platform-deployment/docker/.dockerignore:26.
+
 ## Historique
 
 | Date | Issue | Recommandation | Statut |
