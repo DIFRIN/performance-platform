@@ -8,18 +8,19 @@ import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.Preparation;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.stereotype.Component;
 
-
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -29,26 +30,32 @@ import java.util.concurrent.atomic.AtomicInteger;
  * TaskExecutor for Kafka producer operations: PRODUCE, PRELOAD.
  * <p>
  * Sends messages to a Kafka topic. Supports message templating ({@code {index}},
- * {@code {timestamp}}) and configurable batch sizes.
+ * {@code {timestamp}}) and configurable batch sizes. Uses Spring
+ * {@link KafkaTemplate} via named cluster references or legacy inline bootstrap
+ * servers.
  * <p>
- * Parameters:
+ * Parameters (v2.0 - cluster reference preferred):
  * <ul>
- *   <li>{@code operation} — {@code PRODUCE} or {@code PRELOAD} (default:
+ *   <li>{@code cluster} - named Kafka cluster in {@link KafkaClusterRegistry}
+ *       (v2.0, preferred)</li>
+ *   <li>{@code bootstrapServers} - broker addresses (legacy, log WARN)</li>
+ *   <li>{@code topic} - Kafka topic name (required; resolved through
+ *       {@code KafkaClusterRegistry.resolveTopic()} when {@code cluster}
+ *       is present)</li>
+ *   <li>{@code operation} - {@code PRODUCE} or {@code PRELOAD} (default:
  *       PRODUCE)</li>
- *   <li>{@code topic} — Kafka topic name (required)</li>
- *   <li>{@code bootstrapServers} — broker addresses (required)</li>
- *   <li>{@code messageCount} — number of messages to produce (default: 1)</li>
- *   <li>{@code messageTemplate} — message body template with optional
+ *   <li>{@code messageCount} - number of messages to produce (default: 1)</li>
+ *   <li>{@code messageTemplate} - message body template with optional
  *       {@code {index}} and {@code {timestamp}} placeholders (default:
  *       {@code "perf-message-{index}"})</li>
- *   <li>{@code batchSize} — flush after this many messages (default: 100)</li>
+ *   <li>{@code batchSize} - flush after this many messages (default: 100)</li>
  * </ul>
  * <p>
- * Outputs: {@code {messagesProduced: N}}.
+ * Outputs: {@code {messagesProduced: N, messagesFailed: N}}.
  * I/O blocking operations run under Virtual Threads.
  */
-@Preparation(name = "kafka-producer", version = "1.0.0",
-        description = "Kafka produce or preload messages to a topic")
+@Preparation(name = "kafka-producer", version = "2.0.0",
+        description = "Kafka produce via named cluster reference or inline bootstrap servers")
 @Component
 public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResourceCleaner {
 
@@ -56,15 +63,17 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
     private static final int DEFAULT_MESSAGE_COUNT = 1;
     private static final int DEFAULT_BATCH_SIZE = 100;
     private static final long DEFAULT_TIMEOUT_MS = 120_000L;
+    private static final long SEND_TIMEOUT_SECONDS = 10L;
 
     // Output keys (CRAFT-08: extracted from string literals)
     static final String OUTPUT_MESSAGES_PRODUCED = "messagesProduced";
     static final String OUTPUT_MESSAGES_FAILED = "messagesFailed";
 
-    private final Map<String, KafkaProducer<String, String>> producersByExecution = new ConcurrentHashMap<>();
+    private final KafkaClusterRegistry clusterRegistry;
+    private final Map<String, KafkaTemplate<String, String>> templatesByExecution = new ConcurrentHashMap<>();
 
-    public KafkaProducerTaskExecutor() {
-        // No external dependencies — bootstrap servers come from step parameters
+    public KafkaProducerTaskExecutor(KafkaClusterRegistry clusterRegistry) {
+        this.clusterRegistry = Objects.requireNonNull(clusterRegistry, "clusterRegistry must not be null");
     }
 
     @Override
@@ -75,9 +84,9 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
     /**
      * Executes a kafka-producer operation (PRODUCE or PRELOAD).
      *
-     * <p><b>CC-02</b>: method ~45 lines — parameter extraction, validation,
-     * Virtual Thread dispatch, and exception handling form a single cohesive
-     * control-flow unit that would lose clarity if split.</p>
+     * <p><b>CC-02</b>: method ~60 lines - parameter extraction, cluster-vs-legacy
+     * resolution, validation, Virtual Thread dispatch, and exception handling form
+     * a single cohesive control-flow unit that would lose clarity if split.</p>
      */
     @Override
     public TaskResult execute(ExecutionContext context, StepDefinition step) {
@@ -88,7 +97,8 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
         ExecutionId executionId = context.executionId();
         String operation = Objects.toString(step.parameters().get("operation"), "PRODUCE").toUpperCase().trim();
         String topic = Objects.toString(step.parameters().get("topic"), null);
-        String bootstrapServers = Objects.toString(step.parameters().get("bootstrapServers"), null);
+        String clusterName = (String) step.parameters().get("cluster");
+        String bootstrapServers = (String) step.parameters().get("bootstrapServers");
         int messageCount = parseMessageCount(step);
         String messageTemplate = Objects.toString(step.parameters().get("messageTemplate"), "perf-message-{index}");
         int batchSize = parseBatchSize(step);
@@ -97,8 +107,8 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
         if (topic == null || topic.isBlank()) {
             return fail(step, startNanos, "Required parameter 'topic' is missing or blank");
         }
-        if (bootstrapServers == null || bootstrapServers.isBlank()) {
-            return fail(step, startNanos, "Required parameter 'bootstrapServers' is missing or blank");
+        if (clusterName == null && (bootstrapServers == null || bootstrapServers.isBlank())) {
+            return fail(step, startNanos, "Either 'cluster' or 'bootstrapServers' parameter is required");
         }
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -106,7 +116,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
                 try {
                     return switch (operation) {
                         case "PRODUCE", "PRELOAD" ->
-                                executeProduce(step, startNanos, bootstrapServers, topic, messageCount, messageTemplate, batchSize, timeoutMs, executionId);
+                                executeProduce(step, startNanos, clusterName, bootstrapServers, topic, messageCount, messageTemplate, batchSize, timeoutMs, executionId);
                         default -> fail(step, startNanos, "Unknown kafka-producer operation: " + operation);
                     };
                 } catch (Exception e) {
@@ -128,37 +138,55 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
     }
 
     /**
-     * PRODUCE/PRELOAD: creates a producer, sends messages to the topic with
-     * periodic flushes, and returns produced/failed counts.
+     * PRODUCE/PRELOAD: resolves the KafkaTemplate (cluster or legacy), sends
+     * messages to the topic with periodic flushes, and returns produced/failed
+     * counts.
      *
-     * <p><b>CC-02</b>: method ~45 lines — producer lifecycle management
+     * <p><b>CC-02</b>: method ~45 lines - template lifecycle management
      * (create/send/flush/close) is a single cohesive I/O unit. The send loop
      * is delegated to {@link #sendMessages} to stay within the limit.</p>
      */
     private TaskResult executeProduce(StepDefinition step, long startNanos,
-                                      String bootstrapServers, String topic,
-                                      int messageCount, String messageTemplate,
+                                      String clusterName, String bootstrapServers,
+                                      String topic, int messageCount, String messageTemplate,
                                       int batchSize, long timeoutMs,
                                       ExecutionId executionId) {
-        KafkaProducer<String, String> producer = createProducer(bootstrapServers);
+        // Resolve topic name and create KafkaTemplate
+        String physicalTopic;
+        KafkaTemplate<String, String> kafkaTemplate;
+
+        if (clusterName != null) {
+            physicalTopic = clusterRegistry.resolveTopic(clusterName, topic);
+            kafkaTemplate = new KafkaTemplate<>(clusterRegistry.producerFactory(clusterName));
+            log.info("action=produce_via_cluster clusterName={} logicalTopic={} physicalTopic={} messageCount={} executionId={}",
+                    clusterName, topic, physicalTopic, messageCount, executionId.value());
+        } else {
+            physicalTopic = topic;
+            log.warn("action=produce_via_legacy_bootstrap bootstrapServers={} topic={} executionId={} "
+                    + "consider migrating to named cluster reference",
+                    bootstrapServers, topic, executionId.value());
+            ProducerFactory<String, String> ephemeralFactory = createEphemeralFactory(bootstrapServers);
+            kafkaTemplate = new KafkaTemplate<>(ephemeralFactory);
+        }
+
         String executionKey = step.id().value();
-        producersByExecution.put(executionKey, producer);
+        templatesByExecution.put(executionKey, kafkaTemplate);
 
         try {
             log.info("action=produce_start topic={} messageCount={} batchSize={} executionId={} stepId={}",
-                    topic, messageCount, batchSize, executionId.value(), step.id().value());
+                    physicalTopic, messageCount, batchSize, executionId.value(), step.id().value());
 
             AtomicInteger produced = new AtomicInteger(0);
             AtomicInteger failed = new AtomicInteger(0);
             long deadline = System.currentTimeMillis() + timeoutMs;
 
-            sendMessages(producer, topic, messageCount, messageTemplate, batchSize,
+            sendMessages(kafkaTemplate, physicalTopic, messageCount, messageTemplate, batchSize,
                     deadline, produced, failed, executionId, step.id());
 
             // Final flush to ensure all messages are sent
-            producer.flush();
+            kafkaTemplate.flush();
 
-            java.time.Duration elapsed = java.time.Duration.ofNanos(System.nanoTime() - startNanos);
+            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     OUTPUT_MESSAGES_PRODUCED, produced.get(),
                     OUTPUT_MESSAGES_FAILED, failed.get()
@@ -166,28 +194,30 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
 
             if (failed.get() > 0) {
                 log.warn("action=produce_done_with_errors topic={} produced={} failed={} executionId={} stepId={}",
-                        topic, produced.get(), failed.get(), executionId.value(), step.id().value());
+                        physicalTopic, produced.get(), failed.get(), executionId.value(), step.id().value());
             } else {
                 log.info("action=produce_done topic={} messagesProduced={} executionId={} stepId={}",
-                        topic, produced.get(), executionId.value(), step.id().value());
+                        physicalTopic, produced.get(), executionId.value(), step.id().value());
             }
 
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, outputs);
 
         } catch (Exception e) {
-            log.error("action=produce_failed topic={} executionId={} stepId={}", topic, executionId.value(), step.id().value(), e);
-            return fail(step, startNanos, "PRODUCE failed on topic '" + topic + "': " + e.getMessage());
+            log.error("action=produce_failed topic={} executionId={} stepId={}", physicalTopic, executionId.value(), step.id().value(), e);
+            return fail(step, startNanos, "PRODUCE failed on topic '" + physicalTopic + "': " + e.getMessage());
         } finally {
-            producersByExecution.remove(executionKey);
-            closeProducer(producer);
+            templatesByExecution.remove(executionKey);
+            closeTemplate(kafkaTemplate);
         }
     }
 
     /**
      * Sends {@code messageCount} messages to the topic, flushing periodically
-     * at each batch boundary. Tracks produced/failed via atomic counters.
+     * at each batch boundary. Uses synchronous {@code KafkaTemplate.send().get()}
+     * since the caller runs on a Virtual Thread. Tracks produced/failed via
+     * atomic counters.
      */
-    private void sendMessages(KafkaProducer<String, String> producer, String topic,
+    private void sendMessages(KafkaTemplate<String, String> kafkaTemplate, String topic,
                               int messageCount, String messageTemplate, int batchSize,
                               long deadline, AtomicInteger produced, AtomicInteger failed,
                               ExecutionId executionId, TaskId taskId) {
@@ -201,22 +231,19 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
             final int index = i;
             String message = resolveTemplate(messageTemplate, index);
             String key = "msg-" + index;
-            ProducerRecord<String, String> record = new ProducerRecord<>(topic, key, message);
 
-            producer.send(record, (metadata, exception) -> {
-                if (exception != null) {
-                    failed.incrementAndGet();
-                    log.warn("action=produce_failed topic={} index={} partition={} executionId={} stepId={}",
-                            topic, index, metadata != null ? metadata.partition() : -1,
-                            executionId.value(), taskId.value(), exception);
-                } else {
-                    produced.incrementAndGet();
-                }
-            });
+            try {
+                kafkaTemplate.send(topic, key, message).get(SEND_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                produced.incrementAndGet();
+            } catch (Exception e) {
+                failed.incrementAndGet();
+                log.warn("action=produce_failed topic={} index={} executionId={} stepId={}",
+                        topic, index, executionId.value(), taskId.value(), e);
+            }
 
             // Flush periodically to avoid accumulating too many in-flight records
             if (index % batchSize == 0) {
-                producer.flush();
+                kafkaTemplate.flush();
                 log.debug("action=produce_batch_flush topic={} batchEnd={} producedSoFar={} executionId={} stepId={}",
                         topic, index, produced.get(), executionId.value(), taskId.value());
             }
@@ -226,8 +253,8 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
     /**
      * Resolves a message template. Supports two placeholders:
      * <ul>
-     *   <li>{@code {index}} — replaced with the 1-based message index</li>
-     *   <li>{@code {timestamp}} — replaced with {@code System.currentTimeMillis()}</li>
+     *   <li>{@code {index}} - replaced with the 1-based message index</li>
+     *   <li>{@code {timestamp}} - replaced with {@code System.currentTimeMillis()}</li>
      * </ul>
      */
     static String resolveTemplate(String template, int index) {
@@ -236,15 +263,19 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
                 .replace("{timestamp}", String.valueOf(System.currentTimeMillis()));
     }
 
-    private KafkaProducer<String, String> createProducer(String bootstrapServers) {
-        Properties props = new Properties();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.ACKS_CONFIG, "all");
-        props.put(ProducerConfig.RETRIES_CONFIG, 3);
-        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
-        return new KafkaProducer<>(props);
+    /**
+     * Creates an ephemeral {@link ProducerFactory} from inline bootstrap servers
+     * (legacy path). Logs a WARN to encourage migration to named clusters.
+     */
+    private ProducerFactory<String, String> createEphemeralFactory(String bootstrapServers) {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.ACKS_CONFIG, "all");
+        config.put(ProducerConfig.RETRIES_CONFIG, 3);
+        config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+        return new DefaultKafkaProducerFactory<>(config);
     }
 
     private int parseMessageCount(StepDefinition step) {
@@ -271,35 +302,38 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        java.time.Duration elapsed = java.time.Duration.ofNanos(System.nanoTime() - startNanos);
+        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 
-    private void closeProducer(KafkaProducer<String, String> producer) {
+    /**
+     * Closes the underlying {@link ProducerFactory} of the given template
+     * to release connections.
+     */
+    private void closeTemplate(KafkaTemplate<String, String> kafkaTemplate) {
         try {
-            producer.flush();
-            producer.close(java.time.Duration.ofSeconds(10));
+            kafkaTemplate.destroy();
         } catch (Exception e) {
-            log.warn("action=close_producer_failed", e);
+            log.warn("action=close_template_failed", e);
         }
     }
 
     /**
-     * Flushes and closes any active producer for the given execution
-     * (called on scenario restart).
-     * If {@code executionId} is null, flushes and closes all active producers.
+     * Flushes and closes active templates for the given execution (called on
+     * scenario restart). If {@code executionId} is null, flushes and closes all
+     * active templates.
      */
     @Override
     public void cleanup(ExecutionId executionId) {
         if (executionId == null) {
-            log.info("action=cleanup_all activeProducers={}", producersByExecution.size());
-            producersByExecution.values().forEach(this::closeProducer);
-            producersByExecution.clear();
+            log.info("action=cleanup_all activeTemplates={}", templatesByExecution.size());
+            templatesByExecution.values().forEach(this::closeTemplate);
+            templatesByExecution.clear();
         } else {
-            KafkaProducer<String, String> producer = producersByExecution.remove(executionId.value());
-            if (producer != null) {
+            KafkaTemplate<String, String> template = templatesByExecution.remove(executionId.value());
+            if (template != null) {
                 log.info("action=cleanup_execution executionId={}", executionId.value());
-                closeProducer(producer);
+                closeTemplate(template);
             }
         }
     }

@@ -26,6 +26,7 @@ import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+import java.util.Map;
 
 import java.time.Duration;
 import java.util.List;
@@ -47,10 +48,12 @@ class KafkaTaskExecutorsIT {
     private static KafkaConsumerTaskExecutor consumerExecutor;
     private static KafkaProducerTaskExecutor producerExecutor;
 
+    private static final KafkaClusterRegistry EMPTY_REGISTRY = new KafkaClusterRegistry(Map.of());
+
     @BeforeAll
     static void setUp() {
         consumerExecutor = new KafkaConsumerTaskExecutor();
-        producerExecutor = new KafkaProducerTaskExecutor();
+        producerExecutor = new KafkaProducerTaskExecutor(EMPTY_REGISTRY);
     }
 
     @AfterAll

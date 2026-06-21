@@ -10,7 +10,7 @@
 
 **Date derniere session** : 2026-06-21
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-092 (HttpTargetRegistry + Properties + Configuration — IN REVIEW)
+**Issue active** : ISSUE-087 (Refactor KafkaProducerTaskExecutor — IN REVIEW)
 **Statut issue** : [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
 **PDR parent** : PDR-020
 
@@ -19,37 +19,17 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Developer — ISSUE-092: HttpTargetProperties + PlatformHttpTargetsProperties + HttpTargetRegistry + HttpTargetConfiguration + 16 tests. mvn test OK, BUILD SUCCESS.
-- KafkaClusterProperties.java (record, immutable, defensive copy)
-- PlatformKafkaProperties.java (@ConfigurationProperties record)
-- KafkaClusterRegistry.java (registry + resolveTopic + producerFactory / consumerFactory)
-- KafkaClusterConfiguration.java (@Configuration + @Bean)
-- KafkaClusterRegistryTest.java (17 tests: Get, ResolveTopic, ProducerFactory, ConsumerFactory, Immutability)
-- platform-infrastructure/pom.xml (+spring-kafka 4.0.0)
-- application-orchestrator.yaml (+platform.kafka-clusters block)
-- application-agent.yaml (+platform.kafka-clusters block)
-- mvn test -pl platform-infrastructure : 303 tests OK, BUILD SUCCESS
-
+Developer — ISSUE-087: Refactor KafkaProducerTaskExecutor → KafkaTemplate + KafkaClusterRegistry. 19 tests OK, BUILD SUCCESS (338 total).
 **Prochaine action** :
-Reviewer doit review ISSUE-092 (@reviewer).
+Reviewer doit review ISSUE-087 (@reviewer).
 Prochaines Issues disponibles :
-  1. ISSUE-087 (P1, M, dep ISSUE-086 DONE) — Refactor KafkaProducerTaskExecutor
-  2. ISSUE-088 (P1, M, dep ISSUE-086 DONE) — Refactor KafkaConsumerTaskExecutor
+  1. ISSUE-088 (P1, M, dep ISSUE-086 DONE) — Refactor KafkaConsumerTaskExecutor
+  2. ISSUE-093 (P1, M, dep ISSUE-092 DONE) — Nouveau HttpClientTaskExecutor
   3. ISSUE-096 (P1, L, dep ISSUE-098 DONE) — SUT iot-dispatcher
-
 **Fichiers modifies** (cette session) :
-- platform-infrastructure/src/main/java/.../executor/http/HttpTargetProperties.java (cree)
-- platform-infrastructure/src/main/java/.../executor/http/PlatformHttpTargetsProperties.java (cree)
-- platform-infrastructure/src/main/java/.../executor/http/HttpTargetRegistry.java (cree)
-- platform-infrastructure/src/main/java/.../executor/http/HttpTargetConfiguration.java (cree)
-- platform-infrastructure/src/test/java/.../executor/http/HttpTargetRegistryTest.java (cree)
-- platform-infrastructure/pom.xml (+spring-web 7.0.0)
-- platform-app/src/main/resources/application-orchestrator.yaml (platform.http-targets block)
-- platform-app/src/main/resources/application-local.yaml (platform.http-targets block)
-- .claude/progress.md (ISSUE-092: WAITING → IN PROGRESS → IN REVIEW)
-- .claude/session-state.md (ce fichier)
-- .claude/context/interfaces-registry.md (HttpTarget* → IN PROGRESS)
-
+- platform-infrastructure/src/main/java/.../executor/kafka/KafkaProducerTaskExecutor.java (refactorise)
+- platform-infrastructure/src/test/java/.../executor/kafka/KafkaProducerTaskExecutorTest.java (cree — 19 tests)
+- platform-infrastructure/src/test/java/.../executor/kafka/KafkaTaskExecutorsIT.java (mis a jour — KafkaClusterRegistry)
 **Blocages** : aucun
 
 ---
