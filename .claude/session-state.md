@@ -9,9 +9,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-21
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-086 (KafkaClusterRegistry + KafkaClusterConfiguration — IN REVIEW)
-**Statut issue** : [x] IN REVIEW
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : ISSUE-086 (KafkaClusterRegistry + KafkaClusterConfiguration — DONE)
+**Statut issue** : [x] DONE
 **PDR parent** : PDR-020
 
 ---
@@ -19,7 +19,7 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Developer — ISSUE-086 IN REVIEW :
+Reviewer — ISSUE-086 APPROVED (0 bloquant, 0 recommandation). Commit 29b239a.
 - KafkaClusterProperties.java (record, immutable, defensive copy)
 - PlatformKafkaProperties.java (@ConfigurationProperties record)
 - KafkaClusterRegistry.java (registry + resolveTopic + producerFactory / consumerFactory)
@@ -31,8 +31,7 @@ Developer — ISSUE-086 IN REVIEW :
 - mvn test -pl platform-infrastructure : 303 tests OK, BUILD SUCCESS
 
 **Prochaine action** :
-Reviewer doit revoir ISSUE-086.
-Si APPROVED, Developer peut continuer avec :
+Developer peut continuer avec :
   1. ISSUE-092 (P1, M, aucune dep) — HttpTargetRegistry
   2. ISSUE-096 (P1, L, dep ISSUE-098 DONE) — SUT iot-dispatcher
   3. ISSUE-097 (P1, M, dep ISSUE-098 DONE) — SUT device-api

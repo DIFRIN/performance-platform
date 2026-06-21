@@ -294,10 +294,10 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `KafkaClusterProperties` | 🔄 IN PROGRESS | PDR-020 | ISSUE-086 |
-| `PlatformKafkaProperties` | 🔄 IN PROGRESS | PDR-020 | ISSUE-086 |
-| `KafkaClusterRegistry` | 🔄 IN PROGRESS | PDR-020 | ISSUE-086 |
-| `KafkaClusterConfiguration` | 🔄 IN PROGRESS | PDR-020 | ISSUE-086 |
+| `KafkaClusterProperties` | ✅ STABLE | PDR-020 | ISSUE-086 |
+| `PlatformKafkaProperties` | ✅ STABLE | PDR-020 | ISSUE-086 |
+| `KafkaClusterRegistry` | ✅ STABLE | PDR-020 | ISSUE-086 |
+| `KafkaClusterConfiguration` | ✅ STABLE | PDR-020 | ISSUE-086 |
 
 ## platform-transport — nouvelles classes (PDR-021)
 
