@@ -46,6 +46,25 @@ platform:
         minimum-idle: 5
         connection-timeout: 30000
 
+
+  # Named Kafka clusters (PDR-020)
+  # Chaque cluster definit ses propres bootstrap-servers et topic mappings.
+  # Les topic mappings traduisent un nom logique (utilise dans les scenarios)
+  # vers un nom physique (topic Kafka reel).
+  kafka-clusters:
+    default:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      producer-acks: all
+      consumer-group: perf-consumer
+      topics: {}
+    iot-sut:
+      bootstrap-servers: ${IOT_KAFKA_SERVERS:localhost:9093}
+      producer-acks: "1"
+      consumer-group: perf-test-consumer
+      topics:
+        iot-commands: ${IOT_TOPIC_COMMANDS:iot-commands}
+        device-events: ${DEVICE_TOPIC_EVENTS:device-events}
+
   # Publishers
   # Exemple: activer la publication Confluence
   # publishers:

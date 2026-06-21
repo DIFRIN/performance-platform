@@ -141,7 +141,7 @@
 | ISSUE-077 | SpringBoot main + Modulith + assemblage | PDR-018 | platform-app | M | DONE | ISSUE-023,039,052 |
 | ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | DONE | ISSUE-077 |
 | ISSUE-079 | API REST | PDR-018 | platform-app | M | DONE | ISSUE-077,018 |
-| ISSUE-086 | KafkaClusterRegistry + Properties + Configuration | PDR-020 | platform-infrastructure | M | WAITING | — |
+| ISSUE-086 | KafkaClusterRegistry + Properties + Configuration | PDR-020 | platform-infrastructure | M | IN REVIEW | — |
 | ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
 | ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
 | ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | WAITING | ISSUE-086 |
@@ -530,6 +530,8 @@
 | 2026-06-21 | PDR-020..024 | — → WAITING | System Designer — 5 PDRs + 17 Issues (086..102) créés |
 | 2026-06-21 | ISSUE-086..102 | — → WAITING | System Designer — Spring Kafka migration + Named registries + SUT IoT examples |
 | 2026-06-21 | ISSUE-098 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. V1 + V2 SQL conformes PDR-023. |
+| 2026-06-21 | ISSUE-086 | WAITING → IN PROGRESS | Developer |
+| 2026-06-21 | ISSUE-086 | IN PROGRESS → IN REVIEW | Developer — KafkaClusterRegistry + KafkaClusterConfiguration + 17 tests |
 | 2026-06-21 | ISSUE-098 | IN PROGRESS → IN REVIEW | Developer — V1__devices_schema.sql + V2__seed_10k_devices.sql |
 
 ---
