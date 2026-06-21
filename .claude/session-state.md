@@ -9,27 +9,25 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-21
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : aucune (ISSUE-088 DONE, PDR-020 DONE)
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : ISSUE-089 (KafkaTemplate replace raw KafkaProducer)
 **Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
-**PDR parent** : PDR-020 (DONE)
+**PDR parent** : PDR-021
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-088 re-review: 3 PRECISION CONFIRMED, 0 bloquant. ISSUE-087 et ISSUE-088 passent a DONE. PDR-020 DONE. (Manuellement mis a jour — Reviewer n'avait pas les permissions d'ecriture sur .claude/)
+Reviewer — ISSUE-089 : APPROVED (0 bloquant, 0 recommandation). 213 tests OK, BUILD SUCCESS. KafkaTemplate verify, KafkaTransportBeans stable. Commit effectue.
 **Prochaine action** :
-Developer doit prendre la prochaine Issue WAITING dont les dependances sont DONE.
-Prochaines Issues disponibles :
-  1. ISSUE-089 (P1, M, dep ISSUE-086 DONE) — KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport
-  2. ISSUE-090 (P1, S, dep ISSUE-089) — refactorisation du poll loop transport
-  3. ISSUE-092 (P1, M, dep PDR-022) — HttpTargetRegistry + Properties
-**Fichiers modifies** (cette session) :
-- platform-infrastructure/src/main/java/.../executor/kafka/KafkaConsumerTaskExecutor.java (refactorise)
-- platform-infrastructure/src/test/java/.../executor/kafka/KafkaConsumerTaskExecutorTest.java (cree — 19 tests)
-- platform-infrastructure/src/test/java/.../executor/kafka/KafkaTaskExecutorsIT.java (mis a jour — constructeur + assertions)
+@developer prend ISSUE-090 (P1, L, dep ISSUE-089 DONE) — DynamicKafkaListenerRegistry replace KafkaConsumerManager
+**Fichiers modifies** (cette session — review) :
+- platform-transport/src/main/java/.../kafka/KafkaExecutionTransport.java (KafkaTemplate au lieu de KafkaProducer)
+- platform-transport/src/main/java/.../config/KafkaTransportBeans.java (cree — ProducerFactory + KafkaTemplate beans)
+- platform-transport/src/main/java/.../config/TransportConfiguration.java (injecte KafkaTemplate)
+- platform-transport/src/test/.../kafka/KafkaExecutionTransportTest.java (cree — 20 tests avec KafkaTemplate mock)
+- platform-transport/src/test/.../kafka/KafkaExecutionTransportIT.java (adapte pour KafkaTemplate)
 **Blocages** : aucun
 
 ---
