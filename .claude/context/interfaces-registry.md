@@ -304,7 +304,7 @@
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
 | `DynamicKafkaListenerRegistry` | ⬜ PLANNED | PDR-021 | ISSUE-090 |
-| `KafkaTransportBeans` | ⬜ PLANNED | PDR-021 | ISSUE-089,091 |
+| `KafkaTransportBeans` | ✅ STABLE | PDR-021 | ISSUE-089 |
 
 ## platform-infrastructure — `.executor.http` (PDR-022 — nouvelles classes)
 
