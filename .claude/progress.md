@@ -150,7 +150,7 @@
 | ISSUE-093 | Nouveau HttpClientTaskExecutor (@Preparation http-client) | PDR-022 | platform-infrastructure | M | WAITING | ISSUE-092 |
 | ISSUE-096 | SUT iot-dispatcher Spring Boot (Kafka→DB→HTTP) | PDR-023 | platform-examples/ | L | WAITING | ISSUE-098 |
 | ISSUE-097 | SUT device-api Spring Boot (HTTP→DB→Kafka) | PDR-023 | platform-examples/ | M | WAITING | ISSUE-098 |
-| ISSUE-098 | SUT DB schema + seed 10k devices | PDR-023 | platform-examples/ | S | WAITING | — |
+| ISSUE-098 | SUT DB schema + seed 10k devices | PDR-023 | platform-examples/ | S | IN REVIEW | — |
 | ISSUE-099 | docker-compose-sut.yaml (5 services SUT) | PDR-024 | platform-deployment | S | WAITING | ISSUE-096,097,098 |
 | ISSUE-100 | Scénarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
 | ISSUE-101 | Scénarios YAML device-api (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
@@ -529,6 +529,7 @@
 | 2026-06-20 | PDR-019 | IN PROGRESS → DONE | Reviewer (ISSUE-083,084,085 all DONE) |
 | 2026-06-21 | PDR-020..024 | — → WAITING | System Designer — 5 PDRs + 17 Issues (086..102) créés |
 | 2026-06-21 | ISSUE-086..102 | — → WAITING | System Designer — Spring Kafka migration + Named registries + SUT IoT examples |
+| 2026-06-21 | ISSUE-098 | IN PROGRESS → IN REVIEW | Developer — V1__devices_schema.sql + V2__seed_10k_devices.sql |
 
 ---
 
