@@ -69,7 +69,7 @@
 | PDR-017 | Observability | platform-observability | DONE | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | DONE | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
 | PDR-019 | Deployment | platform-deployment | DONE | ISSUE-083,084,085 | PDR-018 |
-| PDR-020 | Named Kafka Cluster Registry + Executors | platform-infrastructure | WAITING | ISSUE-086,087,088 | PDR-010 |
+| PDR-020 | Named Kafka Cluster Registry + Executors | platform-infrastructure | DONE | ISSUE-086,087,088 | PDR-010 |
 | PDR-021 | Spring Kafka Migration — Transport | platform-transport | WAITING | ISSUE-089,090,091 | PDR-020 |
 | PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | WAITING | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
 | PDR-023 | SUT Example Services (IoT) | platform-examples/ | WAITING | ISSUE-096,097,098 | — |
@@ -142,8 +142,8 @@
 | ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | DONE | ISSUE-077 |
 | ISSUE-079 | API REST | PDR-018 | platform-app | M | DONE | ISSUE-077,018 |
 | ISSUE-086 | KafkaClusterRegistry + Properties + Configuration | PDR-020 | platform-infrastructure | M | DONE | — |
-| ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | APPROVED | ISSUE-086 |
-| ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | IN REVIEW | ISSUE-086 |
+| ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | DONE | ISSUE-086 |
+| ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | DONE | ISSUE-086 |
 | ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | WAITING | ISSUE-086 |
 | ISSUE-090 | DynamicKafkaListenerRegistry replace KafkaConsumerManager | PDR-021 | platform-transport | L | WAITING | ISSUE-089 |
 | ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | DONE | — |
@@ -542,6 +542,8 @@
 | 2026-06-21 | ISSUE-088 | WAITING → IN PROGRESS → IN REVIEW | Developer — KafkaConsumerTaskExecutor refactored to Spring ConsumerFactory + KafkaClusterRegistry, 19 unit tests + IT updated, 355 total OK |
 | 2026-06-21 | ISSUE-088 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 3 recommandations [PRECISION] PENDING, 355 tests OK |
 | 2026-06-21 | ISSUE-088 | APPROVED → IN REVIEW | Developer — 3 recommandations APPLIED (PRECISION-01/02/03), re-review requested |
+| 2026-06-21 | ISSUE-087 | APPROVED → DONE | Reviewer — re-review CONFIRMED (reviewed alongside ISSUE-088), 19 tests + IT OK |
+| 2026-06-21 | ISSUE-088 | IN REVIEW → DONE | Reviewer — re-review: 3 PRECISION CONFIRMED, 0 bloquant, 355 tests OK. PDR-020 DONE. |
 
 ---
 
@@ -550,4 +552,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 24
 **Issues totales** : 102
-**Derniere mise a jour** : 2026-06-21 (Reviewer — ISSUE-098 DONE)
+**Derniere mise a jour** : 2026-06-21 (Reviewer — ISSUE-087,088 DONE, PDR-020 DONE)

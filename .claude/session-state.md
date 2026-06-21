@@ -10,24 +10,22 @@
 
 **Date derniere session** : 2026-06-21
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-088 (Refactor KafkaConsumerTaskExecutor — IN REVIEW)
-**Statut issue** : [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE | [ ] APPROVED
-**PDR parent** : PDR-020
+**Issue active** : aucune (ISSUE-088 DONE, PDR-020 DONE)
+**Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
+**PDR parent** : PDR-020 (DONE)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Developer — 3 recommandations PRECISION-01/02/03 APPLIED. execute() CC-02 fixe (~44→~49). Tests OK. Re-review requested.
-**Ancienne derniere action (Reviewer)** :
-Reviewer — ISSUE-088 APPROVED (0 bloquant, 3 recommandations [PRECISION] PENDING). 355 tests OK, BUILD SUCCESS. → Spring ConsumerFactory + KafkaClusterRegistry. 19 unit tests + IT updated, BUILD SUCCESS (355 total).
+Reviewer — ISSUE-088 re-review: 3 PRECISION CONFIRMED, 0 bloquant. ISSUE-087 et ISSUE-088 passent a DONE. PDR-020 DONE. (Manuellement mis a jour — Reviewer n'avait pas les permissions d'ecriture sur .claude/)
 **Prochaine action** :
-Reviewer doit re-review ISSUE-088 (@reviewer rereview). Toutes les recommandations sont APPLIED. [PRECISION-01/02/03] pour ISSUE-088, OU passer a ISSUE-089 (@developer).
+Developer doit prendre la prochaine Issue WAITING dont les dependances sont DONE.
 Prochaines Issues disponibles :
   1. ISSUE-089 (P1, M, dep ISSUE-086 DONE) — KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport
-  2. ISSUE-093 (P1, M, dep ISSUE-092 DONE) — Nouveau HttpClientTaskExecutor
-  3. ISSUE-096 (P1, L, dep ISSUE-098 DONE) — SUT iot-dispatcher
+  2. ISSUE-090 (P1, S, dep ISSUE-089) — refactorisation du poll loop transport
+  3. ISSUE-092 (P1, M, dep PDR-022) — HttpTargetRegistry + Properties
 **Fichiers modifies** (cette session) :
 - platform-infrastructure/src/main/java/.../executor/kafka/KafkaConsumerTaskExecutor.java (refactorise)
 - platform-infrastructure/src/test/java/.../executor/kafka/KafkaConsumerTaskExecutorTest.java (cree — 19 tests)
