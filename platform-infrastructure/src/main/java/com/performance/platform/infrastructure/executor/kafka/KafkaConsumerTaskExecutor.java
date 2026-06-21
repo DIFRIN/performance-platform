@@ -126,7 +126,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
                         case "CONSUME" -> executeConsume(step, startNanos, clusterName, bootstrapServers,
                                 topic, groupId, maxMessages, timeoutMs, executionId);
                         case "COUNT" -> executeCount(step, startNanos, clusterName, bootstrapServers,
-                                topic, groupId, timeoutMs, executionId);
+                                topic, timeoutMs, executionId);
                         default -> fail(step, startNanos, "Unknown kafka-consumer operation: " + operation);
                     };
                 } catch (Exception e) {
@@ -155,7 +155,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
      * never exceeds {@code maxMessages} regardless of the broker-configured
      * {@code max.poll.records}.
      *
-     * <p><b>CC-02</b>: method ~48 lines - cluster-vs-legacy resolution, consumer
+     * <p><b>CC-02</b>: method ~58 lines - cluster-vs-legacy resolution, consumer
      * lifecycle (create/poll/commit/close), lag computation, and output assembly
      * form a single logical unit.</p>
      */
@@ -252,13 +252,13 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
      * COUNT: counts total available messages in the topic using beginning/end
      * offsets without consuming any messages.
      *
-     * <p><b>CC-02</b>: method ~35 lines - cluster-vs-legacy resolution, consumer
+     * <p><b>CC-02</b>: method ~60 lines - cluster-vs-legacy resolution, consumer
      * lifecycle (create/assign/offsets/close), and output assembly form a single
      * logical unit.</p>
      */
     private TaskResult executeCount(StepDefinition step, long startNanos,
                                     String clusterName, String bootstrapServers,
-                                    String topic, String groupId,
+                                    String topic,
                                     long timeoutMs, ExecutionId executionId) {
         // Resolve topic and create consumer via factory
         String physicalTopic;
