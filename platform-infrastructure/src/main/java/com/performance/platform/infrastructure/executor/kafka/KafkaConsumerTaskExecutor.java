@@ -93,7 +93,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
     /**
      * Executes a kafka-consumer operation (CONSUME or COUNT).
      *
-     * <p><b>CC-02</b>: method ~44 lines - parameter extraction, cluster-vs-legacy
+     * <p><b>CC-02</b>: method ~49 lines - parameter extraction, cluster-vs-legacy
      * resolution, validation, Virtual Thread dispatch, and exception handling form
      * a single cohesive control-flow unit that would lose clarity if split.</p>
      */
