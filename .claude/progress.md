@@ -146,7 +146,7 @@
 | ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
 | ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | WAITING | ISSUE-086 |
 | ISSUE-090 | DynamicKafkaListenerRegistry replace KafkaConsumerManager | PDR-021 | platform-transport | L | WAITING | ISSUE-089 |
-| ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | IN REVIEW | — |
+| ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | DONE | — |
 | ISSUE-093 | Nouveau HttpClientTaskExecutor (@Preparation http-client) | PDR-022 | platform-infrastructure | M | WAITING | ISSUE-092 |
 | ISSUE-096 | SUT iot-dispatcher Spring Boot (Kafka→DB→HTTP) | PDR-023 | platform-examples/ | L | WAITING | ISSUE-098 |
 | ISSUE-097 | SUT device-api Spring Boot (HTTP→DB→Kafka) | PDR-023 | platform-examples/ | M | WAITING | ISSUE-098 |
