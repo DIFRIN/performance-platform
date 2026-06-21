@@ -142,8 +142,8 @@
 | ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | DONE | ISSUE-077 |
 | ISSUE-079 | API REST | PDR-018 | platform-app | M | DONE | ISSUE-077,018 |
 | ISSUE-086 | KafkaClusterRegistry + Properties + Configuration | PDR-020 | platform-infrastructure | M | DONE | — |
-| ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
-| ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | IN REVIEW | ISSUE-086 |
+| ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | APPROVED | ISSUE-086 |
+| ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | APPROVED | ISSUE-086 |
 | ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | WAITING | ISSUE-086 |
 | ISSUE-090 | DynamicKafkaListenerRegistry replace KafkaConsumerManager | PDR-021 | platform-transport | L | WAITING | ISSUE-089 |
 | ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | DONE | — |
@@ -537,7 +537,10 @@
 | 2026-06-21 | ISSUE-098 | IN PROGRESS → IN REVIEW | Developer — V1__devices_schema.sql + V2__seed_10k_devices.sql |
 | 2026-06-21 | ISSUE-087 | WAITING → IN PROGRESS → IN REVIEW | Developer — KafkaProducerTaskExecutor refactored to KafkaTemplate + KafkaClusterRegistry, 19 new unit tests |
 
+
+| 2026-06-21 | ISSUE-087 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, code reviewed alongside ISSUE-088, 19 tests + IT OK |
 | 2026-06-21 | ISSUE-088 | WAITING → IN PROGRESS → IN REVIEW | Developer — KafkaConsumerTaskExecutor refactored to Spring ConsumerFactory + KafkaClusterRegistry, 19 unit tests + IT updated, 355 total OK |
+| 2026-06-21 | ISSUE-088 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 3 recommandations [PRECISION] PENDING, 355 tests OK |
 
 ---
 
