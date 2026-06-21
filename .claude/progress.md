@@ -50,6 +50,7 @@
 | ID | Nom | Module | Statut | Issues | Dépend de |
 |---|---|---|---|---|---|
 | PDR-001 | Domain Core Records | platform-domain | DONE | ISSUE-001..007 | — |
+
 | PDR-002 | Domain Events | platform-domain | DONE | ISSUE-008,009 | PDR-001 |
 | PDR-003 | Plugin API | platform-plugin-api | DONE | ISSUE-010,011 | PDR-001 |
 | PDR-004 | Application Ports & Use Cases | platform-application | DONE | ISSUE-012,013,014 | PDR-001 |
@@ -68,6 +69,11 @@
 | PDR-017 | Observability | platform-observability | DONE | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | DONE | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
 | PDR-019 | Deployment | platform-deployment | DONE | ISSUE-083,084,085 | PDR-018 |
+| PDR-020 | Named Kafka Cluster Registry + Executors | platform-infrastructure | WAITING | ISSUE-086,087,088 | PDR-010 |
+| PDR-021 | Spring Kafka Migration — Transport | platform-transport | WAITING | ISSUE-089,090,091 | PDR-020 |
+| PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | WAITING | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
+| PDR-023 | SUT Example Services (IoT) | platform-examples/ | WAITING | ISSUE-096,097,098 | — |
+| PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | WAITING | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
 
 ---
 
@@ -135,6 +141,19 @@
 | ISSUE-077 | SpringBoot main + Modulith + assemblage | PDR-018 | platform-app | M | DONE | ISSUE-023,039,052 |
 | ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | DONE | ISSUE-077 |
 | ISSUE-079 | API REST | PDR-018 | platform-app | M | DONE | ISSUE-077,018 |
+| ISSUE-086 | KafkaClusterRegistry + Properties + Configuration | PDR-020 | platform-infrastructure | M | WAITING | — |
+| ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
+| ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
+| ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | WAITING | ISSUE-086 |
+| ISSUE-090 | DynamicKafkaListenerRegistry replace KafkaConsumerManager | PDR-021 | platform-transport | L | WAITING | ISSUE-089 |
+| ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | WAITING | — |
+| ISSUE-093 | Nouveau HttpClientTaskExecutor (@Preparation http-client) | PDR-022 | platform-infrastructure | M | WAITING | ISSUE-092 |
+| ISSUE-096 | SUT iot-dispatcher Spring Boot (Kafka→DB→HTTP) | PDR-023 | platform-examples/ | L | WAITING | ISSUE-098 |
+| ISSUE-097 | SUT device-api Spring Boot (HTTP→DB→Kafka) | PDR-023 | platform-examples/ | M | WAITING | ISSUE-098 |
+| ISSUE-098 | SUT DB schema + seed 10k devices | PDR-023 | platform-examples/ | S | WAITING | — |
+| ISSUE-099 | docker-compose-sut.yaml (5 services SUT) | PDR-024 | platform-deployment | S | WAITING | ISSUE-096,097,098 |
+| ISSUE-100 | Scénarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
+| ISSUE-101 | Scénarios YAML device-api (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
 
 ### 🟡 P2 — Normales
 
@@ -175,6 +194,10 @@
 | ISSUE-083 | Dockerfile (<300MB) | PDR-019 | platform-deployment | M | DONE | ISSUE-077 |
 | ISSUE-084 | docker-compose dev local | PDR-019 | platform-deployment | S | DONE | ISSUE-083 |
 | ISSUE-085 | Manifests Kubernetes | PDR-019 | platform-deployment | M | DONE | ISSUE-083 |
+| ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration | PDR-021 | platform-transport | S | WAITING | ISSUE-090 |
+| ISSUE-094 | Refactor MockServerTaskExecutor → target reference | PDR-022 | platform-infrastructure | S | WAITING | ISSUE-092 |
+| ISSUE-095 | Refactor HttpMockAssertionExecutor → target reference | PDR-022 | platform-infrastructure | S | WAITING | ISSUE-092 |
+| ISSUE-102 | README examples + guide démarrage | PDR-024 | platform-deployment | S | WAITING | ISSUE-099,100,101 |
 
 ---
 
@@ -504,12 +527,14 @@
 | 2026-06-20 | ISSUE-085 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING ([PRECISION] terminologie "headless" dans service.yaml) |
 | 2026-06-20 | ISSUE-085 | APPROVED → DONE | Reviewer — re-review: [PRECISION] CONFIRMED (headless→external service placeholder), PDR-019 DONE |
 | 2026-06-20 | PDR-019 | IN PROGRESS → DONE | Reviewer (ISSUE-083,084,085 all DONE) |
+| 2026-06-21 | PDR-020..024 | — → WAITING | System Designer — 5 PDRs + 17 Issues (086..102) créés |
+| 2026-06-21 | ISSUE-086..102 | — → WAITING | System Designer — Spring Kafka migration + Named registries + SUT IoT examples |
 
 ---
 
 ## Métriques
 
 **Démarrage** : 2026-06-12
-**PDRs totaux** : 19
-**Issues totales** : 85
-**Dernière mise à jour** : 2026-06-20 (Reviewer — ISSUE-085 DONE, PDR-019 DONE, PROJET TERMINÉ 🎉)
+**PDRs totaux** : 24
+**Issues totales** : 102
+**Dernière mise à jour** : 2026-06-21 (System Designer — PDR-020..024 + ISSUE-086..102 créés : Spring Kafka + Named Registries + SUT IoT examples)

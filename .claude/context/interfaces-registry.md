@@ -156,7 +156,7 @@
 | `TransportConfiguration` | ✅ STABLE | PDR-008 | ISSUE-028 |
 | `KafkaExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-029 |
 | `KafkaMessageCodec` | ✅ STABLE | PDR-008 | ISSUE-029 |
-| `KafkaConsumerManager` | ✅ STABLE | PDR-008 | ISSUE-029 |
+| `KafkaConsumerManager` | ⚠️ BREAKING | PDR-021 | ISSUE-090 (→ DynamicKafkaListenerRegistry) |
 | `KafkaSubscription` | ✅ STABLE | PDR-008 | ISSUE-029 |
 | `RabbitMQExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-030 |
 | `RabbitMQMessageCodec` | ✅ STABLE | PDR-008 | ISSUE-030 |
@@ -192,8 +192,8 @@
 | `DatasourceProvider` | ✅ STABLE | PDR-010 | ISSUE-040 |
 | `PlatformDatasourcesProperties` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014) |
 | `DatasourceConfiguration` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014) |
-| `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-041 |
-| `MockServerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-042 |
+| `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ⚠️ BREAKING | PDR-020 | ISSUE-087,088 (refactoring Spring Kafka en cours) |
+| `MockServerTaskExecutor` | ⚠️ BREAKING | PDR-022 | ISSUE-094 (refactoring target ref en cours) |
 | `ShellTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-043 |
 | `DockerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-044 |
 | `FilesystemTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-045 |
@@ -248,7 +248,7 @@
 | `GatlingMetricAssertionExecutor` / `MetricExtractor` | ✅ STABLE | PDR-014 | ISSUE-060 |
 | `DatabaseAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-061 |
 | `KafkaAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-062 |
-| `HttpMockAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-063 |
+| `HttpMockAssertionExecutor` | ⚠️ BREAKING | PDR-022 | ISSUE-095 (refactoring target ref en cours) |
 | `FileAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-064 |
 
 ## platform-reporting
@@ -290,13 +290,51 @@
 | `application-{local,orchestrator,agent}.yaml` | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `LocalFlowE2ETest` + `e2e-local.yaml` | ✅ STABLE | PDR-018 | ISSUE-082 |
 
-## platform-deployment
+## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `KafkaClusterProperties` | ⬜ PLANNED | PDR-020 | ISSUE-086 |
+| `PlatformKafkaProperties` | ⬜ PLANNED | PDR-020 | ISSUE-086 |
+| `KafkaClusterRegistry` | ⬜ PLANNED | PDR-020 | ISSUE-086 |
+| `KafkaClusterConfiguration` | ⬜ PLANNED | PDR-020 | ISSUE-086 |
+
+## platform-transport — nouvelles classes (PDR-021)
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `DynamicKafkaListenerRegistry` | ⬜ PLANNED | PDR-021 | ISSUE-090 |
+| `KafkaTransportBeans` | ⬜ PLANNED | PDR-021 | ISSUE-089,091 |
+
+## platform-infrastructure — `.executor.http` (PDR-022 — nouvelles classes)
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `HttpTargetProperties` | ⬜ PLANNED | PDR-022 | ISSUE-092 |
+| `PlatformHttpTargetsProperties` | ⬜ PLANNED | PDR-022 | ISSUE-092 |
+| `HttpTargetRegistry` | ⬜ PLANNED | PDR-022 | ISSUE-092 |
+| `HttpTargetConfiguration` | ⬜ PLANNED | PDR-022 | ISSUE-092 |
+| `HttpClientTaskExecutor` | ⬜ PLANNED | PDR-022 | ISSUE-093 |
+
+## platform-examples (PDR-023 — services SUT standalone)
+
+| Classe / Service | Statut | PDR | Issue |
+|---|---|---|---|
+| `IotDispatcherApplication` + `DeviceCommandConsumer` + `DeviceRepository` + `IotHttpClient` | ⬜ PLANNED | PDR-023 | ISSUE-096 |
+| `DeviceApiApplication` + `DeviceEventController` + `DeviceRepository` + `DeviceEventProducer` | ⬜ PLANNED | PDR-023 | ISSUE-097 |
+| SQL schema `devices` + seed 10k | ⬜ PLANNED | PDR-023 | ISSUE-098 |
+
+## platform-deployment (PDR-024 — exemples et scénarios)
 
 | Livrable | Statut | PDR | Issue |
 |---|---|---|---|
 | Dockerfile + .dockerignore | ✅ STABLE | PDR-019 | ISSUE-083 |
-| docker-compose | ✅ STABLE | PDR-019 | ISSUE-084 |
+| docker-compose plateforme | ✅ STABLE | PDR-019 | ISSUE-084 |
 | Manifests K8s | ✅ STABLE | PDR-019 | ISSUE-085 |
+| `docker-compose-sut.yaml` (5 services SUT) | ⬜ PLANNED | PDR-024 | ISSUE-099 |
+| `scenarios/iot-dispatcher-*.yaml` (LOCAL+DIST) | ⬜ PLANNED | PDR-024 | ISSUE-100 |
+| `scenarios/device-api-*.yaml` (LOCAL+DIST) | ⬜ PLANNED | PDR-024 | ISSUE-101 |
+| `README.md` examples guide | ⬜ PLANNED | PDR-024 | ISSUE-102 |
 
 ---
 

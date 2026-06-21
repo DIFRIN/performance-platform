@@ -1,5 +1,7 @@
 # Session State
 
+
+
 > CE FICHIER EST CRITIQUE. Mis a jour a la FIN de chaque session. Lu EN PREMIER au demarrage.
 > Permet la reprise exacte sans re-lire tout le projet.
 
@@ -7,39 +9,51 @@
 
 ## Etat Courant
 
-**Date derniere session** : 2026-06-20
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-085 (manifests Kubernetes)
-**Statut issue** : [ ] WAITING | [ ] TODO | [ ] IN PROGRESS | [ ] IN REVIEW | [ ] APPROVED | [ ] CHANGES_REQUESTED | [x] DONE
-**PDR parent** : PDR-019 (Deployment — DONE)
+**Date derniere session** : 2026-06-21
+**Agent actif** : [x] System Designer | [ ] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : aucune (System Designer a termine — prochaine : ISSUE-086 ou ISSUE-092 ou ISSUE-098)
+**Statut issue** : [x] WAITING
+**PDR parent** : PDR-020 (premier a demarrer)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-085 DONE : re-review [PRECISION] CONFIRMED (headless→external service placeholder service.yaml lignes 29 et 48). PDR-019 DONE. Tous les PDRs (1-19) sont DONE. Projet termine.
+System Designer — 5 PDRs (020..024) + 17 Issues (086..102) crees.
+- PDR-020 : KafkaClusterRegistry + refactoring executors Kafka → Spring KafkaTemplate
+- PDR-021 : Spring Kafka transport (KafkaTemplate + DynamicKafkaListenerRegistry)
+- PDR-022 : HttpTargetRegistry + HttpClientTaskExecutor + refactoring MockServer/HttpMockAssertion
+- PDR-023 : SUT standalone (iot-dispatcher + device-api + DB schema)
+- PDR-024 : docker-compose-sut + scenarios IoT LOCAL/DISTRIBUTED + README
+
+Nouvelles features cles :
+- Pattern "Named Registry" etendu a Kafka (cluster: ref) et HTTP (target: ref)
+- Noms logiques de topics ET chemins HTTP resolus depuis application-*.yaml (pas de URL inline dans scenarios)
+- Meme scenario.yaml utilisable sur tous les environnements (seul application-*.yaml change)
+- Spring Kafka remplace les raw clients dans les executors ET dans le transport
+- Deux services SUT realistes (iot-dispatcher et device-api) pour les demos
 
 **Prochaine action** :
-Aucune — toutes les Issues (001-085) sont DONE. Informer l'humain que le projet est termine.
+Developer peut demarrer en parallele :
+  1. ISSUE-086 (P1, M, aucune dep) — KafkaClusterRegistry
+  2. ISSUE-092 (P1, M, aucune dep) — HttpTargetRegistry
+  3. ISSUE-098 (P0, S, aucune dep) — DB schema SUT
 
 **Fichiers modifies** (cette session) :
-- platform-deployment/kubernetes/orchestrator-statefulset.yaml (cree)
-- platform-deployment/kubernetes/agent-deployment.yaml (cree)
-- platform-deployment/kubernetes/agent-hpa.yaml (cree)
-- platform-deployment/kubernetes/configmap.yaml (cree)
-- platform-deployment/kubernetes/secret-template.yaml (cree)
-- platform-deployment/kubernetes/service.yaml (cree)
-- .claude/progress.md (ISSUE-085 TODO → IN PROGRESS → IN REVIEW → APPROVED)
-- .claude/context/interfaces-registry.md (Manifests K8s IN PROGRESS — non STABLE car recommandation PENDING)
-- .claude/context/recommendations-tracking.md (ISSUE-085 [PRECISION] PENDING)
+- .claude/pdr/PDR-020-kafka-cluster-registry.md (cree)
+- .claude/pdr/PDR-021-spring-kafka-transport.md (cree)
+- .claude/pdr/PDR-022-http-target-registry.md (cree)
+- .claude/pdr/PDR-023-sut-example-services.md (cree)
+- .claude/pdr/PDR-024-scenarios-docker-compose-sut.md (cree)
+- .claude/issues/ISSUE-086..102.md (17 fichiers crees)
+- .claude/progress.md (PDR-020..024 + ISSUE-086..102 ajoutas)
+- .claude/context/interfaces-registry.md (nouvelles interfaces PLANNED, classes refactorees marquees BREAKING)
 - .claude/session-state.md (ce fichier)
 
 **Blocages** :
-- kubectl apply --dry-run=client non verifiable dans cet environnement (pas de cluster K8s). La review structurelle est terminee (APPROVED) ; validation syntaxique K8s deferree au CI.
-- Docker absent — meme blocage que ISSUE-083/ISSUE-084.
-- Spring Boot 4.0.0 + JUnit 5.11.4 incompatibilite (computeIfAbsent → getOrComputeIfAbsent) — @SpringBootTest inutilisable (connu, non bloque pour ce module)
-- Failsafe classpath issue with spring-boot:repackage — E2E test runs via surefire only (connu, non bloque pour ce module)
+- Memes blocages techniques que sessions precedentes (Spring Boot 4.0.0 + JUnit 5.11.4, Docker absent)
+- spring-kafka a verifier dans le classpath plateforme (peut necessiter ajout dans pom.xml si non transitif)
 
 ---
 
