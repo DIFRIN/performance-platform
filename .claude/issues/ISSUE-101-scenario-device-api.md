@@ -29,6 +29,11 @@ platform-deployment/examples/scenarios/
 
 platform-app/src/main/resources/
   └── application-examples-local.yaml    — déjà créé dans ISSUE-100, ajouter le bloc device-api
+
+platform-app/src/main/resources/sql/
+  └── seed-sut-devices.sql               — copie de platform-examples/sut-db/sql/V2__seed_10k_devices.sql (source PDR-023)
+                                           (renommé sans préfixe Flyway), accessible via classpath:sql/seed-sut-devices.sql
+                                           (INC-4 option A). INSERT ... ON CONFLICT DO NOTHING, 10 000 devices.
 ```
 
 ---
@@ -49,7 +54,7 @@ platform-app/src/main/resources/
 # Configuration technique dans application-examples-local.yaml :
 #   platform.datasources.sut-db    → jdbc:postgresql://localhost:5433/sut_devices
 #   platform.kafka-clusters.iot-sut → localhost:9093 / topic: device-events
-#   platform.http-targets.device-api → http://localhost:8082
+#   platform.http-targets.device-api → http://localhost:8084  (8084 et non 8082 — conflit agent-2 plateforme, INC-3)
 # =============================================================================
 name: device-api-local
 description: "Test SUT-B Device API — mode LOCAL, cible 1 000 req/s"
@@ -61,14 +66,25 @@ slo:
 
 steps:
 
-  - id: purge-and-reseed
-    name: Repeupler la table devices (état propre)
+  - id: reset-devices
+    name: Vider la table devices avant re-seed (état propre)
+    type: preparation
+    task: database
+    parameters:
+      datasource: sut-db
+      operation: PURGE
+      table: devices                # seule la table devices existe (PDR-023)
+    # PURGE avant POPULATE car le script de seed contient ON CONFLICT DO NOTHING
+
+  - id: seed-devices
+    name: Insérer 10 000 devices en base (état propre)
     type: preparation
     task: database
     parameters:
       datasource: sut-db
       operation: POPULATE
-      scriptPath: "classpath:sql/V2__seed_10k_devices.sql"
+      scriptPath: "classpath:sql/seed-sut-devices.sql"   # copie classpath du script SUT V2 (INC-4 option A)
+    dependsOn: [reset-devices]
 
   - id: warmup
     name: Warmup JVM device-api (100 requêtes)
@@ -81,7 +97,7 @@ steps:
       body: '{"device_id":"device-0001"}'
       expectedStatus: 200
     timeout: 10s
-    dependsOn: [purge-and-reseed]
+    dependsOn: [seed-devices]
 
   - id: check-health
     name: Vérifier que device-api est prêt
@@ -103,10 +119,10 @@ steps:
       target: 1000
       duration: 60s
     gatling:
-      baseUrl: "http://localhost:8082"
+      target: device-api            # → platform.http-targets.device-api.base-url (aucune URL inline — ADR-015/ADR-016)
       simulations:
         - name: DeviceApiSimulation
-          path: /api/events
+          path: submit-event        # → /api/events résolu depuis platform.http-targets.device-api.paths
           method: POST
           queryParams:
             device_id: "device-{index}"
@@ -150,14 +166,25 @@ slo:
 
 steps:
 
-  - id: purge-and-reseed
+  - id: reset-devices
+    name: Vider la table devices avant re-seed
+    type: preparation
+    task: database
+    parameters:
+      datasource: sut-db
+      operation: PURGE
+      table: devices                # seule la table devices existe (PDR-023)
+    # PURGE avant POPULATE car le script de seed contient ON CONFLICT DO NOTHING
+
+  - id: seed-devices
     name: Repeupler la table devices
     type: preparation
     task: database
     parameters:
       datasource: sut-db
       operation: POPULATE
-      scriptPath: "classpath:sql/V2__seed_10k_devices.sql"
+      scriptPath: "classpath:sql/seed-sut-devices.sql"   # copie classpath du script SUT V2 (INC-4 option A)
+    dependsOn: [reset-devices]
 
   - id: check-health
     name: Vérifier que device-api est prêt
@@ -168,7 +195,7 @@ steps:
       method: GET
       path: /api/health
       expectedStatus: 200
-    dependsOn: [purge-and-reseed]
+    dependsOn: [seed-devices]
 
   - id: load-test
     name: Charge 10 000 users — ramp 120s
@@ -180,10 +207,10 @@ steps:
       target: 10000
       duration: 120s
     gatling:
-      baseUrl: "http://device-api:8082"  # réseau Docker interne
+      target: device-api            # → platform.http-targets.device-api.base-url (résolu depuis application-*.yaml selon l'env : localhost en LOCAL, host.docker.internal/réseau Docker en DISTRIBUTED — aucune URL inline, ADR-015/ADR-016)
       simulations:
         - name: DeviceApiHighLoadSimulation
-          path: /api/events
+          path: submit-event        # → /api/events résolu depuis platform.http-targets.device-api.paths
           method: POST
           queryParams:
             device_id: "device-{index}"
@@ -232,7 +259,7 @@ platform:
   http-targets:
     # (existant depuis ISSUE-100 : wiremock, iot-dispatcher-health)
     device-api:
-      base-url: ${DEVICE_API_URL:http://localhost:8082}
+      base-url: ${DEVICE_API_URL:http://localhost:8084}   # 8084 et non 8082 — conflit agent-2 plateforme (INC-3)
       connection-timeout: 2s
       read-timeout: 10s
       paths:
@@ -246,7 +273,8 @@ platform:
 
 - Mêmes règles que ISSUE-100 : syntaxe DSL valide, aucune URL inline, `dependsOn:` explicites.
 - L'assertion `task: database` avec `query:` et `expectedValue:` doit correspondre à la signature du `DatabaseAssertionExecutor` existant (ISSUE-061). Le Developer vérifie la syntaxe DSL contre l'implémentation existante.
-- `scriptPath: "classpath:sql/..."` → le script SQL de seed doit être accessible dans le classpath de la plateforme. Vérifier que la convention `classpath:` est supportée par `DatabaseTaskExecutor`.
+- `scriptPath: "classpath:sql/seed-sut-devices.sql"` → le script SQL de seed est copié depuis `platform-examples/sut-db/sql/V2__seed_10k_devices.sql` vers `platform-app/src/main/resources/sql/seed-sut-devices.sql` (renommé sans préfixe Flyway pour ne pas déclencher Flyway sur la base plateforme). Vérifier que la convention `classpath:` est supportée par `DatabaseTaskExecutor`.
+- Le step `reset-devices` (PURGE table `devices`) précède le step `seed-devices` (POPULATE) : le script de seed contient `ON CONFLICT DO NOTHING`, donc un PURGE préalable garantit un état propre. La table est `devices` — il n'existe PAS de table `events` (PDR-023).
 
 ---
 
@@ -254,8 +282,11 @@ platform:
 
 - [ ] `device-api-local.yaml` : parseable par `ScenarioParser` sans exception
 - [ ] `device-api-distributed.yaml` : parseable par `ScenarioParser` sans exception
-- [ ] `application-examples-local.yaml` : section `datasources.sut-db` + `http-targets.device-api` ajoutée
-- [ ] Aucune URL inline dans les scénarios
-- [ ] Steps `dependsOn:` corrects (order : reseed → health → load → assertions)
+- [ ] `application-examples-local.yaml` : section `datasources.sut-db` + `http-targets.device-api` (base-url 8084) ajoutée
+- [ ] `platform-app/src/main/resources/sql/seed-sut-devices.sql` créé (copie de V2__seed_10k_devices.sql, sans préfixe Flyway)
+- [ ] `scriptPath: "classpath:sql/seed-sut-devices.sql"` dans les deux scénarios (PAS de `classpath:sql/V2__...`)
+- [ ] Aucune URL inline dans les scénarios — y compris blocs `gatling:` (pas de `baseUrl:`, utiliser `target: device-api` + `path: submit-event`)
+- [ ] Steps `dependsOn:` corrects (order : reset-devices → seed-devices → warmup/health → load → assertions)
+- [ ] Step `reset-devices` (PURGE table `devices`) présent avant `seed-devices` (POPULATE) ; aucun step ne référence une table `events`
 - [ ] `agentTags:` dans les steps du scénario distributed
 - [ ] `.claude/progress.md` mis à jour : ISSUE-101 → DONE

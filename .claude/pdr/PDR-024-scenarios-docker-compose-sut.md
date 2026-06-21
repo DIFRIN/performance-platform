@@ -23,12 +23,12 @@ Crée les fichiers de démonstration complets pour les deux use cases IoT :
 │  (lancé séparément par l'user)  │    │  (plateforme)                   │
 │                                 │    │                                 │
 │  iot-dispatcher :8083           │◄───│  agents (Gatling, kafka-prod...) │
-│  device-api     :8082           │    │  orchestrateur :8080             │
+│  device-api     :8084           │    │  orchestrateur :8080             │
 │  kafka-sut      :9093           │    │                                 │
 │  postgres-sut   :5433           │    │  platform.kafka-clusters:        │
 │  wiremock       :8090           │    │    iot-sut.bootstrap: :9093      │
 └─────────────────────────────────┘    │  platform.http-targets:          │
-                                       │    device-api.base-url: :8082    │
+                                       │    device-api.base-url: :8084    │
                                        │    wiremock.base-url: :8090      │
                                        └─────────────────────────────────┘
 ```
@@ -51,6 +51,10 @@ platform-deployment/examples/
 │   ├── device-api-local.yaml         SUT-B, plateforme en mode LOCAL
 │   └── device-api-distributed.yaml   SUT-B, plateforme en mode DISTRIBUTED
 └── README.md
+
+platform-app/src/main/resources/sql/
+└── seed-sut-devices.sql               copie classpath du script SUT V2 (INC-4 option A)
+                                       — accessible via scriptPath: "classpath:sql/seed-sut-devices.sql"
 ```
 
 ---
@@ -68,8 +72,10 @@ platform-deployment/examples/
 #   docker compose -f platform-deployment/examples/docker-compose-sut.yaml down
 #
 # Services : iot-dispatcher, device-api, kafka-sut, postgres-sut, wiremock
-# Ports exposés : 9093 (kafka), 5433 (postgres), 8082 (device-api),
+# Ports exposés : 9093 (kafka), 5433 (postgres), 8084 (device-api),
 #                 8083 (iot-dispatcher), 8090 (wiremock)
+# Note: device-api expose 8084 (et NON 8082) pour éviter le conflit avec
+#       agent-2 de la plateforme (docker-compose.yaml mappe host 8082→agent-2).
 # =============================================================================
 
 services:
@@ -171,9 +177,9 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: changeme
       DEVICE_TOPIC_EVENTS: device-events
-      SERVER_PORT: "8082"
+      SERVER_PORT: "8084"
     ports:
-      - "8082:8082"
+      - "8084:8084"
     depends_on:
       kafka-sut:
         condition: service_healthy
@@ -265,20 +271,14 @@ steps:
     dependsOn: [preload-iot-commands]
 
   - id: inject-load
-    name: Injecter charge simultanée (100 users, 30s)
+    name: Injecter charge Kafka simultanée (1 000 messages)
     type: injection
-    task: gatling
-    loadModel:
-      type: CONSTANT_USERS
-      users: 100
-      duration: 30s
-    gatling:
-      baseUrl: "http://localhost:9093"
-      simulations:
-        - name: KafkaProducerSimulation
-          topic: iot-commands
-          messagesPerUser: 10
-          messageTemplate: '{"device_id":"device-{index}","command":"load-test"}'
+    task: kafka-producer            # le SUT iot-dispatcher consomme du Kafka — l'injection produit du Kafka, pas du HTTP (Gatling ne produit pas Kafka)
+    parameters:
+      cluster: iot-sut             # → platform.kafka-clusters.iot-sut (aucune URL inline — ADR-015/ADR-016)
+      topic: iot-commands          # → résolu depuis platform.kafka-clusters.iot-sut.topics.iot-commands
+      messageCount: 1000
+      messageTemplate: '{"device_id":"device-{index}","command":"load-test"}'
     dependsOn: [wait-for-dispatch]
 
   - id: assert-kafka-lag
@@ -328,7 +328,7 @@ steps:
 #           device-events: device-events
 #     http-targets:
 #       device-api:
-#         base-url: http://localhost:8082
+#         base-url: http://localhost:8084
 #         paths:
 #           submit-event: /api/events
 # =============================================================================
@@ -342,15 +342,15 @@ slo:
 
 steps:
 
-  - id: purge-events
-    name: Vider la table events si elle existe
+  - id: reset-devices
+    name: Vider la table devices avant re-seed (état propre)
     type: preparation
     task: database
     parameters:
       datasource: sut-db
       operation: PURGE
-      table: devices
-    # Note: on vide puis re-seed pour avoir un état propre
+      table: devices                # seule la table devices existe (PDR-023) — pas de table events
+    # Note: PURGE avant POPULATE car le script de seed contient ON CONFLICT DO NOTHING
 
   - id: seed-devices
     name: Insérer 10 000 devices en base
@@ -359,8 +359,8 @@ steps:
     parameters:
       datasource: sut-db
       operation: POPULATE
-      scriptPath: "classpath:sql/V2__seed_10k_devices.sql"
-    dependsOn: [purge-events]
+      scriptPath: "classpath:sql/seed-sut-devices.sql"   # copie classpath du script SUT V2 (INC-4 option A)
+    dependsOn: [reset-devices]
 
   - id: warmup
     name: Warmup JVM — 100 requêtes
@@ -383,10 +383,10 @@ steps:
       target: 1000
       duration: 60s
     gatling:
-      baseUrl: "http://localhost:8082"
+      target: device-api            # → platform.http-targets.device-api.base-url (aucune URL inline — ADR-015/ADR-016)
       simulations:
         - name: DeviceApiSimulation
-          path: /api/events
+          path: submit-event        # → /api/events résolu depuis platform.http-targets.device-api.paths
           method: POST
           bodyTemplate: '{"device_id":"device-{index}"}'
           contentType: application/json
@@ -491,7 +491,7 @@ docker compose -f platform-deployment/examples/docker-compose-sut.yaml down
 ## Règles de Comportement
 
 - **`docker-compose-sut.yaml` est 100% autonome** : peut démarrer sans la plateforme.
-- **Ports non-conflictuels** : SUT utilise 9093 (kafka), 5433 (postgres), 8082/8083/8090 — différents des ports plateforme (9092, 5432, 8080/8081/8082).
+- **Ports non-conflictuels** : SUT utilise 9093 (kafka), 5433 (postgres), 8083 (iot-dispatcher), 8084 (device-api), 8090 (wiremock) — différents des ports plateforme exposés sur l'hôte (9092 kafka, 5432 postgres, 8080 orchestrateur, 8081 agent-1, 8082 agent-2, 8090 wiremock plateforme). Note : device-api est sur 8084 (et non 8082) car la plateforme mappe déjà host 8082→agent-2 dans `platform-deployment/docker/docker-compose.yaml`.
 - **Les scénarios `*-local.yaml` et `*-distributed.yaml` sont identiques** sauf pour l'attribution des steps aux agents (`agentTags:` ajouté dans la version distributed).
 - **Aucune URL technique inline dans les scénarios** : uniquement des références logiques. Les URLs réelles sont dans `application-local.yaml` ou `application-orchestrator.yaml`.
 
