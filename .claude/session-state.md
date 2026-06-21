@@ -10,7 +10,7 @@
 
 **Date derniere session** : 2026-06-21
 **Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-087 (Refactor KafkaProducerTaskExecutor — IN REVIEW)
+**Issue active** : ISSUE-088 (Refactor KafkaConsumerTaskExecutor — IN REVIEW)
 **Statut issue** : [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE
 **PDR parent** : PDR-020
 
@@ -19,17 +19,17 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Developer — ISSUE-087: Refactor KafkaProducerTaskExecutor → KafkaTemplate + KafkaClusterRegistry. 19 tests OK, BUILD SUCCESS (338 total).
+Developer — ISSUE-088: Refactor KafkaConsumerTaskExecutor → Spring ConsumerFactory + KafkaClusterRegistry. 19 unit tests + IT updated, BUILD SUCCESS (355 total).
 **Prochaine action** :
-Reviewer doit review ISSUE-087 (@reviewer).
+Reviewer doit review ISSUE-087 ET ISSUE-088 (@reviewer).
 Prochaines Issues disponibles :
-  1. ISSUE-088 (P1, M, dep ISSUE-086 DONE) — Refactor KafkaConsumerTaskExecutor
+  1. ISSUE-089 (P1, M, dep ISSUE-086 DONE) — KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport
   2. ISSUE-093 (P1, M, dep ISSUE-092 DONE) — Nouveau HttpClientTaskExecutor
   3. ISSUE-096 (P1, L, dep ISSUE-098 DONE) — SUT iot-dispatcher
 **Fichiers modifies** (cette session) :
-- platform-infrastructure/src/main/java/.../executor/kafka/KafkaProducerTaskExecutor.java (refactorise)
-- platform-infrastructure/src/test/java/.../executor/kafka/KafkaProducerTaskExecutorTest.java (cree — 19 tests)
-- platform-infrastructure/src/test/java/.../executor/kafka/KafkaTaskExecutorsIT.java (mis a jour — KafkaClusterRegistry)
+- platform-infrastructure/src/main/java/.../executor/kafka/KafkaConsumerTaskExecutor.java (refactorise)
+- platform-infrastructure/src/test/java/.../executor/kafka/KafkaConsumerTaskExecutorTest.java (cree — 19 tests)
+- platform-infrastructure/src/test/java/.../executor/kafka/KafkaTaskExecutorsIT.java (mis a jour — constructeur + assertions)
 **Blocages** : aucun
 
 ---
