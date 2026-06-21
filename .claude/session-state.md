@@ -1,7 +1,6 @@
 # Session State
 
 
-
 > CE FICHIER EST CRITIQUE. Mis a jour a la FIN de chaque session. Lu EN PREMIER au demarrage.
 > Permet la reprise exacte sans re-lire tout le projet.
 
@@ -10,42 +9,52 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-21
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-098 (SUT DB schema + seed 10k devices — DONE)
-**Statut issue** : [x] DONE
-**PDR parent** : PDR-023
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-086 (KafkaClusterRegistry + KafkaClusterConfiguration — IN REVIEW)
+**Statut issue** : [x] IN REVIEW
+**PDR parent** : PDR-020
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-098 APPROVED (0 bloquant, 0 recommandation) :
-- platform-examples/sut-db/sql/V1__devices_schema.sql (CREATE TABLE devices + UNIQUE constraint + 2 indexes + COMMENTs)
-- platform-examples/sut-db/sql/V2__seed_10k_devices.sql (10k devices seed + DO verification block)
-- Fichiers SQL uniquement — pas de code Java, pas de mvn test applicable.
-- ISSUE-098 marquee DONE.
+Developer — ISSUE-086 IN REVIEW :
+- KafkaClusterProperties.java (record, immutable, defensive copy)
+- PlatformKafkaProperties.java (@ConfigurationProperties record)
+- KafkaClusterRegistry.java (registry + resolveTopic + producerFactory / consumerFactory)
+- KafkaClusterConfiguration.java (@Configuration + @Bean)
+- KafkaClusterRegistryTest.java (17 tests: Get, ResolveTopic, ProducerFactory, ConsumerFactory, Immutability)
+- platform-infrastructure/pom.xml (+spring-kafka 4.0.0)
+- application-orchestrator.yaml (+platform.kafka-clusters block)
+- application-agent.yaml (+platform.kafka-clusters block)
+- mvn test -pl platform-infrastructure : 303 tests OK, BUILD SUCCESS
 
 **Prochaine action** :
-Developer peut continuer avec (ISSUE-098 DONE) :
-  1. ISSUE-086 (P1, M, aucune dep) — KafkaClusterRegistry
-  2. ISSUE-092 (P1, M, aucune dep) — HttpTargetRegistry
-  3. ISSUE-096/097 (P1/P0, L/M, dep ISSUE-098) — SUT services
+Reviewer doit revoir ISSUE-086.
+Si APPROVED, Developer peut continuer avec :
+  1. ISSUE-092 (P1, M, aucune dep) — HttpTargetRegistry
+  2. ISSUE-096 (P1, L, dep ISSUE-098 DONE) — SUT iot-dispatcher
+  3. ISSUE-097 (P1, M, dep ISSUE-098 DONE) — SUT device-api
 
 **Fichiers modifies** (cette session) :
-- platform-examples/sut-db/sql/V1__devices_schema.sql (cree)
-- platform-examples/sut-db/sql/V2__seed_10k_devices.sql (cree)
-- .claude/progress.md (ISSUE-098: IN PROGRESS → DONE)
+- platform-infrastructure/src/main/java/.../executor/kafka/KafkaClusterProperties.java (cree)
+- platform-infrastructure/src/main/java/.../executor/kafka/PlatformKafkaProperties.java (cree)
+- platform-infrastructure/src/main/java/.../executor/kafka/KafkaClusterRegistry.java (cree)
+- platform-infrastructure/src/main/java/.../executor/kafka/KafkaClusterConfiguration.java (cree)
+- platform-infrastructure/src/test/java/.../executor/kafka/KafkaClusterRegistryTest.java (cree)
+- platform-infrastructure/pom.xml (+spring-kafka)
+- platform-app/src/main/resources/application-orchestrator.yaml (kafka-clusters block)
+- platform-app/src/main/resources/application-agent.yaml (kafka-clusters block)
+- .claude/progress.md (ISSUE-086: WAITING → IN PROGRESS → IN REVIEW)
 - .claude/session-state.md (ce fichier)
-- .claude/context/interfaces-registry.md (note SUT DB)
-- .claude/settings.local.json (permissions platform-examples)
+- .claude/context/interfaces-registry.md (KafkaCluster* → IN PROGRESS)
 
 **Blocages** : aucun
 
 ---
 
 ## Historique Sessions (1 ligne par session)
-
 
 ## Historique Sessions (1 ligne par session)
 
@@ -70,3 +79,4 @@ Developer peut continuer avec (ISSUE-098 DONE) :
 | 2026-06-20 | Reviewer | ISSUE-085 | Review APPROVED: 0 bloquant, 1 recommandation [PRECISION] PENDING (terminologie "headless" service.yaml). DB_USERNAME verifie conforme application-orchestrator.yaml:41. | APPROVED |
 | 2026-06-20 | Reviewer | ISSUE-085 | Re-review: [PRECISION] CONFIRMED (headless→external service placeholder). PDR-019 DONE. Projet termine. | DONE |
 | 2026-06-21 | System Designer | PDR-024/ISSUE-100/101 | Correction 4 incoherences Architect: INC-1 (URLs inline gatling→target/kafka-producer), INC-2 (purge-events→reset-devices), INC-3 (device-api 8082→8084 conflit agent-2), INC-4 (scriptPath classpath:sql/seed-sut-devices.sql + SQL copie). | DONE |
+| 2026-06-21 | Developer | ISSUE-086 | KafkaClusterRegistry + KafkaClusterConfiguration + 17 tests, 303 total OK, BUILD SUCCESS. | IN REVIEW |

@@ -165,6 +165,14 @@
             <scope>test</scope>
         </dependency>
 
+        
+        <!-- Spring Kafka (DefaultKafkaProducerFactory, DefaultKafkaConsumerFactory) -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- Apache Kafka Clients (KafkaConsumerTaskExecutor + KafkaProducerTaskExecutor) -->
         <dependency>
             <groupId>org.apache.kafka</groupId>

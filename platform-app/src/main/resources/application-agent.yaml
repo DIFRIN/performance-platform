@@ -37,6 +37,23 @@ platform:
   # Les agents injectent la charge; la persistence est cote orchestrateur.
   datasources: {}
 
+  # Named Kafka clusters (PDR-020)
+  # L'agent reference les memes clusters que l'orchestrateur.
+  kafka-clusters:
+    default:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      producer-acks: all
+      consumer-group: ${AGENT_ID:agent}-${random.uuid}
+      topics: {}
+    iot-sut:
+      bootstrap-servers: ${IOT_KAFKA_SERVERS:localhost:9093}
+      producer-acks: "1"
+      consumer-group: ${AGENT_ID:agent}-${random.uuid}
+      topics:
+        iot-commands: ${IOT_TOPIC_COMMANDS:iot-commands}
+        device-events: ${DEVICE_TOPIC_EVENTS:device-events}
+
+
 # ---- Securite OAuth2/JWT ----
 spring:
   security:
