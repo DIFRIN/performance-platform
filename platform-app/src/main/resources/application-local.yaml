@@ -33,6 +33,18 @@ platform:
         minimum-idle: 1
         connection-timeout: 10000
 
+  # Named HTTP targets for local development
+  http-targets:
+    wiremock:
+      base-url: ${WIREMOCK_URL:http://localhost:8090}
+      paths:
+        reset-requests: /__admin/requests
+        count-requests: /__admin/requests/count
+    device-api:
+      base-url: ${DEVICE_API_URL:http://localhost:8082}
+      paths:
+        submit-event: /api/events
+
 # ---- Logging plus verbeux en local ----
 logging:
   level:
