@@ -535,6 +535,7 @@
 | 2026-06-21 | ISSUE-092 | WAITING
 | 2026-06-21 | ISSUE-092 | IN PROGRESS
 | 2026-06-21 | ISSUE-098 | IN PROGRESS → IN REVIEW | Developer — V1__devices_schema.sql + V2__seed_10k_devices.sql |
+| 2026-06-21 | ISSUE-087 | WAITING → IN PROGRESS → IN REVIEW | Developer — KafkaProducerTaskExecutor refactored to KafkaTemplate + KafkaClusterRegistry, 19 new unit tests |
 
 ---
 
