@@ -153,6 +153,8 @@ com.performance.platform.<module>/
 | Découpage des tâches | `.claude/context/task-breakdown.md` | phase concernée |
 | Dépendances inter-tâches | `.claude/context/dependency-map.md` | — |
 | Workflow agents | `.claude/guides/agent-orchestration.md` | — |
+| Dev-Loop autonome | `.claude/workflows/dev-loop.js` + `.claude/scripts/dev-loop.sh` | — |
+| Permissions | `.claude/settings.local.json` | complet |
 | Plugin JAR externe | `.claude/specifications/03-task-framework.md` | section 7 |
 | Annotations @Preparation/@Injection/@Assertion | `.claude/adr/ADR-007-plugin-jar-system.md` | — |
 | Priorité config env vs properties | `.claude/adr/ADR-006-runtime-config-priority.md` | — |
@@ -179,6 +181,11 @@ mvn compile -pl platform-xxx 2>&1 | grep -i warn     # vérifier warnings
 java -jar platform-app/target/*.jar --runtime.mode=LOCAL
 MODE=ORCHESTRATOR java -jar platform-app/target/*.jar
 MODE=AGENT java -jar platform-app/target/*.jar
+bash .claude/scripts/dev-loop.sh                     # boucle autonome Developer→Reviewer→Tester
+bash .claude/scripts/dev-loop.sh --dry-run            # dry-run du dev-loop
+bash .claude/scripts/dev-loop.sh --max-iterations 3   # limiter à 3 Issues
+bash .claude/scripts/dev-loop.sh --pdr PDR-020        # filtrer par PDR
+bash .claude/scripts/dev-loop.sh --resume             # reprendre session interrompue
 ```
 
 ---

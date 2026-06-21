@@ -14,6 +14,7 @@ architect() { python3 "$(_perf_root)/scripts/agent.py" architect        "$@"; }
 dev()       { python3 "$(_perf_root)/scripts/agent.py" developer        "$@"; }
 reviewer()  { python3 "$(_perf_root)/scripts/agent.py" reviewer         "$@"; }
 tester()    { python3 "$(_perf_root)/scripts/agent.py" tester           "$@"; }
+devloop()   { bash "$(_perf_root)/.claude/scripts/dev-loop.sh" "$@"; }
 
 perf-status() {
   local pf="$(_perf_root)/progress.md"
