@@ -141,7 +141,7 @@
 | ISSUE-077 | SpringBoot main + Modulith + assemblage | PDR-018 | platform-app | M | DONE | ISSUE-023,039,052 |
 | ISSUE-078 | RuntimeModeResolver (env var prioritaire) | PDR-018 | platform-app | M | DONE | ISSUE-077 |
 | ISSUE-079 | API REST | PDR-018 | platform-app | M | DONE | ISSUE-077,018 |
-| ISSUE-086 | KafkaClusterRegistry + Properties + Configuration | PDR-020 | platform-infrastructure | M | IN REVIEW | — |
+| ISSUE-086 | KafkaClusterRegistry + Properties + Configuration | PDR-020 | platform-infrastructure | M | DONE | — |
 | ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
 | ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
 | ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | WAITING | ISSUE-086 |
