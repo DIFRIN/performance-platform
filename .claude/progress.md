@@ -144,7 +144,7 @@
 | ISSUE-086 | KafkaClusterRegistry + Properties + Configuration | PDR-020 | platform-infrastructure | M | DONE | — |
 | ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | DONE | ISSUE-086 |
 | ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | DONE | ISSUE-086 |
-| ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | WAITING | ISSUE-086 |
+| ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | DONE | ISSUE-086 |
 | ISSUE-090 | DynamicKafkaListenerRegistry replace KafkaConsumerManager | PDR-021 | platform-transport | L | WAITING | ISSUE-089 |
 | ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | DONE | — |
 | ISSUE-093 | Nouveau HttpClientTaskExecutor (@Preparation http-client) | PDR-022 | platform-infrastructure | M | WAITING | ISSUE-092 |
@@ -544,6 +544,9 @@
 | 2026-06-21 | ISSUE-088 | APPROVED → IN REVIEW | Developer — 3 recommandations APPLIED (PRECISION-01/02/03), re-review requested |
 | 2026-06-21 | ISSUE-087 | APPROVED → DONE | Reviewer — re-review CONFIRMED (reviewed alongside ISSUE-088), 19 tests + IT OK |
 | 2026-06-21 | ISSUE-088 | IN REVIEW → DONE | Reviewer — re-review: 3 PRECISION CONFIRMED, 0 bloquant, 355 tests OK. PDR-020 DONE. |
+| 2026-06-21 | ISSUE-089 | WAITING → IN PROGRESS | Developer — Verification: code deja migre (KafkaTemplate remplace KafkaProducer). KafkaTransportBeans, TransportConfiguration, 20 tests existent. |
+| 2026-06-21 | ISSUE-089 | IN PROGRESS → IN REVIEW | Developer — 213 tests OK, 0 raw KafkaProducer, KafkaTemplate.send() verifie. |
+| 2026-06-21 | ISSUE-089 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 213 tests OK, KafkaTemplate confirmed. |
 
 ---
 
@@ -552,4 +555,4 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 24
 **Issues totales** : 102
-**Derniere mise a jour** : 2026-06-21 (Reviewer — ISSUE-087,088 DONE, PDR-020 DONE)
+**Derniere mise a jour** : 2026-06-21 (Developer — ISSUE-089 IN REVIEW, KafkaTemplate verified)
