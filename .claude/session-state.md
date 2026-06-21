@@ -10,9 +10,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-21
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-098 (SUT DB schema + seed 10k devices — IN REVIEW)
-**Statut issue** : [x] IN REVIEW
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : ISSUE-098 (SUT DB schema + seed 10k devices — DONE)
+**Statut issue** : [x] DONE
 **PDR parent** : PDR-023
 
 ---
@@ -20,15 +20,14 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Developer — ISSUE-098 implementee :
+Reviewer — ISSUE-098 APPROVED (0 bloquant, 0 recommandation) :
 - platform-examples/sut-db/sql/V1__devices_schema.sql (CREATE TABLE devices + UNIQUE constraint + 2 indexes + COMMENTs)
 - platform-examples/sut-db/sql/V2__seed_10k_devices.sql (10k devices seed + DO verification block)
 - Fichiers SQL uniquement — pas de code Java, pas de mvn test applicable.
-- ISSUE-098 marquee IN REVIEW.
+- ISSUE-098 marquee DONE.
 
 **Prochaine action** :
-Reviewer doit reviewer ISSUE-098 (@reviewer).
-Puis Developer peut continuer avec :
+Developer peut continuer avec (ISSUE-098 DONE) :
   1. ISSUE-086 (P1, M, aucune dep) — KafkaClusterRegistry
   2. ISSUE-092 (P1, M, aucune dep) — HttpTargetRegistry
   3. ISSUE-096/097 (P1/P0, L/M, dep ISSUE-098) — SUT services
@@ -36,7 +35,7 @@ Puis Developer peut continuer avec :
 **Fichiers modifies** (cette session) :
 - platform-examples/sut-db/sql/V1__devices_schema.sql (cree)
 - platform-examples/sut-db/sql/V2__seed_10k_devices.sql (cree)
-- .claude/progress.md (ISSUE-098: IN PROGRESS → IN REVIEW)
+- .claude/progress.md (ISSUE-098: IN PROGRESS → DONE)
 - .claude/session-state.md (ce fichier)
 - .claude/context/interfaces-registry.md (note SUT DB)
 - .claude/settings.local.json (permissions platform-examples)
