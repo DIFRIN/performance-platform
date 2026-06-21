@@ -10,66 +10,43 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-21
-**Agent actif** : [x] System Designer | [ ] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : aucune (System Designer a corrige 4 incoherences PDR-024/ISSUE-100/101 — prochaine : ISSUE-086 ou ISSUE-092 ou ISSUE-098)
-**Statut issue** : [x] WAITING
-**PDR parent** : PDR-020 (premier a demarrer)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-098 (SUT DB schema + seed 10k devices — IN REVIEW)
+**Statut issue** : [x] IN REVIEW
+**PDR parent** : PDR-023
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-System Designer — Correction de 4 incoherences signalees par l'Architect dans PDR-024 / ISSUE-100 / ISSUE-101 :
-- INC-1 [BLOQUANT] URLs techniques inline dans blocs `gatling:` supprimees.
-  - iot-dispatcher-local (PDR-024) : `inject-load` n'est plus Gatling avec baseUrl Kafka 9093 — c'est un step `kafka-producer` (`cluster: iot-sut`, `topic: iot-commands`). Gatling ne produit pas de Kafka.
-  - iot-dispatcher-distributed (ISSUE-100) : `inject-load` Gatling utilise `target: iot-dispatcher-health` + `path: health` (au lieu de baseUrl 8083).
-  - device-api local+distributed (PDR-024+ISSUE-101) : Gatling utilise `target: device-api` + `path: submit-event` (au lieu de baseUrl 8082 / device-api:8082).
-- INC-2 [MAJEUR] step `purge-events` (table events inexistante) renomme `reset-devices` (PURGE table `devices`), commentaire corrige. ISSUE-101 : step `purge-and-reseed` (qui ne faisait que POPULATE) scinde en `reset-devices` (PURGE) + `seed-devices` (POPULATE). PURGE justifie par ON CONFLICT DO NOTHING du script de seed.
-- INC-3 [MAJEUR] conflit port 8082 confirme reel (plateforme docker-compose.yaml mappe host 8082→agent-2). device-api SUT change de 8082 → 8084 dans PDR-024 (docker-compose-sut, SERVER_PORT, ports, commentaires, base-url) et ISSUE-101 (config + commentaires).
-- INC-4 [BLOQUANT] `scriptPath: classpath:sql/V2__seed_10k_devices.sql` invalide → Option A retenue : copie du script SUT vers `platform-app/src/main/resources/sql/seed-sut-devices.sql` (sans prefixe Flyway), `scriptPath: classpath:sql/seed-sut-devices.sql`. Fichier ajoute dans "Fichiers a Creer" de ISSUE-101.
-
-A SIGNALER (hors perimetre d'edition de cette tache — a corriger par le Developer/SD ulterieurement) :
-- ISSUE-099 (docker-compose-sut) ligne ~39 : device-api encore liste a 8082 → doit passer a 8084 (coherence INC-3).
-- ISSUE-102 (README) lignes ~48/81/177 : device-api encore a 8082 → doit passer a 8084.
-
-Contexte initial (sessions precedentes) :
-System Designer — 5 PDRs (020..024) + 17 Issues (086..102) crees.
-- PDR-020 : KafkaClusterRegistry + refactoring executors Kafka → Spring KafkaTemplate
-- PDR-021 : Spring Kafka transport (KafkaTemplate + DynamicKafkaListenerRegistry)
-- PDR-022 : HttpTargetRegistry + HttpClientTaskExecutor + refactoring MockServer/HttpMockAssertion
-- PDR-023 : SUT standalone (iot-dispatcher + device-api + DB schema)
-- PDR-024 : docker-compose-sut + scenarios IoT LOCAL/DISTRIBUTED + README
-
-Nouvelles features cles :
-- Pattern "Named Registry" etendu a Kafka (cluster: ref) et HTTP (target: ref)
-- Noms logiques de topics ET chemins HTTP resolus depuis application-*.yaml (pas de URL inline dans scenarios)
-- Meme scenario.yaml utilisable sur tous les environnements (seul application-*.yaml change)
-- Spring Kafka remplace les raw clients dans les executors ET dans le transport
-- Deux services SUT realistes (iot-dispatcher et device-api) pour les demos
+Developer — ISSUE-098 implementee :
+- platform-examples/sut-db/sql/V1__devices_schema.sql (CREATE TABLE devices + UNIQUE constraint + 2 indexes + COMMENTs)
+- platform-examples/sut-db/sql/V2__seed_10k_devices.sql (10k devices seed + DO verification block)
+- Fichiers SQL uniquement — pas de code Java, pas de mvn test applicable.
+- ISSUE-098 marquee IN REVIEW.
 
 **Prochaine action** :
-Developer peut demarrer en parallele :
+Reviewer doit reviewer ISSUE-098 (@reviewer).
+Puis Developer peut continuer avec :
   1. ISSUE-086 (P1, M, aucune dep) — KafkaClusterRegistry
   2. ISSUE-092 (P1, M, aucune dep) — HttpTargetRegistry
-  3. ISSUE-098 (P0, S, aucune dep) — DB schema SUT
+  3. ISSUE-096/097 (P1/P0, L/M, dep ISSUE-098) — SUT services
 
 **Fichiers modifies** (cette session) :
-- .claude/pdr/PDR-020-kafka-cluster-registry.md (cree)
-- .claude/pdr/PDR-021-spring-kafka-transport.md (cree)
-- .claude/pdr/PDR-022-http-target-registry.md (cree)
-- .claude/pdr/PDR-023-sut-example-services.md (cree)
-- .claude/pdr/PDR-024-scenarios-docker-compose-sut.md (cree)
-- .claude/issues/ISSUE-086..102.md (17 fichiers crees)
-- .claude/progress.md (PDR-020..024 + ISSUE-086..102 ajoutas)
-- .claude/context/interfaces-registry.md (nouvelles interfaces PLANNED, classes refactorees marquees BREAKING)
+- platform-examples/sut-db/sql/V1__devices_schema.sql (cree)
+- platform-examples/sut-db/sql/V2__seed_10k_devices.sql (cree)
+- .claude/progress.md (ISSUE-098: IN PROGRESS → IN REVIEW)
 - .claude/session-state.md (ce fichier)
+- .claude/context/interfaces-registry.md (note SUT DB)
+- .claude/settings.local.json (permissions platform-examples)
 
-**Blocages** :
-- Memes blocages techniques que sessions precedentes (Spring Boot 4.0.0 + JUnit 5.11.4, Docker absent)
-- spring-kafka a verifier dans le classpath plateforme (peut necessiter ajout dans pom.xml si non transitif)
+**Blocages** : aucun
 
 ---
+
+## Historique Sessions (1 ligne par session)
+
 
 ## Historique Sessions (1 ligne par session)
 

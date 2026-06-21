@@ -322,7 +322,7 @@
 |---|---|---|---|
 | `IotDispatcherApplication` + `DeviceCommandConsumer` + `DeviceRepository` + `IotHttpClient` | ⬜ PLANNED | PDR-023 | ISSUE-096 |
 | `DeviceApiApplication` + `DeviceEventController` + `DeviceRepository` + `DeviceEventProducer` | ⬜ PLANNED | PDR-023 | ISSUE-097 |
-| SQL schema `devices` + seed 10k | ⬜ PLANNED | PDR-023 | ISSUE-098 |
+| SQL schema `devices` + seed 10k | 🔄 IN PROGRESS | PDR-023 | ISSUE-098 |
 
 ## platform-deployment (PDR-024 — exemples et scénarios)
 
