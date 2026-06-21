@@ -11,7 +11,7 @@
 
 **Date derniere session** : 2026-06-21
 **Agent actif** : [x] System Designer | [ ] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : aucune (System Designer a termine — prochaine : ISSUE-086 ou ISSUE-092 ou ISSUE-098)
+**Issue active** : aucune (System Designer a corrige 4 incoherences PDR-024/ISSUE-100/101 — prochaine : ISSUE-086 ou ISSUE-092 ou ISSUE-098)
 **Statut issue** : [x] WAITING
 **PDR parent** : PDR-020 (premier a demarrer)
 
@@ -20,6 +20,20 @@
 ## Reprise Exacte
 
 **Derniere action** :
+System Designer — Correction de 4 incoherences signalees par l'Architect dans PDR-024 / ISSUE-100 / ISSUE-101 :
+- INC-1 [BLOQUANT] URLs techniques inline dans blocs `gatling:` supprimees.
+  - iot-dispatcher-local (PDR-024) : `inject-load` n'est plus Gatling avec baseUrl Kafka 9093 — c'est un step `kafka-producer` (`cluster: iot-sut`, `topic: iot-commands`). Gatling ne produit pas de Kafka.
+  - iot-dispatcher-distributed (ISSUE-100) : `inject-load` Gatling utilise `target: iot-dispatcher-health` + `path: health` (au lieu de baseUrl 8083).
+  - device-api local+distributed (PDR-024+ISSUE-101) : Gatling utilise `target: device-api` + `path: submit-event` (au lieu de baseUrl 8082 / device-api:8082).
+- INC-2 [MAJEUR] step `purge-events` (table events inexistante) renomme `reset-devices` (PURGE table `devices`), commentaire corrige. ISSUE-101 : step `purge-and-reseed` (qui ne faisait que POPULATE) scinde en `reset-devices` (PURGE) + `seed-devices` (POPULATE). PURGE justifie par ON CONFLICT DO NOTHING du script de seed.
+- INC-3 [MAJEUR] conflit port 8082 confirme reel (plateforme docker-compose.yaml mappe host 8082→agent-2). device-api SUT change de 8082 → 8084 dans PDR-024 (docker-compose-sut, SERVER_PORT, ports, commentaires, base-url) et ISSUE-101 (config + commentaires).
+- INC-4 [BLOQUANT] `scriptPath: classpath:sql/V2__seed_10k_devices.sql` invalide → Option A retenue : copie du script SUT vers `platform-app/src/main/resources/sql/seed-sut-devices.sql` (sans prefixe Flyway), `scriptPath: classpath:sql/seed-sut-devices.sql`. Fichier ajoute dans "Fichiers a Creer" de ISSUE-101.
+
+A SIGNALER (hors perimetre d'edition de cette tache — a corriger par le Developer/SD ulterieurement) :
+- ISSUE-099 (docker-compose-sut) ligne ~39 : device-api encore liste a 8082 → doit passer a 8084 (coherence INC-3).
+- ISSUE-102 (README) lignes ~48/81/177 : device-api encore a 8082 → doit passer a 8084.
+
+Contexte initial (sessions precedentes) :
 System Designer — 5 PDRs (020..024) + 17 Issues (086..102) crees.
 - PDR-020 : KafkaClusterRegistry + refactoring executors Kafka → Spring KafkaTemplate
 - PDR-021 : Spring Kafka transport (KafkaTemplate + DynamicKafkaListenerRegistry)
@@ -79,3 +93,4 @@ Developer peut demarrer en parallele :
 | 2026-06-20 | Developer | ISSUE-085 | 6 manifests K8s (orchestrator-statefulset, agent-deployment, agent-hpa, configmap, secret-template, service). YAML valide, 0 gRPC, probes OK, HPA 2-20 CPU 70%. | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-085 | Review APPROVED: 0 bloquant, 1 recommandation [PRECISION] PENDING (terminologie "headless" service.yaml). DB_USERNAME verifie conforme application-orchestrator.yaml:41. | APPROVED |
 | 2026-06-20 | Reviewer | ISSUE-085 | Re-review: [PRECISION] CONFIRMED (headless→external service placeholder). PDR-019 DONE. Projet termine. | DONE |
+| 2026-06-21 | System Designer | PDR-024/ISSUE-100/101 | Correction 4 incoherences Architect: INC-1 (URLs inline gatling→target/kafka-producer), INC-2 (purge-events→reset-devices), INC-3 (device-api 8082→8084 conflit agent-2), INC-4 (scriptPath classpath:sql/seed-sut-devices.sql + SQL copie). | DONE |

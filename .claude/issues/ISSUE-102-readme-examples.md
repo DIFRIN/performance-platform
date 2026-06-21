@@ -45,7 +45,7 @@ Deux use cases réels de test de performance sur des services IoT :
 │       -sut.yaml)    │        │  (docker-compose.yaml ou JVM)    │
 │                     │        │                                   │
 │  iot-dispatcher:8083│◄───────│  kafka-producer (préparation)     │
-│  device-api    :8082│◄───────│  gatling        (injection)       │
+│  device-api    :8084│◄───────│  gatling        (injection)       │
 │  kafka-sut     :9093│◄──────►│  kafka assertion, http-mock       │
 │  postgres-sut  :5433│◄──────►│  database assertion               │
 │  wiremock      :8090│        │                                   │
@@ -78,7 +78,7 @@ Ports exposés :
 | kafka-sut | 9093 | Kafka SUT (topics: iot-commands, device-events) |
 | postgres-sut | 5433 | PostgreSQL SUT (10k devices pré-chargés) |
 | iot-dispatcher | 8083 | SUT-A : consomme Kafka → dispatch HTTP |
-| device-api | 8082 | SUT-B : reçoit HTTP → publie Kafka |
+| device-api | 8084 | SUT-B : reçoit HTTP → publie Kafka |
 | wiremock | 8090 | Simule les 10k endpoints IoT (POST /command) |
 
 ### Étape 2a — Mode LOCAL (un seul process)
@@ -174,7 +174,7 @@ platform:
         device-events: device-events-prod
   http-targets:
     device-api:
-      base-url: http://device-api.prod.internal:8082
+      base-url: http://device-api.prod.internal:8084
       paths:
         submit-event: /api/v2/events          # ← si l'API a changé de version
 ```

@@ -36,7 +36,7 @@ platform-deployment/examples/
 Voir PDR-024 section "docker-compose-sut.yaml" pour le contenu complet.
 
 Points clés à respecter :
-- **Ports SUT** : 9093 (kafka-sut), 5433 (postgres-sut), 8082 (device-api), 8083 (iot-dispatcher), 8090 (wiremock)
+- **Ports SUT** : 9093 (kafka-sut), 5433 (postgres-sut), 8084 (device-api), 8083 (iot-dispatcher), 8090 (wiremock)
 - **Réseau** : `sut-net` bridge dédié — ne pas partager avec le réseau plateforme
 - **`docker-entrypoint-initdb.d`** : monter `../../platform-examples/sut-db/sql` pour l'init automatique
 - **WireMock volume** : `./wiremock:/home/wiremock` pour les stubs

@@ -91,3 +91,27 @@ et aussi via failsafe:integration-test isole.
 RAISON: Le test est quand meme execute pendant mvn verify (phase test avant integration-test).
 Le profil integration-tests active failsafe pour les *IT.java, pas pour les *E2ETest.
 IMPACT: LocalFlowE2ETest.java execute par surefire. mvn verify -P integration-tests OK.
+
+---
+
+## Decisions ADR PDR-020..024 (revue Architect 2026-06-21)
+
+[2026-06-21] [architecture] DECISION : ADR-015 — Named Resource Registry Pattern officialise comme standard
+CONTEXTE : PDR-020 (Kafka) et PDR-022 (HTTP) repliquent le pattern DatasourceProvider/ADR-014 mot pour mot. Question : ADR-014 (datasource only) suffit-il pour les ressources externes futures ?
+RAISON : ADR-014 n'a pas l'autorite normative transverse. Sans standard, chaque ressource future reinventerait sa convention (risque credentials inline, cles YAML incoherentes). 5 invariants : reference logique dans scenario, config sous platform.<famille>.*, credentials par env var, binding @ConfigurationProperties+Map record immuable, Registry via @Bean (pas @Component).
+IMPACT : ADR-014 devient une instance du standard. S'applique a PDR-020, PDR-022, et toute ressource externe future (gRPC, S3, Redis...). Ne s'applique JAMAIS a transport.* (ADR-017) ni a platform-domain/plugin-api.
+
+[2026-06-21] [architecture] DECISION : ADR-016 — Resolution noms logiques (topics/paths) avec fallback transparent
+CONTEXTE : PDR-020 (resolveTopic) et PDR-022 (resolvePath) ajoutent un 2e niveau de resolution (sous-ressource) non couvert par ADR-014. Quel comportement si nom logique non mappe ?
+RAISON : Decision nouvelle. Fallback "as-is" (retourne logicalName tel quel) garantit retrocompat + souplesse (chemins ad hoc type /__admin/...). Pas d'echec sur non-mappe : validation deleguee a l'execution (broker/serveur). Log DEBUG sur fallback pour tracabilite.
+IMPACT : resolveTopic/resolvePath uniformes Kafka+HTTP. Versioning d'API sans toucher au scenario. Risque typo masquee (atténue par log DEBUG). Recommandation : noms logiques en mode nominal dans les scenarios.
+
+[2026-06-21] [architecture] DECISION : ADR-017 — Separation transport interne vs ciblage ressources externes
+CONTEXTE : PDR-021 migre le transport interne vers Spring Kafka EN MEME TEMPS que PDR-020 introduit Spring Kafka pour le ciblage SUT. Risque eleve de collision de beans et confusion Developer.
+RAISON : Deux concerns distincts : transport (orchestrateur<->agents, platform-transport, transport.*, @ConditionalOnProperty, byte[], groupId=agentId ADR-009) vs ciblage SUT (platform-infrastructure, platform.*, Registry, String, groupId=config). Beans transport qualifies transport* + conditionnels. Aucun bean partage entre les deux.
+IMPACT : PDR-021 beans transportKafkaTemplate/transportProducerFactory/transportContainerFactory. Executors de ciblage injectent UNIQUEMENT les registries, jamais un bean transport*. A lier dans CLAUDE.md table de routing.
+
+[2026-06-21] [architecture] DECISION : ADR-018 — Isolation des services SUT d'exemple (platform-examples)
+CONTEXTE : PDR-023 cree iot-dispatcher/device-api en Spring Boot 3.4.x, hors pom racine, sans archi hexagonale. Tension apparente avec stack NON NEGOCIABLE (CLAUDE.md §4) et regles archi.
+RAISON : Le SUT n'est PAS le produit : c'est un systeme tiers simule pour la demo. Les regles plateforme (stack 4.x, hexagonale, domaine pur, registries, ArchUnit) NE s'appliquent PAS a platform-examples/. Hors build Maven racine, packages com.performance.examples.*, couplage uniquement par contrat reseau (topics/endpoints via registries ADR-015).
+IMPACT : Reviewer NE doit PAS signaler les "violations" archi dans platform-examples/. NE PAS ajouter au pom racine, NE PAS upgrader vers 4.x. Build SUT verifie separement (Done PDR-023).

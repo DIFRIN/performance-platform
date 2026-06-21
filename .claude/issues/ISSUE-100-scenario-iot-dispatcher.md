@@ -45,7 +45,7 @@ Steps obligatoires :
 1. `reset-wiremock` (http-client, DELETE, `target: wiremock`, `path: reset-requests`)
 2. `preload-iot-commands` (kafka-producer, `cluster: iot-sut`, `topic: iot-commands`, 1 000 messages)
 3. `wait-for-processing` (http-client, GET health check sur iot-dispatcher)
-4. `inject-load` (gatling, load sur le SUT pendant le traitement)
+4. `inject-load` (kafka-producer injection — le SUT iot-dispatcher consomme du Kafka ; Gatling ne produit pas Kafka, donc l'injection se fait via kafka-producer avec `cluster: iot-sut` + `topic: iot-commands`, aucune URL inline)
 5. `assert-kafka-lag` (kafka assertion, `cluster: iot-sut`, `expectedLag: 0`)
 6. `assert-http-dispatched` (http-mock assertion, `target: wiremock`, `expectedRequestCount: 1000`)
 
@@ -98,10 +98,10 @@ steps:
       target: 500
       duration: 60s
     gatling:
-      baseUrl: "http://localhost:8083"
+      target: iot-dispatcher-health   # → platform.http-targets.iot-dispatcher-health.base-url (aucune URL inline — ADR-015/ADR-016)
       simulations:
         - name: IotDispatcherMonitorSimulation
-          path: /actuator/health
+          path: health                # → /actuator/health résolu depuis paths map
           method: GET
     dependsOn: [preload-iot-commands]
 
@@ -175,7 +175,8 @@ platform:
 - [ ] `iot-dispatcher-local.yaml` : parseable par `ScenarioParser` sans exception
 - [ ] `iot-dispatcher-distributed.yaml` : parseable par `ScenarioParser` sans exception
 - [ ] `application-examples-local.yaml` : binding Spring valide (`@ConfigurationProperties`)
-- [ ] Aucune URL inline dans les scénarios (uniquement `target:`, `cluster:`, `topic:`)
+- [ ] Aucune URL inline dans les scénarios (uniquement `target:`, `cluster:`, `topic:`) — y compris dans les blocs `gatling:` (pas de `baseUrl:`, utiliser `target:`)
+- [ ] L'injection vers iot-dispatcher passe par `kafka-producer` (`cluster: iot-sut`) — Gatling n'est utilisé que pour le monitoring HTTP via `target: iot-dispatcher-health`
 - [ ] Steps avec `dependsOn:` explicites dans les deux scénarios
 - [ ] `agentTags:` présents dans `iot-dispatcher-distributed.yaml`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-100 → DONE
