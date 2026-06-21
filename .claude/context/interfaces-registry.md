@@ -340,3 +340,4 @@
 
 > ⚡ = Interface publique critique — toute modification requiert un ADR.
 > Les colonnes PDR et Issue sont remplies par le System Designer au moment de la création des PDRs.
+| ISSUE-088 | KafkaConsumerTaskExecutor | platform-infrastructure | @Preparation name=kafka-consumer v2.0.0, Consumer<String,String> via ConsumerFactory | IN PROGRESS |

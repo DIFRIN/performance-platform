@@ -8,21 +8,22 @@ import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.Preparation;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.stereotype.Component;
 
-
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -31,35 +32,41 @@ import java.util.concurrent.TimeUnit;
 /**
  * TaskExecutor for Kafka consumer operations: CONSUME, COUNT.
  * <p>
- * Polls Kafka topics and counts available messages. Each operation creates a
- * short-lived {@link KafkaConsumer} and closes it after the call. A reference
- * is kept per execution so that {@link #cleanup(ExecutionId)} can interrupt a
- * stuck consumer (e.g. during a scenario restart).
+ * Polls Kafka topics and counts available messages via Spring
+ * {@link ConsumerFactory} and named cluster references (v2.0) or legacy
+ * inline bootstrap servers. Each operation creates a short-lived
+ * {@link Consumer} and closes it after the call. A reference is kept per
+ * execution so that {@link #cleanup(ExecutionId)} can interrupt a stuck
+ * consumer (e.g. during a scenario restart).
  * <p>
- * Parameters required:
+ * Parameters (v2.0 - cluster reference preferred):
  * <ul>
- *   <li>{@code operation} — {@code CONSUME} (poll up to maxMessages) or
+ *   <li>{@code cluster} - named Kafka cluster in {@link KafkaClusterRegistry}
+ *       (v2.0, preferred)</li>
+ *   <li>{@code bootstrapServers} - broker addresses (legacy, log WARN)</li>
+ *   <li>{@code topic} - Kafka topic name (required; resolved through
+ *       {@code KafkaClusterRegistry.resolveTopic()} when {@code cluster}
+ *       is present)</li>
+ *   <li>{@code operation} - {@code CONSUME} (poll up to maxMessages) or
  *       {@code COUNT} (count available messages via offsets)</li>
- *   <li>{@code topic} — Kafka topic name</li>
- *   <li>{@code bootstrapServers} — broker addresses (e.g.
- *       {@code "localhost:9092"})</li>
- *   <li>{@code groupId} — consumer group id (used only for CONSUME)</li>
- *   <li>{@code maxMessages} — (optional, default 100) max messages to consume</li>
- *   <li>{@code timeout} — (optional, default 30s) poll timeout</li>
+ *   <li>{@code groupId} - consumer group id (overrides {@code consumerGroup}
+ *       from cluster when present)</li>
+ *   <li>{@code maxMessages} - (optional, default 100) max messages to consume</li>
+ *   <li>{@code timeout} - (optional, default 30s) poll timeout</li>
  * </ul>
  * <p>
  * Outputs: {@code {messagesConsumed: N, lag: M}}.
  * I/O blocking operations run under Virtual Threads.
  *
- * <p><b>CC-02 justification</b> — Class exceeds 300 lines due to the inherent
+ * <p><b>CC-02 justification</b> - Class exceeds 300 lines due to the inherent
  * complexity of coordinating a stateful Kafka consumer lifecycle (create, poll,
- * commit, close, cleanup) within the Virtual Thread model. Splitting the
- * consumer management, offset computation, and cleanup into separate classes
- * would scatter cohesive I/O coordination logic across multiple files without
- * reducing total complexity.</p>
+ * commit, close, cleanup) within the Virtual Thread model, with hybrid
+ * cluster-vs-legacy resolution. Splitting the consumer management, offset
+ * computation, and cleanup into separate classes would scatter cohesive I/O
+ * coordination logic across multiple files without reducing total complexity.</p>
  */
-@Preparation(name = "kafka-consumer", version = "1.0.0",
-        description = "Kafka consume or count messages in a topic")
+@Preparation(name = "kafka-consumer", version = "2.0.0",
+        description = "Kafka consumer via named cluster reference or inline bootstrap servers")
 @Component
 public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResourceCleaner {
 
@@ -71,10 +78,11 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
     static final String OUTPUT_MESSAGES_CONSUMED = "messagesConsumed";
     static final String OUTPUT_LAG = "lag";
 
-    private final Map<String, KafkaConsumer<String, String>> consumersByExecution = new ConcurrentHashMap<>();
+    private final KafkaClusterRegistry clusterRegistry;
+    private final Map<String, Consumer<String, String>> consumersByExecution = new ConcurrentHashMap<>();
 
-    public KafkaConsumerTaskExecutor() {
-        // No external dependencies — bootstrap servers come from step parameters
+    public KafkaConsumerTaskExecutor(KafkaClusterRegistry clusterRegistry) {
+        this.clusterRegistry = Objects.requireNonNull(clusterRegistry, "clusterRegistry must not be null");
     }
 
     @Override
@@ -85,9 +93,9 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
     /**
      * Executes a kafka-consumer operation (CONSUME or COUNT).
      *
-     * <p><b>CC-02</b>: method ~44 lines — parameter extraction, validation,
-     * Virtual Thread dispatch, and exception handling form a single cohesive
-     * control-flow unit that would lose clarity if split.</p>
+     * <p><b>CC-02</b>: method ~44 lines - parameter extraction, cluster-vs-legacy
+     * resolution, validation, Virtual Thread dispatch, and exception handling form
+     * a single cohesive control-flow unit that would lose clarity if split.</p>
      */
     @Override
     public TaskResult execute(ExecutionContext context, StepDefinition step) {
@@ -98,24 +106,27 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
         ExecutionId executionId = context.executionId();
         String operation = Objects.toString(step.parameters().get("operation"), "CONSUME").toUpperCase().trim();
         String topic = Objects.toString(step.parameters().get("topic"), null);
-        String bootstrapServers = Objects.toString(step.parameters().get("bootstrapServers"), null);
-        String groupId = Objects.toString(step.parameters().get("groupId"), "perf-consumer-group");
+        String clusterName = (String) step.parameters().get("cluster");
+        String bootstrapServers = (String) step.parameters().get("bootstrapServers");
+        String groupId = (String) step.parameters().get("groupId");
         int maxMessages = parseMaxMessages(step);
         long timeoutMs = step.timeout() != null ? step.timeout().toMillis() : DEFAULT_TIMEOUT_MS;
 
         if (topic == null || topic.isBlank()) {
             return fail(step, startNanos, "Required parameter 'topic' is missing or blank");
         }
-        if (bootstrapServers == null || bootstrapServers.isBlank()) {
-            return fail(step, startNanos, "Required parameter 'bootstrapServers' is missing or blank");
+        if (clusterName == null && (bootstrapServers == null || bootstrapServers.isBlank())) {
+            return fail(step, startNanos, "Either 'cluster' or 'bootstrapServers' parameter is required");
         }
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var future = executor.submit(() -> {
                 try {
                     return switch (operation) {
-                        case "CONSUME" -> executeConsume(step, startNanos, bootstrapServers, topic, groupId, maxMessages, timeoutMs, executionId);
-                        case "COUNT" -> executeCount(step, startNanos, bootstrapServers, topic, timeoutMs, executionId);
+                        case "CONSUME" -> executeConsume(step, startNanos, clusterName, bootstrapServers,
+                                topic, groupId, maxMessages, timeoutMs, executionId);
+                        case "COUNT" -> executeCount(step, startNanos, clusterName, bootstrapServers,
+                                topic, groupId, timeoutMs, executionId);
                         default -> fail(step, startNanos, "Unknown kafka-consumer operation: " + operation);
                     };
                 } catch (Exception e) {
@@ -139,36 +150,54 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
     /**
      * CONSUME: subscribes to the topic and polls for messages.
      * <p>
-     * <b>Polling behaviour</b>: the consumer is created with
-     * {@code max.poll.records = min(maxMessages, 100)}, so the broker-side
-     * batch is pre-limited to the desired ceiling. The {@code toTake} cap
-     * inside {@link #pollMessages} is a defense-in-depth measure that ensures
-     * the reported count never exceeds {@code maxMessages} even if the broker
-     * returns a larger-than-configured batch (e.g. due to compaction).
+     * <b>Polling behaviour</b>: the {@code toTake} cap inside
+     * {@link #pollMessages} is defense-in-depth that ensures the reported count
+     * never exceeds {@code maxMessages} regardless of the broker-configured
+     * {@code max.poll.records}.
      *
-     * <p><b>CC-02</b>: method ~40 lines — setup, polling delegation, offset commit,
-     * lag computation, and output assembly form a single logical unit.</p>
+     * <p><b>CC-02</b>: method ~48 lines - cluster-vs-legacy resolution, consumer
+     * lifecycle (create/poll/commit/close), lag computation, and output assembly
+     * form a single logical unit.</p>
      */
     private TaskResult executeConsume(StepDefinition step, long startNanos,
-                                      String bootstrapServers, String topic,
-                                      String groupId, int maxMessages, long timeoutMs,
+                                      String clusterName, String bootstrapServers,
+                                      String topic, String groupId,
+                                      int maxMessages, long timeoutMs,
                                       ExecutionId executionId) {
-        int pollBatchSize = Math.min(maxMessages, 100);
-        KafkaConsumer<String, String> consumer = createConsumer(bootstrapServers, groupId, pollBatchSize);
+        // Resolve topic and create consumer via factory
+        String physicalTopic;
+        Consumer<String, String> consumer;
+
+        if (clusterName != null) {
+            physicalTopic = clusterRegistry.resolveTopic(clusterName, topic);
+            String effectiveGroupId = resolveGroupId(groupId, clusterName);
+            ConsumerFactory<String, String> factory = clusterRegistry.consumerFactory(clusterName, effectiveGroupId);
+            consumer = factory.createConsumer();
+            log.info("action=consume_via_cluster clusterName={} logicalTopic={} physicalTopic={} groupId={} executionId={}",
+                    clusterName, topic, physicalTopic, effectiveGroupId, executionId.value());
+        } else {
+            physicalTopic = topic;
+            log.warn("action=consume_via_legacy_bootstrap bootstrapServers={} topic={} executionId={} "
+                    + "consider migrating to named cluster reference",
+                    bootstrapServers, topic, executionId.value());
+            String effectiveGroupId = groupId != null && !groupId.isBlank() ? groupId : "perf-consumer-group";
+            consumer = createEphemeralConsumerFactory(bootstrapServers, effectiveGroupId).createConsumer();
+        }
+
         String executionKey = step.id().value();
         consumersByExecution.put(executionKey, consumer);
 
         try {
-            log.info("action=consume_start topic={} groupId={} maxMessages={} executionId={} stepId={}",
-                    topic, groupId, maxMessages, executionId.value(), step.id().value());
+            log.info("action=consume_start topic={} maxMessages={} executionId={} stepId={}",
+                    physicalTopic, maxMessages, executionId.value(), step.id().value());
 
-            consumer.subscribe(List.of(topic));
+            consumer.subscribe(List.of(physicalTopic));
             long deadline = System.currentTimeMillis() + timeoutMs;
-            int consumed = pollMessages(consumer, maxMessages, deadline, topic, executionId, step.id());
+            int consumed = pollMessages(consumer, maxMessages, deadline, physicalTopic, executionId, step.id());
 
             consumer.commitSync();
 
-            long lag = computeLag(consumer, topic, executionId);
+            long lag = computeLag(consumer, physicalTopic, executionId);
             java.time.Duration elapsed = java.time.Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     OUTPUT_MESSAGES_CONSUMED, consumed,
@@ -176,13 +205,14 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
             );
 
             log.info("action=consume_done topic={} messagesConsumed={} lag={} executionId={} stepId={}",
-                    topic, consumed, lag, executionId.value(), step.id().value());
+                    physicalTopic, consumed, lag, executionId.value(), step.id().value());
 
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, outputs);
 
         } catch (Exception e) {
-            log.error("action=consume_failed topic={} executionId={} stepId={}", topic, executionId.value(), step.id().value(), e);
-            return fail(step, startNanos, "CONSUME failed on topic '" + topic + "': " + e.getMessage());
+            log.error("action=consume_failed topic={} executionId={} stepId={}",
+                    physicalTopic, executionId.value(), step.id().value(), e);
+            return fail(step, startNanos, "CONSUME failed on topic '" + physicalTopic + "': " + e.getMessage());
         } finally {
             consumersByExecution.remove(executionKey);
             closeConsumer(consumer);
@@ -193,11 +223,10 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
      * Polls the consumer in a loop until {@code maxMessages} is reached or the
      * deadline expires. Returns the number of messages actually consumed.
      * <p>
-     * The {@code toTake} cap is defense-in-depth: the consumer was created with
-     * {@code max.poll.records} already bounded, but compaction or broker
-     * behaviour could still return a larger batch.
+     * The {@code toTake} cap is defense-in-depth: the broker may return a batch
+     * larger than {@code maxMessages} depending on {@code max.poll.records}.
      */
-    private int pollMessages(KafkaConsumer<String, String> consumer, int maxMessages,
+    private int pollMessages(Consumer<String, String> consumer, int maxMessages,
                              long deadline, String topic, ExecutionId executionId, TaskId taskId) {
         int consumed = 0;
         while (consumed < maxMessages && System.currentTimeMillis() < deadline) {
@@ -222,23 +251,47 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
     /**
      * COUNT: counts total available messages in the topic using beginning/end
      * offsets without consuming any messages.
+     *
+     * <p><b>CC-02</b>: method ~35 lines - cluster-vs-legacy resolution, consumer
+     * lifecycle (create/assign/offsets/close), and output assembly form a single
+     * logical unit.</p>
      */
     private TaskResult executeCount(StepDefinition step, long startNanos,
-                                    String bootstrapServers, String topic, long timeoutMs,
-                                    ExecutionId executionId) {
-        KafkaConsumer<String, String> consumer = createConsumer(bootstrapServers,
-                "perf-count-" + System.currentTimeMillis(), 1);
+                                    String clusterName, String bootstrapServers,
+                                    String topic, String groupId,
+                                    long timeoutMs, ExecutionId executionId) {
+        // Resolve topic and create consumer via factory
+        String physicalTopic;
+        Consumer<String, String> consumer;
+
+        if (clusterName != null) {
+            physicalTopic = clusterRegistry.resolveTopic(clusterName, topic);
+            // COUNT uses a unique ephemeral group to avoid affecting real consumer group offsets
+            String countGroupId = "perf-count-" + System.currentTimeMillis();
+            ConsumerFactory<String, String> factory = clusterRegistry.consumerFactory(clusterName, countGroupId);
+            consumer = factory.createConsumer();
+            log.info("action=count_via_cluster clusterName={} logicalTopic={} physicalTopic={} executionId={}",
+                    clusterName, topic, physicalTopic, executionId.value());
+        } else {
+            physicalTopic = topic;
+            log.warn("action=count_via_legacy_bootstrap bootstrapServers={} topic={} executionId={} "
+                    + "consider migrating to named cluster reference",
+                    bootstrapServers, topic, executionId.value());
+            String countGroupId = "perf-count-" + System.currentTimeMillis();
+            consumer = createEphemeralConsumerFactory(bootstrapServers, countGroupId).createConsumer();
+        }
 
         try {
-            log.info("action=count_start topic={} executionId={} stepId={}", topic, executionId.value(), step.id().value());
+            log.info("action=count_start topic={} executionId={} stepId={}",
+                    physicalTopic, executionId.value(), step.id().value());
 
-            List<PartitionInfo> partitionInfos = consumer.partitionsFor(topic);
+            List<PartitionInfo> partitionInfos = consumer.partitionsFor(physicalTopic);
             if (partitionInfos == null || partitionInfos.isEmpty()) {
-                return fail(step, startNanos, "No partitions found for topic: " + topic);
+                return fail(step, startNanos, "No partitions found for topic: " + physicalTopic);
             }
 
             List<TopicPartition> partitions = partitionInfos.stream()
-                    .map(pi -> new TopicPartition(topic, pi.partition()))
+                    .map(pi -> new TopicPartition(physicalTopic, pi.partition()))
                     .toList();
             consumer.assign(partitions);
 
@@ -251,23 +304,43 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
             );
 
             log.info("action=count_done topic={} totalMessages={} partitions={} executionId={} stepId={}",
-                    topic, totalMessages, partitions.size(), executionId.value(), step.id().value());
+                    physicalTopic, totalMessages, partitions.size(), executionId.value(), step.id().value());
 
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, outputs);
 
         } catch (Exception e) {
-            log.error("action=count_failed topic={} executionId={} stepId={}", topic, executionId.value(), step.id().value(), e);
-            return fail(step, startNanos, "COUNT failed on topic '" + topic + "': " + e.getMessage());
+            log.error("action=count_failed topic={} executionId={} stepId={}",
+                    physicalTopic, executionId.value(), step.id().value(), e);
+            return fail(step, startNanos, "COUNT failed on topic '" + physicalTopic + "': " + e.getMessage());
         } finally {
             closeConsumer(consumer);
         }
     }
 
     /**
+     * Resolves the effective consumer group ID:
+     * <ol>
+     *   <li>Explicit {@code groupId} from step params (highest priority)</li>
+     *   <li>{@code consumerGroup} from the named cluster properties</li>
+     *   <li>Fallback {@code "perf-consumer-group"}</li>
+     * </ol>
+     */
+    private String resolveGroupId(String explicitGroupId, String clusterName) {
+        if (explicitGroupId != null && !explicitGroupId.isBlank()) {
+            return explicitGroupId;
+        }
+        KafkaClusterProperties cluster = clusterRegistry.get(clusterName);
+        if (cluster != null && cluster.consumerGroup() != null && !cluster.consumerGroup().isBlank()) {
+            return cluster.consumerGroup();
+        }
+        return "perf-consumer-group";
+    }
+
+    /**
      * Sums the available message count across all partitions using
      * {@code endOffsets - beginningOffsets}.
      */
-    private long sumPartitionOffsets(KafkaConsumer<String, String> consumer,
+    private long sumPartitionOffsets(Consumer<String, String> consumer,
                                      List<TopicPartition> partitions) {
         Map<TopicPartition, Long> beginningOffsets = consumer.beginningOffsets(partitions);
         Map<TopicPartition, Long> endOffsets = consumer.endOffsets(partitions);
@@ -285,7 +358,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
      * Computes consumer group lag: sum of (endOffset - committedOffset) across
      * all partitions assigned to this consumer.
      */
-    private long computeLag(KafkaConsumer<String, String> consumer, String topic, ExecutionId executionId) {
+    private long computeLag(Consumer<String, String> consumer, String topic, ExecutionId executionId) {
         try {
             var assignment = consumer.assignment();
             if (assignment.isEmpty()) {
@@ -306,17 +379,19 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
         }
     }
 
-    private KafkaConsumer<String, String> createConsumer(String bootstrapServers, String groupId,
-                                                         int maxPollRecords) {
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
-        return new KafkaConsumer<>(props);
+    /**
+     * Creates an ephemeral {@link ConsumerFactory} from inline bootstrap servers
+     * (legacy path). Logs a WARN to encourage migration to named clusters.
+     */
+    private ConsumerFactory<String, String> createEphemeralConsumerFactory(String bootstrapServers, String groupId) {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        return new DefaultKafkaConsumerFactory<>(config);
     }
 
     private int parseMaxMessages(StepDefinition step) {
@@ -339,7 +414,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 
-    private void closeConsumer(KafkaConsumer<String, String> consumer) {
+    private void closeConsumer(Consumer<String, String> consumer) {
         try {
             consumer.close(java.time.Duration.ofSeconds(5));
         } catch (Exception e) {
@@ -361,7 +436,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
             });
             consumersByExecution.clear();
         } else {
-            KafkaConsumer<String, String> consumer = consumersByExecution.remove(executionId.value());
+            Consumer<String, String> consumer = consumersByExecution.remove(executionId.value());
             if (consumer != null) {
                 log.info("action=cleanup_execution executionId={}", executionId.value());
                 consumer.wakeup();

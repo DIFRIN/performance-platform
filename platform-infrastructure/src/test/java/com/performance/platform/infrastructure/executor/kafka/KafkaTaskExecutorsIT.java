@@ -52,7 +52,7 @@ class KafkaTaskExecutorsIT {
 
     @BeforeAll
     static void setUp() {
-        consumerExecutor = new KafkaConsumerTaskExecutor();
+        consumerExecutor = new KafkaConsumerTaskExecutor(EMPTY_REGISTRY);
         producerExecutor = new KafkaProducerTaskExecutor(EMPTY_REGISTRY);
     }
 
@@ -365,7 +365,7 @@ class KafkaTaskExecutorsIT {
             TaskResult result = consumerExecutor.execute(emptyContext(), step);
 
             assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
-            assertThat(result.errorMessage()).contains("bootstrapServers");
+            assertThat(result.errorMessage()).contains("cluster");
         }
 
         @Test
@@ -394,7 +394,7 @@ class KafkaTaskExecutorsIT {
             TaskResult result = producerExecutor.execute(emptyContext(), step);
 
             assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
-            assertThat(result.errorMessage()).contains("bootstrapServers");
+            assertThat(result.errorMessage()).contains("cluster");
         }
 
         @Test
