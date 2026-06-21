@@ -146,7 +146,7 @@
 | ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | WAITING | ISSUE-086 |
 | ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | WAITING | ISSUE-086 |
 | ISSUE-090 | DynamicKafkaListenerRegistry replace KafkaConsumerManager | PDR-021 | platform-transport | L | WAITING | ISSUE-089 |
-| ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | WAITING | — |
+| ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | IN REVIEW | — |
 | ISSUE-093 | Nouveau HttpClientTaskExecutor (@Preparation http-client) | PDR-022 | platform-infrastructure | M | WAITING | ISSUE-092 |
 | ISSUE-096 | SUT iot-dispatcher Spring Boot (Kafka→DB→HTTP) | PDR-023 | platform-examples/ | L | WAITING | ISSUE-098 |
 | ISSUE-097 | SUT device-api Spring Boot (HTTP→DB→Kafka) | PDR-023 | platform-examples/ | M | WAITING | ISSUE-098 |
@@ -532,6 +532,8 @@
 | 2026-06-21 | ISSUE-098 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. V1 + V2 SQL conformes PDR-023. |
 | 2026-06-21 | ISSUE-086 | WAITING → IN PROGRESS | Developer |
 | 2026-06-21 | ISSUE-086 | IN PROGRESS → IN REVIEW | Developer — KafkaClusterRegistry + KafkaClusterConfiguration + 17 tests |
+| 2026-06-21 | ISSUE-092 | WAITING
+| 2026-06-21 | ISSUE-092 | IN PROGRESS
 | 2026-06-21 | ISSUE-098 | IN PROGRESS → IN REVIEW | Developer — V1__devices_schema.sql + V2__seed_10k_devices.sql |
 
 ---

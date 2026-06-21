@@ -310,10 +310,10 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `HttpTargetProperties` | ⬜ PLANNED | PDR-022 | ISSUE-092 |
-| `PlatformHttpTargetsProperties` | ⬜ PLANNED | PDR-022 | ISSUE-092 |
-| `HttpTargetRegistry` | ⬜ PLANNED | PDR-022 | ISSUE-092 |
-| `HttpTargetConfiguration` | ⬜ PLANNED | PDR-022 | ISSUE-092 |
+| `HttpTargetProperties` | 🔄 IN PROGRESS | PDR-022 | ISSUE-092 |
+| `PlatformHttpTargetsProperties` | 🔄 IN PROGRESS | PDR-022 | ISSUE-092 |
+| `HttpTargetRegistry` | 🔄 IN PROGRESS | PDR-022 | ISSUE-092 |
+| `HttpTargetConfiguration` | 🔄 IN PROGRESS | PDR-022 | ISSUE-092 |
 | `HttpClientTaskExecutor` | ⬜ PLANNED | PDR-022 | ISSUE-093 |
 
 ## platform-examples (PDR-023 — services SUT standalone)

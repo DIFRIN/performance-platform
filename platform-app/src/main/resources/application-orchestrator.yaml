@@ -33,6 +33,25 @@ platform:
   security:
     enabled: true
 
+  # Named HTTP targets (PDR-022)
+  # Chaque target definit son URL de base, timeouts, et mapping de chemins logiques.
+  http-targets:
+    wiremock:
+      base-url: ${WIREMOCK_URL:http://wiremock:8080}
+      connection-timeout: 2s
+      read-timeout: 5s
+      paths:
+        reset-requests: /__admin/requests
+        count-requests: /__admin/requests/count
+        health: /__admin/health
+    device-api:
+      base-url: ${DEVICE_API_URL:http://device-api:8082}
+      connection-timeout: 2s
+      read-timeout: 10s
+      paths:
+        submit-event: /api/events
+        check-device: /api/devices
+
   # Datasource PostgreSQL (production)
   # CNF-03: credentials via env vars.
   datasources:
