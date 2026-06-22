@@ -10,7 +10,7 @@
 
 **Date derniere session** : 2026-06-22
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-102
+**Issue active** : ISSUE-095
 **Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
 **PDR parent** : PDR-024 (DONE)
 
@@ -19,12 +19,12 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-102 APPROVED: README.md 162 lignes conforme spec, 0 bloquant, 0 recommandation. PDR-024 DONE.
+Reviewer — re-review ISSUE-095 : 2 CRAFT-05 CONFIRMED (CC-02 classe + evaluate()). 130 tests OK. PDR-022 DONE.
 **Prochaine action** :
-Developer — Prendre prochaine Issue: ISSUE-095 IN REVIEW ou prochain PDR WAITING.
+Committer le commit pour ISSUE-095 + PDR-022. La session est prete pour le protocole de demarrage (prochaine Issue TODO).
 **Fichiers modifies** (cette session) :
-- platform-deployment/examples/README.md cree
-- .claude/progress.md (ISSUE-102 DONE, PDR-024 DONE)
+- .claude/context/recommendations-tracking.md (ISSUE-095 APPLIED→CONFIRMED x2)
+- .claude/progress.md (ISSUE-095 APPROVED→DONE, PDR-022 WAITING→DONE)
 - .claude/session-state.md
 **Blocages** : aucun
 
@@ -34,7 +34,9 @@ Developer — Prendre prochaine Issue: ISSUE-095 IN REVIEW ou prochain PDR WAITI
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-22 | Reviewer | ISSUE-095 | Re-review : 2 CRAFT-05 CONFIRMED (CC-02 classe + evaluate()). 130 tests OK. PDR-022 DONE. | DONE |
 | 2026-06-22 | Developer | ISSUE-100 | Scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) + application-examples-local.yaml. 4 parse tests OK, 188 total OK, BUILD SUCCESS, 0 inline URL, agentTags OK. | IN REVIEW |
+| 2026-06-22 | Reviewer | ISSUE-095 | APPROVED: 0 bloquant, 2 recommandations CRAFT-05 PENDING. 130 tests OK. | EN ATTENTE RE-REVIEW |
 | 2026-06-22 | Reviewer | ISSUE-102 | APPROVED: 0 bloquant, 0 recommandation. README conforme spec, PDR-024 DONE. | DONE |
 | 2026-06-22 | Developer | ISSUE-102 | README.md 162 lignes dans platform-deployment/examples — guide demarrage IoT. | IN REVIEW |
 | 2026-06-22 | Developer | ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration: KafkaTransportBeans (+transportContainerFactory +kafkaExecutionTransport bean), TransportConfiguration (bean retire), KafkaExecutionTransport (ConcurrentKafkaListenerContainerFactory), KafkaConsumerManager supprime. 225 tests OK, BUILD SUCCESS. | IN REVIEW |
