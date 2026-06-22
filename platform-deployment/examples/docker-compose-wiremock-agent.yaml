@@ -1,40 +1,3 @@
-# ISSUE-107 — Create docker-compose-wiremock-agent.yaml
-
-**PDR** : PDR-025
-**Module** : `platform-deployment`
-**Statut** : APPROVED
-**Priorite** : P1 (critique — necessaire pour le demo DISTRIBUTED mock-as-agent)
-**Bloquee par** : ISSUE-103 (le docker-compose-sut ne contient plus de wiremock standalone — modele coherent)
-**Estime** : M (1-3h)
-
----
-
-## Objectif
-
-Creer un fichier `docker-compose-wiremock-agent.yaml` qui demontre le pattern "WireMock as Agent" avec 3 agents specialises via le modele configuration-driven. Ce fichier est l'infrastructure pour executer le scenario `http-api-mock-agent-distributed.yaml`.
-
-Architecture :
-- **postgres** : base de donnees de la plateforme (etat des executions)
-- **kafka** : transport entre orchestrateur et agents
-- **orchestrator** : recoit le scenario, planifie le DAG, dispatche en broadcast
-- **mock-agent** : `agent.supported-tasks: [mock-server, http-client]` — demarre WireMock EMBEDDED en preparation
-- **gatling-agent** : `agent.supported-tasks: [gatling, gatling-metric]` — execute l'injection de charge
-- **standard-agent** : `agent.supported-tasks: [http-mock, database, kafka]` — execute les assertions
-
-**PAS de service WireMock standalone.** Le mock est fourni par l'agent.
-
-**Configuration-driven model** : Chaque agent recoit sa liste de tasks via la variable d'environnement `AGENT_SUPPORTED_TASKS` (mappe a `agent.supported-tasks` dans application.yml). Meme image Docker partout — config differente = role different. Pas de `AGENT_TAGS` (les tags ne sont plus utilises pour le routing).
-
-## Fichier a Creer
-
-```
-platform-deployment/examples/
-  └── docker-compose-wiremock-agent.yaml
-```
-
-## docker-compose-wiremock-agent.yaml — Contenu
-
-```yaml
 # =============================================================================
 # Performance Engineering Platform — WireMock as Agent Demo
 # =============================================================================
@@ -229,25 +192,3 @@ networks:
 
 volumes:
   postgres_data:
-```
-
-## Regles Specifiques
-
-- **PAS de service WireMock standalone** — c'est le point central de ce PDR
-- **Configuration-driven model** : Chaque agent utilise `AGENT_SUPPORTED_TASKS` env var (mappe a `agent.supported-tasks` dans application.yml). Pas de `AGENT_TAGS` (les tags ne sont plus utilises pour le routing).
-- **Meme image Docker** : Tous les agents partagent le meme Dockerfile (`platform-deployment/docker/Dockerfile`) — artefact unique (CF-01). Config differente = role different.
-- `mock-agent` utilise `expose` (pas `ports`) pour eviter les collisions de ports. Le port WireMock EMBEDDED est attribue dynamiquement et accessible via le reseau Docker interne.
-- Le repertoire `init-scripts/` est reference depuis `../docker/` (chemin relatif au fichier compose dans `examples/`)
-- Les volumes `./scenarios:/scenarios:ro` et `./reports:/reports` permettent d'injecter les scenarios et de recuperer les rapports
-- **`AGENT_SUPPORTED_TASKS` env var** : Liste de task names separee par des virgules. Mappe a la propriété Spring `agent.supported-tasks` (YAML list). Exemple : `AGENT_SUPPORTED_TASKS=mock-server,http-client` devient `agent.supported-tasks: [mock-server, http-client]`.
-- Si le mecanisme de mapping `AGENT_SUPPORTED_TASKS` env var -> `agent.supported-tasks` n'existe pas encore dans le code, le Developer doit implementer ce mapping dans le cadre de cette Issue. Le mapping est trivial : `@ConfigurationProperties(prefix = "agent")` avec une `List<String> supportedTasks` et Spring Boot relie automatiquement la notation avec underscore (`AGENT_SUPPORTED_TASKS`) a la propriete camelCase (`agent.supported-tasks`).
-
-## Criteres de Done
-
-- [ ] `docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml config` -> YAML valide, 6 services
-- [ ] Aucun service nomme `wiremock` dans le fichier
-- [ ] Chaque agent a `AGENT_SUPPORTED_TASKS` env var avec sa liste de tasks
-- [ ] Aucun `AGENT_TAGS` dans le fichier
-- [ ] Le mapping `AGENT_SUPPORTED_TASKS` -> `agent.supported-tasks` fonctionne (ou est implemente si manquant)
-- [ ] `mvn test -pl platform-deployment -q` -> 0 erreur
-- [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-107 -> DONE
