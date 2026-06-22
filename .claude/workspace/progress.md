@@ -118,9 +118,9 @@
 | ISSUE-104 | Delete DevicePopulationTaskExecutor + DeviceCheckTaskExecutor from platform-infrastructure | DONE | PDR-025 | - |
 | ISSUE-105 | Create http-api-mock-agent-local.yaml scenario (LOCAL mode) | DONE | PDR-025 | ISSUE-103 |
 | ISSUE-106 | Create http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED mode) | DONE | PDR-025 | ISSUE-105 |
-| ISSUE-107 | Create docker-compose-wiremock-agent.yaml | APPROVED | PDR-025 | ISSUE-103 |
+| ISSUE-107 | Create docker-compose-wiremock-agent.yaml | DONE | PDR-025 | ISSUE-103 |
 | ISSUE-108 | README Mock-as-Agent architecture documentation | WAITING | PDR-025 | ISSUE-103,104,105,106,107 |
-| ISSUE-109 | Delete legacy device-check-perf.yaml scenario | WAITING | PDR-025 | ISSUE-104 |
+| ISSUE-109 | Delete legacy device-check-perf.yaml scenario | APPROVED | PDR-025 | ISSUE-104 |
 | ISSUE-110 | Clean device entries from interfaces-registry | WAITING | PDR-025 | ISSUE-104,109 |
 | ISSUE-111 | AgentProperties @ConfigurationProperties record | DONE | PDR-026 | — |
 | ISSUE-112 | Create AgentRuntimeConfiguration @Configuration | DONE | PDR-026 | ISSUE-111 |
@@ -567,3 +567,7 @@
 | 2026-06-22 | ISSUE-107 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-22 | ISSUE-107 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-107 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-107 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-109 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-22 | ISSUE-109 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-22 | ISSUE-109 | IN_REVIEW → APPROVED | Reviewer approved |
