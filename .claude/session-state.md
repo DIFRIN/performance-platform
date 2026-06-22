@@ -8,26 +8,26 @@
 
 ## Etat Courant
 
-**Date derniere session** : 2026-06-21
+**Date derniere session** : 2026-06-22
 **Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-089 (KafkaTemplate replace raw KafkaProducer)
-**Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
-**PDR parent** : PDR-021
+**Issue active** : aucune (ISSUE-094+096+097 DONE)
+**Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [x] APPROVED
+**PDR parent** : PDR-023
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-089 : APPROVED (0 bloquant, 0 recommandation). 213 tests OK, BUILD SUCCESS. KafkaTemplate verify, KafkaTransportBeans stable. Commit effectue.
+Reviewer — ISSUE-094+096+097 APPROVED: 0 bloquant, 0 recommandation. 26+4+6=36 tests OK, BUILD SUCCESS.
 **Prochaine action** :
-@developer prend ISSUE-090 (P1, L, dep ISSUE-089 DONE) — DynamicKafkaListenerRegistry replace KafkaConsumerManager
-**Fichiers modifies** (cette session — review) :
-- platform-transport/src/main/java/.../kafka/KafkaExecutionTransport.java (KafkaTemplate au lieu de KafkaProducer)
-- platform-transport/src/main/java/.../config/KafkaTransportBeans.java (cree — ProducerFactory + KafkaTemplate beans)
-- platform-transport/src/main/java/.../config/TransportConfiguration.java (injecte KafkaTemplate)
-- platform-transport/src/test/.../kafka/KafkaExecutionTransportTest.java (cree — 20 tests avec KafkaTemplate mock)
-- platform-transport/src/test/.../kafka/KafkaExecutionTransportIT.java (adapte pour KafkaTemplate)
+@developer ou /next — prendre la prochaine Issue (ISSUE-095 ou ISSUE-099 selon dependances)
+**Fichiers modifies** (cette session) :
+- platform-infrastructure/.../executor/mock/MockServerTaskExecutor.java (ISSUE-094)
+- platform-infrastructure/.../executor/mock/MockServerTaskExecutorTest.java (ISSUE-094)
+- platform-examples/iot-dispatcher/ (ISSUE-096)
+- platform-examples/device-api/ (ISSUE-097)
+- .claude/progress.md, .claude/context/interfaces-registry.md, .claude/session-state.md
 **Blocages** : aucun
 
 ---

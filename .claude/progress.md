@@ -1,3 +1,6 @@
+| 2026-06-22 | ISSUE-094 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 26 tests OK. |
+| 2026-06-22 | ISSUE-096 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. |
+| 2026-06-22 | ISSUE-097 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 6 tests OK. |
 # Progress
 
 > Tracker central de tous les PDRs et Issues du projet.
@@ -145,11 +148,11 @@
 | ISSUE-087 | Refactor KafkaProducerTaskExecutor → cluster ref + KafkaTemplate | PDR-020 | platform-infrastructure | M | DONE | ISSUE-086 |
 | ISSUE-088 | Refactor KafkaConsumerTaskExecutor → cluster ref + ConsumerFactory | PDR-020 | platform-infrastructure | M | DONE | ISSUE-086 |
 | ISSUE-089 | KafkaTemplate replace raw KafkaProducer dans KafkaExecutionTransport | PDR-021 | platform-transport | M | DONE | ISSUE-086 |
-| ISSUE-090 | DynamicKafkaListenerRegistry replace KafkaConsumerManager | PDR-021 | platform-transport | L | WAITING | ISSUE-089 |
+| ISSUE-090 | DynamicKafkaListenerRegistry replace KafkaConsumerManager | PDR-021 | platform-transport | L | DONE | ISSUE-089 |
 | ISSUE-092 | HttpTargetRegistry + Properties + Configuration | PDR-022 | platform-infrastructure | M | DONE | — |
-| ISSUE-093 | Nouveau HttpClientTaskExecutor (@Preparation http-client) | PDR-022 | platform-infrastructure | M | WAITING | ISSUE-092 |
-| ISSUE-096 | SUT iot-dispatcher Spring Boot (Kafka→DB→HTTP) | PDR-023 | platform-examples/ | L | WAITING | ISSUE-098 |
-| ISSUE-097 | SUT device-api Spring Boot (HTTP→DB→Kafka) | PDR-023 | platform-examples/ | M | WAITING | ISSUE-098 |
+| ISSUE-093 | Nouveau HttpClientTaskExecutor (@Preparation http-client) | PDR-022 | platform-infrastructure | M | DONE | ISSUE-092 |
+| ISSUE-096 | SUT iot-dispatcher Spring Boot (Kafka→DB→HTTP) | PDR-023 | platform-examples/ | L | DONE | ISSUE-098 |
+| ISSUE-097 | SUT device-api Spring Boot (HTTP→DB→Kafka) | PDR-023 | platform-examples/ | M | DONE | ISSUE-098 |
 | ISSUE-098 | SUT DB schema + seed 10k devices | PDR-023 | platform-examples/ | S | DONE | — |
 | ISSUE-099 | docker-compose-sut.yaml (5 services SUT) | PDR-024 | platform-deployment | S | WAITING | ISSUE-096,097,098 |
 | ISSUE-100 | Scénarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
@@ -195,7 +198,7 @@
 | ISSUE-084 | docker-compose dev local | PDR-019 | platform-deployment | S | DONE | ISSUE-083 |
 | ISSUE-085 | Manifests Kubernetes | PDR-019 | platform-deployment | M | DONE | ISSUE-083 |
 | ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration | PDR-021 | platform-transport | S | WAITING | ISSUE-090 |
-| ISSUE-094 | Refactor MockServerTaskExecutor → target reference | PDR-022 | platform-infrastructure | S | WAITING | ISSUE-092 |
+| ISSUE-094 | Refactor MockServerTaskExecutor → target reference | PDR-022 | platform-infrastructure | S | DONE | ISSUE-092 |
 | ISSUE-095 | Refactor HttpMockAssertionExecutor → target reference | PDR-022 | platform-infrastructure | S | WAITING | ISSUE-092 |
 | ISSUE-102 | README examples + guide démarrage | PDR-024 | platform-deployment | S | WAITING | ISSUE-099,100,101 |
 
@@ -547,6 +550,13 @@
 | 2026-06-21 | ISSUE-089 | WAITING → IN PROGRESS | Developer — Verification: code deja migre (KafkaTemplate remplace KafkaProducer). KafkaTransportBeans, TransportConfiguration, 20 tests existent. |
 | 2026-06-21 | ISSUE-089 | IN PROGRESS → IN REVIEW | Developer — 213 tests OK, 0 raw KafkaProducer, KafkaTemplate.send() verifie. |
 | 2026-06-21 | ISSUE-089 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 213 tests OK, KafkaTemplate confirmed. |
+| 2026-06-21 | ISSUE-090 | WAITING → IN PROGRESS → IN REVIEW | Developer — DynamicKafkaListenerRegistry (331L) + 12 tests mock containers, KafkaExecutionTransport integre ConsumerFactory lazy init, KafkaConsumerManager @Deprecated, KafkaSubscription Runnable cleanup, KafkaTransportBeans ConsumerFactory bean. 225 tests OK, 0 warning. |
+| 2026-06-22 | ISSUE-090 | CHANGES_REQUESTED → IN REVIEW | Developer (4 recommandations APPLIED: CRAFT-05 CC-02 x2 + CRAFT-08 ORCHESTRATOR_GROUP + DRY getOrCreateEventGroup) |
+| 2026-06-22 | ISSUE-093 | IN PROGRESS → IN REVIEW | Developer — HttpClientTaskExecutor (189L) + 23 tests WireMock, BUILD SUCCESS |
+| 2026-06-22 | ISSUE-093 | IN REVIEW → CHANGES_REQUESTED | Reviewer — CRAFT-05: execute() 47L + executeRequest() 57L sans CC-02. 39 tests OK. |
+| 2026-06-22 | ISSUE-093 | CHANGES_REQUESTED → IN REVIEW | Developer (2 CRAFT-05 APPLIED: CC-02 execute() + executeRequest()) |
+| 2026-06-22 | ISSUE-094 | WAITING → IN PROGRESS → IN REVIEW | Developer — MockServerTaskExecutor refactored with HttpTargetRegistry, 26 tests OK (23+3), BUILD SUCCESS |
+| 2026-06-22 | ISSUE-096 | WAITING → IN PROGRESS | Developer |
 
 ---
 
@@ -555,4 +565,7 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 24
 **Issues totales** : 102
-**Derniere mise a jour** : 2026-06-21 (Developer — ISSUE-089 IN REVIEW, KafkaTemplate verified)
+**Derniere mise a jour** : 2026-06-22 (Reviewer — ISSUE-094, 096, 097 APPROVED)
+
+| 2026-06-22 | ISSUE-096 | IN PROGRESS → IN REVIEW | Developer — iot-dispatcher SUT: pom.xml + 4 classes + YAML + Dockerfile + 4 tests OK, BUILD SUCCESS |
+| 2026-06-22 | ISSUE-097 | WAITING → IN REVIEW | Developer — device-api SUT: pom.xml + 4 classes + YAML + Dockerfile + 6 tests OK, BUILD SUCCESS |

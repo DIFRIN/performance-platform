@@ -155,6 +155,7 @@
 | `KafkaTransportProperties` / `RabbitMQTransportProperties` / `HttpTransportProperties` / `SocketTransportProperties` | ✅ STABLE | PDR-008 | ISSUE-028 |
 | `TransportConfiguration` | ✅ STABLE | PDR-008 | ISSUE-028 |
 | `KafkaExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-029 |
+| `DynamicKafkaListenerRegistry` | 🔄 IN PROGRESS | PDR-021 | ISSUE-090 |
 | `KafkaMessageCodec` | ✅ STABLE | PDR-008 | ISSUE-029 |
 | `KafkaConsumerManager` | ⚠️ BREAKING | PDR-021 | ISSUE-090 (→ DynamicKafkaListenerRegistry) |
 | `KafkaSubscription` | ✅ STABLE | PDR-008 | ISSUE-029 |
@@ -193,7 +194,7 @@
 | `PlatformDatasourcesProperties` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014) |
 | `DatasourceConfiguration` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014) |
 | `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ⚠️ BREAKING | PDR-020 | ISSUE-087,088 (refactoring Spring Kafka en cours) |
-| `MockServerTaskExecutor` | ⚠️ BREAKING | PDR-022 | ISSUE-094 (refactoring target ref en cours) |
+| `MockServerTaskExecutor` | ✅ STABLE | PDR-022 | ISSUE-094 |
 | `ShellTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-043 |
 | `DockerTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-044 |
 | `FilesystemTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-045 |
@@ -310,18 +311,18 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `HttpTargetProperties` | 🔄 IN PROGRESS | PDR-022 | ISSUE-092 |
-| `PlatformHttpTargetsProperties` | 🔄 IN PROGRESS | PDR-022 | ISSUE-092 |
-| `HttpTargetRegistry` | 🔄 IN PROGRESS | PDR-022 | ISSUE-092 |
-| `HttpTargetConfiguration` | 🔄 IN PROGRESS | PDR-022 | ISSUE-092 |
-| `HttpClientTaskExecutor` | ⬜ PLANNED | PDR-022 | ISSUE-093 |
+| `HttpTargetProperties` | ✅ STABLE | PDR-022 | ISSUE-092 |
+| `PlatformHttpTargetsProperties` | ✅ STABLE | PDR-022 | ISSUE-092 |
+| `HttpTargetRegistry` | ✅ STABLE | PDR-022 | ISSUE-092 |
+| `HttpTargetConfiguration` | ✅ STABLE | PDR-022 | ISSUE-092 |
+| `HttpClientTaskExecutor` | 🔄 IN PROGRESS | PDR-022 | ISSUE-093 |
 
 ## platform-examples (PDR-023 — services SUT standalone)
 
 | Classe / Service | Statut | PDR | Issue |
 |---|---|---|---|
-| `IotDispatcherApplication` + `DeviceCommandConsumer` + `DeviceRepository` + `IotHttpClient` | ⬜ PLANNED | PDR-023 | ISSUE-096 |
-| `DeviceApiApplication` + `DeviceEventController` + `DeviceRepository` + `DeviceEventProducer` | ⬜ PLANNED | PDR-023 | ISSUE-097 |
+| `IotDispatcherApplication` + `DeviceCommandConsumer` + `DeviceRepository` + `IotHttpClient` | ✅ STABLE | PDR-023 | ISSUE-096 |
+| `DeviceApiApplication` + `DeviceEventController` + `DeviceRepository` + `DeviceEventProducer` | ✅ STABLE | PDR-023 | ISSUE-097 |
 | SQL schema `devices` + seed 10k | 🔄 IN PROGRESS | PDR-023 | ISSUE-098 |
 
 ## platform-deployment (PDR-024 — exemples et scénarios)

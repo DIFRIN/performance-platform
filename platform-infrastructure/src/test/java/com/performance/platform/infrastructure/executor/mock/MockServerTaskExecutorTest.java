@@ -8,6 +8,9 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
+import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
+import com.performance.platform.infrastructure.executor.http.HttpTargetProperties;
+import org.springframework.web.client.RestClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,7 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @DisplayName("MockServerTaskExecutor")
 class MockServerTaskExecutorTest {
 
-    private final MockServerTaskExecutor executor = new MockServerTaskExecutor();
+    private final HttpTargetRegistry targetRegistry = new HttpTargetRegistry(Map.of(), RestClient.builder());
+    private final MockServerTaskExecutor executor = new MockServerTaskExecutor(targetRegistry);
 
     @AfterEach
     void tearDown() {
@@ -244,8 +248,8 @@ class MockServerTaskExecutorTest {
     class ExternalMode {
 
         @Test
-        @DisplayName("should fail START when externalUrl is missing")
-        void shouldFailStartWhenExternalUrlMissing() {
+        @DisplayName("should fail START when target and wiremockUrl are missing")
+        void shouldFailStartWhenTargetAndWiremockUrlMissing() {
             var step = new StepDefinition(
                     TaskId.of("step-040"), "mock-server", Phase.PREPARATION,
                     Map.of("deployment", "EXTERNAL", "action", "START"),
@@ -254,7 +258,7 @@ class MockServerTaskExecutorTest {
             TaskResult result = executor.execute(emptyContext(), step);
 
             assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
-            assertThat(result.errorMessage()).contains("externalUrl");
+            assertThat(result.errorMessage()).contains("wiremockUrl");
         }
 
         @Test
@@ -263,7 +267,7 @@ class MockServerTaskExecutorTest {
             var step = new StepDefinition(
                     TaskId.of("step-041"), "mock-server", Phase.PREPARATION,
                     Map.of("deployment", "EXTERNAL", "action", "START",
-                            "externalUrl", "http://127.0.0.1:19999"),
+                            "wiremockUrl", "http://127.0.0.1:19999"),
                     null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
@@ -278,7 +282,7 @@ class MockServerTaskExecutorTest {
             var step = new StepDefinition(
                     TaskId.of("step-042"), "mock-server", Phase.PREPARATION,
                     Map.of("deployment", "EXTERNAL", "action", "STOP",
-                            "externalUrl", "http://localhost:8090"),
+                            "wiremockUrl", "http://localhost:8090"),
                     null, null, Duration.ofSeconds(10), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
@@ -292,12 +296,77 @@ class MockServerTaskExecutorTest {
             var step = new StepDefinition(
                     TaskId.of("step-043"), "mock-server", Phase.PREPARATION,
                     Map.of("deployment", "EXTERNAL", "action", "VERIFY",
-                            "externalUrl", "http://127.0.0.1:19999"),
+                            "wiremockUrl", "http://127.0.0.1:19999"),
                     null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
             assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+        }
+    }
+
+    // ─────────────────────────────── TARGET-BASED EXTERNAL ───────────────────────────────
+
+    @Nested
+    @DisplayName("EXTERNAL with target parameter (HttpTargetRegistry)")
+    class TargetBasedExternal {
+
+        private final HttpTargetRegistry targetRegistryWithTarget = new HttpTargetRegistry(
+                Map.of("wiremock", new HttpTargetProperties("http://127.0.0.1:19999",
+                        java.time.Duration.ofSeconds(2), java.time.Duration.ofSeconds(5),
+                        Map.of(), Map.of())),
+                RestClient.builder());
+        private final MockServerTaskExecutor targetExecutor = new MockServerTaskExecutor(targetRegistryWithTarget);
+
+        @AfterEach
+        void tearDown() {
+            targetExecutor.cleanup(null);
+        }
+
+        @Test
+        @DisplayName("should resolve target and attempt connection (fails gracefully on unreachable)")
+        void shouldResolveTargetAndAttemptConnection() {
+            var step = new StepDefinition(
+                    TaskId.of("step-080"), "mock-server", Phase.PREPARATION,
+                    Map.of("deployment", "EXTERNAL", "action", "START",
+                            "target", "wiremock"),
+                    null, null, Duration.ofSeconds(2), null);
+
+            TaskResult result = targetExecutor.execute(emptyContext(), step);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+            assertThat(result.errorMessage()).contains("not reachable");
+        }
+
+        @Test
+        @DisplayName("should fail when target name is unknown in registry")
+        void shouldFailWhenTargetNameUnknown() {
+            var step = new StepDefinition(
+                    TaskId.of("step-081"), "mock-server", Phase.PREPARATION,
+                    Map.of("deployment", "EXTERNAL", "action", "START",
+                            "target", "nonexistent"),
+                    null, null, Duration.ofSeconds(10), null);
+
+            TaskResult result = executor.execute(emptyContext(), step);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+            assertThat(result.errorMessage()).contains("Unknown http-target");
+        }
+
+        @Test
+        @DisplayName("should prefer target over wiremockUrl when both are provided")
+        void shouldPreferTargetOverWiremockUrl() {
+            var step = new StepDefinition(
+                    TaskId.of("step-082"), "mock-server", Phase.PREPARATION,
+                    Map.of("deployment", "EXTERNAL", "action", "STOP",
+                            "target", "wiremock",
+                            "wiremockUrl", "http://should-not-be-used:9999"),
+                    null, null, Duration.ofSeconds(10), null);
+
+            TaskResult result = targetExecutor.execute(emptyContext(), step);
+
+            // STOP is a no-op for EXTERNAL, should succeed using target's URL
+            assertThat(result.isSuccess()).isTrue();
         }
     }
 
