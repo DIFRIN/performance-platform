@@ -17,44 +17,41 @@
 
 ### Developer (session standard)
 ```
-Fichiers obligatoires (~400 tokens) :
-  .claude/workspace/session-state.md          ~80 tokens
-  CLAUDE.md                 ~300 tokens
-  .claude/workspace/current-task.md           ~150 tokens
+Fichiers obligatoires (~250 tokens) :
+  .claude/workspace/current-issue.md            ~300 tokens  — specs, signatures, critères, feedbacks
 
-Fichiers conditionnels (lire UNIQUEMENT si dans session-state.md) :
+Fichiers conditionnels :
   agents/developer.md       ~200 tokens   — 1ère session ou si incertitude sur les règles
   .claude/knowledge/glossary.md               ~200 tokens   — si un terme est ambigu
   .claude/workspace/interfaces-registry.md  ~300 tokens  — toujours (évite les divergences)
   Une spec (section ciblée)  ~150-300 tokens — section spécifique uniquement
 
-Total typique : 600-1000 tokens de contexte par session
-À NE PAS charger : autres specs, roadmap, .claude/knowledge/adr/, .claude/guides/, feature-summaries
+Total typique : 500-800 tokens de contexte par session
+À NE PAS charger : session-state.md, progress.md, PDRs, roadmap, ADRs, guides
 ```
 
 ### Reviewer (session standard)
 ```
-Fichiers obligatoires :
-  agents/reviewer.md        ~250 tokens
-  .claude/workspace/current-task.md           ~150 tokens
-  .claude/workspace/interfaces-registry.md  ~300 tokens
+Fichier obligatoire :
+  .claude/workspace/current-issue.md            ~300 tokens  — specs, signatures, critères
 
 Fichiers conditionnels :
+  agents/reviewer.md        ~250 tokens
+  .claude/workspace/interfaces-registry.md  ~300 tokens
   Une spec (section interfaces) ~100 tokens  — vérification des signatures
 
-Total typique : 500-800 tokens
-À NE PAS charger : session-state.md, .claude/skills/, roadmap, autres specs
+Total typique : 400-700 tokens
+À NE PAS charger : session-state.md, progress.md, .claude/skills/, roadmap, PDRs
 ```
 
 ### Tester (session standard)
 ```
-Fichiers obligatoires :
-  agents/tester.md (section phase) ~150 tokens
-  .claude/workspace/current-task.md                  ~150 tokens
-  .claude/workspace/interfaces-registry.md   ~300 tokens
+Fichier obligatoire :
+  .claude/workspace/current-issue.md            ~300 tokens  — specs, critères de test
 
 Fichiers conditionnels :
-  .claude/workspace/progress.md (index) ~80 tokens
+  agents/tester.md (section phase) ~150 tokens
+  .claude/workspace/interfaces-registry.md   ~300 tokens
 
 Total typique : 450-700 tokens
 ```
@@ -87,14 +84,14 @@ Les specs sont longues (150-280 lignes). Ne jamais les lire en entier sauf Phase
 | Vérifier un format de retour | Section "Modèle de Données" uniquement |
 | Phase 1 uniquement | Spec 01 complète (parsing = besoin global) |
 
-Indiquer dans `.claude/workspace/current-task.md` et `.claude/workspace/session-state.md` **quelle section** lire,
+Indiquer dans `.claude/workspace/current-issue.md` **quelle section** lire,
 pas juste le fichier.
 
 ---
 
 ## Règle de Non-Redite
 
-Si une information est dans `.claude/workspace/session-state.md` → ne pas aller la chercher dans la spec.
+Si une information est dans `.claude/workspace/current-issue.md` → ne pas aller la chercher dans la spec.
 Si une signature est dans `.claude/workspace/interfaces-registry.md` → ne pas aller la chercher dans la spec.
 Si une décision est dans `.claude/workspace/decisions-log.md` → ne pas aller la chercher dans les ADRs.
 

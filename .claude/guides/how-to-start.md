@@ -1,7 +1,7 @@
 # Guide — Démarrage du Projet
 
 > Ce guide répond à : "J'ai ce repo, par où je commence ?"
-> À lire UNE SEULE FOIS au démarrage. Ensuite, suivre `.claude/knowledge/roadmap.md` et `.claude/workspace/current-task.md`.
+> À lire UNE SEULE FOIS au démarrage. Ensuite, suivre `.claude/knowledge/roadmap.md`.
 
 ---
 
@@ -106,7 +106,7 @@ Instruction d'activation :
 "Tu es l'agent Architect de ce projet.
 Lis agents/architect.md.
 Lis architecture.md, constraints.md, .claude/knowledge/adr/*.md.
-Valide que .claude/workspace/current-task.md pour la Phase 1 est cohérent
+Valide que les PDRs et Issues pour la Phase 1 sont cohérents
 avec les specs et l'architecture. Identifie tout manque
 avant de laisser le Developer démarrer."
 ```
@@ -116,9 +116,8 @@ avant de laisser le Developer démarrer."
 Instruction d'activation :
 "Tu es l'agent Developer de ce projet.
 Lis agents/developer.md.
-Lis CLAUDE.md, glossary.md, current-task.md.
-Lis les specs référencées dans current-task.md.
-Implémente la tâche courante."
+Lis CLAUDE.md, glossary.md, current-issue.md.
+Implémente l'Issue courante."
 ```
 
 ---
@@ -143,6 +142,6 @@ Ne JAMAIS mixer les rôles dans une même session.
 |---|---|
 | Comprendre le vocabulaire | `.claude/knowledge/glossary.md` |
 | Voir où on en est | `.claude/knowledge/roadmap.md` + `.claude/workspace/progress.md` |
-| Savoir quoi faire maintenant | `.claude/workspace/current-task.md` |
+| Savoir quoi faire maintenant | `.claude/workspace/current-issue.md` |
 | Décisions architecturales | `.claude/knowledge/adr/*.md` |
 | Comment les agents collaborent | `.claude/guides/agent-orchestration.md` |
