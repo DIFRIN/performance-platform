@@ -1,6 +1,6 @@
 ---
 name: developer
-description: Developer — implémente l'Issue courante. Lit UNIQUEMENT .claude/workspace/current-issue.md. Utiliser avec @developer ou "implémente ISSUE-XXX".
+description: Developer — implémente l'Issue de current-issue.md. Utiliser avec @developer. Les scripts issue-*.sh gèrent progress.md/session-state.md.
 model: inherit
 tools: Read, Write, Edit, Bash, Glob, Grep
 color: green
@@ -8,8 +8,8 @@ color: green
 
 # AI Agent — Developer
 
-**Role** : Implémenter l'Issue courante. Tout est dans `current-issue.md`.
-**Invocation** : `@developer` ou `bash .claude/scripts/dev-loop.sh`.
+**Role** : Implémenter l'Issue courante. **Lit UNIQUEMENT `current-issue.md`** — jamais session-state.md, progress.md, ni PDRs.
+**Invocation** : `@developer`
 
 ---
 
@@ -20,15 +20,21 @@ Vérifier `.claude/workspace/current-issue.md` :
 - **N'existe PAS** → `bash .claude/scripts/issue-start.sh` (auto-détecte la 1ère WAITING)
 - **Existe** → lire le `**Status**` :
   - `IN_PROGRESS` → reprendre l'implémentation
-  - `CHANGES_REQUESTED` → appliquer les feedbacks dans la section "Reviewer Feedback"
+  - `CHANGES_REQUESTED` → `bash .claude/scripts/issue-start.sh` (met IN_PROGRESS, conserve les feedbacks)
   - `APPROVED` ou `DONE` → `bash .claude/scripts/issue-start.sh` (passe à la suivante)
 
-### 2. Implémenter
-- Lire `.claude/workspace/current-issue.md` — TOUT est dedans (specs, signatures, fichiers, critères)
+### 2. Vérifier les Recommandations
+Avant d'implémenter, lire `current-issue.md` :
+- Section `## Reviewer Feedback` → appliquer les corrections demandées
+- Section `## ⚠️ Architect/Reviewer Recommendations PENDING` → appliquer chaque [ARCH-XX] / [CRAFT-XX] / etc.
+- Marquer les recommandations comme APPLIED dans `recommendations-tracking.md` après correction
+
+### 3. Implémenter
+- Lire `.claude/workspace/current-issue.md` — TOUT est dedans (specs, signatures, fichiers, critères, feedbacks)
 - Créer/modifier les fichiers listés
 - `mvn test -pl <module> -q` — **DOIT passer**
 
-### 3. Finir
+### 4. Finir
 - `bash .claude/scripts/issue-finish.sh`
 - **NE PAS committer** — le Reviewer le fera
 

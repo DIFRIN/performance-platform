@@ -281,7 +281,7 @@ Session 4 — Tester
 ```
 Session 1 — Architect
 "Valide le découpage de la Phase 7 (Transport).
-Identifie les risques. Prépare .claude/workspace/current-task.md pour
+Identifie les risques. Prépare le PDR et les Issues pour
 l'implémentation de ExecutionTransport interface + KafkaExecutionTransport."
 
 Session 2 — Developer

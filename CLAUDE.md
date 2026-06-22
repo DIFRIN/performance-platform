@@ -1,7 +1,6 @@
 # CLAUDE.md — Performance Engineering Platform
 
-> Ce fichier est la première chose à lire après `.claude/workspace/session-state.md`.
-> Il contient les règles permanentes, la stack, et la table de routing.
+> Ce fichier contient les règles permanentes, la stack, et la table de routing.
 > Ne pas modifier sans décision explicite de l'Architect.
 
 ---
@@ -11,41 +10,43 @@
 **Nom** : Performance Engineering Platform
 **Objectif** : Plateforme de test de performance distribuée — mode LOCAL ou DISTRIBUTED avec le même artefact.
 **Stack** : Java 25 / Spring Boot 4.x / Gatling / PostgreSQL / Transport pluggable
-**Statut** : Voir `.claude/workspace/session-state.md` (état exact) + `.claude/knowledge/roadmap.md` (phases)
+**Statut** : Voir `bash .claude/scripts/progress-status.sh`
 
 ---
 
-## 2. Ordre de Lecture au Démarrage de Session
+## 2. Point d'Entrée Unique au Démarrage
 
 ```
 TOUJOURS lire dans cet ordre :
-  1. .claude/workspace/session-state.md    ← état exact + Issue active
-  2. CLAUDE.md                             ← ce fichier (règles)
-  3. .claude/workspace/progress.md         ← trouver / confirmer l'Issue active (NON chargé en contexte IA depuis Phase B)
-  4. .claude/workspace/current-issue.md    ← détail de l'Issue active (SEUL fichier à lire)
-  5. .claude/agents/<role>.md              ← comportement de ton rôle
+  1. .claude/workspace/current-issue.md    ← SEUL fichier. Contient TOUT : specs, signatures, critères, feedbacks
+  2. .claude/agents/<role>.md              ← comportement de ton rôle (lit aussi current-issue.md)
 
-NE PAS lire les autres fichiers sauf si explicitement listés dans session-state.md.
-current-task.md est un scratchpad secondaire — ne pas le lire sauf si Architect/Reviewer
-travaille sur une décision hors-Issue.
+NE PAS lire session-state.md, progress.md, PDRs, ni recommendations-tracking.md.
+Ces fichiers sont gérés EXCLUSIVEMENT par les scripts :
+  - issue-start.sh / issue-finish.sh / issue-review.sh / issue-next.sh
+  - progress-status.sh
+Les agents n'ont pas besoin de ces fichiers pour travailler.
 ```
 
 ---
 
-## 3. Les 4 Agents — Activation
+## 3. Les Agents — Activation
 
 | Agent | Fichier | Invocation CLI | Quand |
 |---|---|---|---|
-| **System Designer** | `.claude/agents/system-designer.md` | `@system-designer` ou `.claude/scripts/agent.sh system-designer` | Avant tout développement — crée PDRs + Issues |
-| **Architect** | `.claude/agents/architect.md` | `@architect` ou `.claude/scripts/agent.sh architect` | Décisions archi, ADRs, escalades |
-| **Developer** | `.claude/agents/developer.md` | `@developer` ou `.claude/scripts/agent.sh developer` | Implémente l'Issue de `.claude/workspace/current-issue.md` |
-| **Reviewer** | `.claude/agents/reviewer.md` | `@reviewer` ou `.claude/scripts/agent.sh reviewer` | Après chaque Issue IN REVIEW — rapport uniquement |
-| **Tester** | `.claude/agents/tester.md` | `@tester` ou `.claude/scripts/agent.sh tester` | Tests d'intégration + E2E |
+| **System Designer** | `.claude/agents/system-designer.md` | `@system-designer` | Avant tout développement — crée PDRs + Issues |
+| **Architect** | `.claude/agents/architect.md` | `@architect` | Décisions archi, ADRs, escalades |
+| **Developer** | `.claude/agents/developer.md` | `@developer` | Implémente l'Issue dans `current-issue.md` — `issue-start.sh` → code → `issue-finish.sh` |
+| **Reviewer** | `.claude/agents/reviewer.md` | `@reviewer` | Review le code de `current-issue.md` — `git diff` → verdict → `issue-review.sh` |
+| **Tester** | `.claude/agents/tester.md` | `@tester` | Tests d'intégration + E2E |
 
-**Reprise sans contexte** → `.claude/prompts/session-bootstrap.md`
-**Commandes slash** → `/next` `/done` `/review`
-**Tracker d'avancement** → `.claude/workspace/progress.md` (scripts uniquement)
-**Workflow complet** → `.claude/guides/agent-orchestration.md`
+**Scripts de workflow** (gèrent progress.md et session-state.md) :
+- `issue-start.sh` — WAITING → IN_PROGRESS + crée current-issue.md
+- `issue-finish.sh` — IN_PROGRESS → IN_REVIEW
+- `issue-review.sh APPROVED|CHANGES_REQUESTED` — enregistre le verdict
+- `issue-next.sh` — APPROVED → DONE + archive + lance la prochaine
+
+**Dev-Loop** → `bash .claude/scripts/dev-loop.sh`
 
 ---
 
@@ -149,7 +150,7 @@ com.performance.platform.<module>/
 | Interfaces implémentées | `.claude/workspace/interfaces-registry.md` | module concerné |
 | Décisions passées | `.claude/workspace/decisions-log.md` | sujet concerné |
 | Issues connues | `.claude/workspace/known-issues.md` | — |
-| Recommandations Reviewer en attente | `.claude/workspace/recommendations-tracking.md` | complet |
+| Recommandations Reviewer/Architect en attente | `.claude/workspace/current-issue.md` section "Recommendations PENDING" (injecté par `issue-start.sh`) | — |
 | Découpage des tâches | `.claude/workspace/task-breakdown.md` | phase concernée |
 | Dépendances inter-tâches | `.claude/workspace/dependency-map.md` | — |
 | Workflow agents | `.claude/guides/agent-orchestration.md` | — |

@@ -122,8 +122,8 @@
 | ISSUE-108 | README Mock-as-Agent architecture documentation | WAITING | PDR-025 | ISSUE-103,104,105,106,107 |
 | ISSUE-109 | Delete legacy device-check-perf.yaml scenario | WAITING | PDR-025 | ISSUE-104 |
 | ISSUE-110 | Clean device entries from interfaces-registry | WAITING | PDR-025 | ISSUE-104,109 |
-| ISSUE-111 | AgentProperties @ConfigurationProperties record | IN REVIEW | PDR-026 | — |
-| ISSUE-112 | AgentRuntimeConfiguration @Configuration | WAITING | PDR-026 | ISSUE-111 |
+| ISSUE-111 | AgentProperties @ConfigurationProperties record | DONE | PDR-026 | — |
+| ISSUE-112 | Create AgentRuntimeConfiguration @Configuration | APPROVED | PDR-026 | ISSUE-111 |
 | ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | WAITING | PDR-026 | ISSUE-112 |
 | ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | WAITING | PDR-026 | ISSUE-112 |
 | ISSUE-115 | Add agent.supported-tasks to application-agent.yaml | WAITING | PDR-026 | ISSUE-111 |
@@ -537,3 +537,8 @@
 | 2026-06-22 | ISSUE-111 | WAITING → IN PROGRESS | Developer — Implementation de AgentProperties @ConfigurationProperties record |
 | 2026-06-22 | ISSUE-111 | IN PROGRESS → IN REVIEW | Developer — AgentProperties.java + AgentPropertiesTest.java (8 tests), @EnableConfigurationProperties dans PerformancePlatformApplication. 78 tests OK, 0 warning. |
 | 2026-06-22 | ISSUE-111 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-111 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-112 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-22 | ISSUE-112 | IN_REVIEW → CHANGES_REQUESTED | Issue status is IN_PROGRESS, not IN_REVIEW — run issue-finish.sh first to transition. The committed script changes (ff59663) are infrastructure improvements, not an Issue implementation under review. |
+| 2026-06-22 | ISSUE-112 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-22 | ISSUE-112 | IN_REVIEW → APPROVED | Reviewer approved |

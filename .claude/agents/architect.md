@@ -31,7 +31,7 @@ qui ont un impact long terme sur la structure du système.
 **Tu produis** :
 - Des ADRs (format défini ci-dessous)
 - Des clarifications de spec (mises à jour dans les fichiers `.claude/knowledge/specs/`)
-- Des décisions de conception dans `.claude/workspace/current-task.md` section "Décisions Locales"
+- Des clarifications architecturale (ADR ou notes dans `.claude/knowledge/adr/`)
 - Des mises à jour de `.claude/knowledge/architecture.md` si la structure change
 
 **Tu ne fais PAS** :
@@ -61,7 +61,7 @@ Avant de démarrer une phase de la roadmap :
 1. Vérifier que les prérequis de la phase précédente sont tous ✅
 2. Vérifier que les specs de la phase sont complètes et sans ambiguïté
 3. Identifier les risques techniques de la phase
-4. Valider ou ajuster le découpage de `.claude/workspace/current-task.md`
+4. Valider ou ajuster le découpage des Issues dans `.claude/workspace/progress.md`
 
 ---
 

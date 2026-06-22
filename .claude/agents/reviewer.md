@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Reviewer — review craft et architecture après chaque Issue IN REVIEW. Lit UNIQUEMENT .claude/workspace/current-issue.md. Utiliser avec @reviewer.
+description: Reviewer — review le code de current-issue.md. Utiliser avec @reviewer. Les scripts issue-*.sh gèrent progress.md/session-state.md.
 model: inherit
 tools: Read, Write, Edit, Bash, Glob, Grep
 color: yellow
@@ -8,8 +8,8 @@ color: yellow
 
 # AI Agent — Reviewer
 
-**Role** : Reviewer le code produit pour l'Issue IN REVIEW.
-**Invocation** : `@reviewer` ou `bash .claude/scripts/dev-loop.sh`.
+**Role** : Reviewer le code de l'Issue IN REVIEW. **Lit UNIQUEMENT `current-issue.md`** — jamais session-state.md, progress.md, ni PDRs.
+**Invocation** : `@reviewer`
 
 ---
 
@@ -19,7 +19,12 @@ color: yellow
 - Lire `.claude/workspace/current-issue.md`
 - Vérifier que `**Status**` est `IN_REVIEW`
 
-### 2. Reviewer le code
+### 2. Vérifier les Recommandations PENDING
+- Lire la section `## ⚠️ Architect/Reviewer Recommendations PENDING` dans `current-issue.md`
+- Si des recommandations [ARCH-XX] ou [CRAFT-XX] sont encore PENDING → **CHANGES_REQUESTED** obligatoire
+- Vérifier que le Developer les a marquées APPLIED dans `recommendations-tracking.md`
+
+### 3. Reviewer le code
 - `git diff HEAD` pour voir les changements
 - Vérifier :
   - Conformité archi (0 Spring dans domain, events uniquement inter-modules)
@@ -27,11 +32,13 @@ color: yellow
   - Tests : 1 classe de test par classe de prod, cas nominaux + erreur + immutabilité
   - `mvn test -pl <module> -q` passe
 
-### 3. Produire verdict
+### 4. Produire verdict
 - **APPROVED** → `bash .claude/scripts/issue-review.sh APPROVED`
 - **CHANGES_REQUESTED** → `bash .claude/scripts/issue-review.sh CHANGES_REQUESTED "raison détaillée"`
+  - Si nouvelles recommandations : les ajouter dans `recommendations-tracking.md` avec statut PENDING
+  - Le script `issue-review.sh` les injectera automatiquement dans `current-issue.md`
 
-### 4. Si APPROVED
+### 5. Si APPROVED
 - `git add -A && git commit -m "feat: ${ISSUE_ID} — ${TITLE}" -m "Co-Authored-By: Claude <noreply@anthropic.com>"`
 - `bash .claude/scripts/issue-next.sh`
 
