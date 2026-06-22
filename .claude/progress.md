@@ -1,6 +1,7 @@
 | 2026-06-22 | ISSUE-094 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 26 tests OK. |
 | 2026-06-22 | ISSUE-096 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. |
 | 2026-06-22 | ISSUE-097 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 6 tests OK. |
+| 2026-06-22 | ISSUE-099 | IN REVIEW -> DONE | Reviewer - APPROVED: 0 bloquant, 0 recommandation. YAML/JSON conformes spec. |
 # Progress
 
 > Tracker central de tous les PDRs et Issues du projet.
@@ -154,7 +155,7 @@
 | ISSUE-096 | SUT iot-dispatcher Spring Boot (Kafka→DB→HTTP) | PDR-023 | platform-examples/ | L | DONE | ISSUE-098 |
 | ISSUE-097 | SUT device-api Spring Boot (HTTP→DB→Kafka) | PDR-023 | platform-examples/ | M | DONE | ISSUE-098 |
 | ISSUE-098 | SUT DB schema + seed 10k devices | PDR-023 | platform-examples/ | S | DONE | — |
-| ISSUE-099 | docker-compose-sut.yaml (5 services SUT) | PDR-024 | platform-deployment | S | WAITING | ISSUE-096,097,098 |
+| ISSUE-099 | docker-compose-sut.yaml (5 services SUT) | PDR-024 | platform-deployment | S | DONE | ISSUE-096,097,098 |
 | ISSUE-100 | Scénarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
 | ISSUE-101 | Scénarios YAML device-api (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
 
@@ -569,3 +570,4 @@
 
 | 2026-06-22 | ISSUE-096 | IN PROGRESS → IN REVIEW | Developer — iot-dispatcher SUT: pom.xml + 4 classes + YAML + Dockerfile + 4 tests OK, BUILD SUCCESS |
 | 2026-06-22 | ISSUE-097 | WAITING → IN REVIEW | Developer — device-api SUT: pom.xml + 4 classes + YAML + Dockerfile + 6 tests OK, BUILD SUCCESS |
+| 2026-06-22 | ISSUE-099 | WAITING → IN REVIEW | Developer — docker-compose-sut.yaml + wiremock/mappings/iot-endpoints.json, YAML + JSON validated |
