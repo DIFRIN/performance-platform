@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # =============================================================================
-# issue-next.sh — APPROVED → DONE, archive, et lance la prochaine Issue
+# issue-next.sh — APPROVED → DONE, nettoie current-issue.md, lance la prochaine
 #
 # Usage: bash .claude/scripts/issue-next.sh
 # Appelé par : Reviewer agent (après APPROVED + commit)
 #
-# Dépendance sur le format de progress.md :
-#   Table Issues en format plat : | ISSUE-XXX | Title | STATUS | PDR | Dependencies |
-#   sed opère entre ## Issues et ## PDRs uniquement.
+# Ne crée pas d'archive. Le fichier source issues/ISSUE-XXX-name.md reste
+# l'unique source de vérité — son **Statut** est mis à jour à DONE.
 # =============================================================================
 set -euo pipefail
 
@@ -15,7 +14,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE="$ROOT/workspace"
 CURRENT="$WORKSPACE/current-issue.md"
 PROGRESS="$WORKSPACE/progress.md"
-ARCHIVE_DIR="$WORKSPACE/issues/"
 
 if [[ ! -f "$CURRENT" ]]; then
     echo "❌ No current-issue.md found."
@@ -31,14 +29,18 @@ if [[ "$CURRENT_STATUS" != "APPROVED" ]]; then
     exit 1
 fi
 
-# ── APPROVED → DONE (scoped ## Issues → ## PDRs) ─────────────────────────────
+# ── Update source file **Statut** → DONE ────────────────────────────────────
+SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
+if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
+    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : DONE/" "${WORKSPACE}/${SOURCE_FILE}"
+fi
+
+# ── APPROVED → DONE in progress.md ──────────────────────────────────────────
 sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | APPROVED |/| ${ISSUE_ID} | ${TITLE} | DONE |/}" "$PROGRESS"
 echo "| $(date -I) | ${ISSUE_ID} | APPROVED → DONE | issue-next.sh |" >> "$PROGRESS"
 
-# ── Archiver ─────────────────────────────────────────────────────────────────
-# mv (not cp) so current-issue.md is removed — issue-start.sh starts fresh
-mv "$CURRENT" "${ARCHIVE_DIR}${ISSUE_ID}-completed.md"
-echo "📦 Archived: ${ARCHIVE_DIR}${ISSUE_ID}-completed.md"
+# ── Nettoyer current-issue.md (pas d'archive — le fichier source fait foi) ──
+rm "$CURRENT"
 
 # ── Lancer la prochaine ──────────────────────────────────────────────────────
 exec "$(dirname "${BASH_SOURCE[0]}")/issue-start.sh"

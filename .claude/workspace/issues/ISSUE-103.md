@@ -1,1 +1,0 @@
-ISSUE-103-remove-standalone-wiremock-sut.md
