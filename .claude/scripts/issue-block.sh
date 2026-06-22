@@ -30,6 +30,12 @@ ISSUE_ID=$(grep -oP '^# \KISSUE-\d+' "$CURRENT")
 TITLE=$(grep '^# ' "$CURRENT" | sed 's/^# [A-Z0-9-]*: //')
 OLD_STATUS=$(grep -oP '\*\*Status\*\*: \K\w+' "$CURRENT")
 
+# ── Update source file **Statut** ────────────────────────────────────────────
+SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
+if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
+    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : BLOCKED/" "${WORKSPACE}/${SOURCE_FILE}"
+fi
+
 # ── Marquer BLOCKED (scoped ## Issues → ## PDRs) ─────────────────────────────
 sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE} | BLOCKED |/}" "$PROGRESS"
 sed -i "s/\*\*Status\*\*: ${OLD_STATUS}/**Status**: BLOCKED/" "$CURRENT"

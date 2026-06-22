@@ -8,12 +8,12 @@ color: green
 
 # AI Agent — Developer
 
-**Role** : Implémenter l'Issue courante. **Lit UNIQUEMENT `current-issue.md`** — jamais session-state.md, progress.md, ni PDRs.
+**Role** : Implémenter l'Issue courante. **Lit `current-issue.md` + le fichier source `issues/ISSUE-XXX-name.md`** — jamais session-state.md, progress.md, ni PDRs.
 **Invocation** : `@developer`
 
 ---
 
-## Protocole Simplifié (1 fichier + 2 scripts)
+## Protocole Simplifié (2 fichiers + 2 scripts)
 
 ### 1. Démarrer
 Vérifier `.claude/workspace/current-issue.md` :
@@ -23,15 +23,14 @@ Vérifier `.claude/workspace/current-issue.md` :
   - `CHANGES_REQUESTED` → `bash .claude/scripts/issue-start.sh` (met IN_PROGRESS, conserve les feedbacks)
   - `APPROVED` ou `DONE` → `bash .claude/scripts/issue-start.sh` (passe à la suivante)
 
-### 2. Vérifier les Recommandations
-Avant d'implémenter, lire `current-issue.md` :
-- Section `## Reviewer Feedback` → appliquer les corrections demandées
-- Section `## ⚠️ Architect/Reviewer Recommendations PENDING` → appliquer chaque [ARCH-XX] / [CRAFT-XX] / etc.
-- Marquer les recommandations comme APPLIED dans `recommendations-tracking.md` après correction
+### 2. Lire la spec
+- Lire `.claude/workspace/current-issue.md` : status, `**IssueFile**`, Reviewer Feedback, Recommendations PENDING
+- Lire le fichier source pointé par `**IssueFile**` (ex: `.claude/workspace/issues/ISSUE-042-description.md`) — contient la spec complète (Objectif, Fichiers à créer, Structure, Règles, Tests, Critères de Done)
+- Appliquer les corrections demandées dans `## Reviewer Feedback`
+- Appliquer chaque recommandation dans `## ⚠️ Recommendations PENDING`, puis les marquer `APPLIED` dans le même fichier
 
 ### 3. Implémenter
-- Lire `.claude/workspace/current-issue.md` — TOUT est dedans (specs, signatures, fichiers, critères, feedbacks)
-- Créer/modifier les fichiers listés
+- Créer/modifier les fichiers listés dans la spec
 - `mvn test -pl <module> -q` — **DOIT passer**
 
 ### 4. Finir

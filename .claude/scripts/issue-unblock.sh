@@ -74,6 +74,17 @@ else
     echo "🔓 ${ISSUE_ID} BLOCKED → WAITING (returned to queue)"
 fi
 
+# ── Update source file **Statut** ────────────────────────────────────────────
+SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
+if [[ -z "$SOURCE_FILE" ]]; then
+    # Fallback: find by glob
+    SOURCE_FILE_REL=$(ls "$WORKSPACE/issues/${ISSUE_ID}"*.md 2>/dev/null | head -1)
+    SOURCE_FILE="${SOURCE_FILE_REL#$WORKSPACE/}"
+fi
+if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
+    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : ${NEW_STATUS}/" "${WORKSPACE}/${SOURCE_FILE}"
+fi
+
 # ── Mettre à jour progress.md ──────────────────────────────────────────────────
 sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | BLOCKED |/| ${ISSUE_ID} | ${TITLE} | ${NEW_STATUS} |/}" "$PROGRESS"
 echo "| $(date -I) | ${ISSUE_ID} | BLOCKED → ${NEW_STATUS} | issue-unblock.sh |" >> "$PROGRESS"

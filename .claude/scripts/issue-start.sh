@@ -12,8 +12,7 @@
 #   1. current-issue.md absent → trouve la 1ère WAITING (deps DONE), crée current-issue.md
 #   2. current-issue.md CHANGES_REQUESTED → reprend, met IN_PROGRESS
 #   3. current-issue.md IN_PROGRESS → resume (déjà actif)
-#   4. Architect recommendations PENDING → injectées dans current-issue.md
-#   5. --dry-run → affiche l'Issue qui serait démarrée sans modifier l'état
+#   4. --dry-run → affiche l'Issue qui serait démarrée sans modifier l'état
 #
 # Appelé par : Developer agent (jamais l'humain directement)
 # =============================================================================
@@ -23,7 +22,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE="$ROOT/workspace"
 PROGRESS="$WORKSPACE/progress.md"
 CURRENT="$WORKSPACE/current-issue.md"
-RECOMMENDATIONS="$WORKSPACE/recommendations-tracking.md"
 
 # ── Args ───────────────────────────────────────────────────────────────────────
 DRY_RUN=false
@@ -128,6 +126,15 @@ escape_sed_rhs() {
     echo "$s"
 }
 
+# ── Helper: update **Statut** field in the source issue file ────────────────────────
+update_source_status() {
+    local issue_file="$1"
+    local new_status="$2"
+    if [[ -f "$issue_file" ]]; then
+        sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : ${new_status}/" "$issue_file"
+    fi
+}
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Scénario 3 : Reprise IN_PROGRESS ou CHANGES_REQUESTED (current-issue.md existe)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -167,7 +174,11 @@ if [[ -f "$CURRENT" ]]; then
                 exit 0
             fi
 
-            # ── Mettre à jour status dans current-issue.md ──────────────────
+            # ── Mettre à jour status dans source + current-issue.md ────────
+            SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
+            if [[ -n "$SOURCE_FILE" ]]; then
+                update_source_status "${WORKSPACE}/${SOURCE_FILE}" "IN_PROGRESS"
+            fi
             sed -i 's/\*\*Status\*\*: CHANGES_REQUESTED/**Status**: IN_PROGRESS/' "$CURRENT"
 
             # ── Marquer IN_PROGRESS dans progress.md ───────────────────────
@@ -183,14 +194,14 @@ if [[ -f "$CURRENT" ]]; then
         *)
             # Statut inattendu (APPROVED, DONE, BLOCKED...)
             if [[ -n "$ISSUE_ARG" ]]; then
-                echo "⚠️  current-issue.md has ${CURRENT_ISSUE} (${CURRENT_STATUS}) — archiving and starting ${ISSUE_ARG}"
+                echo "⚠️  current-issue.md has ${CURRENT_ISSUE} (${CURRENT_STATUS}) — discarding and starting ${ISSUE_ARG}"
                 if [[ "$DRY_RUN" == true ]]; then
-                    echo "🔍 DRY-RUN: Would archive ${CURRENT_ISSUE} and start ${ISSUE_ARG}"
+                    echo "🔍 DRY-RUN: Would discard ${CURRENT_ISSUE} and start ${ISSUE_ARG}"
                     exit 0
                 fi
-                # Archiver l'ancien current-issue.md
-                mv "$CURRENT" "${WORKSPACE}/issues/${CURRENT_ISSUE}-completed.md"
-                echo "📦 Archived previous: ${CURRENT_ISSUE}-completed.md"
+                # Discard old current-issue.md (no archive — source file is the record)
+                rm "$CURRENT"
+                echo "   Discarded previous current-issue.md"
                 # Continuer vers Scénario 1 ci-dessous
             else
                 echo "❌ current-issue.md has status '${CURRENT_STATUS}' — cannot start"
@@ -200,10 +211,8 @@ if [[ -f "$CURRENT" ]]; then
             ;;
     esac
 
-    # Si on est arrivé ici via le cas "archiver et continuer", on ne fait pas exit
+    # Si on est arrivé ici via le cas "discard et continuer", on ne fait pas exit
     if [[ "$CURRENT_STATUS" == "IN_PROGRESS" || "$CURRENT_STATUS" == "CHANGES_REQUESTED" ]]; then
-        # ── Vérifier recommendations Architect PENDING ─────────────────────────
-        inject_architect_recs
         exit 0
     fi
     # Sinon (statut inattendu + arg explicite), on continue vers Scénario 1
@@ -323,6 +332,9 @@ TITLE_ESC=$(escape_sed_rhs "$TITLE")
 sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE_ESC} | IN_PROGRESS |/}" "$PROGRESS"
 echo "| $(date -I) | ${ISSUE_ID} | ${OLD_STATUS} → IN_PROGRESS | issue-start.sh |" >> "$PROGRESS"
 
+# ── Update source file status ──────────────────────────────────────────────
+update_source_status "$ISSUE_FILE" "IN_PROGRESS"
+
 # ── Créer current-issue.md (pointer — body stays in issues/ISSUE-XXX.md) ────
 ISSUE_FILE_REL="issues/$(basename "$ISSUE_FILE")"
 
@@ -340,36 +352,5 @@ cat > "$CURRENT" << INNEREOF
 (None yet)
 INNEREOF
 
-# ── Vérifier recommendations Architect PENDING ─────────────────────────────────
-inject_architect_recs
-
 echo "✅ ${ISSUE_ID} → IN_PROGRESS | current-issue.md ready"
 echo "   Module: ${MODULE} | PDR: ${PDR}"
-
-# =============================================================================
-# inject_architect_recs — ajoute les recommendations PENDING au current-issue.md
-# =============================================================================
-inject_architect_recs() {
-    if [[ ! -f "$RECOMMENDATIONS" ]]; then
-        return 0
-    fi
-
-    # Extraire les lignes PENDING (pas CONFIRMED ni APPLIED)
-    local pending
-    pending=$(grep -E '^\*\*\[(ARCH|CRAFT|TEST|PRECISION|SPEC|CONFIG|ROBUSTNESS|NAMING|VERSION|DRY|IMPORT|DESIGN|DOC)\-' "$RECOMMENDATIONS" 2>/dev/null | grep 'PENDING\]' || true)
-
-    if [[ -n "$pending" ]]; then
-        cat >> "$CURRENT" << INNEREOF
-
----
-## ⚠️ Architect/Reviewer Recommendations PENDING
-> Ces recommandations sont en attente d'application. Appliquer AVANT de marquer l'Issue IN_REVIEW.
-> Source : \`.claude/workspace/recommendations-tracking.md\`
-
-$(echo "$pending")
-
-**Action** : Appliquer chaque recommandation, puis marquer comme APPLIED dans recommendations-tracking.md.
-INNEREOF
-        echo "   ⚠️  $(echo "$pending" | wc -l) pending recommendation(s) injected into current-issue.md"
-    fi
-}
