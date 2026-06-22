@@ -155,9 +155,9 @@
 | `KafkaTransportProperties` / `RabbitMQTransportProperties` / `HttpTransportProperties` / `SocketTransportProperties` | ✅ STABLE | PDR-008 | ISSUE-028 |
 | `TransportConfiguration` | ✅ STABLE | PDR-008 | ISSUE-028 |
 | `KafkaExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-029 |
-| `DynamicKafkaListenerRegistry` | 🔄 IN PROGRESS | PDR-021 | ISSUE-090 |
+| `DynamicKafkaListenerRegistry` | ✅ STABLE | PDR-021 | ISSUE-090 |
 | `KafkaMessageCodec` | ✅ STABLE | PDR-008 | ISSUE-029 |
-| `KafkaConsumerManager` | ⚠️ BREAKING | PDR-021 | ISSUE-090 (→ DynamicKafkaListenerRegistry) |
+| `KafkaConsumerManager` | ❌ REMOVED | PDR-021 | ISSUE-091 (supprimé) |
 | `KafkaSubscription` | ✅ STABLE | PDR-008 | ISSUE-029 |
 | `RabbitMQExecutionTransport` | ✅ STABLE | PDR-008 | ISSUE-030 |
 | `RabbitMQMessageCodec` | ✅ STABLE | PDR-008 | ISSUE-030 |
@@ -249,7 +249,7 @@
 | `GatlingMetricAssertionExecutor` / `MetricExtractor` | ✅ STABLE | PDR-014 | ISSUE-060 |
 | `DatabaseAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-061 |
 | `KafkaAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-062 |
-| `HttpMockAssertionExecutor` | ⚠️ BREAKING | PDR-022 | ISSUE-095 (refactoring target ref en cours) |
+| `HttpMockAssertionExecutor` | ✅ STABLE | PDR-022 | ISSUE-095 (v2 HttpTargetRegistry + legacy compat) |
 | `FileAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-064 |
 
 ## platform-reporting
@@ -304,8 +304,8 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `DynamicKafkaListenerRegistry` | ⬜ PLANNED | PDR-021 | ISSUE-090 |
-| `KafkaTransportBeans` | ✅ STABLE | PDR-021 | ISSUE-089 |
+| `DynamicKafkaListenerRegistry` | ✅ STABLE | PDR-021 | ISSUE-090 |
+| `KafkaTransportBeans` | ✅ STABLE | PDR-021 | ISSUE-089,091 |
 
 ## platform-infrastructure — `.executor.http` (PDR-022 — nouvelles classes)
 
@@ -315,7 +315,7 @@
 | `PlatformHttpTargetsProperties` | ✅ STABLE | PDR-022 | ISSUE-092 |
 | `HttpTargetRegistry` | ✅ STABLE | PDR-022 | ISSUE-092 |
 | `HttpTargetConfiguration` | ✅ STABLE | PDR-022 | ISSUE-092 |
-| `HttpClientTaskExecutor` | 🔄 IN PROGRESS | PDR-022 | ISSUE-093 |
+| `HttpClientTaskExecutor` | ✅ STABLE | PDR-022 | ISSUE-093 |
 
 ## platform-examples (PDR-023 — services SUT standalone)
 
