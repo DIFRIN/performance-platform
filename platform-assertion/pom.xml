@@ -43,6 +43,20 @@
             <version>7.0.0</version>
         </dependency>
 
+        <!-- Spring Web (RestClient for target-based HTTP) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>7.0.0</version>
+        </dependency>
+
+        <!-- Infra (HttpTargetRegistry, HttpTargetProperties) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-infrastructure</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Logging structuré -->
         <dependency>
             <groupId>org.slf4j</groupId>
