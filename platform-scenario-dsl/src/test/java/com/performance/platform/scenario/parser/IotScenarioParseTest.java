@@ -127,4 +127,62 @@ class IotScenarioParseTest {
         assertTrue(scenario.tags().contains("http"));
     }
 
+    @Test
+    @DisplayName("http-api-mock-agent-distributed.yaml is parseable — WireMock as Agent (DISTRIBUTED)")
+    void parseHttpApiMockAgentDistributedScenario() throws Exception {
+        var file = Path.of(BASE, "http-api-mock-agent-distributed.yaml");
+        try {
+            ScenarioDefinition scenario = parser.parseFile(file);
+
+            assertEquals("http-api-mock-agent-distributed", scenario.id().value());
+            assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
+            assertEquals(7, scenario.steps().size());
+
+            // Verify step 1: spawn-mock (PREPARATION) — routing: task=mock-server -> mock-agent
+            assertEquals("spawn-mock", scenario.steps().get(0).id().value());
+            assertEquals("mock-server", scenario.steps().get(0).taskName());
+            assertEquals(Phase.PREPARATION, scenario.steps().get(0).phase());
+
+            // Verify step 2: load-test (INJECTION) — dependsOn spawn-mock
+            assertEquals("load-test", scenario.steps().get(1).id().value());
+            assertEquals("gatling", scenario.steps().get(1).taskName());
+            assertEquals(Phase.INJECTION, scenario.steps().get(1).phase());
+            assertTrue(scenario.steps().get(1).dependsOn().stream()
+                    .anyMatch(d -> d.value().equals("spawn-mock")));
+
+            // Verify step 6: assert-mock-hit (ASSERTION) — routing: task=http-mock -> standard-agent
+            assertEquals("assert-mock-hit", scenario.steps().get(5).id().value());
+            assertEquals("http-mock", scenario.steps().get(5).taskName());
+            assertEquals(Phase.ASSERTION, scenario.steps().get(5).phase());
+            assertEquals("mock-api", scenario.steps().get(5).parameters().get("target"));
+
+            // Verify step 7: stop-mock (PREPARATION) — dependsOn all 4 assertions
+            assertEquals("stop-mock", scenario.steps().get(6).id().value());
+            assertEquals("mock-server", scenario.steps().get(6).taskName());
+            assertEquals(Phase.PREPARATION, scenario.steps().get(6).phase());
+            assertEquals(4, scenario.steps().get(6).dependsOn().size());
+
+            // Verify load model — higher load than LOCAL
+            assertTrue(scenario.loadModels().containsKey("demo-high-ramp"));
+
+            // Verify metadata
+            assertEquals("perf-team", scenario.metadata().get("owner"));
+
+            // Verify tags (should NOT contain 'local')
+            assertTrue(scenario.tags().contains("distributed"));
+            assertTrue(scenario.tags().contains("mock-agent"));
+            assertTrue(scenario.tags().contains("http"));
+
+            // Verify no agentTags field — routing is by task name only (configuration-driven)
+            // The parser ignores unknown fields, so this is verified by absence of agentTags in step parameters
+            for (var step : scenario.steps()) {
+                assertNull(step.parameters().get("agentTags"),
+                        "Step " + step.id().value() + " should not have agentTags");
+            }
+        } catch (ScenarioParsingException e) {
+            System.err.println("PARSE ERRORS: " + e.getMessage() + " — errors: " + e.getErrors());
+            throw e;
+        }
+    }
+
 }

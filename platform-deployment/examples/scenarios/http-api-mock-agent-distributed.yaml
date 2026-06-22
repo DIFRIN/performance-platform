@@ -1,34 +1,3 @@
-# ISSUE-106 — Create http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED mode)
-
-**PDR** : PDR-025
-**Module** : `platform-deployment`
-**Statut** : APPROVED
-**Priorite** : P1 (critique — contrepartie DISTRIBUTED du scenario LOCAL)
-**Bloquee par** : ISSUE-105 (les mappings JSON sont deja crees, scenario LOCAL sert de modele)
-**Estime** : M (1-3h)
-
----
-
-## Objectif
-
-Creer un scenario YAML pour le mode DISTRIBUTED qui demontre le pattern "WireMock as Agent" avec des agents specialises via le modele configuration-driven. Le scenario montre la distribution des roles par task name :
-
-1. **mock-agent** (agent.supported-tasks: [mock-server, http-client]) — demarre WireMock EMBEDDED en phase PREPARATION
-2. **gatling-agent** (agent.supported-tasks: [gatling, gatling-metric]) — execute l'injection de charge HTTP en phase INJECTION
-3. **standard-agent** (agent.supported-tasks: [http-mock, database, kafka]) — execute les assertions
-
-**Routing** : L'orchestrateur broadcast chaque `TaskExecutionRequest`. Chaque agent filtre localement via `TaskSpecializationFilter` base sur `supportedTaskNames` (issu de `agent.supported-tasks`). Aucun `agentTags` dans le scenario — le routing est par `task:` name UNIQUEMENT.
-
-## Fichier a Creer
-
-```
-platform-deployment/examples/scenarios/
-  └── http-api-mock-agent-distributed.yaml
-```
-
-## http-api-mock-agent-distributed.yaml — Contenu
-
-```yaml
 # =============================================================================
 # Scenario : HTTP API Test — Mock as Agent (DISTRIBUTED)
 # =============================================================================
@@ -161,28 +130,3 @@ loadModels:
     type: RAMP
     target: 500
     duration: 120s
-```
-
-## Regles Specifiques
-
-- **Aucun `agentTags`** : Le routing est entierement par `task:` name. L'orchestrateur broadcast la `TaskExecutionRequest`. Chaque agent filtre via `TaskSpecializationFilter` base sur `supportedTaskNames` (issu de `agent.supported-tasks` dans la configuration). Les tags ne sont plus utilises pour le routing.
-- **Configuration-driven model** :
-  - mock-agent config : `agent.supported-tasks: [mock-server, http-client]`
-  - gatling-agent config : `agent.supported-tasks: [gatling, gatling-metric]`
-  - standard-agent config : `agent.supported-tasks: [http-mock, database, kafka]`
-- **Aucune URL inline** : utiliser `target: mock-api` resolue via HttpTargetRegistry
-- **Le step stop-mock** est en phase PREPARATION mais execute APRES les assertions grace au DAG. Ceci est intentionnel — cleanup stateful apres la campagne.
-- **Charge plus elevee** que le mode LOCAL (500 users, 120s ramp, 50000 requetes attendues)
-- **requiredContexts** : chaque step declare ce dont il a besoin -> le PartialExecutionContext envoye a l'agent contient uniquement les entrees necessaires
-- Les mappings JSON sont les memes que ceux crees par ISSUE-105 (`http-api-endpoints.json`)
-- **Multi-claim possible** : Si deux agents declarent la meme task dans `agent.supported-tasks` (ex: `gatling-metric` dans les deux gatling-agent et standard-agent), les deux peuvent claimer et executer. Voir `TaskCompletionPolicy` et ADR-011.
-
-## Criteres de Done
-
-- [ ] `http-api-mock-agent-distributed.yaml` cree dans `platform-deployment/examples/scenarios/`
-- [ ] Le scenario est parseable par le ScenarioParser (test unitaire)
-- [ ] Scenario contient 0 URL inline — uniquement `target:`, `classpath:` references logiques
-- [ ] Aucun champ `agentTags` dans le scenario
-- [ ] Commentaires documentent le routing par task name + config `agent.supported-tasks`
-- [ ] `mvn test -pl platform-deployment -q` -> 0 erreur
-- [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-106 -> DONE

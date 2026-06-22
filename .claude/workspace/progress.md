@@ -116,8 +116,8 @@
 | ISSUE-108 (old, superseded) | README Mock-as-Agent + Device example-only | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-108 below |
 | ISSUE-103 | Remove standalone WireMock from docker-compose-sut.yaml | DONE | PDR-025 | - |
 | ISSUE-104 | Delete DevicePopulationTaskExecutor + DeviceCheckTaskExecutor from platform-infrastructure | DONE | PDR-025 | - |
-| ISSUE-105 | Create http-api-mock-agent-local.yaml scenario (LOCAL mode) | APPROVED | PDR-025 | ISSUE-103 |
-| ISSUE-106 | http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED) | WAITING | PDR-025 | ISSUE-105 |
+| ISSUE-105 | Create http-api-mock-agent-local.yaml scenario (LOCAL mode) | DONE | PDR-025 | ISSUE-103 |
+| ISSUE-106 | Create http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED mode) | APPROVED | PDR-025 | ISSUE-105 |
 | ISSUE-107 | docker-compose-wiremock-agent.yaml | WAITING | PDR-025 | ISSUE-103 |
 | ISSUE-108 | README Mock-as-Agent architecture documentation | WAITING | PDR-025 | ISSUE-103,104,105,106,107 |
 | ISSUE-109 | Delete legacy device-check-perf.yaml scenario | WAITING | PDR-025 | ISSUE-104 |
@@ -559,3 +559,7 @@
 | 2026-06-22 | ISSUE-105 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-22 | ISSUE-105 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-105 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-105 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-106 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-22 | ISSUE-106 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-22 | ISSUE-106 | IN_REVIEW → APPROVED | Reviewer approved |
