@@ -39,13 +39,17 @@ done
 
 # ─── Quick status ──────────────────────────────────────────────────────────────
 
+# ─── Shared counter (single source of truth: progress-status.sh) ─────────────
+
 _count() {
   # Return single integer: count of Issues with given status
-  local n
-  n=$(grep -ciE "^\| *ISSUE-[0-9]+.*\| *${1} *\|" "$PROGRESS_FILE" 2>/dev/null) || n=0
-  # Clean: keep only digits, default to 0
-  n="${n//[^0-9]/}"
-  echo "${n:-0}"
+  # Delegates to progress-status.sh to avoid duplicated logic
+  # Maps space-containing statuses to underscore format (e.g. IN REVIEW → IN_REVIEW)
+  local status="$1"
+  local key="${status// /_}"
+  local output
+  output=$("$SCRIPT_DIR/progress-status.sh" 2>/dev/null) || { echo "0"; return; }
+  echo "$output" | grep -oP "${key}:\K[0-9]+" || echo "0"
 }
 
 status_line() {
@@ -105,8 +109,23 @@ while true; do
   # ── Develop ──
   invoke_developer
 
-  # ── Review ──
-  invoke_reviewer
+  # ── Review + Fix cycle (handle CHANGES_REQUESTED within same iteration) ──
+  fix_round=0
+  while true; do
+    invoke_reviewer
+
+    # Check if Reviewer requested changes
+    current_status=$(grep -oP '\*\*Status\*\*: \K\w+' "$PROJECT_ROOT/.claude/workspace/current-issue.md" 2>/dev/null || echo "")
+    if [[ "$current_status" != "CHANGES_REQUESTED" ]]; then
+      break  # APPROVED or other terminal state
+    fi
+
+    fix_round=$((fix_round + 1))
+    [[ "$fix_round" -gt 3 ]] && { echo "⚠️  Too many fix rounds (${fix_round}) — breaking out"; break; }
+
+    echo "🔄 CHANGES_REQUESTED — applying fixes (round ${fix_round})..."
+    invoke_developer
+  done
 
   # ── Status ──
   echo "📊 $(status_line)"

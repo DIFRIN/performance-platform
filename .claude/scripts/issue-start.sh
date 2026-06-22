@@ -1,83 +1,347 @@
 #!/usr/bin/env bash
 # =============================================================================
-# issue-start.sh — Démarre une Issue (WAITING → IN_PROGRESS) et crée current-issue.md
+# issue-start.sh — Prépare ou reprend une Issue pour le Developer
 #
 # Usage:
-#   issue-start.sh              Auto-détecte la 1ère WAITING
-#   issue-start.sh ISSUE-042    Démarre l'Issue spécifiée
+#   issue-start.sh                 Auto-détecte (CHANGES_REQUESTED > WAITING)
+#   issue-start.sh ISSUE-042       Démarre/Reprend l'Issue spécifiée
+#   issue-start.sh --dry-run       Affiche ce qui serait démarré (sans modifier)
+#   issue-start.sh --dry-run ISSUE-042
+#
+# Scénarios :
+#   1. current-issue.md absent → trouve la 1ère WAITING (deps DONE), crée current-issue.md
+#   2. current-issue.md CHANGES_REQUESTED → reprend, met IN_PROGRESS
+#   3. current-issue.md IN_PROGRESS → resume (déjà actif)
+#   4. Architect recommendations PENDING → injectées dans current-issue.md
+#   5. --dry-run → affiche l'Issue qui serait démarrée sans modifier l'état
 #
 # Appelé par : Developer agent (jamais l'humain directement)
-#
-# Dépendance sur le format de progress.md :
-#   Table Issues en format plat : | ISSUE-XXX | Title | STATUS | PDR | Dependencies |
-#   Sections ## Issues et ## PDRs délimitent la table (sed opère entre les deux).
-#   Section ## History en append-only (>>).
 # =============================================================================
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE="$ROOT/workspace"
 PROGRESS="$WORKSPACE/progress.md"
+CURRENT="$WORKSPACE/current-issue.md"
+RECOMMENDATIONS="$WORKSPACE/recommendations-tracking.md"
 
-# ── Résoudre l'Issue ─────────────────────────────────────────────────────────
-if [[ $# -ge 1 ]]; then
-    ISSUE_ID="$1"
-else
-    ISSUE_ID=$(grep -oP '^\| \KISSUE-\d+' "$PROGRESS" | while read -r id; do
-        if grep -qP "^\| ${id} \| .* \| WAITING \|" "$PROGRESS" 2>/dev/null; then
-            echo "$id"
-            break
+# ── Args ───────────────────────────────────────────────────────────────────────
+DRY_RUN=false
+ISSUE_ARG=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run) DRY_RUN=true; shift ;;
+        --help|-h)
+            echo "Usage: issue-start.sh [--dry-run] [ISSUE-XXX]"
+            echo "  --dry-run  Show what would start without modifying state"
+            exit 0
+            ;;
+        ISSUE-*) ISSUE_ARG="$1"; shift ;;
+        *) echo "Unknown: $1"; exit 1 ;;
+    esac
+done
+
+# ── Helper: extraire les dépendances d'une Issue depuis progress.md ─────────────
+get_deps() {
+    local issue_id="$1"
+    # Extrait la colonne Dependencies (5ème colonne) de la table Issues
+    sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+        | grep -P "^\| ${issue_id} \|" \
+        | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $6); print $6}' \
+        | tr -d ' '
+}
+
+# ── Helper: vérifier qu'un statut est bien dans la table Issues ─────────────────
+is_status_in_table() {
+    local issue_id="$1"
+    local expected_status="$2"
+    sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+        | grep -qP "^\| ${issue_id} \| .* \| ${expected_status} \|"
+}
+
+# ── Helper: vérifier que toutes les dépendances d'une Issue sont DONE ────────────
+deps_are_done() {
+    local issue_id="$1"
+    local deps
+    deps=$(get_deps "$issue_id")
+
+    # Pas de dépendances → OK
+    if [[ -z "$deps" || "$deps" == "-" ]]; then
+        return 0
+    fi
+
+    # Vérifier chaque dépendance
+    local IFS=','
+    for dep in $deps; do
+        dep=$(echo "$dep" | tr -d ' ')  # trim
+        [[ -z "$dep" ]] && continue
+        if ! is_status_in_table "$dep" "DONE"; then
+            return 1
         fi
-    done)
+    done
+    return 0
+}
+
+# ── Helper: trouver la prochaine Issue à démarrer ───────────────────────────────
+find_next_issue() {
+    # Extraire la table Issues une seule fois
+    local table
+    table=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS")
+
+    # Priorité 1 : CHANGES_REQUESTED (reprise après feedback Reviewer)
+    local changed
+    changed=$(echo "$table" | grep 'CHANGES_REQUESTED' | grep -oP '^\| \KISSUE-\d+' | head -1)
+    if [[ -n "$changed" ]]; then
+        echo "$changed"
+        return 0
+    fi
+
+    # Priorité 2 : première WAITING dont toutes les dépendances sont DONE
+    local waiting_ids
+    waiting_ids=$(echo "$table" | grep 'WAITING' | grep -oP '^\| \KISSUE-\d+')
+    for id in $waiting_ids; do
+        if deps_are_done "$id"; then
+            echo "$id"
+            return 0
+        fi
+    done
+
+    # Rien trouvé
+    return 1
+}
+
+# ── Helper: extraire les métadonnées d'une Issue ────────────────────────────────
+extract_metadata() {
+    local issue_file="$1"
+    TITLE=$(grep '^# ' "$issue_file" | head -1 | sed -E 's/^# [A-Z0-9-]+[[:space:]]*[-–—:][[:space:]]*//')
+    PDR=$(grep -oP '\*\*PDR\*\*[[:space:]]*:[[:space:]]*\K[^\s`]+' "$issue_file" | head -1 | tr -d '`' || echo "UNKNOWN")
+    MODULE=$(grep -oP 'platform-[a-z-]+' "$issue_file" | head -1 || echo "UNKNOWN")
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Scénario 3 : Reprise IN_PROGRESS ou CHANGES_REQUESTED (current-issue.md existe)
+# ═══════════════════════════════════════════════════════════════════════════════
+if [[ -f "$CURRENT" ]]; then
+    CURRENT_STATUS=$(grep -oP '\*\*Status\*\*: \K\w+' "$CURRENT" 2>/dev/null || echo "")
+    CURRENT_ISSUE=$(grep -oP '^# \KISSUE-\d+' "$CURRENT" 2>/dev/null || echo "")
+
+    case "$CURRENT_STATUS" in
+        IN_PROGRESS)
+            # Si un arg explicite est donné pour une autre Issue
+            if [[ -n "$ISSUE_ARG" && "$ISSUE_ARG" != "$CURRENT_ISSUE" ]]; then
+                echo "⚠️  current-issue.md has ${CURRENT_ISSUE} (IN_PROGRESS), but you requested ${ISSUE_ARG}"
+                echo "   Finish or block ${CURRENT_ISSUE} first, then re-run with ${ISSUE_ARG}"
+                exit 1
+            fi
+            echo "📌 ${CURRENT_ISSUE} already IN_PROGRESS — resuming"
+            echo "   current-issue.md is ready"
+            exit 0
+            ;;
+
+        CHANGES_REQUESTED)
+            # Si un arg explicite est donné pour une autre Issue
+            if [[ -n "$ISSUE_ARG" && "$ISSUE_ARG" != "$CURRENT_ISSUE" ]]; then
+                echo "⚠️  current-issue.md has ${CURRENT_ISSUE} (CHANGES_REQUESTED), but you requested ${ISSUE_ARG}"
+                echo "   Finish the review cycle for ${CURRENT_ISSUE} first (fix → issue-finish.sh),"
+                echo "   or archive it with issue-next.sh if APPROVED."
+                exit 1
+            fi
+
+            ISSUE_ID="$CURRENT_ISSUE"
+            TITLE=$(grep '^# ' "$CURRENT" | sed 's/^# [A-Z0-9-]*: //')
+
+            if [[ "$DRY_RUN" == true ]]; then
+                echo "🔍 DRY-RUN: Would resume ${ISSUE_ID} (CHANGES_REQUESTED → IN_PROGRESS)"
+                echo "   Title: ${TITLE}"
+                echo "   Action: apply Reviewer feedback, then issue-finish.sh"
+                exit 0
+            fi
+
+            # ── Mettre à jour status dans current-issue.md ──────────────────
+            sed -i 's/\*\*Status\*\*: CHANGES_REQUESTED/**Status**: IN_PROGRESS/' "$CURRENT"
+
+            # ── Marquer IN_PROGRESS dans progress.md ───────────────────────
+            sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | CHANGES_REQUESTED |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/}" "$PROGRESS"
+            echo "| $(date -I) | ${ISSUE_ID} | CHANGES_REQUESTED → IN_PROGRESS (resume) | issue-start.sh |" >> "$PROGRESS"
+
+            echo "♻️  ${ISSUE_ID} CHANGES_REQUESTED → IN_PROGRESS"
+            echo "   📋 Reviewer feedback preserved in current-issue.md"
+            echo "   Apply fixes, then run issue-finish.sh"
+            ;;
+
+        *)
+            # Statut inattendu (APPROVED, DONE, BLOCKED...)
+            if [[ -n "$ISSUE_ARG" ]]; then
+                echo "⚠️  current-issue.md has ${CURRENT_ISSUE} (${CURRENT_STATUS}) — archiving and starting ${ISSUE_ARG}"
+                if [[ "$DRY_RUN" == true ]]; then
+                    echo "🔍 DRY-RUN: Would archive ${CURRENT_ISSUE} and start ${ISSUE_ARG}"
+                    exit 0
+                fi
+                # Archiver l'ancien current-issue.md
+                mv "$CURRENT" "${WORKSPACE}/issues/${CURRENT_ISSUE}-completed.md"
+                echo "📦 Archived previous: ${CURRENT_ISSUE}-completed.md"
+                # Continuer vers Scénario 1 ci-dessous
+            else
+                echo "❌ current-issue.md has status '${CURRENT_STATUS}' — cannot start"
+                echo "   Run issue-next.sh first if APPROVED/DONE, or check manually."
+                exit 1
+            fi
+            ;;
+    esac
+
+    # Si on est arrivé ici via le cas "archiver et continuer", on ne fait pas exit
+    if [[ "$CURRENT_STATUS" == "IN_PROGRESS" || "$CURRENT_STATUS" == "CHANGES_REQUESTED" ]]; then
+        # ── Vérifier recommendations Architect PENDING ─────────────────────────
+        inject_architect_recs
+        exit 0
+    fi
+    # Sinon (statut inattendu + arg explicite), on continue vers Scénario 1
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Scénario 1 : Nouvelle Issue
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Déterminer l'Issue ID ──────────────────────────────────────────────────────
+if [[ -n "$ISSUE_ARG" ]]; then
+    ISSUE_ID="$ISSUE_ARG"
+    # Vérifier que l'Issue existe dans progress.md
+    if ! grep -qP "^\| ${ISSUE_ID} \|" "$PROGRESS"; then
+        echo "❌ ${ISSUE_ID} not found in progress.md"
+        exit 1
+    fi
+    # Vérifier le statut
+    if ! is_status_in_table "$ISSUE_ID" "WAITING" && ! is_status_in_table "$ISSUE_ID" "CHANGES_REQUESTED"; then
+        ACTUAL_STATUS=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+            | grep -P "^\| ${ISSUE_ID} \|" \
+            | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4); print $4}')
+        echo "❌ ${ISSUE_ID} has status '${ACTUAL_STATUS}' (expected WAITING or CHANGES_REQUESTED)"
+        exit 1
+    fi
+    # Vérifier les dépendances
+    if is_status_in_table "$ISSUE_ID" "WAITING" && ! deps_are_done "$ISSUE_ID"; then
+        DEPS=$(get_deps "$ISSUE_ID")
+        echo "❌ ${ISSUE_ID} dependencies not all DONE: ${DEPS}"
+        echo "   Run: bash .claude/scripts/progress-status.sh to check status"
+        exit 1
+    fi
+else
+    ISSUE_ID=$(find_next_issue)
 
     if [[ -z "$ISSUE_ID" ]]; then
-        echo "✅ No WAITING issues remaining."
+        if [[ "$DRY_RUN" == true ]]; then
+            echo "🔍 DRY-RUN: No WAITING issues with all dependencies DONE."
+            echo "   Run progress-status.sh to see current state."
+            exit 0
+        fi
+        echo "✅ No startable issues remaining."
         {
             echo "# No active issue — all work complete"
             echo "**Status**: DONE"
             echo "**Date**: $(date -Iminutes)"
             echo ""
             echo "Run \`progress-status.sh\` to verify."
-        } > "$WORKSPACE/current-issue.md"
+        } > "$CURRENT"
         exit 0
     fi
 fi
 
-ISSUE_FILE="$WORKSPACE/issues/${ISSUE_ID}.md"
+ISSUE_FILE=$(ls "$WORKSPACE/issues/${ISSUE_ID}"*.md 2>/dev/null | head -1)
 
 if [[ ! -f "$ISSUE_FILE" ]]; then
-    echo "❌ Issue file not found: $ISSUE_FILE"
+    echo "❌ Issue file not found: $WORKSPACE/issues/${ISSUE_ID}*.md"
     exit 1
 fi
 
 # ── Extraire métadonnées ─────────────────────────────────────────────────────
-# Heading format: "# ISSUE-XXX: Title" or "# ISSUE-XXX — Title" (both supported)
-TITLE=$(grep '^# ' "$ISSUE_FILE" | head -1 | sed -E 's/^# [A-Z0-9-]+[[:space:]]*[-–—:][[:space:]]*//')
-# PDR: extract from **PDR** : PDR-XXX or **PDR** : `PDR-XXX`
-PDR=$(grep -oP '\*\*PDR\*\*[[:space:]]*:[[:space:]]*\K[^\s`]+' "$ISSUE_FILE" | head -1 | tr -d '`' || echo "UNKNOWN")
-MODULE=$(grep -oP 'platform-[a-z-]+' "$ISSUE_FILE" | head -1 || echo "UNKNOWN")
+extract_metadata "$ISSUE_FILE"
 
-# ── Marquer IN_PROGRESS dans progress.md (scoped ## Issues → ## PDRs) ────────
-# Only the Issues table is modified; history rows are append-only.
-# Table format: | ISSUE-XXX | Title | STATUS | PDR | Dependencies |
-sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | WAITING |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/}" "$PROGRESS"
+# ── Dry-run : afficher sans modifier ──────────────────────────────────────────
+if [[ "$DRY_RUN" == true ]]; then
+    DEPS=$(get_deps "$ISSUE_ID")
+    echo "🔍 DRY-RUN: Would start ${ISSUE_ID}"
+    echo "   Title    : ${TITLE}"
+    echo "   PDR      : ${PDR}"
+    echo "   Module   : ${MODULE}"
+    echo "   Deps     : ${DEPS:--}"
+    if [[ -n "$DEPS" && "$DEPS" != "-" ]]; then
+        echo "   Deps status:"
+        old_ifs="$IFS"
+        IFS=','
+        for dep in $DEPS; do
+            IFS="$old_ifs"
+            dep=$(echo "$dep" | tr -d ' ')
+            [[ -z "$dep" ]] && continue
+            if is_status_in_table "$dep" "DONE"; then
+                echo "     ✅ ${dep} DONE"
+            else
+                DEP_STAT=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+                    | grep -P "^\| ${dep} \|" \
+                    | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4); print $4}')
+                echo "     ❌ ${dep} ${DEP_STAT:-UNKNOWN}"
+            fi
+        done
+        IFS="$old_ifs"
+    fi
+    echo "   Action   : mark IN_PROGRESS, create current-issue.md"
+    exit 0
+fi
 
-# ── Ajouter entrée historique (append-only) ───────────────────────────────────
-echo "| $(date -I) | ${ISSUE_ID} | WAITING → IN_PROGRESS | issue-start.sh |" >> "$PROGRESS"
+# ── Marquer IN_PROGRESS dans progress.md ────────────────────────────────────
+OLD_STATUS=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+    | grep -P "^\| ${ISSUE_ID} \|" \
+    | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4); print $4}')
+sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/}" "$PROGRESS"
+echo "| $(date -I) | ${ISSUE_ID} | ${OLD_STATUS} → IN_PROGRESS | issue-start.sh |" >> "$PROGRESS"
 
-# ── Créer current-issue.md ───────────────────────────────────────────────────
-cat > "$WORKSPACE/current-issue.md" << INNEREOF
+# ── Créer current-issue.md (S1: skip frontmatter, body only after ---) ──────
+# awk: ignore everything until the first ---, then print the rest
+BODY=$(awk 'found {print} /^---$/ {found=1}' "$ISSUE_FILE")
+
+cat > "$CURRENT" << INNEREOF
 # ${ISSUE_ID}: ${TITLE}
 **Status**: IN_PROGRESS
 **PDR**: ${PDR}
 **Module**: ${MODULE}
 **Started**: $(date -Iminutes)
 
-$(tail -n +2 "$ISSUE_FILE")
+${BODY}
 
 ## Reviewer Feedback
 (None yet)
 INNEREOF
 
+# ── Vérifier recommendations Architect PENDING ─────────────────────────────────
+inject_architect_recs
+
 echo "✅ ${ISSUE_ID} → IN_PROGRESS | current-issue.md ready"
 echo "   Module: ${MODULE} | PDR: ${PDR}"
+
+# =============================================================================
+# inject_architect_recs — ajoute les recommendations PENDING au current-issue.md
+# =============================================================================
+inject_architect_recs() {
+    if [[ ! -f "$RECOMMENDATIONS" ]]; then
+        return 0
+    fi
+
+    # Extraire les lignes PENDING (pas CONFIRMED ni APPLIED)
+    local pending
+    pending=$(grep -E '^\*\*\[(ARCH|CRAFT|TEST|PRECISION|SPEC|CONFIG|ROBUSTNESS|NAMING|VERSION|DRY|IMPORT|DESIGN|DOC)\-' "$RECOMMENDATIONS" 2>/dev/null | grep 'PENDING\]' || true)
+
+    if [[ -n "$pending" ]]; then
+        cat >> "$CURRENT" << INNEREOF
+
+---
+## ⚠️ Architect/Reviewer Recommendations PENDING
+> Ces recommandations sont en attente d'application. Appliquer AVANT de marquer l'Issue IN_REVIEW.
+> Source : \`.claude/workspace/recommendations-tracking.md\`
+
+$(echo "$pending")
+
+**Action** : Appliquer chaque recommandation, puis marquer comme APPLIED dans recommendations-tracking.md.
+INNEREOF
+        echo "   ⚠️  $(echo "$pending" | wc -l) pending recommendation(s) injected into current-issue.md"
+    fi
+}
