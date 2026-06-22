@@ -2,7 +2,7 @@
 
 **PDR** : PDR-026
 **Module** : `platform-app` (config wiring) + `platform-agent-runtime` (test verification)
-**Statut** : WAITING
+**Statut** : IN_REVIEW
 **Priorite** : P0 (LOCAL mode doit fonctionner)
 **Bloquee par** : ISSUE-112 (AgentRuntimeConfiguration doit exister)
 **Estime** : M (1-3h)
