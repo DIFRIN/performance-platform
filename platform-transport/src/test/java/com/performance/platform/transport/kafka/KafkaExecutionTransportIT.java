@@ -12,7 +12,19 @@ import com.performance.platform.transport.config.KafkaTransportProperties;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -42,6 +54,8 @@ class KafkaExecutionTransportIT {
 
     private KafkaExecutionTransport transport;
     private KafkaTransportProperties props;
+    private KafkaTemplate<String, byte[]> kafkaTemplate;
+    private ConsumerFactory<String, byte[]> consumerFactory;
 
     @BeforeAll
     static void startContainer() {
@@ -59,7 +73,28 @@ class KafkaExecutionTransportIT {
                 "all",
                 "test-group-" + UUID.randomUUID()
         );
-        transport = new KafkaExecutionTransport(props);
+        Map<String, Object> config = Map.of(
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers(),
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class,
+                ProducerConfig.ACKS_CONFIG, "all"
+        );
+        var producerFactory = new DefaultKafkaProducerFactory<String, byte[]>(config);
+        kafkaTemplate = new KafkaTemplate<>(producerFactory);
+
+        Map<String, Object> consumerConfig = Map.of(
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getBootstrapServers(),
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class,
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
+                ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true"
+        );
+        consumerFactory = new DefaultKafkaConsumerFactory<>(consumerConfig);
+
+        var containerFactory = new ConcurrentKafkaListenerContainerFactory<String, byte[]>();
+        containerFactory.setConsumerFactory(consumerFactory);
+        containerFactory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+        transport = new KafkaExecutionTransport(props, kafkaTemplate, containerFactory);
         transport.connect();
     }
 
@@ -67,6 +102,9 @@ class KafkaExecutionTransportIT {
     void tearDown() {
         if (transport.isConnected()) {
             transport.disconnect();
+        }
+        if (kafkaTemplate != null) {
+            kafkaTemplate.destroy();
         }
     }
 
