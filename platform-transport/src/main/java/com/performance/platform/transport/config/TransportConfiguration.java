@@ -4,7 +4,6 @@ import com.performance.platform.application.ports.out.AgentRegistryPort;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.http.HttpExecutionTransport;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
-import com.performance.platform.transport.kafka.KafkaExecutionTransport;
 import com.performance.platform.transport.rabbitmq.RabbitMQExecutionTransport;
 import com.performance.platform.transport.socket.SocketExecutionTransport;
 
@@ -28,6 +27,11 @@ import org.springframework.context.annotation.Configuration;
  * et les tests. Les transports reels sont selectionnes via
  * {@code transport.type} dans {@code application.yaml} ou via la variable
  * d'environnement {@code TRANSPORT_TYPE} (ADR-006 : env prioritaire).
+ *
+ * <p>Le transport KAFKA est configure via {@link KafkaTransportBeans}
+ * (ISSUE-089, ISSUE-091) qui expose le {@code KafkaExecutionTransport}
+ * avec {@code KafkaTemplate} et
+ * {@code ConcurrentKafkaListenerContainerFactory} qualifies.
  */
 @Configuration
 @EnableConfigurationProperties({
@@ -48,17 +52,6 @@ public class TransportConfiguration {
     @ConditionalOnProperty(name = "transport.type", havingValue = "IN_MEMORY", matchIfMissing = true)
     public ExecutionTransport inMemoryExecutionTransport() {
         return new InMemoryExecutionTransport();
-    }
-
-    /**
-     * Transport KAFKA — implementation complete (ISSUE-029).
-     * <p>
-     * Utilise un consumer group unique par agent (ADR-009) pour le broadcast.
-     */
-    @Bean
-    @ConditionalOnProperty(name = "transport.type", havingValue = "KAFKA")
-    public ExecutionTransport kafkaExecutionTransport(KafkaTransportProperties props) {
-        return new KafkaExecutionTransport(props);
     }
 
     /**

@@ -14,64 +14,67 @@ import com.performance.platform.transport.config.KafkaTransportProperties;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.StringSerializer;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Implementation Kafka de {@link ExecutionTransport}.
+ * Implementation Kafka de ExecutionTransport.
  * <p>
- * <strong>Producer side (orchestrateur) :</strong>
- * {@code dispatchTask} vers le topic tasks,
- * {@code publishEvent} et {@code publishAgentEvent} vers le topic events,
- * {@code broadcastSignal} vers le topic signals.
- * <p>
- * <strong>Consumer side (agent) :</strong>
- * Chaque agent utilise un consumer group unique (son {@code agentId},
- * ADR-009) pour recevoir tous les messages en broadcast.
- * Le filtrage se fait cote agent via {@code TaskSpecializationFilter}.
- * <p>
- * Les boucles de consommation sont deleguees a {@link KafkaConsumerManager}
- * qui les execute sur des Virtual Threads.
- * <p>
- * Selectionnee par {@code TransportConfiguration} avec le bean conditionnel
- * {@code @ConditionalOnProperty(name = "transport.type", havingValue = "KAFKA")}.
+ * Producer side: KafkaTemplate. Consumer side: DynamicKafkaListenerRegistry
+ * (ISSUE-090) qui cree des KafkaMessageListenerContainer Spring par agent.
+ * ADR-009: chaque agent a son propre consumer group.
  */
 public class KafkaExecutionTransport implements ExecutionTransport {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaExecutionTransport.class);
 
     private final KafkaTransportProperties props;
+    private final KafkaTemplate<String, byte[]> kafkaTemplate;
+    private final ConsumerFactory<String, byte[]> consumerFactory;
     private final KafkaMessageCodec codec;
     private final AtomicBoolean connected = new AtomicBoolean(false);
 
-    // Handler registries (thread-safe, shared with consumer manager)
-    private final List<TaskRequestHandler> taskHandlers = new CopyOnWriteArrayList<>();
-    private final List<AgentSignalHandler> signalHandlers = new CopyOnWriteArrayList<>();
-    private final ConcurrentMap<KafkaSubscription, ExecutionEventHandler> subscriptions =
-            new ConcurrentHashMap<>();
-    private final ConcurrentMap<KafkaSubscription, AgentLifecycleEventHandler> agentSubscriptions =
-            new ConcurrentHashMap<>();
+    static final String ORCHESTRATOR_GROUP = "orchestrator";
 
-    // Kafka infrastructure
-    private KafkaProducer<String, byte[]> producer;
-    private KafkaConsumerManager consumerManager;
+    private DynamicKafkaListenerRegistry listenerRegistry;
 
-    public KafkaExecutionTransport(KafkaTransportProperties props) {
+    /**
+     * Constructeur principal utilise par {@code KafkaTransportBeans}.
+     *
+     * @param props proprietes de transport Kafka
+     * @param kafkaTemplate le KafkaTemplate qualifie transportKafkaTemplate
+     * @param containerFactory la ConcurrentKafkaListenerContainerFactory qualifiee
+     *                         transportContainerFactory — le ConsumerFactory est
+     *                         extrait pour le DynamicKafkaListenerRegistry
+     */
+    public KafkaExecutionTransport(KafkaTransportProperties props,
+                                   KafkaTemplate<String, byte[]> kafkaTemplate,
+                                   ConcurrentKafkaListenerContainerFactory<String, byte[]> containerFactory) {
         this.props = props;
+        this.kafkaTemplate = Objects.requireNonNull(kafkaTemplate, "kafkaTemplate must not be null");
+        @SuppressWarnings("unchecked")
+        ConsumerFactory<String, byte[]> cf = containerFactory != null
+                ? (ConsumerFactory<String, byte[]>) containerFactory.getConsumerFactory()
+                : null;
+        this.consumerFactory = cf;
+        this.codec = new KafkaMessageCodec();
+    }
+
+    /**
+     * Constructeur allege sans consumer (tests unitaires).
+     */
+    public KafkaExecutionTransport(KafkaTransportProperties props,
+                                   KafkaTemplate<String, byte[]> kafkaTemplate) {
+        this.props = props;
+        this.kafkaTemplate = Objects.requireNonNull(kafkaTemplate, "kafkaTemplate must not be null");
+        this.consumerFactory = null;
         this.codec = new KafkaMessageCodec();
     }
 
@@ -79,16 +82,13 @@ public class KafkaExecutionTransport implements ExecutionTransport {
 
     @Override
     public void connect() throws TransportException {
-        if (connected.get()) {
-            return;
-        }
+        if (connected.get()) return;
         try {
-            this.producer = createProducer();
-            this.consumerManager = new KafkaConsumerManager(
-                    props.bootstrapServers(), props.consumerGroup(),
-                    props.tasksTopic(), props.eventsTopic(), props.signalsTopic(),
-                    codec, taskHandlers, signalHandlers, subscriptions, agentSubscriptions);
-            consumerManager.start();
+            if (consumerFactory != null) {
+                this.listenerRegistry = new DynamicKafkaListenerRegistry(
+                        consumerFactory, codec,
+                        props.tasksTopic(), props.signalsTopic(), props.eventsTopic());
+            }
             connected.set(true);
             log.info("action=connect transport=KAFKA bootstrap={} consumerGroup={}",
                     props.bootstrapServers(), props.consumerGroup());
@@ -99,31 +99,21 @@ public class KafkaExecutionTransport implements ExecutionTransport {
 
     @Override
     public void disconnect() {
-        if (!connected.compareAndSet(true, false)) {
-            return;
-        }
-        if (consumerManager != null) {
-            consumerManager.stop();
-        }
-        closeQuietly(producer);
+        if (!connected.compareAndSet(true, false)) return;
+        if (listenerRegistry != null) listenerRegistry.stopAll();
+        kafkaTemplate.flush();
         log.info("action=disconnect transport=KAFKA");
     }
 
     @Override
-    public boolean isConnected() {
-        return connected.get();
-    }
+    public boolean isConnected() { return connected.get(); }
 
     @Override
-    public TransportType getType() {
-        return TransportType.KAFKA;
-    }
+    public TransportType getType() { return TransportType.KAFKA; }
 
     @Override
     public void dispatchTask(TaskExecutionRequest request) {
-        if (request == null) {
-            throw new TransportException("request must not be null");
-        }
+        if (request == null) throw new TransportException("request must not be null");
         ensureConnected();
         byte[] data = codec.encodeTaskRequest(request);
         sendRecord(props.tasksTopic(), request.id().value(), data, "dispatch_task",
@@ -132,9 +122,7 @@ public class KafkaExecutionTransport implements ExecutionTransport {
 
     @Override
     public void publishEvent(ExecutionEvent event) {
-        if (event == null) {
-            throw new TransportException("event must not be null");
-        }
+        if (event == null) throw new TransportException("event must not be null");
         ensureConnected();
         byte[] data = codec.encodeExecutionEvent(event);
         sendRecord(props.eventsTopic(), event.id().value(), data, "publish_event",
@@ -143,69 +131,56 @@ public class KafkaExecutionTransport implements ExecutionTransport {
 
     @Override
     public void publishAgentEvent(AgentLifecycleEvent event) {
-        if (event == null) {
-            throw new TransportException("event must not be null");
-        }
+        if (event == null) throw new TransportException("event must not be null");
         ensureConnected();
         byte[] data = codec.encodeAgentLifecycleEvent(event);
-        sendRecord(props.eventsTopic(), event.id().value(), data, "publish_agent_event",
-                null);
+        sendRecord(props.eventsTopic(), event.id().value(), data, "publish_agent_event", null);
     }
 
     @Override
     public void broadcastSignal(AgentSignal signal) {
-        if (signal == null) {
-            throw new TransportException("signal must not be null");
-        }
+        if (signal == null) throw new TransportException("signal must not be null");
         ensureConnected();
         byte[] data = codec.encodeSignal(signal);
-        sendRecord(props.signalsTopic(), signal.id().value(), data, "broadcast_signal",
-                null);
+        sendRecord(props.signalsTopic(), signal.id().value(), data, "broadcast_signal", null);
     }
 
     @Override
     public void receiveTask(TaskRequestHandler handler) {
-        if (handler == null) {
-            throw new TransportException("handler must not be null");
-        }
-        taskHandlers.add(handler);
+        if (handler == null) throw new TransportException("handler must not be null");
+        ensureListenerRegistry();
+        listenerRegistry.registerTaskListener(resolveAgentId(), handler);
     }
 
     @Override
     public void receiveSignal(AgentSignalHandler handler) {
-        if (handler == null) {
-            throw new TransportException("handler must not be null");
-        }
-        signalHandlers.add(handler);
+        if (handler == null) throw new TransportException("handler must not be null");
+        ensureListenerRegistry();
+        listenerRegistry.registerSignalListener(resolveAgentId(), handler);
     }
 
     @Override
     public Subscription subscribe(ExecutionEventHandler handler) {
-        if (handler == null) {
-            throw new TransportException("handler must not be null");
-        }
-        var sub = new KafkaSubscription(subscriptions);
-        subscriptions.put(sub, handler);
-        return sub;
+        if (handler == null) throw new TransportException("handler must not be null");
+        ensureListenerRegistry();
+        Runnable cleanup = listenerRegistry.registerExecutionHandler(ORCHESTRATOR_GROUP, handler);
+        return new KafkaSubscription(cleanup);
     }
 
     @Override
     public Subscription subscribeAgentEvents(AgentLifecycleEventHandler handler) {
-        if (handler == null) {
-            throw new TransportException("handler must not be null");
-        }
-        var sub = new KafkaSubscription(agentSubscriptions);
-        agentSubscriptions.put(sub, handler);
-        return sub;
+        if (handler == null) throw new TransportException("handler must not be null");
+        ensureListenerRegistry();
+        Runnable cleanup = listenerRegistry.registerAgentLifecycleHandler(ORCHESTRATOR_GROUP, handler);
+        return new KafkaSubscription(cleanup);
     }
 
-    // === Producer ===
+    // === Producer helpers ===
 
     private void sendRecord(String topic, String key, byte[] data,
                             String action, String executionId) {
-        var record = new ProducerRecord<>(topic, key, data);
         try {
-            producer.send(record).get();
+            kafkaTemplate.send(topic, key, data).get();
             log.debug("action={} executionId={} topic={} key={}",
                     action, executionId, topic, key);
         } catch (InterruptedException e) {
@@ -217,26 +192,29 @@ public class KafkaExecutionTransport implements ExecutionTransport {
         }
     }
 
-    private KafkaProducer<String, byte[]> createProducer() {
-        Map<String, Object> config = Map.of(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, props.bootstrapServers(),
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class,
-                ProducerConfig.ACKS_CONFIG, props.producerAcks()
-        );
-        return new KafkaProducer<>(config);
-    }
-
     private void ensureConnected() {
-        if (!connected.get()) {
-            throw new TransportException("transport is not connected");
+        if (!connected.get()) throw new TransportException("transport is not connected");
+    }
+
+    /**
+     * Initialisation lazy du listenerRegistry pour supporter
+     * receiveTask/receiveSignal avant connect().
+     */
+    private void ensureListenerRegistry() {
+        if (!connected.get()) connect();
+        if (listenerRegistry == null && consumerFactory != null) {
+            listenerRegistry = new DynamicKafkaListenerRegistry(
+                    consumerFactory, codec,
+                    props.tasksTopic(), props.signalsTopic(), props.eventsTopic());
         }
     }
 
-    private void closeQuietly(AutoCloseable closeable) {
-        if (closeable != null) {
-            try { closeable.close(); } catch (Exception ignored) { /* ignore */ }
-        }
+    /**
+     * Resout l'agentId pour le consumer group (ADR-009).
+     * Utilise consumerGroup des proprietes qui vaut
+     * ${agent.id} pour les agents.
+     */
+    private String resolveAgentId() {
+        return props.consumerGroup();
     }
-
 }
