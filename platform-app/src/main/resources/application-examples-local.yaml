@@ -1,0 +1,66 @@
+# =============================================================================
+# Performance Engineering Platform — Profil Examples Local
+# =============================================================================
+# Profil Spring pour les exemples IoT en mode LOCAL.
+# Active avec : --spring.profiles.active=local,examples-local
+#
+# Prerequis : docker-compose-sut.yaml en cours d'execution
+#   docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
+#
+# Ce profil definit les configurations techniques pour les scenarios IoT :
+#   - platform.kafka-clusters.iot-sut : cluster Kafka du SUT
+#   - platform.datasources.sut-db : base PostgreSQL du SUT (devices)
+#   - platform.http-targets.wiremock : WireMock du SUT pour assertions
+#   - platform.http-targets.iot-dispatcher-health : health check iot-dispatcher
+#   - platform.http-targets.device-api : API REST du SUT device-api (port 8084)
+#
+# ADR-015/ADR-016 : les scenarios ne contiennent aucune URL inline.
+# Les noms logiques (cluster:, target:, topic:, datasource:) sont resolus via cette config.
+# =============================================================================
+
+platform:
+  # Named Kafka clusters pour les exemples IoT (PDR-020)
+  # Le cluster iot-sut pointe vers le Kafka du docker-compose-sut.yaml (port 9093).
+  kafka-clusters:
+    iot-sut:
+      bootstrap-servers: ${IOT_KAFKA_SERVERS:localhost:9093}
+      producer-acks: "1"
+      consumer-group: perf-test-consumer
+      topics:
+        iot-commands: ${IOT_TOPIC_COMMANDS:iot-commands}
+        device-events: ${DEVICE_TOPIC_EVENTS:device-events}
+
+  # Named datasources pour les exemples IoT
+  # sut-db pointe vers le PostgreSQL du docker-compose-sut.yaml (port 5433).
+  datasources:
+    sut-db:
+      url: ${SUT_DB_URL:jdbc:postgresql://localhost:5433/sut_devices}
+      username: ${SUT_DB_USERNAME:postgres}
+      password: ${SUT_DB_PASSWORD:changeme}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+
+  # Named HTTP targets pour les exemples IoT (PDR-022)
+  # Chaque target definit son URL de base, timeouts, et mapping de chemins logiques.
+  http-targets:
+    wiremock:
+      base-url: ${WIREMOCK_URL:http://localhost:8090}
+      connection-timeout: 2s
+      read-timeout: 5s
+      paths:
+        reset-requests: /__admin/requests
+        count-requests: /__admin/requests/count
+    iot-dispatcher-health:
+      base-url: ${IOT_DISPATCHER_URL:http://localhost:8083}
+      read-timeout: 10s
+      paths:
+        health: /actuator/health
+    device-api:
+      base-url: ${DEVICE_API_URL:http://localhost:8084}
+      connection-timeout: 2s
+      read-timeout: 10s
+      paths:
+        submit-event: /api/events
+        health: /api/health

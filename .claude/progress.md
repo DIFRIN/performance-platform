@@ -157,7 +157,7 @@
 | ISSUE-098 | SUT DB schema + seed 10k devices | PDR-023 | platform-examples/ | S | DONE | — |
 | ISSUE-099 | docker-compose-sut.yaml (5 services SUT) | PDR-024 | platform-deployment | S | DONE | ISSUE-096,097,098 |
 | ISSUE-100 | Scénarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
-| ISSUE-101 | Scénarios YAML device-api (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | WAITING | ISSUE-086,092,099 |
+| ISSUE-101 | Scénarios YAML device-api (LOCAL + DISTRIBUTED) | PDR-024 | platform-deployment | M | DONE | ISSUE-086,092,099 |
 
 ### 🟡 P2 — Normales
 
@@ -561,12 +561,15 @@
 
 ---
 
+| 2026-06-22 | ISSUE-101 | IN PROGRESS → IN REVIEW | Developer — device-api-local.yaml, device-api-distributed.yaml, application-examples-local.yaml (datasources.sut-db + http-targets.device-api), seed-sut-devices.sql. 4 parse tests OK, BUILD SUCCESS. |
+| 2026-06-22 | ISSUE-101 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 4 parse tests OK, BUILD SUCCESS, 188 total OK. |
+
 ## Métriques
 
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 24
 **Issues totales** : 102
-**Derniere mise a jour** : 2026-06-22 (Reviewer — ISSUE-094, 096, 097 APPROVED)
+**Derniere mise a jour** : 2026-06-22 (Developer — ISSUE-094, 096, 097 APPROVED)
 
 | 2026-06-22 | ISSUE-096 | IN PROGRESS → IN REVIEW | Developer — iot-dispatcher SUT: pom.xml + 4 classes + YAML + Dockerfile + 4 tests OK, BUILD SUCCESS |
 | 2026-06-22 | ISSUE-097 | WAITING → IN REVIEW | Developer — device-api SUT: pom.xml + 4 classes + YAML + Dockerfile + 6 tests OK, BUILD SUCCESS |
