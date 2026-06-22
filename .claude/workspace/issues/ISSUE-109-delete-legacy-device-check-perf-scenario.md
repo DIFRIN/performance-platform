@@ -2,7 +2,7 @@
 
 **PDR** : PDR-025
 **Module** : `platform-deployment`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P0 (bloquant — scenario depend de code supprime)
 **Bloquee par** : ISSUE-104 (DevicePopulationTaskExecutor + DeviceCheckTaskExecutor supprimes)
 **Estime** : S (< 1h)

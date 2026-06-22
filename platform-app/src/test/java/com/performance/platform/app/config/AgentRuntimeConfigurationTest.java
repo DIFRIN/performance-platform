@@ -1,17 +1,25 @@
 package com.performance.platform.app.config;
 
+import com.performance.platform.agent.filter.TaskFilterResult;
 import com.performance.platform.agent.filter.TaskSpecializationFilter;
 import com.performance.platform.agent.local.LocalAgent;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.runtime.AgentRuntime;
 import com.performance.platform.agent.runtime.DistributedAgentRuntime;
 import com.performance.platform.domain.execution.ExecutionContext;
+import com.performance.platform.domain.execution.PartialExecutionContext;
+import com.performance.platform.domain.execution.RetryPolicy;
+import com.performance.platform.domain.id.ExecutionId;
+import com.performance.platform.domain.id.MessageId;
+import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
+import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
+import com.performance.platform.transport.message.TaskExecutionRequest;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,9 +28,14 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests de la {@link AgentRuntimeConfiguration}.
@@ -323,6 +336,149 @@ class AgentRuntimeConfigurationTest {
                 var props = ctx.getBean(AgentProperties.class);
                 assertThat(props.supportedTasks()).isEmpty();
             });
+        }
+    }
+
+    // ========================================================================
+    // Config-driven specialization — ADR-015 verification
+    // ========================================================================
+
+    @Nested
+    @DisplayName("Config-driven specialization (ADR-015)")
+    class ConfigDrivenSpecializationTests {
+
+        @Test
+        @DisplayName("should use only configured task names, not executor registry names")
+        void distributedAgentShouldUseConfiguredTaskNames() {
+            // Given: 3 executors dans le registre, mais seulement 2 dans la config
+            var exec1 = mock(TaskExecutor.class);
+            when(exec1.getSupportedTaskName()).thenReturn("mock-server");
+            var exec2 = mock(TaskExecutor.class);
+            when(exec2.getSupportedTaskName()).thenReturn("gatling");
+            var exec3 = mock(TaskExecutor.class);
+            when(exec3.getSupportedTaskName()).thenReturn("http-client");
+
+            var context = new ApplicationContextRunner()
+                    .withUserConfiguration(AgentRuntimeConfiguration.class)
+                    .withPropertyValues(
+                            "runtime.mode=DISTRIBUTED",
+                            "runtime.role=AGENT",
+                            "agent.supported-tasks=mock-server,http-client"
+                    )
+                    .withBean(ExecutionTransport.class, () -> mock(ExecutionTransport.class))
+                    .withBean("execMockServer", TaskExecutor.class, () -> exec1)
+                    .withBean("execGatling", TaskExecutor.class, () -> exec2)
+                    .withBean("execHttpClient", TaskExecutor.class, () -> exec3)
+                    .run(ctx -> {
+                        assertThat(ctx).hasSingleBean(AgentRuntime.class);
+                        var agent = ctx.getBean(AgentRuntime.class);
+                        assertThat(agent).isInstanceOf(DistributedAgentRuntime.class);
+
+                        var taskNames = agent.getDescriptor().supportedTaskNames();
+                        // Seulement les 2 de la config, PAS "gatling" du registre
+                        assertThat(taskNames).containsExactlyInAnyOrder("mock-server", "http-client");
+                        assertThat(taskNames).doesNotContain("gatling");
+
+                        assertThat(agent.canExecute("mock-server")).isTrue();
+                        assertThat(agent.canExecute("http-client")).isTrue();
+                        assertThat(agent.canExecute("gatling")).isFalse();
+                    });
+        }
+
+        @Test
+        @DisplayName("agent with empty config should be idle — no tasks accepted")
+        void distributedAgentWithEmptyConfigShouldBeIdle() {
+            var context = new ApplicationContextRunner()
+                    .withUserConfiguration(AgentRuntimeConfiguration.class)
+                    .withPropertyValues(
+                            "runtime.mode=DISTRIBUTED",
+                            "runtime.role=AGENT"
+                            // agent.supported-tasks PAS defini -> liste vide
+                    )
+                    .withBean(ExecutionTransport.class, () -> mock(ExecutionTransport.class))
+                    .run(ctx -> {
+                        assertThat(ctx).hasSingleBean(AgentRuntime.class);
+                        var agent = ctx.getBean(AgentRuntime.class);
+                        assertThat(agent.getDescriptor().supportedTaskNames()).isEmpty();
+
+                        // Aucune task acceptee
+                        assertThat(agent.canExecute("mock-server")).isFalse();
+                        assertThat(agent.canExecute("gatling")).isFalse();
+                    });
+        }
+
+        @Test
+        @DisplayName("taskSpecializationFilter should only contain configured task names")
+        void taskSpecializationFilterShouldOnlyContainConfiguredTaskNames() {
+            var exec1 = mock(TaskExecutor.class);
+            when(exec1.getSupportedTaskName()).thenReturn("mock-server");
+            var exec2 = mock(TaskExecutor.class);
+            when(exec2.getSupportedTaskName()).thenReturn("kafka-producer");
+
+            var context = new ApplicationContextRunner()
+                    .withUserConfiguration(AgentRuntimeConfiguration.class)
+                    .withPropertyValues(
+                            "runtime.mode=DISTRIBUTED",
+                            "runtime.role=AGENT",
+                            "agent.supported-tasks=mock-server"
+                    )
+                    .withBean(ExecutionTransport.class, () -> mock(ExecutionTransport.class))
+                    .withBean("execMockServer", TaskExecutor.class, () -> exec1)
+                    .withBean("execKafka", TaskExecutor.class, () -> exec2)
+                    .run(ctx -> {
+                        assertThat(ctx).hasSingleBean(TaskSpecializationFilter.class);
+                        var filter = ctx.getBean(TaskSpecializationFilter.class);
+
+                        // Step pour mock-server -> doit matcher
+                        var supportedStep = new StepDefinition(
+                                TaskId.of("step-ms"),
+                                "mock-server",
+                                Phase.INJECTION,
+                                Map.of(),
+                                List.of(),
+                                List.of(),
+                                Duration.ofSeconds(30),
+                                RetryPolicy.defaults());
+
+                        var supportedRequest = new TaskExecutionRequest(
+                                MessageId.generate(),
+                                ExecutionId.generate(),
+                                supportedStep,
+                                new PartialExecutionContext(
+                                        ExecutionId.generate(),
+                                        ScenarioId.of("scenario-1"),
+                                        Map.of()),
+                                Instant.now(),
+                                RetryPolicy.defaults());
+
+                        var result1 = filter.filter(supportedRequest);
+                        assertThat(result1).isInstanceOf(TaskFilterResult.Responsible.class);
+
+                        // Step pour kafka-producer -> ne doit PAS matcher
+                        var unsupportedStep = new StepDefinition(
+                                TaskId.of("step-kafka"),
+                                "kafka-producer",
+                                Phase.INJECTION,
+                                Map.of(),
+                                List.of(),
+                                List.of(),
+                                Duration.ofSeconds(30),
+                                RetryPolicy.defaults());
+
+                        var unsupportedRequest = new TaskExecutionRequest(
+                                MessageId.generate(),
+                                ExecutionId.generate(),
+                                unsupportedStep,
+                                new PartialExecutionContext(
+                                        ExecutionId.generate(),
+                                        ScenarioId.of("scenario-1"),
+                                        Map.of()),
+                                Instant.now(),
+                                RetryPolicy.defaults());
+
+                        var result2 = filter.filter(unsupportedRequest);
+                        assertThat(result2).isInstanceOf(TaskFilterResult.NotResponsible.class);
+                    });
         }
     }
 }

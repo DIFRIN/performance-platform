@@ -120,12 +120,12 @@
 | ISSUE-106 | Create http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED mode) | DONE | PDR-025 | ISSUE-105 |
 | ISSUE-107 | Create docker-compose-wiremock-agent.yaml | DONE | PDR-025 | ISSUE-103 |
 | ISSUE-108 | README Mock-as-Agent architecture documentation | WAITING | PDR-025 | ISSUE-103,104,105,106,107 |
-| ISSUE-109 | Delete legacy device-check-perf.yaml scenario | APPROVED | PDR-025 | ISSUE-104 |
+| ISSUE-109 | Delete legacy device-check-perf.yaml scenario | DONE | PDR-025 | ISSUE-104 |
 | ISSUE-110 | Clean device entries from interfaces-registry | WAITING | PDR-025 | ISSUE-104,109 |
 | ISSUE-111 | AgentProperties @ConfigurationProperties record | DONE | PDR-026 | — |
 | ISSUE-112 | Create AgentRuntimeConfiguration @Configuration | DONE | PDR-026 | ISSUE-111 |
 | ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | DONE | PDR-026 | ISSUE-112 |
-| ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | WAITING | PDR-026 | ISSUE-112 |
+| ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | APPROVED | PDR-026 | ISSUE-112 |
 | ISSUE-115 | Add agent.supported-tasks to application-agent.yaml | WAITING | PDR-026 | ISSUE-111 |
 | ISSUE-116 | Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files | WAITING | PDR-026 | ISSUE-111 |
 | ISSUE-117 | E2E integration test: agent config → registration → task execution | WAITING | PDR-026 | ISSUE-111,112,113,114,115,116 |
@@ -571,3 +571,7 @@
 | 2026-06-22 | ISSUE-109 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-22 | ISSUE-109 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-109 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-109 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-114 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-22 | ISSUE-114 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-22 | ISSUE-114 | IN_REVIEW → APPROVED | Reviewer approved |
