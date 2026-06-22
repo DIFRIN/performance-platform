@@ -1,261 +1,142 @@
-# ISSUE-112: Create AgentRuntimeConfiguration @Configuration
-**Status**: APPROVED
+# ISSUE-113: Wire LocalAgent with ALL task names from TaskExecutorRegistry
+**Status**: IN_PROGRESS
 **PDR**: PDR-026
 **Module**: platform-app
-**Started**: 2026-06-22T18:42+02:00
+**Started**: 2026-06-22T19:56+02:00
 
-
-**PDR** : PDR-026
-**Module** : `platform-app`
-**Statut** : WAITING
-**Priorite** : P0 (bloquant ISSUE-113, ISSUE-114)
-**Bloquee par** : ISSUE-111 (AgentProperties doit exister)
-**Estime** : M (1-3h)
-
----
 
 ## Objectif
 
-Creer la classe de configuration Spring `AgentRuntimeConfiguration` qui produit les beans du runtime agent selon le mode d'execution. En mode LOCAL, elle cree un `LocalAgent`. En mode DISTRIBUTED avec role AGENT, elle cree un `DistributedAgentRuntime`. Les beans sont conditionnels (`@ConditionalOnProperty`) pour eviter tout `if/switch` dans le code metier (CF-03).
+Verifier que le cablage Spring du mode LOCAL produit un `LocalAgent` avec TOUS les task names du `TaskExecutorRegistry`. Le `LocalAgent` ignore `agent.supported-tasks` et derive `supportedTaskNames` du registre. Verifier par test unitaire que `LocalAgent.canExecute(taskName)` retourne `true` pour chaque task name enregistre.
 
-## Fichiers a Creer
+Le code du `LocalAgent` est DEJA correct -- il utilise `descriptor.supportedTaskNames()` via `filter` et `canExecute()`. Le travail ici est de verifier le cablage et d'ajouter un test qui confirme le comportement.
+
+## Fichiers a Creer / Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/app/config/
-  └── AgentRuntimeConfiguration.java      — @Configuration avec @Bean conditionnels
-
 platform-app/src/test/java/com/performance/platform/app/config/
-  └── AgentRuntimeConfigurationTest.java  — tests de selection de beans selon mode
+  └── AgentRuntimeConfigurationTest.java   — UPDATE: ajouter test LOCAL all-task-names (si pas deja couvert dans ISSUE-112)
+
+platform-agent-runtime/src/test/java/com/performance/platform/agent/local/
+  └── LocalAgentAllTaskNamesTest.java      — test: LocalAgent avec registre connu, verifie canExecute()
 ```
 
-## Structure de la classe
+## Verification du cablage
+
+Dans `AgentRuntimeConfiguration.localAgentRuntime()` (ISSUE-112), le code collecte deja tous les noms du registre :
 
 ```java
-package com.performance.platform.app.config;
+var taskExecutors = taskExecutorRegistry.getAll();
+var allTaskNames = taskExecutors.stream()
+        .map(TaskExecutor::getSupportedTaskName)
+        .collect(Collectors.toUnmodifiableSet());
+```
 
-import com.performance.platform.agent.runtime.AgentRuntime;
-import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
-import com.performance.platform.agent.filter.TaskSpecializationFilter;
-import com.performance.platform.agent.registration.AgentRegistrationPort;
-import com.performance.platform.agent.runtime.DistributedAgentRuntime;
-import com.performance.platform.agent.local.LocalAgent;
-import com.performance.platform.domain.agent.AgentDescriptor;
-import com.performance.platform.domain.agent.AgentCapabilities;
-import com.performance.platform.domain.agent.AgentState;
-import com.performance.platform.domain.id.AgentId;
-import com.performance.platform.plugin.TaskExecutor;
-import com.performance.platform.plugin.StatefulResourceCleaner;
-import com.performance.platform.infrastructure.executor.TaskExecutorRegistry;
-import com.performance.platform.transport.ExecutionTransport;
-import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
+Confirmer que ce `Set` est passe au `AgentDescriptor` et que le `LocalAgent` l'utilise.
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.beans.factory.ObjectProvider;
+## Test `LocalAgentAllTaskNamesTest`
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+Test unitaire (pas Spring) qui verifie le comportement du `LocalAgent` quand il est cree avec un `AgentDescriptor` contenant tous les task names :
 
-/**
- * Configuration Spring pour les beans du runtime agent.
- * <p>
- * Selectionne le {@link AgentRuntime} selon le mode :
- * <ul>
- *   <li>{@code runtime.mode=LOCAL} → {@code LocalAgent} avec tous les task names
- *       du {@code TaskExecutorRegistry}</li>
- *   <li>{@code runtime.mode=DISTRIBUTED} et {@code runtime.role=AGENT} →
- *       {@code DistributedAgentRuntime} avec {@code agent.supported-tasks}
- *       de la configuration</li>
- * </ul>
- * <p>
- * Aucun bean {@link AgentRuntime} n'est cree en mode ORCHESTRATOR.
- */
-@Configuration
-@EnableConfigurationProperties(AgentProperties.class)
-public class AgentRuntimeConfiguration {
+```java
+@Test
+void localAgentShouldAcceptAllRegisteredTaskNames() {
+    // Given: 3 TaskExecutors enregistres
+    var exec1 = mock(TaskExecutor.class);
+    when(exec1.getSupportedTaskName()).thenReturn("mock-server");
+    var exec2 = mock(TaskExecutor.class);
+    when(exec2.getSupportedTaskName()).thenReturn("gatling");
+    var exec3 = mock(TaskExecutor.class);
+    when(exec3.getSupportedTaskName()).thenReturn("http-client");
 
-    // ========================================================================
-    // Mode LOCAL : LocalAgent avec TOUS les task names du registre
-    // ========================================================================
+    var allTaskNames = Set.of("mock-server", "gatling", "http-client");
+    var transport = new InMemoryExecutionTransport();
+    var descriptor = new AgentDescriptor(
+            AgentId.generate(), "local-agent", "localhost", 8080, null,
+            allTaskNames, AgentCapabilities.empty(),
+            AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-    @Bean
-    @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
-    public AgentRuntime localAgentRuntime(
-            InMemoryExecutionTransport transport,
-            TaskExecutorRegistry taskExecutorRegistry,
-            ObjectProvider<StatefulResourceCleaner> cleanersProvider) {
+    var agent = new LocalAgent(transport, descriptor,
+            Duration.ofMinutes(5), List.of(exec1, exec2, exec3), List.of());
 
-        var taskExecutors = taskExecutorRegistry.getAll();
-        var allTaskNames = taskExecutors.stream()
-                .map(TaskExecutor::getSupportedTaskName)
-                .collect(Collectors.toUnmodifiableSet());
+    // Then: canExecute() retourne true pour chaque task name
+    assertThat(agent.canExecute("mock-server")).isTrue();
+    assertThat(agent.canExecute("gatling")).isTrue();
+    assertThat(agent.canExecute("http-client")).isTrue();
 
-        var agentId = AgentId.generate();
-        var descriptor = new AgentDescriptor(
-                agentId,
-                "local-agent",
-                "localhost",
-                8080,
-                null,
-                allTaskNames,                    // TOUS les noms du registre
-                AgentCapabilities.empty(),
-                AgentState.OFFLINE,
-                Instant.now(),
-                Instant.now(),
-                Duration.ofMinutes(5)
-        );
+    // Et false pour une task non enregistree
+    assertThat(agent.canExecute("unknown-task")).isFalse();
+}
 
-        var cleaners = cleanersProvider.stream().toList();
-        return new LocalAgent(transport, descriptor, Duration.ofMinutes(5), taskExecutors, cleaners);
-    }
+@Test
+void localAgentShouldIgnoreAgentProperties() {
+    // Le LocalAgent derive ses supportedTaskNames du registre,
+    // pas de AgentProperties. Ce test confirme que meme avec
+    // un supportedTaskNames partiel, canExecute() reflete le descriptor.
+    var exec = mock(TaskExecutor.class);
+    when(exec.getSupportedTaskName()).thenReturn("mock-server");
+    var transport = new InMemoryExecutionTransport();
+    var partialNames = Set.of("mock-server"); // seulement 1 sur 2
+    var descriptor = new AgentDescriptor(
+            AgentId.generate(), "partial-agent", "localhost", 8080, null,
+            partialNames, AgentCapabilities.empty(),
+            AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-    // ========================================================================
-    // Mode DISTRIBUTED, role AGENT : DistributedAgentRuntime avec config
-    // ========================================================================
+    var agent = new LocalAgent(transport, descriptor,
+            Duration.ofMinutes(5), List.of(exec), List.of());
 
-    @Bean
-    @ConditionalOnProperty(name = "runtime.mode", havingValue = "DISTRIBUTED")
-    @ConditionalOnProperty(name = "runtime.role", havingValue = "AGENT")
-    public AgentRuntime distributedAgentRuntime(
-            ExecutionTransport transport,
-            AgentProperties agentProperties,
-            AgentRegistrationPort registrationPort,
-            TaskExecutorRegistry taskExecutorRegistry,
-            ObjectProvider<StatefulResourceCleaner> cleanersProvider) {
+    assertThat(agent.canExecute("mock-server")).isTrue();
+    assertThat(agent.canExecute("gatling")).isFalse(); // non inclus dans le descriptor
+}
+```
 
-        var taskExecutors = taskExecutorRegistry.getAll();
-        var supportedTaskNames = Set.copyOf(agentProperties.supportedTasks());
+## Test d'integration Spring (dans platform-app)
 
-        if (supportedTaskNames.isEmpty()) {
-            // Pas de tasks configurees → agent idle (log en WARN dans le runtime)
-            log.warn("No agent.supported-tasks configured — agent will be idle");
-        }
+Ajouter dans `AgentRuntimeConfigurationTest` (cree dans ISSUE-112) un test qui verifie que le `AgentRuntime` bean en LOCAL a bien le bon type ET que son `getDescriptor().supportedTaskNames()` contient tous les task names des executors enregistres :
 
-        var agentId = AgentId.generate();
-        var descriptor = new AgentDescriptor(
-                agentId,
-                resolveAgentName(),
-                resolveAgentHost(),
-                resolveAgentPort(),
-                null,
-                supportedTaskNames,              // depuis la config
-                AgentCapabilities.empty(),
-                AgentState.OFFLINE,
-                Instant.now(),
-                Instant.now(),
-                Duration.ofMinutes(5)
-        );
-
-        var filter = new DefaultTaskSpecializationFilter(supportedTaskNames, agentId);
-        var cleaners = cleanersProvider.stream().toList();
-
-        return new DistributedAgentRuntime(
-                transport,
-                filter,
-                registrationPort,
-                descriptor,
-                Duration.ofSeconds(10),         // heartbeat interval
-                Duration.ofMinutes(5),          // task execution timeout
-                taskExecutors,
-                cleaners
-        );
-    }
-
-    // ========================================================================
-    // TaskSpecializationFilter (partage, utilise par les beans ci-dessus)
-    // ========================================================================
-
-    @Bean
-    @ConditionalOnProperty(name = "runtime.mode", havingValue = "DISTRIBUTED")
-    @ConditionalOnProperty(name = "runtime.role", havingValue = "AGENT")
-    public TaskSpecializationFilter taskSpecializationFilter(
-            AgentProperties agentProperties) {
-        var agentId = AgentId.generate();
-        return new DefaultTaskSpecializationFilter(
-                Set.copyOf(agentProperties.supportedTasks()), agentId);
-    }
-
-    // ========================================================================
-    // Helpers
-    // ========================================================================
-
-    private static String resolveAgentName() {
-        // Priorite: env var AGENT_NAME > hostname > "agent-" + random
-        var envName = System.getenv("AGENT_NAME");
-        if (envName != null && !envName.isBlank()) return envName.strip();
-        var envId = System.getenv("AGENT_ID");
-        if (envId != null && !envId.isBlank()) return envId.strip();
-        try {
-            return java.net.InetAddress.getLocalHost().getHostName();
-        } catch (Exception e) {
-            return "agent-" + java.util.UUID.randomUUID().toString().substring(0, 8);
-        }
-    }
-
-    private static String resolveAgentHost() {
-        var envHost = System.getenv("AGENT_HOST");
-        if (envHost != null && !envHost.isBlank()) return envHost.strip();
-        try {
-            return java.net.InetAddress.getLocalHost().getHostAddress();
-        } catch (Exception e) {
-            return "127.0.0.1";
-        }
-    }
-
-    private static int resolveAgentPort() {
-        var envPort = System.getenv("AGENT_PORT");
-        if (envPort != null && !envPort.isBlank()) {
-            return Integer.parseInt(envPort.strip());
-        }
-        return 8080;
-    }
-
-    private static final org.slf4j.Logger log =
-            org.slf4j.LoggerFactory.getLogger(AgentRuntimeConfiguration.class);
+```java
+@Test
+void localAgentShouldHaveAllTaskNamesFromRegistry() {
+    var context = new ApplicationContextRunner()
+            .withUserConfiguration(AgentRuntimeConfiguration.class)
+            .withPropertyValues("runtime.mode=LOCAL")
+            .withBean(InMemoryExecutionTransport.class, InMemoryExecutionTransport::new)
+            .withBean(TaskExecutorRegistry.class, () -> {
+                // Fake registry with known executors
+                var registry = mock(TaskExecutorRegistry.class);
+                var exec1 = mock(TaskExecutor.class);
+                when(exec1.getSupportedTaskName()).thenReturn("mock-server");
+                var exec2 = mock(TaskExecutor.class);
+                when(exec2.getSupportedTaskName()).thenReturn("gatling");
+                when(registry.getAll()).thenReturn(List.of(exec1, exec2));
+                return registry;
+            })
+            .run(ctx -> {
+                assertThat(ctx).hasSingleBean(AgentRuntime.class);
+                var agent = ctx.getBean(AgentRuntime.class);
+                assertThat(agent).isInstanceOf(LocalAgent.class);
+                var taskNames = agent.getDescriptor().supportedTaskNames();
+                assertThat(taskNames).containsExactlyInAnyOrder("mock-server", "gatling");
+                assertThat(agent.canExecute("mock-server")).isTrue();
+                assertThat(agent.canExecute("gatling")).isTrue();
+            });
 }
 ```
 
 ## Regles Specifiques
 
-- Les methodes `@Bean` utilisent `@ConditionalOnProperty` et non des `if/switch` (CF-03).
-- Le `LocalAgent` obtient `allTaskNames` du `TaskExecutorRegistry` -- il ignore `AgentProperties.supportedTasks()`.
-- Le `DistributedAgentRuntime` utilise exclusivement `AgentProperties.supportedTasks()` comme source de `supportedTaskNames` (ADR-015).
-- `AgentId.generate()` est une methode statique existante sur le record `AgentId` -- si elle n'existe pas, utiliser `AgentId.of(java.util.UUID.randomUUID().toString())`.
-- Les `StatefulResourceCleaner` sont injectes via `ObjectProvider` pour gerer le cas ou aucun cleaner n'est enregistre.
-- `AgentCapabilities.empty()` : si la methode n'existe pas, utiliser `new AgentCapabilities(Set.of(), Map.of())` (a adapter selon la definition du record).
-- Les helpers `resolveAgentName()`, `resolveAgentHost()`, `resolveAgentPort()` suivent la priorite env var > hostname > fallback (ADR-006).
-- Verifier que `TaskExecutorRegistry` a bien une methode `getAll()`. Si elle s'appelle autrement (`listAll()`, `getExecutors()`...), utiliser le nom exact existant.
-- Le `TaskSpecializationFilter` partage pour `DistributedAgentRuntime` doit etre le meme bean que celui utilise par l'agent. Dans le code ci-dessus, le `DistributedAgentRuntime` recoit son propre filtre cree localement. Le bean `taskSpecializationFilter` est disponible pour d'autres consommateurs (ex: observability).
-
-## Tests
-
-`AgentRuntimeConfigurationTest` (test Spring Boot avec `ApplicationContextRunner` ou `@SpringBootTest`):
-
-1. **LOCAL mode** : avec `runtime.mode=LOCAL`, verifier qu'un bean `AgentRuntime` de type `LocalAgent` est cree.
-2. **DISTRIBUTED+AGENT mode** : avec `runtime.mode=DISTRIBUTED` et `runtime.role=AGENT`, verifier qu'un bean `AgentRuntime` de type `DistributedAgentRuntime` est cree.
-3. **ORCHESTRATOR mode** : avec `runtime.mode=DISTRIBUTED` et `runtime.role=ORCHESTRATOR`, verifier qu'AUCUN bean `AgentRuntime` n'est cree.
-4. **Default empty supported-tasks** : en DISTRIBUTED+AGENT avec `agent.supported-tasks` non defini, verifier que le bean est cree avec une liste vide (agent idle).
-5. **AgentProperties binding DISTRIBUTED** : avec `agent.supported-tasks: [mock-server]`, verifier que `AgentProperties.supportedTasks()` contient `"mock-server"`.
-
-Utiliser `ApplicationContextRunner` pour des tests de configuration legers (sans demarrer l'appli entiere).
+- Le `LocalAgent` NE lit PAS `AgentProperties`. Le test doit le confirmer.
+- Tous les `TaskExecutor` enregistres dans le `TaskExecutorRegistry` doivent etre dans `supportedTaskNames`.
+- La methode `canExecute()` delegue a `descriptor.supportedTaskNames().contains()` -- c'est deja le comportement implemente.
+- Le test d'integration utilise `ApplicationContextRunner` (Spring Boot Test) pour etre leger.
 
 ## Critères de Done
 
+- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
 - [ ] `mvn test -pl platform-app -q` → 0 erreur
-- [ ] `AgentRuntimeConfiguration` est dans `platform-app/src/main/java/com/performance/platform/app/config/`
-- [ ] Les tests verifient le bon type de bean selon le mode
-- [ ] Aucun `if/switch` sur runtime.mode ou runtime.role dans la config
-- [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-112 → DONE
-- [ ] `.claude/workspace/interfaces-registry.md` mis a jour : `AgentRuntimeConfiguration` → STABLE
+- [ ] `LocalAgent.canExecute("mock-server")` = true si "mock-server" est dans le registre
+- [ ] `LocalAgent.canExecute("unknown")` = false si "unknown" n'est pas dans le registre
+- [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-113 → DONE
 
 ## Reviewer Feedback
 (None yet)
-
----
-## Reviewer Feedback — 2026-06-22T19:33+02:00
-Issue status is IN_PROGRESS, not IN_REVIEW — run issue-finish.sh first to transition. The committed script changes (ff59663) are infrastructure improvements, not an Issue implementation under review.
