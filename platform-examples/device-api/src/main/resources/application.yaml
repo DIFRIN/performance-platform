@@ -1,0 +1,32 @@
+spring:
+  application.name: device-api
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: "1"
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/sut_devices}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:changeme}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  sql:
+    init:
+      mode: never
+
+device:
+  topics:
+    events: ${DEVICE_TOPIC_EVENTS:device-events}
+
+server:
+  port: ${SERVER_PORT:8082}
+
+management:
+  endpoints.web.exposure.include: health,info
+
+logging:
+  level:
+    com.performance.examples: INFO

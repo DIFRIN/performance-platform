@@ -9,6 +9,8 @@ import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
+import com.performance.platform.infrastructure.executor.http.HttpTargetProperties;
 import com.performance.platform.plugin.Preparation;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
@@ -37,7 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>{@code port} — port number for embedded mode (default 8090)</li>
  *   <li>{@code mappingsPath} — optional path to stub mappings directory</li>
  *   <li>{@code action} — START, STOP, RESET, or VERIFY</li>
- *   <li>{@code externalUrl} — base URL of external WireMock (e.g. {@code http://host:8090})</li>
+ *   <li>{@code target} — (recommended, EXTERNAL) HttpTargetRegistry target name</li>
+ *   <li>{@code wiremockUrl} — (deprecated, EXTERNAL) direct WireMock admin URL</li>
  * </ul>
  * <p>
  * Outputs: {@code {port: 8090, url: "http://localhost:8090"}}.
@@ -53,7 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * complexity — the split would require shared parameter extraction, error handling,
  * and output key constants to be duplicated or extracted to a third shared class.
  */
-@Preparation(name = "mock-server", version = "1.0.0", description = "WireMock embedded/external")
+@Preparation(name = "mock-server", version = "1.1.0", description = "WireMock embedded/external with HttpTargetRegistry")
 @Component
 public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCleaner {
 
@@ -75,11 +78,17 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
     private static final String PARAM_ACTION = "action";
     private static final String PARAM_PORT = "port";
     private static final String PARAM_MAPPINGS_PATH = "mappingsPath";
-    private static final String PARAM_EXTERNAL_URL = "externalUrl";
+    private static final String PARAM_TARGET = "target";
+    private static final String PARAM_WIREMOCK_URL = "wiremockUrl";
 
     private static final String DEFAULT_EXECUTION_KEY = "default";
 
     private final Map<String, WireMockServer> serversByExecution = new ConcurrentHashMap<>();
+    private final HttpTargetRegistry targetRegistry;
+
+    public MockServerTaskExecutor(HttpTargetRegistry targetRegistry) {
+        this.targetRegistry = Objects.requireNonNull(targetRegistry, "targetRegistry required");
+    }
 
     @Override
     public String getSupportedTaskName() {
@@ -216,10 +225,48 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
 
     // ─────────────────────────────── EXTERNAL ───────────────────────────────
 
+    /**
+     * Resolves the external WireMock URL from parameters.
+     * <p>Preferred: {@code target} parameter via {@link HttpTargetRegistry}.
+     * Legacy (deprecated): {@code wiremockUrl} parameter with WARN log.
+     *
+     * @param step the step definition containing parameters
+     * @return the resolved base URL, or {@code null} if neither parameter is provided
+     * @throws IllegalArgumentException if the target name is unknown
+     */
+    private String resolveExternalUrl(StepDefinition step) {
+        String targetName = paramString(step, PARAM_TARGET, null);
+        if (targetName != null && !targetName.isBlank()) {
+            HttpTargetProperties props = targetRegistry.get(targetName);
+            if (props == null) {
+                throw new IllegalArgumentException("Unknown http-target: " + targetName);
+            }
+            return props.baseUrl();
+        }
+
+        String wiremockUrl = paramString(step, PARAM_WIREMOCK_URL, null);
+        if (wiremockUrl != null && !wiremockUrl.isBlank()) {
+            log.warn("action=deprecated_param param=wiremockUrl stepId={} — use 'target:' instead",
+                    step.id().value());
+            return wiremockUrl;
+        }
+
+        return null;
+    }
+
     private TaskResult executeExternal(StepDefinition step, String action, long startNanos, String executionId) {
-        String externalUrl = paramString(step, PARAM_EXTERNAL_URL, null);
+        String externalUrl;
+        try {
+            externalUrl = resolveExternalUrl(step);
+        } catch (IllegalArgumentException e) {
+            log.warn("action=mock_server_unknown_target stepId={} message={}",
+                    step.id().value(), e.getMessage());
+            return fail(step, startNanos, e.getMessage());
+        }
+
         if (externalUrl == null || externalUrl.isBlank()) {
-            return fail(step, startNanos, "Required parameter '" + PARAM_EXTERNAL_URL + "' is missing for EXTERNAL deployment");
+            return fail(step, startNanos,
+                    "Required parameter 'target' (or legacy 'wiremockUrl') is missing for EXTERNAL deployment");
         }
 
         String baseUrl = externalUrl.replaceAll("/+$", ""); // strip trailing slashes
@@ -232,7 +279,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
             host = uri.getHost() != null ? uri.getHost() : "localhost";
             port = uri.getPort() >= 0 ? uri.getPort() : 8080;
         } catch (IllegalArgumentException e) {
-            return fail(step, startNanos, "Invalid externalUrl: " + baseUrl + " — " + e.getMessage(), e);
+            return fail(step, startNanos, "Invalid external URL: " + baseUrl + " — " + e.getMessage(), e);
         }
 
         return switch (action) {

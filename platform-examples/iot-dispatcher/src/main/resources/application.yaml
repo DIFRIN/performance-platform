@@ -1,0 +1,34 @@
+spring:
+  application.name: iot-dispatcher
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: iot-dispatcher
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/sut_devices}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:changeme}
+    hikari:
+      maximum-pool-size: 10
+  sql:
+    init:
+      mode: never   # schema managed by docker-compose-sut
+
+iot:
+  topics:
+    commands: ${IOT_TOPIC_COMMANDS:iot-commands}
+  kafka:
+    group-id: ${IOT_KAFKA_GROUP_ID:iot-dispatcher}
+    concurrency: ${IOT_KAFKA_CONCURRENCY:3}
+  http:
+    device-gateway-url: ${IOT_DEVICE_GATEWAY_URL:http://localhost:8090}
+
+management:
+  endpoints.web.exposure.include: health,info
+
+logging:
+  level:
+    com.performance.examples: INFO
