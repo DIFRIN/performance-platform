@@ -62,5 +62,5 @@ bash scripts/setup-hooks.sh
 ```
 
 `prepare-commit-msg` : préfixe automatiquement le message de commit avec `[ISSUE-XXX]`
-si une Issue est IN PROGRESS dans `.claude/progress.md`. Transparent — vous ne changez rien
+si une Issue est IN PROGRESS dans `.claude/workspace/progress.md`. Transparent — vous ne changez rien
 à votre workflow git.

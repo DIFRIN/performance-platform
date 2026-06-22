@@ -37,8 +37,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GIT_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 
-PROGRESS_FILE="$GIT_ROOT/.claude/progress.md"
-ISSUES_DIR="$GIT_ROOT/.claude/issues"
+PROGRESS_FILE="$GIT_ROOT/.claude/workspace/progress.md"
+ISSUES_DIR="$GIT_ROOT/.claude/workspace/issues"
 DRY_RUN=false
 
 for arg in "$@"; do
@@ -130,7 +130,7 @@ commit_type() {
   title=$(issue_field "$issue_file" "Titre" 2>/dev/null || head -1 "$issue_file" | sed 's/^# //')
   module=$(issue_field "$issue_file" "Module")
   pdr_id=$(issue_field "$issue_file" "PDR")
-  pdr_file="$GIT_ROOT/.claude/pdr/${pdr_id}-*.md"
+  pdr_file="$GIT_ROOT/.claude/workspace/pdr/${pdr_id}-*.md"
 
   # Read PDR module if available
   pdr_module=""
@@ -292,7 +292,7 @@ ${BODY}"
     fi
 
     # Also stage tracking files that are always part of an issue delivery
-    for tf in ".claude/progress.md" ".claude/session-state.md" ".claude/context/interfaces-registry.md" ".claude/context/decisions-log.md"; do
+    for tf in ".claude/workspace/progress.md" ".claude/workspace/session-state.md" ".claude/workspace/interfaces-registry.md" ".claude/workspace/decisions-log.md"; do
       [[ -f "$GIT_ROOT/$tf" ]] && git -C "$GIT_ROOT" add "$tf" 2>/dev/null || true
     done
 

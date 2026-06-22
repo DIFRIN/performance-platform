@@ -56,7 +56,7 @@ elif tool_name == "Write":
             capture_output=True, text=True, check=True
         ).stdout.strip()
         diff = subprocess.run(
-            ["git", "-C", root, "diff", "HEAD", "--", ".claude/progress.md"],
+            ["git", "-C", root, "diff", "HEAD", "--", ".claude/workspace/progress.md"],
             capture_output=True, text=True
         ).stdout
         added_lines = [

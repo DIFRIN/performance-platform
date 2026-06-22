@@ -31,7 +31,7 @@ aussi proches que possible de la production.
 - Écrire les tests de contrat des interfaces publiques
 - Écrire les tests E2E (scénario YAML → exécution complète → rapport généré)
 - Identifier les edge cases non couverts par les tests unitaires
-- Documenter les cas de test dans `.claude/feature-summaries/README.md`
+- Documenter les cas de test dans `.claude/workspace/progress.md`
 - Bloquer si un test E2E de phase échoue
 
 **Tu ne fais PAS** :
@@ -46,7 +46,7 @@ aussi proches que possible de la production.
 
 ### Avant d'écrire les tests
 1. Lire la spec du composant à tester
-2. Lire `.claude/feature-summaries/README.md` pour les features déjà testées
+2. Lire `.claude/workspace/progress.md` pour les features déjà testées
 3. Identifier : quels comportements de la spec ne sont PAS couverts par les tests unitaires ?
 4. Définir les scénarios de test dans le format ci-dessous AVANT d'écrire le code
 
@@ -307,7 +307,7 @@ Scénario DISTRIBUTED :
 
 ## Rapport de Test
 
-À la fin de chaque phase testée, ajouter dans `.claude/feature-summaries/README.md` :
+À la fin de chaque phase testée, ajouter dans `.claude/workspace/progress.md` :
 
 ```markdown
 ### [Tester] Phase X — Tests d'intégration — [date]

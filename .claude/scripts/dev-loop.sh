@@ -13,7 +13,7 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PERF_PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
-PROGRESS_FILE="$PROJECT_ROOT/.claude/progress.md"
+PROGRESS_FILE="$PROJECT_ROOT/.claude/workspace/progress.md"
 DEVELOPER_MD="$PROJECT_ROOT/.claude/agents/developer.md"
 REVIEWER_MD="$PROJECT_ROOT/.claude/agents/reviewer.md"
 
@@ -49,12 +49,12 @@ _count() {
 }
 
 status_line() {
-  echo "DONE:$(_count DONE) APPROVED:$(_count APPROVED) REVIEW:$(_count 'IN REVIEW') CHANGES:$(_count 'CHANGES_REQUESTED') PROGRESS:$(_count 'IN PROGRESS') WAIT:$(_count WAITING) TODO:$(_count TODO)"
+  echo "DONE:$(_count DONE) APPROVED:$(_count APPROVED) REVIEW:$(_count 'IN REVIEW') CHANGES:$(_count 'CHANGES_REQUESTED') PROGRESS:$(_count 'IN PROGRESS') WAIT:$(_count WAITING)"
 }
 
 has_work() {
   local n
-  n=$(( $(_count 'IN REVIEW') + $(_count 'IN PROGRESS') + $(_count WAITING) + $(_count TODO) + $(_count APPROVED) + $(_count 'CHANGES_REQUESTED') ))
+  n=$(( $(_count 'IN REVIEW') + $(_count 'IN PROGRESS') + $(_count WAITING) + $(_count APPROVED) + $(_count 'CHANGES_REQUESTED') ))
   [[ "$n" -gt 0 ]]
 }
 
@@ -66,7 +66,7 @@ invoke_developer() {
     --add-dir "$PROJECT_ROOT" \
     --dangerously-skip-permissions \
     --system-prompt "$(cat "$DEVELOPER_MD")" \
-    -p "Follow your Developer protocol. If there are PENDING recommendations in .claude/context/recommendations-tracking.md, apply them first. Then find and implement the next Issue." 2>&1
+    -p "Follow your Developer protocol. Read .claude/workspace/current-issue.md. If it doesn't exist, run issue-start.sh. Implement the issue." 2>&1
   echo "🔨 Developer done (exit=$?)"
 }
 
@@ -76,7 +76,7 @@ invoke_reviewer() {
     --add-dir "$PROJECT_ROOT" \
     --dangerously-skip-permissions \
     --system-prompt "$(cat "$REVIEWER_MD")" \
-    -p "Follow your Reviewer protocol. Find the Issue IN REVIEW in .claude/progress.md and review it." 2>&1
+    -p "Follow your Reviewer protocol. Read .claude/workspace/current-issue.md and review the changes." 2>&1
   echo "📝 Reviewer done (exit=$?)"
 }
 

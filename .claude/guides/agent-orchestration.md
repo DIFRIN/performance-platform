@@ -16,14 +16,14 @@
 │  ┌─────────────────┐    ┌────────────┐              │
 │  │ SYSTEM DESIGNER │───▶│  ARCHITECT │ (escalades)  │
 │  └─────────────────┘    └────────────┘              │
-│    Produit PDRs + Issues dans .claude/progress.md           │
+│    Produit PDRs + Issues dans .claude/workspace/progress.md           │
 └─────────────────────────────────────────────────────┘
                        │
-                       ▼ .claude/progress.md initialisé
+                       ▼ .claude/workspace/progress.md initialisé
 ┌─────────────────────────────────────────────────────┐
 │         BOUCLE DE DÉVELOPPEMENT (par Issue)         │
 │                                                     │
-│  .claude/progress.md ──▶ DEVELOPER ──▶ REVIEWER ──▶ TESTER │
+│  .claude/workspace/progress.md ──▶ DEVELOPER ──▶ REVIEWER ──▶ TESTER │
 │  (choisit        (implémente)  (review)   (intég.)  │
 │   l'Issue)            │            │                │
 │       ▲    CHANGES_REQUESTED       │ FAIL           │
@@ -43,10 +43,10 @@ sans avoir été APPROVED par le Reviewer.
 
 | Agent | Fichier | Quand l'activer |
 |---|---|---|
-| **System Designer** | `.claude/agents/system-designer.md` | **Une fois au démarrage** — lit les specs, crée PDRs + Issues dans `.claude/progress.md` |
+| **System Designer** | `.claude/agents/system-designer.md` | **Une fois au démarrage** — lit les specs, crée PDRs + Issues dans `.claude/workspace/progress.md` |
 | **Architect** | `.claude/agents/architect.md` | Escalades du Designer/Developer, ADRs, décisions bloquantes |
-| **Developer** | `.claude/agents/developer.md` | Chaque session — prend la prochaine Issue dans `.claude/progress.md` |
-| **Reviewer** | `.claude/agents/reviewer.md` | Après chaque Issue IN REVIEW dans `.claude/progress.md` |
+| **Developer** | `.claude/agents/developer.md` | Chaque session — prend la prochaine Issue dans `.claude/workspace/progress.md` |
+| **Reviewer** | `.claude/agents/reviewer.md` | Après chaque Issue IN REVIEW dans `.claude/workspace/progress.md` |
 | **Tester** | `.claude/agents/tester.md` | Après APPROVED sur Issues nécessitant des tests d'intégration |
 
 ---
@@ -76,33 +76,33 @@ ils sont calibrés pour charger le minimum de contexte nécessaire.
 **Responsable** : Architect + Humain
 
 ```
-1. Humain vérifie que la phase précédente est ✅ dans .claude/roadmap.md
+1. Humain vérifie que la phase précédente est ✅ dans .claude/knowledge/roadmap.md
 2. Activer Architect :
    "Valide le démarrage de la Phase X. Vérifie :
     - Prérequis de la phase précédente satisfaits (PDRs DONE dans progress.md)
     - Specs de la phase complètes et sans ambiguïté
     - Risques identifiés
-    - Issues de la Phase X créées dans .claude/progress.md par le System Designer"
+    - Issues de la Phase X créées dans .claude/workspace/progress.md par le System Designer"
 3. Architect produit son validation ou ses ajustements
-4. System Designer crée les Issues de la Phase X dans .claude/progress.md
+4. System Designer crée les Issues de la Phase X dans .claude/workspace/progress.md
 ```
 
 ### 4.2 Cycle d'Implémentation d'une Tâche
 
 ```
 ┌─ DÉMARRAGE ─────────────────────────────────────────────────────┐
-│ 1. Humain vérifie que .claude/progress.md a une Issue WAITING débloquée │
+│ 1. Humain vérifie que .claude/workspace/progress.md a une Issue WAITING débloquée │
 │ 2. Humain vérifie que l'Issue précédente est DONE dans progress │
 └─────────────────────────────────────────────────────────────────┘
            │
            ▼
 ┌─ DÉVELOPPEMENT ─────────────────────────────────────────────────┐
 │ Activer Developer                                               │
-│ → Il lit .claude/progress.md + .claude/issues/ISSUE-XXX.md                     │
+│ → Il lit .claude/workspace/progress.md + .claude/workspace/issues/ISSUE-XXX.md                     │
 │ → Il implémente                                                 │
 │ → Il écrit les tests unitaires                                  │
-│ → Il met à jour .claude/feature-summaries/README.md                     │
-│ → Il marque l'Issue IN REVIEW dans .claude/progress.md                  │
+│ → Il met à jour .claude/workspace/progress.md                     │
+│ → Il marque l'Issue IN REVIEW dans .claude/workspace/progress.md                  │
 │                                                                 │
 │ ⚠️ Si Developer escalade → activer Architect avant de continuer │
 └─────────────────────────────────────────────────────────────────┘
@@ -110,7 +110,7 @@ ils sont calibrés pour charger le minimum de contexte nécessaire.
            ▼
 ┌─ REVIEW ────────────────────────────────────────────────────────┐
 │ Activer Reviewer                                                │
-│ → Il lit .claude/issues/ISSUE-XXX.md + .claude/pdr/PDR-XXX.md                  │
+│ → Il lit .claude/workspace/issues/ISSUE-XXX.md + .claude/workspace/pdr/PDR-XXX.md                  │
 │ → Il passe toutes ses checklists                                │
 │ → Il produit son rapport                                        │
 │                                                                 │
@@ -125,14 +125,14 @@ ils sont calibrés pour charger le minimum de contexte nécessaire.
 │ → Il définit son plan de test                                   │
 │ → Il écrit les tests Testcontainers                             │
 │ → Il exécute et vérifie                                         │
-│ → Il met à jour .claude/feature-summaries/README.md                     │
+│ → Il met à jour .claude/workspace/progress.md                     │
 │                                                                 │
 │ Si tous passent → Tâche ✅ DONE                                 │
 │ Si un test E2E échoue → retour Developer avec rapport précis    │
 └─────────────────────────────────────────────────────────────────┘
            │
            ▼
-       Tâche DONE → prochaine tâche dans .claude/roadmap.md
+       Tâche DONE → prochaine tâche dans .claude/knowledge/roadmap.md
 ```
 
 ### 4.3 Cycle de Correction (CHANGES_REQUESTED)
@@ -181,35 +181,35 @@ Chaque agent charge UNIQUEMENT :
 
 **Developer** :
 ```
-.claude/session-state.md             (toujours — en premier)
-.claude/progress.md                  (toujours — trouver l'Issue active)
-.claude/issues/ISSUE-XXX.md          (toujours — l'Issue active)
-.claude/pdr/PDR-XXX.md               (si l'Issue le référence explicitement)
+.claude/workspace/session-state.md             (toujours — en premier)
+.claude/workspace/progress.md                  (toujours — trouver l'Issue active)
+.claude/workspace/issues/ISSUE-XXX.md          (toujours — l'Issue active)
+.claude/workspace/pdr/PDR-XXX.md               (si l'Issue le référence explicitement)
 agents/developer.md          (première session ou si incertitude sur les règles)
 ```
 
 **Reviewer** :
 ```
 agents/reviewer.md           (toujours)
-.claude/issues/ISSUE-XXX.md          (l'Issue IN REVIEW)
-.claude/pdr/PDR-XXX.md               (signatures de référence)
-.claude/context/interfaces-registry.md  (statuts attendus)
+.claude/workspace/issues/ISSUE-XXX.md          (l'Issue IN REVIEW)
+.claude/workspace/pdr/PDR-XXX.md               (signatures de référence)
+.claude/workspace/interfaces-registry.md  (statuts attendus)
 ```
 
 **Tester** :
 ```
 agents/tester.md             (section phase concernée)
-.claude/issues/ISSUE-XXX.md          (composants à tester)
-.claude/pdr/PDR-XXX.md               (interfaces exactes)
-.claude/progress.md                  (voir quelles Issues sont DONE — éviter doublons)
+.claude/workspace/issues/ISSUE-XXX.md          (composants à tester)
+.claude/workspace/pdr/PDR-XXX.md               (interfaces exactes)
+.claude/workspace/progress.md                  (voir quelles Issues sont DONE — éviter doublons)
 ```
 
 **Architect** :
 ```
 agents/architect.md          (toujours)
-.claude/adr/*.md                     (tous - pour ne pas re-décider ce qui l'est déjà)
-.claude/architecture.md              (toujours)
-.claude/constraints.md               (toujours)
+.claude/knowledge/adr/*.md                     (tous - pour ne pas re-décider ce qui l'est déjà)
+.claude/knowledge/architecture.md              (toujours)
+.claude/knowledge/constraints.md               (toujours)
 [spec concernée par l'escalade]
 ```
 
@@ -225,12 +225,12 @@ agents/architect.md          (toujours)
 
 | Fichier | Mis à jour par | Fréquence |
 |---|---|---|
-| `.claude/progress.md` | System Designer + Developer + Reviewer | Chaque changement de statut |
-| `.claude/feature-summaries/README.md` | Developer + Tester | Fin de chaque tâche |
-| `.claude/roadmap.md` | Humain + Architect | Fin de chaque phase |
-| `.claude/adr/` | Architect | Sur décision architecturale |
+| `.claude/workspace/progress.md` | System Designer + Developer + Reviewer | Chaque changement de statut |
+| `.claude/workspace/progress.md` | Developer + Tester | Fin de chaque tâche |
+| `.claude/knowledge/roadmap.md` | Humain + Architect | Fin de chaque phase |
+| `.claude/knowledge/adr/` | Architect | Sur décision architecturale |
 
-### Format du Suivi dans .claude/feature-summaries/README.md
+### Format du Suivi dans .claude/workspace/progress.md
 
 ```markdown
 ### [Phase 1] Parsing YAML ScenarioDefinition — 2026-06-10
@@ -267,7 +267,7 @@ Session 1 — Architect
 dans progress.md. Attends validation avant d'écrire les fichiers."
 
 Session 2 — Developer
-"Implémente ISSUE-001 selon .claude/issues/ISSUE-001.md."
+"Implémente ISSUE-001 selon .claude/workspace/issues/ISSUE-001.md."
 
 Session 3 — Reviewer
 "Review ISSUE-001 passée IN REVIEW par le Developer."
@@ -281,7 +281,7 @@ Session 4 — Tester
 ```
 Session 1 — Architect
 "Valide le découpage de la Phase 7 (Transport).
-Identifie les risques. Prépare .claude/current-task.md pour
+Identifie les risques. Prépare .claude/workspace/current-task.md pour
 l'implémentation de ExecutionTransport interface + KafkaExecutionTransport."
 
 Session 2 — Developer
@@ -306,7 +306,7 @@ Session 6 — Tester
 
 | Anti-pattern | Problème | Solution |
 |---|---|---|
-| Activer Developer sans Issue WAITING dans `.claude/progress.md` | L'agent ne peut pas choisir de tâche → blocage | System Designer doit créer les Issues d'abord |
+| Activer Developer sans Issue WAITING dans `.claude/workspace/progress.md` | L'agent ne peut pas choisir de tâche → blocage | System Designer doit créer les Issues d'abord |
 | Court-circuiter le Reviewer | De la dette technique s'accumule sans être détectée | Reviewer obligatoire après chaque tâche Developer |
 | Charger tous les fichiers dans chaque session | Consommation de tokens × 5-10 inutilement | Chargement minimal selon table de routing |
 | Laisser l'Architect coder | Il perd son recul architectural | L'Architect décide, le Developer code |
