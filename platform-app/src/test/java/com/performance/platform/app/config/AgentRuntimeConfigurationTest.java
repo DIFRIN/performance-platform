@@ -116,6 +116,19 @@ class AgentRuntimeConfigurationTest {
         }
 
         @Test
+        @DisplayName("should have all task names from registry in descriptor")
+        void localAgentShouldHaveAllTaskNamesFromRegistry() {
+            runner.withPropertyValues("runtime.mode=LOCAL")
+                    .run(ctx -> {
+                        assertThat(ctx).hasSingleBean(AgentRuntime.class);
+                        var agent = ctx.getBean(AgentRuntime.class);
+                        assertThat(agent).isInstanceOf(LocalAgent.class);
+                        var taskNames = agent.getDescriptor().supportedTaskNames();
+                        assertThat(taskNames).containsExactlyInAnyOrder("mock-server", "http-client");
+                    });
+        }
+
+        @Test
         @DisplayName("should not create distributed beans in LOCAL mode")
         void shouldNotCreateDistributedBeans() {
             runner.withPropertyValues("runtime.mode=LOCAL")
