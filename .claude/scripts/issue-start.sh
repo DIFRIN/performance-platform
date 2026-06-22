@@ -74,6 +74,10 @@ deps_are_done() {
     for dep in $deps; do
         dep=$(echo "$dep" | tr -d ' ')  # trim
         [[ -z "$dep" ]] && continue
+        # Normalize: if dep doesn't start with ISSUE-, add the prefix
+        if [[ ! "$dep" =~ ^ISSUE- ]]; then
+            dep="ISSUE-${dep}"
+        fi
         if ! is_status_in_table "$dep" "DONE"; then
             return 1
         fi
@@ -246,7 +250,7 @@ if [[ -n "$ISSUE_ARG" ]]; then
         exit 1
     fi
 else
-    ISSUE_ID=$(find_next_issue)
+    ISSUE_ID=$(find_next_issue) || true
 
     if [[ -z "$ISSUE_ID" ]]; then
         if [[ "$DRY_RUN" == true ]]; then
