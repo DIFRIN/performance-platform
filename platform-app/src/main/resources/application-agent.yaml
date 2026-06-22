@@ -15,6 +15,23 @@ runtime:
   mode: DISTRIBUTED
   role: AGENT
 
+# ---- Agent specialization (ADR-015: configuration-driven) ----
+# La liste supported-tasks définit quelles tasks cet agent exécute.
+# Vide par défaut: à surcharger par agent via AGENT_SUPPORTED_TASKS env var.
+#
+# Mode DISTRIBUTED: cette liste est la source UNIQUE de vérité.
+#   L'agent n'exécute QUE les tasks listées ici.
+#   Exemple: AGENT_SUPPORTED_TASKS=mock-server,http-client
+#
+# Mode LOCAL: cette propriété est IGNORÉE. Le LocalAgent exécute
+#   automatiquement toutes les tasks du TaskExecutorRegistry.
+#
+# Format env var: valeurs séparées par des virgules (Spring Boot binding standard)
+#   AGENT_SUPPORTED_TASKS=mock-server,http-client,gatling
+#   → agent.supported-tasks: [mock-server, http-client, gatling]
+agent:
+  supported-tasks: []
+
 # ---- Transport distribue ----
 transport:
   type: KAFKA

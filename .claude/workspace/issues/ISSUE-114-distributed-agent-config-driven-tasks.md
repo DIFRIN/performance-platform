@@ -2,7 +2,7 @@
 
 **PDR** : PDR-026
 **Module** : `platform-app` (config wiring) + `platform-agent-runtime` (test verification)
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P0 (DISTRIBUTED mode doit suivre ADR-015)
 **Bloquee par** : ISSUE-112 (AgentRuntimeConfiguration doit exister)
 **Estime** : M (1-3h)
