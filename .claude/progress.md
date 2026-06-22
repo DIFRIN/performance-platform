@@ -77,9 +77,9 @@
 | PDR-018 | Application Assembly | platform-app | DONE | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
 | PDR-019 | Deployment | platform-deployment | DONE | ISSUE-083,084,085 | PDR-018 |
 | PDR-020 | Named Kafka Cluster Registry + Executors | platform-infrastructure | DONE | ISSUE-086,087,088 | PDR-010 |
-| PDR-021 | Spring Kafka Migration — Transport | platform-transport | WAITING | ISSUE-089,090,091 | PDR-020 |
+| PDR-021 | Spring Kafka Migration — Transport | platform-transport | DONE | ISSUE-089,090,091 | PDR-020 |
 | PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | DONE | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
-| PDR-023 | SUT Example Services (IoT) | platform-examples/ | WAITING | ISSUE-096,097,098 | — |
+| PDR-023 | SUT Example Services (IoT) | platform-examples/ | DONE | ISSUE-096,097,098 | — |
 | PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | DONE | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
 
 ---
@@ -582,7 +582,7 @@
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 24
 **Issues totales** : 102
-**Derniere mise a jour** : 2026-06-22 (Reviewer — ISSUE-102 DONE, PDR-024 DONE)
+**Derniere mise a jour** : 2026-06-22 (Reviewer — ISSUE-095 DONE. 24/24 PDRs DONE, 102/102 Issues DONE. PROJET TERMINE.)
 
 | 2026-06-22 | ISSUE-096 | IN PROGRESS → IN REVIEW | Developer — iot-dispatcher SUT: pom.xml + 4 classes + YAML + Dockerfile + 4 tests OK, BUILD SUCCESS |
 | 2026-06-22 | ISSUE-097 | WAITING → IN REVIEW | Developer — device-api SUT: pom.xml + 4 classes + YAML + Dockerfile + 6 tests OK, BUILD SUCCESS |
