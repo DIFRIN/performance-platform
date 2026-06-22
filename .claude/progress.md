@@ -77,7 +77,7 @@
 | PDR-021 | Spring Kafka Migration — Transport | platform-transport | WAITING | ISSUE-089,090,091 | PDR-020 |
 | PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | WAITING | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
 | PDR-023 | SUT Example Services (IoT) | platform-examples/ | WAITING | ISSUE-096,097,098 | — |
-| PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | WAITING | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
+| PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | IN PROGRESS | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
 
 ---
 
@@ -201,7 +201,7 @@
 | ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration | PDR-021 | platform-transport | S | WAITING | ISSUE-090 |
 | ISSUE-094 | Refactor MockServerTaskExecutor → target reference | PDR-022 | platform-infrastructure | S | DONE | ISSUE-092 |
 | ISSUE-095 | Refactor HttpMockAssertionExecutor → target reference | PDR-022 | platform-infrastructure | S | WAITING | ISSUE-092 |
-| ISSUE-102 | README examples + guide démarrage | PDR-024 | platform-deployment | S | WAITING | ISSUE-099,100,101 |
+| ISSUE-102 | README examples + guide démarrage | PDR-024 | platform-deployment | S | TODO | ISSUE-099,100,101 |
 
 ---
 
