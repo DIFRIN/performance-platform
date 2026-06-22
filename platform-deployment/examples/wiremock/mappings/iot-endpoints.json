@@ -1,0 +1,44 @@
+{
+  "mappings": [
+    {
+      "name": "IoT Command Endpoint",
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPattern": "/command"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"status\":\"accepted\",\"processed\":true}"
+      }
+    },
+    {
+      "name": "IoT Health Check",
+      "request": {
+        "method": "GET",
+        "url": "/health"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": "{\"status\":\"UP\"}"
+      }
+    },
+    {
+      "name": "WireMock Admin Health (proxy)",
+      "request": {
+        "method": "GET",
+        "url": "/__admin/health"
+      },
+      "response": {
+        "status": 200,
+        "body": "{\"status\":\"healthy\"}"
+      }
+    }
+  ]
+}
