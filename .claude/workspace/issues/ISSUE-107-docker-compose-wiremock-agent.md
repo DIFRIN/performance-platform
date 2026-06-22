@@ -2,7 +2,7 @@
 
 **PDR** : PDR-025
 **Module** : `platform-deployment`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P1 (critique — necessaire pour le demo DISTRIBUTED mock-as-agent)
 **Bloquee par** : ISSUE-103 (le docker-compose-sut ne contient plus de wiremock standalone — modele coherent)
 **Estime** : M (1-3h)
