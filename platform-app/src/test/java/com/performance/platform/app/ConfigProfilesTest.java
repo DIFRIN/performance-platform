@@ -133,6 +133,77 @@ class ConfigProfilesTest {
         }
     }
 
+    // ---- Profil EXAMPLES-LOCAL (IoT scenarios) ----
+
+    @Nested
+    @DisplayName("Profil EXAMPLES-LOCAL")
+    class ExamplesLocalProfileTest {
+
+        @Test
+        @DisplayName("should load application-examples-local.yaml from classpath")
+        void shouldLoadExamplesLocalProfile() throws IOException {
+            var sources = loadYaml("application-examples-local.yaml");
+            assertThat(sources).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("should contain kafka-clusters config")
+        void shouldContainKafkaClustersConfig() throws IOException {
+            var sources = loadYaml("application-examples-local.yaml");
+            // Verify the YAML loads and contains expected top-level structures
+            // by checking the raw source map (YamlPropertySourceLoader uses
+            // flattened map with dot keys at the top level)
+            boolean found = false;
+            for (var ps : sources) {
+                Object src = ps.getSource();
+                if (src instanceof java.util.Map<?, ?> map) {
+                    // Check for flattened keys containing kafka-clusters
+                    for (Object key : map.keySet()) {
+                        if (key.toString().contains("kafka-clusters")) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            assertThat(found).isTrue();
+        }
+
+        @Test
+        @DisplayName("should contain http-targets config")
+        void shouldContainHttpTargetsConfig() throws IOException {
+            var sources = loadYaml("application-examples-local.yaml");
+            boolean found = false;
+            for (var ps : sources) {
+                Object src = ps.getSource();
+                if (src instanceof java.util.Map<?, ?> map) {
+                    for (Object key : map.keySet()) {
+                        if (key.toString().contains("http-targets")) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            assertThat(found).isTrue();
+        }
+
+        @Test
+        @DisplayName("should not contain any GRPC reference")
+        void shouldNotContainGrpc() throws IOException {
+            var sources = loadYaml("application-examples-local.yaml");
+            for (var ps : sources) {
+                Object src = ps.getSource();
+                if (src instanceof java.util.Map<?, ?> map) {
+                    for (var entry : map.entrySet()) {
+                        String key = entry.getKey().toString();
+                        assertThat(key.toUpperCase()).doesNotContain("GRPC");
+                    }
+                }
+            }
+        }
+    }
+
     // ---- Absence de references GRPC ----
 
     @Nested
