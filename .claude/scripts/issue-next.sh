@@ -32,11 +32,12 @@ if [[ "$CURRENT_STATUS" != "APPROVED" ]]; then
 fi
 
 # ── APPROVED → DONE (scoped ## Issues → ## PDRs) ─────────────────────────────
-sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | APPROVED |/| ${ISSUE_ID} | ${TITLE} | DONE |/}" "$PROGRESS"
+sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | APPROVED |/| ${ISSUE_ID} | ${TITLE} | DONE |/}" "$PROGRESS"
 echo "| $(date -I) | ${ISSUE_ID} | APPROVED → DONE | issue-next.sh |" >> "$PROGRESS"
 
 # ── Archiver ─────────────────────────────────────────────────────────────────
-cp "$CURRENT" "${ARCHIVE_DIR}${ISSUE_ID}-completed.md"
+# mv (not cp) so current-issue.md is removed — issue-start.sh starts fresh
+mv "$CURRENT" "${ARCHIVE_DIR}${ISSUE_ID}-completed.md"
 echo "📦 Archived: ${ARCHIVE_DIR}${ISSUE_ID}-completed.md"
 
 # ── Lancer la prochaine ──────────────────────────────────────────────────────

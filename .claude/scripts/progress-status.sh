@@ -17,7 +17,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROGRESS="$ROOT/workspace/progress.md"
 
 # Extract only the Issues table (between ## Issues and ## PDRs)
-ISSUES_TABLE=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS")
+ISSUES_TABLE=$(sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS")
 
 for status in DONE APPROVED IN_REVIEW IN_PROGRESS CHANGES_REQUESTED WAITING BLOCKED; do
     count=$(echo "$ISSUES_TABLE" | grep -cP "^\| ISSUE-\d+ \| .* \| ${status} \|" 2>/dev/null | tr -d '\n' || true)

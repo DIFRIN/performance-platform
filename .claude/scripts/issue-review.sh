@@ -32,14 +32,14 @@ TITLE=$(grep '^# ' "$CURRENT" | sed 's/^# [A-Z0-9-]*: //')
 
 if [[ "$VERDICT" == "APPROVED" ]]; then
     # ── IN_REVIEW → APPROVED ─────────────────────────────────────────────────
-    sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | IN_REVIEW |/| ${ISSUE_ID} | ${TITLE} | APPROVED |/}" "$PROGRESS"
+    sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | IN_REVIEW |/| ${ISSUE_ID} | ${TITLE} | APPROVED |/}" "$PROGRESS"
     sed -i 's/\*\*Status\*\*: IN_REVIEW/**Status**: APPROVED/' "$CURRENT"
     echo "| $(date -I) | ${ISSUE_ID} | IN_REVIEW → APPROVED | Reviewer approved |" >> "$PROGRESS"
     echo "✅ ${ISSUE_ID} APPROVED → prêt pour commit + issue-next.sh"
 
 elif [[ "$VERDICT" == "CHANGES_REQUESTED" ]]; then
     # ── IN_REVIEW → CHANGES_REQUESTED ────────────────────────────────────────
-    sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | IN_REVIEW |/| ${ISSUE_ID} | ${TITLE} | CHANGES_REQUESTED |/}" "$PROGRESS"
+    sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | IN_REVIEW |/| ${ISSUE_ID} | ${TITLE} | CHANGES_REQUESTED |/}" "$PROGRESS"
     sed -i 's/\*\*Status\*\*: IN_REVIEW/**Status**: CHANGES_REQUESTED/' "$CURRENT"
 
     cat >> "$CURRENT" << INNEREOF

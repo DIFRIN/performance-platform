@@ -31,13 +31,13 @@ TITLE=$(grep '^# ' "$CURRENT" | sed 's/^# [A-Z0-9-]*: //')
 OLD_STATUS=$(grep -oP '\*\*Status\*\*: \K\w+' "$CURRENT")
 
 # ── Marquer BLOCKED (scoped ## Issues → ## PDRs) ─────────────────────────────
-sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE} | BLOCKED |/}" "$PROGRESS"
+sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE} | BLOCKED |/}" "$PROGRESS"
 sed -i "s/\*\*Status\*\*: ${OLD_STATUS}/**Status**: BLOCKED/" "$CURRENT"
 
 cat >> "$CURRENT" << INNEREOF
 
 ---
-## Blocked — $(date -Iminutes)
+## Blocked -- $(date -Iminutes)
 **Reason**: ${REASON}
 INNEREOF
 

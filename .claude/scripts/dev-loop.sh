@@ -21,7 +21,7 @@ REVIEWER_MD="$PROJECT_ROOT/.claude/agents/reviewer.md"
 [[ -f "$PROJECT_ROOT/.env" ]] && { set -a; source "$PROJECT_ROOT/.env"; set +a; }
 
 # ─── Args ───────────────────────────────────────────────────────────────────────
-MAX_ITERATIONS=0
+MAX_ITERATIONS=10
 DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
