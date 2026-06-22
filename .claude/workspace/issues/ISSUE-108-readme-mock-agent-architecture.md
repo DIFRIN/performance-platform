@@ -2,7 +2,7 @@
 
 **PDR** : PDR-025
 **Module** : `platform-deployment`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P2 (normal — documentation, non bloquant)
 **Bloquee par** : ISSUE-103, ISSUE-104, ISSUE-105, ISSUE-106, ISSUE-107 (documente les artefacts crees et le cleanup effectue)
 **Estime** : M (1-3h) — etendue S a M car documentation du modele configuration-driven

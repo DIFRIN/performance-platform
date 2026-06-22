@@ -1,11 +1,11 @@
-# ISSUE-108: Update README with Mock-as-Agent architecture documentation
+# ISSUE-110: Clean device entries from interfaces-registry
 **Status**: APPROVED
 **PDR**: PDR-025
-**Module**: platform-deployment
-**Started**: 2026-06-22T23:14+02:00
-**IssueFile**: issues/ISSUE-108-readme-mock-agent-architecture.md
+**Module**: platform-infrastructure
+**Started**: 2026-06-22T23:20+02:00
+**IssueFile**: issues/ISSUE-110-clean-device-entries-interfaces-registry.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-108-readme-mock-agent-architecture.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-110-clean-device-entries-interfaces-registry.md`
 
 ## Reviewer Feedback
 (None yet)
