@@ -7,12 +7,14 @@ import com.performance.platform.domain.assertion.Evidence;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
 import com.performance.platform.plugin.Assertion;
 import com.performance.platform.plugin.AssertionExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -28,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 /**
  * Assertion executor pour les assertions WireMock.
  * Interroge l'API admin WireMock pour obtenir le nombre d'appels
@@ -38,29 +39,27 @@ import java.util.regex.Pattern;
  * et {@code unmatchedCalls} — toutes interrogeant
  * {@code /__admin/requests/count}.
  * <p>
+ * <b>v2.0.0 :</b> Supporte la resolution de la cible WireMock via
+ * {@link HttpTargetRegistry} (parametre {@code target}) en plus du flux
+ * legacy {@code refTaskId} (URL depuis ExecutionContext) et
+ * {@code wiremockUrl} direct.
+ * <p>
  * Toute operation I/O (appel HTTP a WireMock) est executee sous
  * Virtual Threads.
  * <p>
  * Annotee {@code @Assertion(name = "http-mock")} pour la decouverte
  * automatique par le {@code DefaultAssertionExecutorRegistry}.
  * <p>
- * <b>CC-02:</b> Pipeline cohesif d'evaluation WireMock —
- * resolution des parametres ({@link #getRequiredStringParam},
- * {@link #getRequiredDoubleParam}) → validation metrique →
- * resolution URL mock depuis {@link ExecutionContext}
- * ({@link #resolveMockUrl}) → appel HTTP
- * {@code /__admin/requests/count} ({@link #fetchRequestCount}) →
- * extraction count JSON ({@link #extractCount}) →
- * evaluation {@link AssertionOperator} → construction
- * {@link AssertionResult} ({@link #buildErrorResult},
- * {@link #buildDescription}). Les helpers de parametres,
- * de resolution, d'appel HTTP et de construction sont
- * indissociables du flux d'evaluation WireMock.
- * Extraire une portion isolee nuirait a la lisibilite
- * du pipeline sequentiel.</p>
+ * <b>CC-02 :</b> Pipeline cohesif d'evaluation WireMock inseparable —
+ * resolution source (target/wiremockUrl/refTaskId) → appel WireMock
+ * (RestClient v2 ou JDK HttpClient legacy) → evaluation operateur
+ * → construction AssertionResult, avec helpers parametres/metriques/
+ * construction indissociables. Classe >300 lignes car les 3 strategies
+ * de resolution HTTP + les helpers forment un ensemble coherent dont
+ * l'extraction artificielle nuirait a la lisibilite.
  */
 @Component
-@Assertion(name = "http-mock",
+@Assertion(name = "http-mock", version = "2.0.0",
            description = "WireMock receivedCalls/matchedCalls/unmatchedCalls assertions")
 public class HttpMockAssertionExecutor implements AssertionExecutor {
 
@@ -73,6 +72,8 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     static final String PARAM_OPERATOR = "operator";
     static final String PARAM_VALUE = "value";
     static final String PARAM_REF_TASK_ID = "refTaskId";
+    static final String PARAM_TARGET = "target";
+    static final String PARAM_WIREMOCK_URL = "wiremockUrl";
 
     // --- Noms de metriques supportes ---
 
@@ -93,16 +94,21 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     private static final Pattern COUNT_PATTERN =
             Pattern.compile("\"count\"\\s*:\\s*(\\d+)");
 
+    private final HttpTargetRegistry targetRegistry;
     private final HttpClient httpClient;
 
-    public HttpMockAssertionExecutor() {
+    public HttpMockAssertionExecutor(HttpTargetRegistry targetRegistry) {
+        this.targetRegistry = Objects.requireNonNull(targetRegistry,
+                "targetRegistry must not be null");
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
     }
 
     // Package-private pour tests
-    HttpMockAssertionExecutor(HttpClient httpClient) {
+    HttpMockAssertionExecutor(HttpTargetRegistry targetRegistry, HttpClient httpClient) {
+        this.targetRegistry = Objects.requireNonNull(targetRegistry,
+                "targetRegistry must not be null");
         this.httpClient = Objects.requireNonNull(httpClient,
                 "httpClient must not be null");
     }
@@ -113,15 +119,16 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     }
 
     /**
-     * CC-02: pipeline cohesif — extraction parametres, resolution URL mock,
-     * appel HTTP WireMock admin, extraction count, evaluation operateur,
-     * construction resultat. L'extraction en methodes separees fragmenterait
-     * la logique de conversion metric→endpoint HTTP→count sans gain
-     * de reutilisabilite.
-     *
-     * @param context le contexte d'execution immuable
-     * @param step    la definition de l'etape d'assertion
-     * @return le resultat de l'evaluation (PASSED, FAILED, ou ERROR)
+     * Evalue une assertion WireMock en interrogeant l'API admin.
+     * <p>
+     * <b>CC-02 :</b> Pipeline cohesif inseparable (~123 lignes) —
+     * (1) extraction/validation parametres, (2) validation metrique,
+     * (3) resolution operateur, (4) resolution source HTTP tri-flux
+     * (target → wiremockUrl → refTaskId), (5) evaluation operateur,
+     * (6) construction Evidence + AssertionResult, (7) logging structure.
+     * Les etapes sont sequentielles avec logique de fallback
+     * (v2 target → deprecated wiremockUrl → legacy refTaskId), formant
+     * un flux de decision que l'extraction fragmenterait artificiellement.
      */
     @Override
     public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
@@ -136,7 +143,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
             String metricName = getRequiredStringParam(params, PARAM_METRIC);
             String operatorStr = getRequiredStringParam(params, PARAM_OPERATOR);
             double expectedValue = getRequiredDoubleParam(params, PARAM_VALUE);
-            String refTaskId = getRequiredStringParam(params, PARAM_REF_TASK_ID);
+            String refTaskId = getStringParam(params, PARAM_REF_TASK_ID, null);
             String endpoint = getStringParam(params, PARAM_ENDPOINT, null);
 
             // 2. Valider la metrique
@@ -153,29 +160,65 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
             // 3. Resoudre l'operateur
             AssertionOperator operator = resolveOperator(operatorStr);
 
-            // 4. Lire l'URL du mock depuis le contexte
-            String mockUrl = resolveMockUrl(context, refTaskId);
-            if (mockUrl == null) {
-                log.warn("action=http_mock_assertion_mock_url_not_found executionId={} "
-                         + "assertionId={} refTaskId={}",
-                         context.executionId().value(), step.id().value(), refTaskId);
-                return buildErrorResult(step, start,
-                        "Mock URL not found for refTaskId: '" + refTaskId
-                        + "'. Ensure MockServerTaskExecutor produced 'url' output.",
-                        params);
+            // 4. Resoudre la source HTTP (v2 target, legacy wiremockUrl, ou refTaskId)
+            String targetName = getStringParam(params, PARAM_TARGET, null);
+            String wiremockUrl = getStringParam(params, PARAM_WIREMOCK_URL, null);
+            double actualValue;
+            String mockUrl;
+
+            if (targetName != null && !targetName.isBlank()) {
+                RestClient restClient;
+                try {
+                    restClient = targetRegistry.clientFor(targetName);
+                } catch (IllegalArgumentException e) {
+                    log.warn("action=http_mock_assertion_target_not_found executionId={} "
+                             + "assertionId={} target={}",
+                             context.executionId().value(), step.id().value(), targetName);
+                    return buildErrorResult(step, start,
+                            "Unknown http-target: '" + targetName + "'. "
+                            + "Check platform.http-targets configuration.",
+                            params);
+                }
+                actualValue = fetchRequestCountViaRestClient(restClient);
+                mockUrl = targetRegistry.get(targetName) != null
+                        ? targetRegistry.get(targetName).baseUrl() : targetName;
+            } else if (wiremockUrl != null && !wiremockUrl.isBlank()) {
+                log.warn("action=deprecated_param param=wiremockUrl executionId={} "
+                         + "assertionId={} — use 'target:' instead",
+                         context.executionId().value(), step.id().value());
+                actualValue = fetchRequestCount(wiremockUrl);
+                mockUrl = wiremockUrl;
+            } else {
+                if (refTaskId == null || refTaskId.isBlank()) {
+                    log.warn("action=http_mock_assertion_no_source executionId={} "
+                             + "assertionId={}",
+                             context.executionId().value(), step.id().value());
+                    return buildErrorResult(step, start,
+                            "No HTTP source configured. Provide 'target', "
+                            + "'wiremockUrl', or 'refTaskId' parameter.",
+                            params);
+                }
+                mockUrl = resolveMockUrl(context, refTaskId);
+                if (mockUrl == null) {
+                    log.warn("action=http_mock_assertion_mock_url_not_found executionId={} "
+                             + "assertionId={} refTaskId={}",
+                             context.executionId().value(), step.id().value(), refTaskId);
+                    return buildErrorResult(step, start,
+                            "Mock URL not found for refTaskId: '" + refTaskId
+                            + "'. Provide 'target' or 'wiremockUrl' parameter, "
+                            + "or ensure MockServerTaskExecutor produced 'url' output.",
+                            params);
+                }
+                actualValue = fetchRequestCount(mockUrl);
             }
 
-            // 5. Appeler l'API admin WireMock sous Virtual Thread
-            double actualValue = fetchRequestCount(mockUrl);
-
-            // 6. Evaluer l'operateur
             boolean passed = operator.evaluate(actualValue, expectedValue);
 
-            // 7. Construire l'evidence
             Map<String, Object> details = new HashMap<>();
             details.put("metric", metricName);
             details.put("mockUrl", mockUrl);
-            details.put("refTaskId", refTaskId);
+            if (refTaskId != null && !refTaskId.isBlank()) details.put("refTaskId", refTaskId);
+            if (targetName != null && !targetName.isBlank()) details.put("target", targetName);
             if (endpoint != null) details.put("endpoint", endpoint);
 
             Evidence evidence = new Evidence(
@@ -185,7 +228,6 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
                     "calls",
                     Map.copyOf(details));
 
-            // 8. Construire la description et le resultat
             AssertionStatus status = passed ? AssertionStatus.PASSED : AssertionStatus.FAILED;
             String description = buildDescription(metricName, actualValue,
                     expectedValue, operator, passed);
@@ -193,9 +235,9 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
             Duration evaluationDuration = Duration.between(start, Instant.now());
 
             log.info("action=http_mock_assertion_evaluated executionId={} assertionId={} "
-                     + "metric={} refTaskId={} actual={} expected={} operator={} status={}",
+                     + "metric={} refTaskId={} target={} actual={} expected={} operator={} status={}",
                      context.executionId().value(), step.id().value(),
-                     metricName, refTaskId, actualValue, expectedValue, operatorStr, status);
+                     metricName, refTaskId, targetName, actualValue, expectedValue, operatorStr, status);
 
             return new AssertionResult(
                     step.id(),
@@ -213,17 +255,34 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
         }
     }
 
+    // --- Requete WireMock via RestClient (v2) ---
+
+    double fetchRequestCountViaRestClient(RestClient restClient) {
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            Future<Double> future = executor.submit(() -> {
+                String json = restClient.get()
+                        .uri(ADMIN_REQUESTS_COUNT_PATH)
+                        .retrieve()
+                        .body(String.class);
+                return extractCount(json);
+            });
+            return future.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalArgumentException(
+                    "WireMock request count fetch interrupted", e);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof IllegalArgumentException iae) {
+                throw iae;
+            }
+            throw new IllegalArgumentException(
+                    "WireMock request count fetch failed: "
+                    + e.getMessage(), e.getCause());
+        }
+    }
+
     // --- Resolution URL Mock ---
 
-    /**
-     * Resout l'URL de base du WireMock depuis les outputs du contexte.
-     * Lit le {@link TaskResult} pour la task refTaskId et extrait la clef
-     * {@code "url"}.
-     *
-     * @param context   le contexte d'execution
-     * @param refTaskId l'identifiant de la task MockServer
-     * @return l'URL de base, ou null si non trouvee
-     */
     private String resolveMockUrl(ExecutionContext context, String refTaskId) {
         Map<String, TaskResult> allResults = context.getAll(refTaskId);
         if (allResults.isEmpty()) return null;
@@ -237,17 +296,6 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
 
     // --- Appel HTTP WireMock Admin ---
 
-    /**
-     * Interroge l'API admin WireMock {@code /__admin/requests/count}
-     * et retourne le nombre d'appels.
-     * <p>
-     * L'appel HTTP est execute sous Virtual Thread pour ne pas bloquer
-     * la plateforme.
-     *
-     * @param baseUrl l'URL de base du WireMock (ex: {@code http://localhost:8090})
-     * @return le nombre de requetes dans le journal WireMock
-     * @throws IllegalArgumentException si l'appel HTTP echoue
-     */
     double fetchRequestCount(String baseUrl) {
         String url = baseUrl.replaceAll("/+$", "") + ADMIN_REQUESTS_COUNT_PATH;
         HttpRequest request = HttpRequest.newBuilder()
@@ -282,9 +330,6 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
         }
     }
 
-    /**
-     * Extrait le count du corps JSON WireMock {@code {"count": 123}}.
-     */
     private double extractCount(String json) {
         if (json == null || json.isEmpty()) {
             throw new IllegalArgumentException(

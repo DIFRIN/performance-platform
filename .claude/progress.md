@@ -1,3 +1,4 @@
+| 2026-06-22 | ISSUE-095 | APPROVED -> DONE | Reviewer — re-review: 2 CRAFT-05 CONFIRMED (CC-02 classe + evaluate()). 130 tests OK, BUILD SUCCESS. PDR-022 DONE. |
 | 2026-06-22 | ISSUE-102 | IN REVIEW -> DONE | Reviewer -- APPROVED: 0 bloquant, 0 recommandation. README 162 lignes conforme spec, PDR-024 DONE. |
 | 2026-06-22 | ISSUE-094 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 26 tests OK. |
 | 2026-06-22 | ISSUE-096 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. |
@@ -77,7 +78,7 @@
 | PDR-019 | Deployment | platform-deployment | DONE | ISSUE-083,084,085 | PDR-018 |
 | PDR-020 | Named Kafka Cluster Registry + Executors | platform-infrastructure | DONE | ISSUE-086,087,088 | PDR-010 |
 | PDR-021 | Spring Kafka Migration — Transport | platform-transport | WAITING | ISSUE-089,090,091 | PDR-020 |
-| PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | WAITING | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
+| PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | DONE | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
 | PDR-023 | SUT Example Services (IoT) | platform-examples/ | WAITING | ISSUE-096,097,098 | — |
 | PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | DONE | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
 
@@ -202,7 +203,7 @@
 | ISSUE-085 | Manifests Kubernetes | PDR-019 | platform-deployment | M | DONE | ISSUE-083 |
 | ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration | PDR-021 | platform-transport | S | DONE | ISSUE-090 |
 | ISSUE-094 | Refactor MockServerTaskExecutor → target reference | PDR-022 | platform-infrastructure | S | DONE | ISSUE-092 |
-| ISSUE-095 | Refactor HttpMockAssertionExecutor → target reference | PDR-022 | platform-infrastructure | S | IN REVIEW | ISSUE-092 |
+| ISSUE-095 | Refactor HttpMockAssertionExecutor → target reference | PDR-022 | platform-infrastructure | S | DONE | ISSUE-092 |
 | ISSUE-102 | README examples + guide démarrage | PDR-024 | platform-deployment | S | DONE | ISSUE-099,100,101 |
 
 ---
@@ -589,3 +590,5 @@
 | 2026-06-22 | ISSUE-102 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. README 162 lignes conforme spec, tous fichiers référencés existent. |
 | 2026-06-22 | PDR-024 | IN PROGRESS → DONE | Reviewer — ISSUE-099,100,101,102 all DONE. |
 | 2026-06-22 | ISSUE-095 | WAITING -> IN PROGRESS -> IN REVIEW | Developer — HttpMockAssertionExecutor refactored with HttpTargetRegistry (target param), RestClient v2 flow, legacy wiremockUrl + refTaskId support, 130 tests OK, BUILD SUCCESS. |
+| 2026-06-22 | ISSUE-095 | IN REVIEW -> APPROVED | Reviewer -- 0 bloquant, 2 recommandations CRAFT-05 PENDING (CC-02 classe + evaluate() regressions ISSUE-063). 130 tests OK, BUILD SUCCESS. |
+| 2026-06-22 | ISSUE-095 | APPROVED -> DONE | Reviewer — re-review: 2 CRAFT-05 CONFIRMED (CC-02 classe + evaluate() Javadoc). 130 tests OK, BUILD SUCCESS. PDR-022 DONE. |
