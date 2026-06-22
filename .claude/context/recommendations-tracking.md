@@ -370,6 +370,8 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-085] [2026-06-20] [CONFIRMED] [PRECISION] Terminologie "headless" incorrecte dans les commentaires des services `perf-kafka-service` et `perf-postgres-service` de service.yaml. Ces services sont des placeholders pour services externes (managed Kafka/PostgreSQL), pas des headless services K8s (qui requierent `clusterIP: None`). Remplacer "(headless placeholder)" par "(external service placeholder)" dans les deux commentaires d'en-tete (lignes 29 et 48). Fichier : platform-deployment/kubernetes/service.yaml.
 
+[ISSUE-100] [2026-06-22] [DEFERRED->ISSUE-103] [PRECISION] agentTags dans iot-dispatcher-distributed.yaml (lignes 50, 66) silencieusement ignores par YamlScenarioParser. StepYamlDto n'a pas de champ agentTags et Jackson est configure avec FAIL_ON_UNKNOWN_PROPERTIES=false. Le routage par agent base sur les tags ne fonctionnera pas tant que StepDefinition + StepYamlDto ne supportent pas agentTags. Ajouter List<String> agentTags a StepDefinition, StepYamlDto, et au mapping dans YamlScenarioParser, puis integrer dans TaskSpecializationFilter. Deferre a ISSUE-103 -- ajout support agentTags dans StepDefinition -> StepYamlDto -> YamlScenarioParser -> TaskSpecializationFilter.
+
 ## Historique
 
 | Date | Issue | Recommandation | Statut |
@@ -411,3 +413,15 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-088] [2026-06-21] [CONFIRMED] [PRECISION-02] Duplicate import java.util.Map at lines 29 and 33 in KafkaTaskExecutorsIT.java. Remove the duplicate at line 33. Fichier : platform-infrastructure/src/test/.../executor/kafka/KafkaTaskExecutorsIT.java:33.
 
 [ISSUE-088] [2026-06-21] [CONFIRMED] [PRECISION-03] Unused parameter groupId in executeCount() method signature. Both cluster and legacy paths create ephemeral perf-count-* group IDs internally; the passed groupId is never referenced. Remove groupId from executeCount() signature and the call-site in execute(). Fichier : platform-infrastructure/.../executor/kafka/KafkaConsumerTaskExecutor.java:259-262,129.
+
+[ISSUE-093] [2026-06-22] [APPLIED] [CRAFT-05] execute() ~47 lignes (>40) sans CC-02 dans HttpClientTaskExecutor. Ajouter Javadoc CC-02 expliquant le pipeline cohesif : extraction parametres → validation target/path → resolution path logique → obtention RestClient → execution Virtual Thread avec timeout guard. Fichier : platform-infrastructure/.../executor/http/HttpClientTaskExecutor.java (avant execute()).
+
+[ISSUE-093] [2026-06-22] [APPLIED] [CRAFT-05] executeRequest() ~57 lignes (>40) sans CC-02 dans HttpClientTaskExecutor. Ajouter Javadoc CC-02 expliquant le pipeline cohesif : switch methode HTTP → appel RestClient .toEntity() → capture 4xx/5xx → extraction status/body → construction outputs → assertion expectedStatus → retour TaskResult. Fichier : platform-infrastructure/.../executor/http/HttpClientTaskExecutor.java (avant executeRequest()).
+
+[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-05] registerExecutionHandler() 42 lignes (>40) sans CC-02 method-level dans DynamicKafkaListenerRegistry. Pipeline cohesif : computeIfAbsent → createContainer → dispatch EventGroup → retour Runnable cleanup. Fichier : platform-transport/.../kafka/DynamicKafkaListenerRegistry.java:170-211.
+
+[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-05] registerAgentLifecycleHandler() 43 lignes (>40) sans CC-02 method-level dans DynamicKafkaListenerRegistry. Pipeline cohesif : computeIfAbsent → createContainer → dispatch EventGroup → retour Runnable cleanup. Fichier : platform-transport/.../kafka/DynamicKafkaListenerRegistry.java:217-259.
+
+[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-08] Magic string "orchestrator" utilisee en dur deux fois dans KafkaExecutionTransport (lignes 144, 152) pour registerExecutionHandler/registerAgentLifecycleHandler. Extraire en constante ORCHESTRATOR_GROUP = "orchestrator". Fichier : platform-transport/.../kafka/KafkaExecutionTransport.java.
+
+[ISSUE-090] [2026-06-22] [APPLIED] [DRY] Duplication ~30 lignes entre registerExecutionHandler() et registerAgentLifecycleHandler() — le bloc computeIfAbsent de creation container + dispatch instanceof est identique. Extraire methode privee getOrCreateEventGroup(String groupId) factorisant la creation et le dispatch. Fichier : platform-transport/.../kafka/DynamicKafkaListenerRegistry.java.

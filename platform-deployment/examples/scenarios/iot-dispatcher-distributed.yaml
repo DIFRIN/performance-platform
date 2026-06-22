@@ -1,0 +1,103 @@
+# =============================================================================
+# Scenario : IoT Dispatcher — Mode DISTRIBUTED (plateforme)
+# SUT-A : Kafka -> DB lookup -> HTTP dispatch vers IoT devices
+#
+# Prerequis :
+#   - docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
+#   - plateforme DISTRIBUTED : orchestrateur + 2 agents (docker compose -f platform-deployment/docker/docker-compose.yaml up -d)
+#
+# Config technique (application-orchestrator.yaml) :
+#   platform.kafka-clusters.iot-sut.bootstrap-servers: localhost:9093
+#   platform.http-targets.wiremock.base-url: http://localhost:8090
+#   platform.http-targets.iot-dispatcher-health.base-url: http://localhost:8083
+#
+# Differences vs local :
+#   - messageCount: 10000 (charge plus importante)
+#   - agentTags: sur les steps Kafka et Gatling pour distribuer sur agents specialises
+#   - injection: task: gatling (HTTP monitoring via target: iot-dispatcher-health)
+#     au lieu de kafka-producer direct
+#   - Aucune URL inline — uniquement references logiques (target:, cluster:, topic:)
+# =============================================================================
+scenario:
+  id: iot-dispatcher-distributed
+  name: "Test de performance SUT-A (IoT Dispatcher) — mode DISTRIBUTED, 10 000 commandes"
+  version: "1.0"
+  tags: [iot, dispatcher, sut-a, distributed]
+  metadata:
+    owner: perf-team
+    sut: iot-dispatcher
+  execution: { mode: DISTRIBUTED }
+
+  steps:
+    # Step 1 : Remettre WireMock a zero
+    - id: reset-wiremock
+      task: http-client
+      phase: PREPARATION
+      parameters:
+        target: wiremock
+        method: DELETE
+        path: reset-requests
+        expectedStatus: 200
+      timeout: 30s
+
+    # Step 2 : Precharger 10 000 commandes IoT dans Kafka
+    # agentTags: [kafka, standard] — distribue sur un agent specialise kafka
+    - id: preload-iot-commands
+      task: kafka-producer
+      phase: PREPARATION
+      dependsOn: [reset-wiremock]
+      requiredContexts: [reset-wiremock]
+      agentTags: [kafka, standard]
+      parameters:
+        cluster: iot-sut
+        topic: iot-commands
+        messageCount: 10000
+        messageTemplate: '{"device_id":"device-{index}","command":"ping","ts":"{timestamp}"}'
+      timeout: 5m
+
+    # Step 3 : Injection Gatling (500 users, 60s ramp-up)
+    # agentTags: [gatling, high-memory] — agent avec plus de RAM pour Gatling
+    # target: iot-dispatcher-health -> platform.http-targets.iot-dispatcher-health.base-url
+    - id: inject-load
+      task: gatling
+      phase: INJECTION
+      dependsOn: [preload-iot-commands]
+      requiredContexts: [preload-iot-commands]
+      agentTags: [gatling, high-memory]
+      parameters:
+        target: iot-dispatcher-health
+        simulation: IotDispatcherMonitorSimulation
+        path: health
+        method: GET
+      timeout: 5m
+
+    # Step 4 : Verifier lag Kafka = 0 (tout traite)
+    - id: assert-kafka-lag
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [inject-load]
+      requiredContexts: [inject-load]
+      parameters:
+        cluster: iot-sut
+        topic: iot-commands
+        expectedLag: 0
+      timeout: 1m
+
+    # Step 5 : Verifier que WireMock a recu les 10 000 commandes HTTP
+    - id: assert-http-dispatched
+      task: http-mock
+      phase: ASSERTION
+      dependsOn: [inject-load]
+      requiredContexts: [inject-load]
+      parameters:
+        target: wiremock
+        urlPattern: "/command"
+        expectedRequestCount: 10000
+        operator: GREATER_THAN_OR_EQUAL
+      timeout: 1m
+
+loadModels:
+  iot-dispatcher-ramp:
+    type: RAMP
+    target: 500
+    duration: 60s

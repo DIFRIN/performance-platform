@@ -1,0 +1,82 @@
+# =============================================================================
+# Scenario : IoT Dispatcher — Mode LOCAL
+# =============================================================================
+scenario:
+  id: iot-dispatcher-local
+  name: "Test de performance SUT-A"
+  version: "1.0"
+  tags: [iot, dispatcher, sut-a]
+  metadata:
+    owner: perf-team
+    sut: iot-dispatcher
+  execution: { mode: LOCAL }
+
+  steps:
+    - id: reset-wiremock
+      task: http-client
+      phase: PREPARATION
+      parameters:
+        target: wiremock
+        method: DELETE
+        path: reset-requests
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: preload-iot-commands
+      task: kafka-producer
+      phase: PREPARATION
+      dependsOn: [reset-wiremock]
+      requiredContexts: [reset-wiremock]
+      parameters:
+        cluster: iot-sut
+        topic: iot-commands
+        messageCount: 1000
+        messageTemplate: '{"device_id":"device-{index}","command":"ping","ts":"{timestamp}"}'
+      timeout: 2m
+
+    - id: wait-for-dispatch
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [preload-iot-commands]
+      requiredContexts: [preload-iot-commands]
+      parameters:
+        target: iot-dispatcher-health
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 35s
+
+    - id: inject-load
+      task: kafka-producer
+      phase: INJECTION
+      dependsOn: [wait-for-dispatch]
+      requiredContexts: [wait-for-dispatch]
+      parameters:
+        cluster: iot-sut
+        topic: iot-commands
+        messageCount: 1000
+        messageTemplate: '{"device_id":"device-{index}","command":"load-test"}'
+      timeout: 2m
+
+    - id: assert-kafka-lag
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [inject-load]
+      requiredContexts: [inject-load]
+      parameters:
+        cluster: iot-sut
+        topic: iot-commands
+        expectedLag: 0
+      timeout: 1m
+
+    - id: assert-http-dispatched
+      task: http-mock
+      phase: ASSERTION
+      dependsOn: [inject-load]
+      requiredContexts: [inject-load]
+      parameters:
+        target: wiremock
+        urlPattern: "/command"
+        expectedRequestCount: 1000
+        operator: GREATER_THAN_OR_EQUAL
+      timeout: 1m
