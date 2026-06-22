@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TransportConfigurationTest {
 
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
-            .withUserConfiguration(TransportConfiguration.class);
+            .withUserConfiguration(TransportConfiguration.class, KafkaTransportBeans.class);
 
     // === Kafka Properties Binding ===
 
@@ -180,11 +180,18 @@ class TransportConfigurationTest {
 
     @Test
     void shouldRegisterKafkaTransportWhenTypeKafka() {
-        runner.withPropertyValues("transport.type=KAFKA")
-                .run(ctx -> {
-                    assertThat(ctx.containsBean("kafkaExecutionTransport")).isTrue();
-                    assertThat(ctx.containsBean("inMemoryExecutionTransport")).isFalse();
-                });
+        runner.withPropertyValues(
+                "transport.type=KAFKA",
+                "transport.kafka.bootstrap-servers=localhost:9092",
+                "transport.kafka.tasks-topic=tasks",
+                "transport.kafka.events-topic=events",
+                "transport.kafka.signals-topic=signals",
+                "transport.kafka.producer-acks=all",
+                "transport.kafka.consumer-group=test"
+        ).run(ctx -> {
+            assertThat(ctx.containsBean("kafkaExecutionTransport")).isTrue();
+            assertThat(ctx.containsBean("inMemoryExecutionTransport")).isFalse();
+        });
     }
 
     @Test
