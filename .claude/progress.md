@@ -1,7 +1,9 @@
+| 2026-06-22 | ISSUE-102 | IN REVIEW -> DONE | Reviewer -- APPROVED: 0 bloquant, 0 recommandation. README 162 lignes conforme spec, PDR-024 DONE. |
 | 2026-06-22 | ISSUE-094 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 26 tests OK. |
 | 2026-06-22 | ISSUE-096 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. |
 | 2026-06-22 | ISSUE-097 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 6 tests OK. |
 | 2026-06-22 | ISSUE-099 | IN REVIEW -> DONE | Reviewer - APPROVED: 0 bloquant, 0 recommandation. YAML/JSON conformes spec. |
+| 2026-06-22 | ISSUE-091 | IN REVIEW - DONE | Reviewer - APPROVED: 0 bloquant, 0 recommandation. 225 tests OK, BUILD SUCCESS. |
 # Progress
 
 > Tracker central de tous les PDRs et Issues du projet.
@@ -77,7 +79,7 @@
 | PDR-021 | Spring Kafka Migration — Transport | platform-transport | WAITING | ISSUE-089,090,091 | PDR-020 |
 | PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | WAITING | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
 | PDR-023 | SUT Example Services (IoT) | platform-examples/ | WAITING | ISSUE-096,097,098 | — |
-| PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | IN PROGRESS | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
+| PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | DONE | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
 
 ---
 
@@ -198,15 +200,17 @@
 | ISSUE-083 | Dockerfile (<300MB) | PDR-019 | platform-deployment | M | DONE | ISSUE-077 |
 | ISSUE-084 | docker-compose dev local | PDR-019 | platform-deployment | S | DONE | ISSUE-083 |
 | ISSUE-085 | Manifests Kubernetes | PDR-019 | platform-deployment | M | DONE | ISSUE-083 |
-| ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration | PDR-021 | platform-transport | S | WAITING | ISSUE-090 |
+| ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration | PDR-021 | platform-transport | S | DONE | ISSUE-090 |
 | ISSUE-094 | Refactor MockServerTaskExecutor → target reference | PDR-022 | platform-infrastructure | S | DONE | ISSUE-092 |
-| ISSUE-095 | Refactor HttpMockAssertionExecutor → target reference | PDR-022 | platform-infrastructure | S | WAITING | ISSUE-092 |
-| ISSUE-102 | README examples + guide démarrage | PDR-024 | platform-deployment | S | TODO | ISSUE-099,100,101 |
+| ISSUE-095 | Refactor HttpMockAssertionExecutor → target reference | PDR-022 | platform-infrastructure | S | IN REVIEW | ISSUE-092 |
+| ISSUE-102 | README examples + guide démarrage | PDR-024 | platform-deployment | S | DONE | ISSUE-099,100,101 |
 
 ---
 
 ## Historique des Changements de Statut
 | 2026-06-22 | ISSUE-100 | APPROVED -> DONE | Reviewer -- re-review: [PRECISION] DEFERRED->ISSUE-103, 4 parse tests OK, 188 total OK, BUILD SUCCESS. |
+| 2026-06-22 | ISSUE-091 | WAITING → IN PROGRESS | Developer — TransportConfiguration Spring Kafka autoconfiguration. |
+| 2026-06-22 | ISSUE-091 | IN PROGRESS → IN REVIEW | Developer — KafkaTransportBeans (transportContainerFactory + kafkaExecutionTransport bean), TransportConfiguration (bean retire), KafkaExecutionTransport (ConcurrentKafkaListenerContainerFactory), KafkaConsumerManager supprime. 225 tests OK, BUILD SUCCESS. |
 
 > Chaque changement de statut est loggé ici. Format : `[date] ISSUE-XXX : ANCIEN → NOUVEAU (agent)`
 
@@ -570,13 +574,18 @@
 | 2026-06-22 | ISSUE-100 | IN PROGRESS → IN REVIEW | Developer — 2 scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) + application-examples-local.yaml. 4 parse tests OK, 188 total OK, BUILD SUCCESS. 0 inline URL, agentTags OK. |
 | 2026-06-22 | ISSUE-100 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation [PRECISION] PENDING (agentTags silencieusement ignores). 4 parse tests OK, BUILD SUCCESS. |
 
+| 2026-06-22 | ISSUE-102 | TODO → IN PROGRESS → IN REVIEW | Developer — README.md examples + guide démarrage créé dans platform-deployment/examples/ (162 lignes). |
+
 ## Métriques
 
 **Démarrage** : 2026-06-12
 **PDRs totaux** : 24
 **Issues totales** : 102
-**Derniere mise a jour** : 2026-06-22 (Developer — ISSUE-100 IN REVIEW)
+**Derniere mise a jour** : 2026-06-22 (Reviewer — ISSUE-102 DONE, PDR-024 DONE)
 
 | 2026-06-22 | ISSUE-096 | IN PROGRESS → IN REVIEW | Developer — iot-dispatcher SUT: pom.xml + 4 classes + YAML + Dockerfile + 4 tests OK, BUILD SUCCESS |
 | 2026-06-22 | ISSUE-097 | WAITING → IN REVIEW | Developer — device-api SUT: pom.xml + 4 classes + YAML + Dockerfile + 6 tests OK, BUILD SUCCESS |
 | 2026-06-22 | ISSUE-099 | WAITING → IN REVIEW | Developer — docker-compose-sut.yaml + wiremock/mappings/iot-endpoints.json, YAML + JSON validated |
+| 2026-06-22 | ISSUE-102 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. README 162 lignes conforme spec, tous fichiers référencés existent. |
+| 2026-06-22 | PDR-024 | IN PROGRESS → DONE | Reviewer — ISSUE-099,100,101,102 all DONE. |
+| 2026-06-22 | ISSUE-095 | WAITING -> IN PROGRESS -> IN REVIEW | Developer — HttpMockAssertionExecutor refactored with HttpTargetRegistry (target param), RestClient v2 flow, legacy wiremockUrl + refTaskId support, 130 tests OK, BUILD SUCCESS. |
