@@ -108,6 +108,28 @@
 | ISSUE-094 | Refactor MockServerTaskExecutor → target reference | DONE | PDR-022 | ISSUE-092 |
 | ISSUE-095 | Refactor HttpMockAssertionExecutor → target reference | DONE | PDR-022 | ISSUE-092 |
 | ISSUE-102 | README examples + guide démarrage | DONE | PDR-024 | ISSUE-099,100,101 |
+| ISSUE-103 (old, superseded) | Remove standalone WireMock from docker-compose-sut.yaml | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-103 below |
+| ISSUE-104 (old, superseded) | Device example-only Javadoc markers | DELETED | PDR-025-v1 | SUPERSEDED — replaced by delete-executors ISSUE-104 below |
+| ISSUE-105 (old, superseded) | http-api-mock-agent-local.yaml scenario | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-105 below |
+| ISSUE-106 (old, superseded) | http-api-mock-agent-distributed.yaml scenario | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-106 below |
+| ISSUE-107 (old, superseded) | docker-compose-wiremock-agent.yaml | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-107 below |
+| ISSUE-108 (old, superseded) | README Mock-as-Agent + Device example-only | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-108 below |
+| ISSUE-103 | Remove standalone WireMock from docker-compose-sut.yaml | WAITING | PDR-025 | - |
+| ISSUE-104 | Delete DevicePopulationTaskExecutor + DeviceCheckTaskExecutor | WAITING | PDR-025 | - |
+| ISSUE-105 | http-api-mock-agent-local.yaml scenario (LOCAL mode) | WAITING | PDR-025 | ISSUE-103 |
+| ISSUE-106 | http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED) | WAITING | PDR-025 | ISSUE-105 |
+| ISSUE-107 | docker-compose-wiremock-agent.yaml | WAITING | PDR-025 | ISSUE-103 |
+| ISSUE-108 | README Mock-as-Agent architecture documentation | WAITING | PDR-025 | ISSUE-103,104,105,106,107 |
+| ISSUE-109 | Delete legacy device-check-perf.yaml scenario | WAITING | PDR-025 | ISSUE-104 |
+| ISSUE-110 | Clean device entries from interfaces-registry | WAITING | PDR-025 | ISSUE-104,109 |
+| ISSUE-111 | AgentProperties @ConfigurationProperties record | IN REVIEW | PDR-026 | — |
+| ISSUE-112 | AgentRuntimeConfiguration @Configuration | WAITING | PDR-026 | ISSUE-111 |
+| ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | WAITING | PDR-026 | ISSUE-112 |
+| ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | WAITING | PDR-026 | ISSUE-112 |
+| ISSUE-115 | Add agent.supported-tasks to application-agent.yaml | WAITING | PDR-026 | ISSUE-111 |
+| ISSUE-116 | Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files | WAITING | PDR-026 | ISSUE-111 |
+| ISSUE-117 | E2E integration test: agent config → registration → task execution | WAITING | PDR-026 | ISSUE-111,112,113,114,115,116 |
+| ISSUE-118 | E2E integration test: LOCAL mode executes all scenario tasks | WAITING | PDR-026 | ISSUE-113 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -136,6 +158,14 @@
 | PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | DONE | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
 | PDR-023 | SUT Example Services (IoT) | platform-examples/ | DONE | ISSUE-096,097,098 | — |
 | PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | DONE | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
+| PDR-025 | Mock Agent Demo Scenarios + Device Cleanup | platform-deployment | WAITING (blocked by PDR-026 priority) | ISSUE-103,104,105,106,107,108,109,110 | PDR-010,013,014,018,019,022,023,024,026 |
+| PDR-026 | Agent Configuration Wiring & E2E Verification | platform-app + platform-agent-runtime | WAITING | ISSUE-111,112,113,114,115,116,117,118 | PDR-009, PDR-018, ADR-015 |
+| — | **NOTE: Configuration-driven model** | — | — | — | — |
+| — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
+| — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
+| — | `agentTags` COMPLETELY REMOVED from scenarios — routing by `task:` name only | PDR-006,PDR-009 | — | — | — |
+| — | LOCAL mode: specialization irrelevant, LocalAgent has all supportedTaskNames | PDR-009 | — | — | — |
+| — | DISTRIBUTED mode: each agent has explicit `agent.supported-tasks` in config | PDR-009,PDR-018 | — | — | — |
 
 ## History
 | Date | Issue | Transition | Note |
@@ -499,3 +529,11 @@
 | 2026-06-22 | ISSUE-095 | WAITING -> IN PROGRESS -> IN REVIEW | Developer — HttpMockAssertionExecutor refactored with HttpTargetRegistry (target param), RestClient v2 flow, legacy wiremockUrl + refTaskId support, 130 tests OK, BUILD SUCCESS. |
 | 2026-06-22 | ISSUE-095 | IN REVIEW -> APPROVED | Reviewer -- 0 bloquant, 2 recommandations CRAFT-05 PENDING (CC-02 classe + evaluate() regressions ISSUE-063). 130 tests OK, BUILD SUCCESS. |
 | 2026-06-22 | ISSUE-095 | APPROVED -> DONE | Reviewer — re-review: 2 CRAFT-05 CONFIRMED (CC-02 classe + evaluate() Javadoc). 130 tests OK, BUILD SUCCESS. PDR-022 DONE. |
+| 2026-06-22 | PDR-025 + ISSUE-103..108 | — → WAITING | System Designer — Mock Agent Demo: WireMock as Agent (pas standalone), Device example-only, 6 Issues (v1). |
+| 2026-06-22 | PDR-025 + ISSUE-103..110 | — → IN PROGRESS | System Designer — PDR-025 v2: DELETE Device executors (not mark), new scenarios LOCAL+DISTRIBUTED, docker-compose-wiremock-agent, README, delete device-check-perf.yaml, clean interfaces-registry. Old ISSUE-103..108 superseded. |
+| 2026-06-22 | PDR-025 + ISSUE-103..108 | IN PROGRESS → UPDATED | System Designer — Configuration-driven model documented: `agent.supported-tasks` (NOT auto-discovery from annotations), `agentTags` COMPLETELY REMOVED from scenarios, routing by `task:` name only, LOCAL mode specialization irrelevant. PDR-009/PDR-018 flagged for follow-up verification. Annotations kept for PluginLoader only. |
+| 2026-06-22 | ADR-015 | — → ACCEPTED | Architect — ADR-015 cree formalisant le modele configuration-driven. SUPERSEDES ADR-008. Code existant valide conforme (DefaultTaskSpecializationFilter, LocalAgent, DistributedAgentRuntime utilisent deja supportedTaskNames en parametre). Travail restant identifie: Spring @ConfigurationProperties pour agent.supported-tasks + mapping AGENT_SUPPORTED_TASKS dans PDR-009/PDR-018. |
+| 2026-06-22 | PDR-026 + ISSUE-111..118 | — → WAITING | System Designer — PDR-026 Agent Configuration Wiring & E2E Verification cree (PRIORITY P0, ABOVE PDR-025). 8 Issues: AgentProperties @ConfigurationProperties, AgentRuntimeConfiguration @Configuration, LocalAgent + DistributedAgentRuntime wiring, YAML config, AGENT_TAGS→AGENT_SUPPORTED_TASKS migration, 2 tests E2E. PDR-025 marked WAITING (blocked by PDR-026 priority). |
+| 2026-06-22 | ISSUE-111 | WAITING → IN PROGRESS | Developer — Implementation de AgentProperties @ConfigurationProperties record |
+| 2026-06-22 | ISSUE-111 | IN PROGRESS → IN REVIEW | Developer — AgentProperties.java + AgentPropertiesTest.java (8 tests), @EnableConfigurationProperties dans PerformancePlatformApplication. 78 tests OK, 0 warning. |
+| 2026-06-22 | ISSUE-111 | IN_REVIEW → APPROVED | Reviewer approved |

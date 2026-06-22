@@ -290,6 +290,8 @@
 | `application.yaml` (common config) | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `application-{local,orchestrator,agent}.yaml` | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `LocalFlowE2ETest` + `e2e-local.yaml` | ✅ STABLE | PDR-018 | ISSUE-082 |
+| `AgentProperties` | 🔄 IN PROGRESS | PDR-026 | ISSUE-111 |
+| `AgentRuntimeConfiguration` | ⬜ PLANNED | PDR-026 | ISSUE-112 |
 
 ## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
 
@@ -332,10 +334,37 @@
 | Dockerfile + .dockerignore | ✅ STABLE | PDR-019 | ISSUE-083 |
 | docker-compose plateforme | ✅ STABLE | PDR-019 | ISSUE-084 |
 | Manifests K8s | ✅ STABLE | PDR-019 | ISSUE-085 |
-| `docker-compose-sut.yaml` (5 services SUT) | ⬜ PLANNED | PDR-024 | ISSUE-099 |
-| `scenarios/iot-dispatcher-*.yaml` (LOCAL+DIST) | ⬜ PLANNED | PDR-024 | ISSUE-100 |
-| `scenarios/device-api-*.yaml` (LOCAL+DIST) | ⬜ PLANNED | PDR-024 | ISSUE-101 |
-| `README.md` examples guide | ⬜ PLANNED | PDR-024 | ISSUE-102 |
+| `docker-compose-sut.yaml` (5 services SUT) | ✅ STABLE | PDR-024 | ISSUE-099 |
+| `scenarios/iot-dispatcher-*.yaml` (LOCAL+DIST) | ✅ STABLE | PDR-024 | ISSUE-100 |
+| `scenarios/device-api-*.yaml` (LOCAL+DIST) | ✅ STABLE | PDR-024 | ISSUE-101 |
+| `README.md` examples guide | ✅ STABLE | PDR-024 | ISSUE-102 |
+
+## platform-deployment (PDR-025 — Mock Agent Demo Scenarios + Device Cleanup)
+
+| Livrable | Statut | PDR | Issue |
+|---|---|---|---|
+| `docker-compose-sut.yaml` (wiremock removed) | ⬜ PLANNED | PDR-025 | ISSUE-103 |
+| `DevicePopulationTaskExecutor` + `DeviceCheckTaskExecutor` DELETED | ❌ TO DELETE | PDR-025 | ISSUE-104 |
+| `scenarios/http-api-mock-agent-local.yaml` | ⬜ PLANNED | PDR-025 | ISSUE-105 |
+| `scenarios/http-api-mock-agent-distributed.yaml` | ⬜ PLANNED | PDR-025 | ISSUE-106 |
+| `docker-compose-wiremock-agent.yaml` | ⬜ PLANNED | PDR-025 | ISSUE-107 |
+| `README.md` Mock-as-Agent architecture | ⬜ PLANNED | PDR-025 | ISSUE-108 |
+| `scenarios/device-check-perf.yaml` DELETED | ❌ TO DELETE | PDR-025 | ISSUE-109 |
+| Device entries cleanup in interfaces-registry | — | PDR-025 | ISSUE-110 |
+
+## Model: Agent Specialization (Configuration-Driven) — ADR-015
+
+| Aspect | Statut | Source |
+|---|---|---|
+| `agent.supported-tasks` config (YAML list) | 🔄 IN PROGRESS | PDR-026, ISSUE-111 — AgentProperties record created, @ConfigurationProperties binding tested (8 tests OK) |
+| `AgentDescriptor.supportedTaskNames` (Set<String>) | ✅ STABLE | PDR-001 — already defined, MUST be populated from config NOT annotations (ADR-015) |
+| `TaskSpecializationFilter` (filters broadcast by taskName) | ✅ STABLE | PDR-009 — already implemented, MUST use `supportedTaskNames` from config (ADR-015) |
+| `@Preparation/@Injection/@Assertion` annotations | ✅ STABLE | PDR-003 — PluginLoader ONLY, NOT used to derive `supportedTaskNames` (ADR-015) |
+| `agentTags` in scenario YAML | ❌ REMOVED | ADR-015 — COMPLETELY REMOVED, routing is by `task:` name only |
+| `AGENT_TAGS` env var | ❌ REMOVED | ADR-015 — replaced by `AGENT_SUPPORTED_TASKS` (cleanup in ISSUE-116) |
+| `LocalAgent` — all supportedTaskNames | ⬜ PLANNED | PDR-026, ISSUE-113 — wiring from TaskExecutorRegistry |
+| Config-driven: plugin loaded but task not in config → idle | ⬜ PLANNED | PDR-026, ISSUE-114 — DistributedAgentRuntime wiring |
+| `AGENT_SUPPORTED_TASKS` → `agent.supported-tasks` mapping | 🔄 IN PROGRESS | PDR-026, ISSUE-111 — Spring Boot @ConfigurationProperties with comma-split List binding verified |
 
 ---
 

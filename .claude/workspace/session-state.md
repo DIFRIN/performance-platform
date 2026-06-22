@@ -1,6 +1,5 @@
 # Session State
 
-
 > CE FICHIER EST CRITIQUE. Mis a jour a la FIN de chaque session. Lu EN PREMIER au demarrage.
 > Permet la reprise exacte sans re-lire tout le projet.
 
@@ -9,24 +8,65 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-22
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : ISSUE-095
-**Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
-**PDR parent** : PDR-024 (DONE)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-111 (IN REVIEW)
+**Statut issue** : [ ] IN PROGRESS | [x] IN REVIEW | [ ] DONE | [ ] APPROVED
+**PDR parent** : PDR-026 (Agent Configuration Wiring & E2E Verification)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — re-review ISSUE-095 : 2 CRAFT-05 CONFIRMED (CC-02 classe + evaluate()). 130 tests OK. PDR-022 DONE.
+Developer — ISSUE-111 implemented: AgentProperties (@ConfigurationProperties record) + AgentPropertiesTest (8 tests, binding YAML + env var + immutability). @EnableConfigurationProperties added to PerformancePlatformApplication. 78 tests OK, 0 warning. BUILD SUCCESS.
+
 **Prochaine action** :
-Committer le commit pour ISSUE-095 + PDR-022. La session est prete pour le protocole de demarrage (prochaine Issue TODO).
+Reviewer — review ISSUE-111 (@reviewer). Si APPROVED → Developer prend ISSUE-112 (AgentRuntimeConfiguration).
+
 **Fichiers modifies** (cette session) :
-- .claude/context/recommendations-tracking.md (ISSUE-095 APPLIED→CONFIRMED x2)
-- .claude/workspace/progress.md (ISSUE-095 APPROVED→DONE, PDR-022 WAITING→DONE)
-- .claude/session-state.md
+- .claude/workspace/pdr/PDR-026-agent-configuration-wiring.md (NOUVEAU)
+- .claude/workspace/issues/ISSUE-111-agent-properties-configuration-properties.md (NOUVEAU)
+- .claude/workspace/issues/ISSUE-112-agent-runtime-configuration.md (NOUVEAU)
+- .claude/workspace/issues/ISSUE-113-local-agent-all-task-names.md (NOUVEAU)
+- .claude/workspace/issues/ISSUE-114-distributed-agent-config-driven-tasks.md (NOUVEAU)
+- .claude/workspace/issues/ISSUE-115-agent-supported-tasks-yaml.md (NOUVEAU)
+- .claude/workspace/issues/ISSUE-116-replace-agent-tags-env-var.md (NOUVEAU)
+- .claude/workspace/issues/ISSUE-117-e2e-agent-config-to-execution.md (NOUVEAU)
+- .claude/workspace/issues/ISSUE-118-e2e-local-mode-all-tasks.md (NOUVEAU)
+- .claude/workspace/progress.md (mis a jour: PDR-026 + ISSUE-111..118, PDR-025 WAITING blocked)
+- .claude/workspace/interfaces-registry.md (mis a jour: AgentProperties/AgentRuntimeConfiguration PLANNED, Model section)
+- .claude/workspace/session-state.md (ce fichier)
+
 **Blocages** : aucun
+
+---
+
+## PRIORITY NOTE — PDR-026 BEFORE PDR-025
+
+PDR-026 (Agent Configuration Wiring) prend PRIORITE ABSOLUE sur PDR-025 (Mock Agent Demo Scenarios).
+Raison : PDR-026 construit le cablage Spring manquant (`AgentProperties`, `AgentRuntimeConfiguration`,
+bean conditionnels LOCAL/DISTRIBUTED) sans lequel le modele configuration-driven (ADR-015) n'est pas
+functionnel. PDR-025 (scenarios demo, docker-compose, README) depend de ce cablage pour etre verifiable.
+
+Ordre de travail :
+1. ISSUE-111 → ISSUE-112 → (ISSUE-113, ISSUE-114, ISSUE-115, ISSUE-116 en parallele)
+2. ISSUE-117, ISSUE-118 (E2E tests) APRES toutes les autres
+3. APRES ISSUE-118 DONE → Developer peut passer a PDR-025 (ISSUE-103)
+
+---
+
+## Resume pour le Developer — PDR-026
+
+Ce que le Developer doit savoir avant de commencer :
+
+1. **Le code metier est DEJA pret** : `LocalAgent`, `DistributedAgentRuntime`, `DefaultTaskSpecializationFilter` acceptent `supportedTaskNames` en parametre de constructeur. Rien a changer.
+2. **Les annotations sont DEJA cantonnees** a `PluginLoader` — rien a changer.
+3. **Il manque UNIQUEMENT le cablage Spring** : `@ConfigurationProperties(prefix = "agent")`, `@Configuration` avec `@Bean` conditionnels, mapping env var → YAML.
+4. **Spring Boot mappe automatiquement** `AGENT_SUPPORTED_TASKS` → `agent.supported-tasks` via `@ConfigurationProperties` (binding standard, pas de code custom, cf. CC-05).
+5. **LOCAL** : `LocalAgent` recoit `supportedTaskNames` = tous les noms du `TaskExecutorRegistry`. Ignore `AgentProperties`.
+6. **DISTRIBUTED** : `DistributedAgentRuntime` recoit `supportedTaskNames` = `AgentProperties.supportedTasks()` exclusivement.
+7. **`AGENT_TAGS` est MORT** — ISSUE-116 remplace tout par `AGENT_SUPPORTED_TASKS`.
+8. **ADR-015** est la spec definitive — ADR-008 est SUPERSEDED.
 
 ---
 
@@ -34,31 +74,7 @@ Committer le commit pour ISSUE-095 + PDR-022. La session est prete pour le proto
 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
-| 2026-06-22 | Reviewer | ISSUE-095 | Re-review : 2 CRAFT-05 CONFIRMED (CC-02 classe + evaluate()). 130 tests OK. PDR-022 DONE. | DONE |
-| 2026-06-22 | Developer | ISSUE-100 | Scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) + application-examples-local.yaml. 4 parse tests OK, 188 total OK, BUILD SUCCESS, 0 inline URL, agentTags OK. | IN REVIEW |
-| 2026-06-22 | Reviewer | ISSUE-095 | APPROVED: 0 bloquant, 2 recommandations CRAFT-05 PENDING. 130 tests OK. | EN ATTENTE RE-REVIEW |
-| 2026-06-22 | Reviewer | ISSUE-102 | APPROVED: 0 bloquant, 0 recommandation. README conforme spec, PDR-024 DONE. | DONE |
-| 2026-06-22 | Developer | ISSUE-102 | README.md 162 lignes dans platform-deployment/examples — guide demarrage IoT. | IN REVIEW |
-| 2026-06-22 | Developer | ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration: KafkaTransportBeans (+transportContainerFactory +kafkaExecutionTransport bean), TransportConfiguration (bean retire), KafkaExecutionTransport (ConcurrentKafkaListenerContainerFactory), KafkaConsumerManager supprime. 225 tests OK, BUILD SUCCESS. | IN REVIEW |
-| 2026-06-22 | Developer | ISSUE-101 | Scenarios YAML device-api (LOCAL + DISTRIBUTED), application-examples-local.yaml (datasources.sut-db + device-api), seed-sut-devices.sql, 4 parse tests OK. | IN REVIEW |
-| 2026-06-22 | Developer | ISSUE-100 | Scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED), application-examples-local.yaml. 4 fichiers YAML + 2 tests. 186 tests OK, BUILD SUCCESS. | IN REVIEW |
-| 2026-06-20 | Developer | ISSUE-077 | platform-app: pom.xml (11 modules) + @SpringBootApplication + @Modulith + 4 tests, fat JAR 131 MB. | IN REVIEW |
-| 2026-06-20 | Reviewer | ISSUE-077 | Review APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. Commit. | DONE |
-| 2026-06-20 | Developer | ISSUE-078 | RuntimeMode + RuntimeRole + RuntimeModeResolver + EnvironmentPostProcessor + 24 tests, 28 total OK. | IN REVIEW |
-| 2026-06-20 | Developer | ISSUE-079 | ScenarioController + 2 DTOs + ApiExceptionHandler + 11 tests. 43 total OK, BUILD SUCCESS. Jackson 2.x excluded, bytebuddy experimental. | IN REVIEW |
-| 2026-06-20 | Developer | ISSUE-079 | 3 recommandations APPLIED (CRAFT-02, CRAFT-08, CRAFT-07). Tests OK. Awaiting re-review. | — |
-| 2026-06-20 | Reviewer | ISSUE-079 | Re-review: 3 recommandations CONFIRMED (CRAFT-02/CRAFT-08/CRAFT-07). Commit. | DONE |
-| 2026-06-20 | Developer | ISSUE-080 | PluginBootstrap + PluginProperties + 8 tests + @EnableConfigurationProperties. 51 tests OK, BUILD SUCCESS. | IN REVIEW |
-| 2026-06-20 | Developer | ISSUE-081 | application.yaml (common/health), 3 profiles (local/orchestrator/agent), SecurityConfiguration OAuth2/JWT, ConfigProfilesTest (14 tests). 65 tests OK, 0 warning. | IN REVIEW |
-| 2026-06-20 | Developer | ISSUE-082 | LocalFlowE2ETest + e2e-local.yaml + RawJpaExecutionRepository. Testcontainers PostgreSQL, Flyway, manual wiring. 66 tests OK, BUILD SUCCESS. | IN REVIEW |
-| 2026-06-20 | Reviewer | ISSUE-082 | Review APPROVED: 0 bloquant, 1 recommandation PENDING (VERSION Testcontainers 1.20.4→1.20.6). | APPROVED |
-| 2026-06-20 | Reviewer | ISSUE-082 | Re-review: [VERSION] CONFIRMED (Testcontainers 1.20.6 verified platform-app/pom.xml). Commit. | DONE |
-| 2026-06-20 | Developer | ISSUE-083 | platform-deployment: pom.xml + Dockerfile multi-stage + .dockerignore. Maven BUILD SUCCESS, 0 warning. | IN REVIEW |
-| 2026-06-20 | Reviewer | ISSUE-083 | Review APPROVED: 0 bloquant, 1 recommandation PRECISION PENDING | APPROVED |
-| 2026-06-20 | Reviewer | ISSUE-083 | Re-review: [PRECISION] CONFIRMED (suppression !platform-app/target/performance-platform.jar + commentaire). Commit. | DONE |
-| 2026-06-20 | Developer | ISSUE-084 | platform-deployment/docker/docker-compose.yaml (5 services: postgres, kafka KRaft, orchestrator, agent-1, agent-2). IN REVIEW. | IN REVIEW |
-| 2026-06-20 | Developer | ISSUE-085 | 6 manifests K8s (orchestrator-statefulset, agent-deployment, agent-hpa, configmap, secret-template, service). YAML valide, 0 gRPC, probes OK, HPA 2-20 CPU 70%. | IN REVIEW |
-| 2026-06-20 | Reviewer | ISSUE-085 | Review APPROVED: 0 bloquant, 1 recommandation [PRECISION] PENDING (terminologie "headless" service.yaml). DB_USERNAME verifie conforme application-orchestrator.yaml:41. | APPROVED |
-| 2026-06-20 | Reviewer | ISSUE-085 | Re-review: [PRECISION] CONFIRMED (headless→external service placeholder). PDR-019 DONE. Projet termine. | DONE |
-| 2026-06-21 | System Designer | PDR-024/ISSUE-100/101 | Correction 4 incoherences Architect: INC-1 (URLs inline gatling→target/kafka-producer), INC-2 (purge-events→reset-devices), INC-3 (device-api 8082→8084 conflit agent-2), INC-4 (scriptPath classpath:sql/seed-sut-devices.sql + SQL copie). | DONE |
-| 2026-06-21 | Developer | ISSUE-086 | KafkaClusterRegistry + KafkaClusterConfiguration + 17 tests, 303 total OK, BUILD SUCCESS. | IN REVIEW |
+| 2026-06-22 | System Designer | PDR-026 + ISSUE-111..118 | PDR-026 cree (PRIORITY P0): Agent Configuration Wiring & E2E Verification. 8 Issues: @ConfigurationProperties, @Configuration, LocalAgent/DistributedAgentRuntime wiring, YAML config, AGENT_TAGS→AGENT_SUPPORTED_TASKS migration, 2 tests E2E. PDR-025 WAITING (blocked by PDR-026 priority). | DONE |
+| 2026-06-22 | Architect | ADR-015 | ADR-015 cree: specialisation configuration-driven, agent.supported-tasks source exclusive, agentTags supprime. ADR-008 SUPERSEDED. Code valide conforme. Cablage Spring identifie comme travail restant. | DONE |
+| 2026-06-22 | System Designer | PDR-025 v3 | Configuration-driven model definitif: agent.supported-tasks, agentTags removed, annotations PluginLoader-only, AGENT_SUPPORTED_TASKS env var. PDR-009/PDR-018 flagged. Tous fichiers mis a jour. | DONE |
+| 2026-06-22 | System Designer | PDR-025 v2 | PDR-025 re-ecrit: DELETE device executors + 8 Issues (103-110). Ancien ISSUE-103..108 SUPERSEDED. | DONE |
