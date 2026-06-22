@@ -13,6 +13,13 @@ runtime:
   mode: DISTRIBUTED
   role: ORCHESTRATOR
 
+# ---- Agent specialization (documentation) ----
+# L'orchestrateur n'exécute pas de tasks directement.
+# La propriété agent.supported-tasks est IGNORÉE en mode ORCHESTRATOR.
+# Elle est documentée ici pour référence.
+# agent:
+#   supported-tasks: []
+
 # ---- Transport distribue ----
 # Par defaut KAFKA. Surchargeable via TRANSPORT_TYPE env var
 # (KAFKA / RABBITMQ / HTTP / SOCKET).

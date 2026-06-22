@@ -125,8 +125,8 @@
 | ISSUE-111 | AgentProperties @ConfigurationProperties record | DONE | PDR-026 | — |
 | ISSUE-112 | Create AgentRuntimeConfiguration @Configuration | DONE | PDR-026 | ISSUE-111 |
 | ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | DONE | PDR-026 | ISSUE-112 |
-| ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | APPROVED | PDR-026 | ISSUE-112 |
-| ISSUE-115 | Add agent.supported-tasks to application-agent.yaml | WAITING | PDR-026 | ISSUE-111 |
+| ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | DONE | PDR-026 | ISSUE-112 |
+| ISSUE-115 | Add agent.supported-tasks to application-agent.yaml | APPROVED | PDR-026 | ISSUE-111 |
 | ISSUE-116 | Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files | WAITING | PDR-026 | ISSUE-111 |
 | ISSUE-117 | E2E integration test: agent config → registration → task execution | WAITING | PDR-026 | ISSUE-111,112,113,114,115,116 |
 | ISSUE-118 | E2E integration test: LOCAL mode executes all scenario tasks | WAITING | PDR-026 | ISSUE-113 |
@@ -575,3 +575,7 @@
 | 2026-06-22 | ISSUE-114 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-22 | ISSUE-114 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-114 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-114 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-115 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-22 | ISSUE-115 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-22 | ISSUE-115 | IN_REVIEW → APPROVED | Reviewer approved |

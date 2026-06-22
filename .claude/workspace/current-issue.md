@@ -1,11 +1,11 @@
-# ISSUE-114: Wire DistributedAgentRuntime with config-driven supportedTaskNames
+# ISSUE-115: Add agent.supported-tasks to application-agent.yaml
 **Status**: APPROVED
 **PDR**: PDR-026
 **Module**: platform-app
-**Started**: 2026-06-22T21:53+02:00
-**IssueFile**: issues/ISSUE-114-distributed-agent-config-driven-tasks.md
+**Started**: 2026-06-22T22:12+02:00
+**IssueFile**: issues/ISSUE-115-agent-supported-tasks-yaml.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-114-distributed-agent-config-driven-tasks.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-115-agent-supported-tasks-yaml.md`
 
 ## Reviewer Feedback
 (None yet)
