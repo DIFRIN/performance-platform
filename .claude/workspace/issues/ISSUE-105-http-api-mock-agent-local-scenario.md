@@ -2,7 +2,7 @@
 
 **PDR** : PDR-025
 **Module** : `platform-deployment`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P1 (critique — scenario de demonstration principal)
 **Bloquee par** : ISSUE-103 (wiremock retire du compose, le mock est maintenant agent-embedded)
 **Estime** : M (1-3h)

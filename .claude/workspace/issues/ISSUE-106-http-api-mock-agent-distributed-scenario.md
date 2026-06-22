@@ -2,7 +2,7 @@
 
 **PDR** : PDR-025
 **Module** : `platform-deployment`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P1 (critique — contrepartie DISTRIBUTED du scenario LOCAL)
 **Bloquee par** : ISSUE-105 (les mappings JSON sont deja crees, scenario LOCAL sert de modele)
 **Estime** : M (1-3h)

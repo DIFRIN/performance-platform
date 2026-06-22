@@ -1,11 +1,11 @@
-# ISSUE-105: Create http-api-mock-agent-local.yaml scenario (LOCAL mode)
+# ISSUE-106: Create http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED mode)
 **Status**: APPROVED
 **PDR**: PDR-025
 **Module**: platform-deployment
-**Started**: 2026-06-22T21:24+02:00
-**IssueFile**: issues/ISSUE-105-http-api-mock-agent-local-scenario.md
+**Started**: 2026-06-22T21:32+02:00
+**IssueFile**: issues/ISSUE-106-http-api-mock-agent-distributed-scenario.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-105-http-api-mock-agent-local-scenario.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-106-http-api-mock-agent-distributed-scenario.md`
 
 ## Reviewer Feedback
 (None yet)
