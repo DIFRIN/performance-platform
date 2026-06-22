@@ -158,7 +158,8 @@ com.performance.platform.<module>/
 | Plugin JAR externe | `.claude/knowledge/specs/03-task-framework.md` | section 7 |
 | Annotations @Preparation/@Injection/@Assertion | `.claude/knowledge/adr/ADR-007-plugin-jar-system.md` | — |
 | Priorité config env vs properties | `.claude/knowledge/adr/ADR-006-runtime-config-priority.md` | — |
-| Agents spécialisés + filtre local | `.claude/knowledge/adr/ADR-008-specialized-agent-filter.md` | — |
+| Agents spécialisés + filtre local | `.claude/knowledge/adr/ADR-008-specialized-agent-filter.md` | SUPERSEDED BY ADR-015 |
+| Spécialisation configuration-driven + `agent.supported-tasks` + supression `agentTags` | `.claude/knowledge/adr/ADR-015-configuration-driven-agent-specialization.md` | — |
 | Consumer group Kafka par agent | `.claude/knowledge/adr/ADR-009-kafka-consumer-group-per-agent.md` | — |
 | PartialExecutionContext | `.claude/knowledge/adr/ADR-010-partial-execution-context.md` | — |
 | Multi-claim orchestrateur | `.claude/knowledge/adr/ADR-011-multi-claim-all-complete.md` | — |
@@ -203,3 +204,6 @@ bash .claude/scripts/dev-loop.sh --max 3              # limiter à 3 Issues
 - Utilisation de `AgentAllocator` — supprimé (ADR-008)
 - Utilisation de `TaskMessage` — remplacé par `TaskExecutionRequest`
 - Utilisation de `transport.sendTask(agentId, ...)` — remplacé par `transport.dispatchTask(...)`
+- Utilisation de `agentTags` dans un scénario YAML — supprimé, le routing est par `task:` name uniquement (ADR-015)
+- Utilisation de `AGENT_TAGS` env var — remplacé par `AGENT_SUPPORTED_TASKS` (ADR-015)
+- Auto-discovery des `supportedTaskNames` depuis les annotations — les noms viennent de la config `agent.supported-tasks` uniquement (ADR-015)

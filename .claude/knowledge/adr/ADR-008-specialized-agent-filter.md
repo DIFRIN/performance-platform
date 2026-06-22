@@ -1,10 +1,15 @@
 # ADR-008 — Suppression de AgentAllocator : Filtre de Spécialisation Côté Agent
 
 **Date** : 2026-06-08
-**Statut** : ACCEPTED
+**Statut** : SUPERSEDED BY ADR-015
 **Décideurs** : Architect
 **Contexte** : Introduction des agents spécialisés — chaque agent déclare les tasks
 qu'il peut exécuter. Décision : où vit la logique de sélection ?
+
+> NOTE (2026-06-22) : Cet ADR est SUPERSEDED par ADR-015. Le principe de filtrage cote agent
+> (broadcast + `TaskSpecializationFilter`) est CONSERVE, mais ADR-015 precise que la source
+> exclusive des `supportedTaskNames` est la configuration `agent.supported-tasks` — PAS
+> les annotations `@Preparation`/`@Injection`/`@Assertion`.
 
 ---
 

@@ -238,10 +238,13 @@ agent:
   id: agent-perf-01                # auto-généré UUID si absent
   name: "Performance Test Agent"
 
-  supportedTasks:                  # STATIQUE — immuable après démarrage, voir ADR-008
+  supportedTasks:                  # STATIQUE — immuable après démarrage, source EXCLUSIVE de supportedTaskNames (ADR-015)
     - performance_test
     - gatling-metric
     - assertions
+    # NOTE (ADR-015) : supportedTaskNames est derive EXCLUSIVEMENT de cette config.
+    # Les annotations @Preparation/@Injection/@Assertion sont utilisees UNIQUEMENT
+    # par PluginLoader (task-name -> implementation) et NE contribuent PAS a supportedTaskNames.
 
   capabilities:
     maxConcurrentTasks: 3
