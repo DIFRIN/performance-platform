@@ -3,7 +3,10 @@
 Déléguer immédiatement au subagent @reviewer.
 
 Le reviewer va :
-1. Identifier l'Issue IN REVIEW dans `.claude/workspace/progress.md`
+1. Identifier l'Issue IN REVIEW via `.claude/workspace/current-issue.md`
 2. Passer les checklists ARCH / CRAFT / TEST / SPEC
-3. Produire le rapport APPROVED | CHANGES_REQUESTED | REJECTED
-4. Mettre à jour `.claude/workspace/progress.md` et `.claude/workspace/interfaces-registry.md` selon le verdict
+3. Produire le verdict et exécuter le script correspondant :
+   - **APPROVED** → `bash .claude/scripts/issue-review.sh APPROVED`
+   - **CHANGES_REQUESTED** → `bash .claude/scripts/issue-review.sh CHANGES_REQUESTED "raison"`
+4. Si APPROVED : commit + `bash .claude/scripts/issue-next.sh`
+5. Mettre à jour `.claude/workspace/recommendations-tracking.md` si recommandations PENDING

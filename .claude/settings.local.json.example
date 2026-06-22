@@ -1,0 +1,27 @@
+{
+  "_doc": "PERFORMANCE PLATFORM — Template de permissions locales. Copiez ce fichier vers .claude/settings.local.json (gitignoré) et ajoutez vos permissions spécifiques.",
+
+  "_doc_usage": [
+    "1. cp .claude/settings.local.json.example .claude/settings.local.json",
+    "2. Décommentez les permissions dont vous avez besoin",
+    "3. Ajoutez vos permissions spécifiques (paths absolus, outils locaux, etc.)",
+    "",
+    "Les permissions dans settings.json (commité) couvrent déjà le harness de base.",
+    "Ce fichier ajoute les permissions risquées ou spécifiques à votre machine."
+  ],
+
+  "permissions": {
+    "_doc": "Permissions risquées — à activer selon votre environnement de développement.",
+
+    "allow": [
+      "Bash(git *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(cp *)",
+
+      "Bash(docker *)",
+
+      "Bash(node *)"
+    ]
+  }
+}

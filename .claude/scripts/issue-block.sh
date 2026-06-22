@@ -7,6 +7,10 @@
 #   issue-block.sh                (sans message)
 #
 # Appelé par : Developer agent (quand bloqué)
+#
+# Dépendance sur le format de progress.md :
+#   Table Issues en format plat : | ISSUE-XXX | Title | STATUS | PDR | Dependencies |
+#   sed opère entre ## Issues et ## PDRs uniquement.
 # =============================================================================
 set -euo pipefail
 
@@ -26,8 +30,8 @@ ISSUE_ID=$(grep -oP '^# \KISSUE-\d+' "$CURRENT")
 TITLE=$(grep '^# ' "$CURRENT" | sed 's/^# [A-Z0-9-]*: //')
 OLD_STATUS=$(grep -oP '\*\*Status\*\*: \K\w+' "$CURRENT")
 
-# ── Marquer BLOCKED ──────────────────────────────────────────────────────────
-sed -i "s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE} | BLOCKED |/" "$PROGRESS"
+# ── Marquer BLOCKED (scoped ## Issues → ## PDRs) ─────────────────────────────
+sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE} | BLOCKED |/}" "$PROGRESS"
 sed -i "s/\*\*Status\*\*: ${OLD_STATUS}/**Status**: BLOCKED/" "$CURRENT"
 
 cat >> "$CURRENT" << INNEREOF

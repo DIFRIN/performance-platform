@@ -1,4 +1,6 @@
 {
+  "_doc": "PERFORMANCE PLATFORM — Permissions Portables (commit-safe). Ce fichier est COMMITTÉ — il contient UNIQUEMENT les permissions safe nécessaires au harness. Les permissions risquées (rm, docker, chmod, sed, awk, cp, git push, xargs, tee, node) sont dans .claude/settings.local.json (gitignoré). Template : .claude/settings.local.json.example",
+
   "hooks": {
     "PostToolUse": [
       {
@@ -14,43 +16,41 @@
       }
     ]
   },
+
   "permissions": {
     "allow": [
+      "Read(*)",
+      "Write(.claude/**)",
+      "Edit(.claude/**)",
+      "Skill(*)",
+
       "Bash(mvn *)",
+      "Bash(java *)",
+
+      "Bash(bash .claude/scripts/*)",
+
       "Bash(find *)",
       "Bash(grep *)",
-      "Bash(git *)",
-      "Bash(sed *)",
-      "Bash(awk *)",
-      "Bash(mkdir -p *)",
-      "Bash(chmod *)",
-      "Bash(bash .claude/scripts/*)",
-      "Bash(javap *)",
-      "Bash(curl -s *)",
-      "Bash(jar *)",
-      "Bash(unzip *)",
-      "Bash(echo *)",
-      "Bash(sort *)",
-      "Bash(xargs *)",
-      "Bash(rm *)",
-      "Bash(cp *)",
       "Bash(cat *)",
       "Bash(ls *)",
       "Bash(wc *)",
-      "Bash(tee *)",
+      "Bash(sort *)",
       "Bash(head *)",
       "Bash(tail *)",
       "Bash(cut *)",
       "Bash(tr *)",
+      "Bash(echo *)",
+
+      "Bash(curl -s *)",
+
+      "Bash(javap *)",
+      "Bash(jar *)",
+      "Bash(unzip *)",
+
+      "Bash(mkdir -p *)",
+
       "Bash(python3 *)",
-      "Bash(java *)",
-      "Bash(docker *)",
-      "Bash(node *)",
-      "Bash(bash -n *)",
-      "Read(*)",
-      "Write(.claude/**)",
-      "Edit(.claude/**)",
-      "Skill(*)"
+      "Bash(bash -n *)"
     ]
   }
 }

@@ -4,6 +4,10 @@
 #
 # Usage: bash .claude/scripts/issue-finish.sh
 # Appelé par : Developer agent (quand l'implémentation est finie)
+#
+# Dépendance sur le format de progress.md :
+#   Table Issues en format plat : | ISSUE-XXX | Title | STATUS | PDR | Dependencies |
+#   sed opère entre ## Issues et ## PDRs uniquement.
 # =============================================================================
 set -euo pipefail
 
@@ -26,13 +30,13 @@ if [[ "$CURRENT_STATUS" != "IN_PROGRESS" && "$CURRENT_STATUS" != "CHANGES_REQUES
     exit 1
 fi
 
-# ── Marquer IN_REVIEW dans progress.md ───────────────────────────────────────
-sed -i "s/| ${ISSUE_ID} | .* | ${CURRENT_STATUS} |/| ${ISSUE_ID} | ${TITLE} | IN_REVIEW |/" "$PROGRESS"
+# ── Marquer IN_REVIEW dans progress.md (scoped ## Issues → ## PDRs) ──────────
+sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | ${CURRENT_STATUS} |/| ${ISSUE_ID} | ${TITLE} | IN_REVIEW |/}" "$PROGRESS"
 
 # ── Mettre à jour current-issue.md ───────────────────────────────────────────
 sed -i "s/\*\*Status\*\*: ${CURRENT_STATUS}/**Status**: IN_REVIEW/" "$CURRENT"
 
-# ── Historique ───────────────────────────────────────────────────────────────
+# ── Historique (append-only) ─────────────────────────────────────────────────
 echo "| $(date -I) | ${ISSUE_ID} | ${CURRENT_STATUS} → IN_REVIEW | issue-finish.sh |" >> "$PROGRESS"
 
 echo "✅ ${ISSUE_ID} → IN_REVIEW"
