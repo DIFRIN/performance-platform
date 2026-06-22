@@ -9,9 +9,9 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-22
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : aucune (ISSUE-094+096+097 DONE)
-**Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [x] APPROVED
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-099 (IN REVIEW)
+**Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
 **PDR parent** : PDR-023
 
 ---
@@ -19,15 +19,13 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-094+096+097 APPROVED: 0 bloquant, 0 recommandation. 26+4+6=36 tests OK, BUILD SUCCESS.
+Reviewer — ISSUE-099 DONE: docker-compose-sut.yaml (5 services SUT) + wiremock/mappings/iot-endpoints.json. YAML + JSON validates.
 **Prochaine action** :
-@developer ou /next — prendre la prochaine Issue (ISSUE-095 ou ISSUE-099 selon dependances)
+@developer — ISSUE-100 (scenarios YAML iot-dispatcher)
 **Fichiers modifies** (cette session) :
-- platform-infrastructure/.../executor/mock/MockServerTaskExecutor.java (ISSUE-094)
-- platform-infrastructure/.../executor/mock/MockServerTaskExecutorTest.java (ISSUE-094)
-- platform-examples/iot-dispatcher/ (ISSUE-096)
-- platform-examples/device-api/ (ISSUE-097)
-- .claude/progress.md, .claude/context/interfaces-registry.md, .claude/session-state.md
+- platform-deployment/examples/docker-compose-sut.yaml (ISSUE-099)
+- platform-deployment/examples/wiremock/mappings/iot-endpoints.json (ISSUE-099)
+- .claude/progress.md, .claude/session-state.md
 **Blocages** : aucun
 
 ---
