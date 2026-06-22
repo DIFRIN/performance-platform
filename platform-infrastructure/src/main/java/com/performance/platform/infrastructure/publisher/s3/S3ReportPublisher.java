@@ -584,7 +584,7 @@ public class S3ReportPublisher implements ReportPublisher {
         String[] segments = path.split("/", -1);
         // Skip leading empty segment from absolute paths
         int start = segments.length > 0 && segments[0].isEmpty() ? 1 : 0;
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         for (int i = start; i < segments.length; i++) {
             sb.append('/');
             sb.append(URLEncoder.encode(segments[i], StandardCharsets.UTF_8)

@@ -39,7 +39,7 @@ class DefaultDockerClient implements DockerClient {
     @Override
     public String runContainer(String image, String containerName,
                                Map<String, String> ports, Map<String, String> env) {
-        List<String> cmd = new ArrayList<>();
+        var cmd = new ArrayList<String>();
         cmd.add("docker");
         cmd.add("run");
         cmd.add("-d"); // detached
@@ -92,7 +92,7 @@ class DefaultDockerClient implements DockerClient {
 
     private String execute(List<String> command) {
         try {
-            ProcessBuilder pb = new ProcessBuilder(command);
+            var pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
             Process process = pb.start();
             boolean completed = process.waitFor(CLI_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -100,7 +100,7 @@ class DefaultDockerClient implements DockerClient {
                 process.destroyForcibly();
                 throw new DockerException("docker CLI timed out: " + String.join(" ", command));
             }
-            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            var output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             int exitCode = process.exitValue();
             if (exitCode != 0) {
                 throw new DockerException(

@@ -17,7 +17,7 @@ public class HttpTargetConfiguration {
     public HttpTargetRegistry httpTargetRegistry(
             PlatformHttpTargetsProperties props,
             RestClient.Builder restClientBuilder) {
-        HttpTargetRegistry registry = new HttpTargetRegistry(props.httpTargets(), restClientBuilder);
+        var registry = new HttpTargetRegistry(props.httpTargets(), restClientBuilder);
         if (props.httpTargets().isEmpty()) {
             log.warn("action=no_http_target_configured prefix=platform.http-targets");
         }

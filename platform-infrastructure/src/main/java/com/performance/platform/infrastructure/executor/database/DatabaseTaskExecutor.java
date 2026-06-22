@@ -129,7 +129,7 @@ public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceClean
             log.info("action=purge_start table={} datasource={} stepId={}",
                     table, step.parameters().get("datasource"), step.id().value());
 
-            JdbcTemplate jdbc = new JdbcTemplate(ds);
+            var jdbc = new JdbcTemplate(ds);
             int rowsAffected = jdbc.update(sql);
 
             Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
@@ -169,7 +169,7 @@ public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceClean
         }
 
         // DefaultResourceLoader gère "classpath:" et les chemins filesystem nativement (ADR-013).
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        var resourceLoader = new DefaultResourceLoader();
         Resource script = resourceLoader.getResource(scriptPath);
         if (!script.exists()) {
             return fail(step, startNanos, "Script not found: " + scriptPath, null);

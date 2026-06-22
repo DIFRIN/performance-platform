@@ -105,12 +105,12 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
             boolean passed = operator.evaluate(actualValue, expectedValue);
 
             // 6. Construire l'evidence
-            Map<String, Object> details = new HashMap<>();
+            var details = new HashMap<String, Object>();
             details.put("datasource", datasourceName);
             details.put("query", query);
             details.put("unit", unit);
 
-            Evidence evidence = new Evidence(
+            var evidence = new Evidence(
                     actualValue,
                     expectedValue,
                     operator,

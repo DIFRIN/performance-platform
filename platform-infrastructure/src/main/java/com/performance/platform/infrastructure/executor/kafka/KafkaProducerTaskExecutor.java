@@ -176,8 +176,8 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
             log.info("action=produce_start topic={} messageCount={} batchSize={} executionId={} stepId={}",
                     physicalTopic, messageCount, batchSize, executionId.value(), step.id().value());
 
-            AtomicInteger produced = new AtomicInteger(0);
-            AtomicInteger failed = new AtomicInteger(0);
+            var produced = new AtomicInteger(0);
+            var failed = new AtomicInteger(0);
             long deadline = System.currentTimeMillis() + timeoutMs;
 
             sendMessages(kafkaTemplate, physicalTopic, messageCount, messageTemplate, batchSize,
@@ -268,7 +268,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
      * (legacy path). Logs a WARN to encourage migration to named clusters.
      */
     private ProducerFactory<String, String> createEphemeralFactory(String bootstrapServers) {
-        Map<String, Object> config = new HashMap<>();
+        var config = new HashMap<String, Object>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);

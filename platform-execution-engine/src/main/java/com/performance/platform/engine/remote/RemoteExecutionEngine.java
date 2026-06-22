@@ -219,7 +219,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
                 executionId.value(), scenarioId.value(), scenario.name());
 
         ExecutionState state = createInitialState(executionId, scenarioId, plan.initialContext());
-        ActiveExecution exec = new ActiveExecution(state);
+        var exec = new ActiveExecution(state);
         activeExecutions.put(executionId.value(), exec);
 
         eventPublisher.publishEvent(new ScenarioStarted(executionId, scenarioId, Instant.now()));
@@ -312,7 +312,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         log.info("action=dispatch_dag_level phase={} steps={} executionId={}",
                 phase, steps.size(), executionId.value());
 
-        List<PendingDispatch> dispatched = new ArrayList<>();
+        var dispatched = new ArrayList<PendingDispatch>();
 
         for (ExecutionStep execStep : steps) {
             if (cancelled.get()) break;
@@ -329,7 +329,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
             // 3. Create request (broadcast, pas de targetAgentId)
             MessageId messageId = MessageId.generate();
             RetryPolicy retry = stepDef.retryPolicy() != null ? stepDef.retryPolicy() : RetryPolicy.defaults();
-            TaskExecutionRequest request = new TaskExecutionRequest(
+            var request = new TaskExecutionRequest(
                     messageId, executionId, stepDef, partialCtx, Instant.now(), retry);
 
             // 4. Dispatch
@@ -337,7 +337,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
 
             // 5. Track
             tracker.trackDispatched(messageId, stepDef.id(), executionId);
-            PendingDispatch pending = new PendingDispatch(messageId, stepDef.id());
+            var pending = new PendingDispatch(messageId, stepDef.id());
             ActiveExecution exec = activeExecutions.get(executionId.value());
             if (exec != null) {
                 exec.pendingDispatches.put(messageId, pending);
@@ -603,8 +603,8 @@ public class RemoteExecutionEngine implements ExecutionEngine {
     private record LevelClassification(List<ExecutionStep> runnable, List<ExecutionStep> skippable) {}
 
     private LevelClassification classifySteps(List<ExecutionStep> steps, ExecutionContext context) {
-        List<ExecutionStep> runnable = new ArrayList<>();
-        List<ExecutionStep> skippable = new ArrayList<>();
+        var runnable = new ArrayList<ExecutionStep>();
+        var skippable = new ArrayList<ExecutionStep>();
         for (ExecutionStep step : steps) {
             if (allDependenciesSatisfied(step, context)) {
                 runnable.add(step);

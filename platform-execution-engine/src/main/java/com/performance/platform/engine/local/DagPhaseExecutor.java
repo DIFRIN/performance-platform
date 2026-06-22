@@ -141,8 +141,8 @@ public class DagPhaseExecutor {
      * dependencies satisfied) and those that must be skipped (failed dependency).
      */
     private LevelClassification classifySteps(List<ExecutionStep> steps, ExecutionContext context) {
-        List<ExecutionStep> runnable = new ArrayList<>();
-        List<ExecutionStep> skippable = new ArrayList<>();
+        var runnable = new ArrayList<ExecutionStep>();
+        var skippable = new ArrayList<ExecutionStep>();
         for (ExecutionStep step : steps) {
             if (allDependenciesSatisfied(step, context)) {
                 runnable.add(step);
@@ -174,7 +174,7 @@ public class DagPhaseExecutor {
         boolean anyFailed = false;
 
         try (var vtExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
-            List<Future<StepExecutionResult>> futures = new ArrayList<>();
+            var futures = new ArrayList<Future<StepExecutionResult>>();
 
             for (ExecutionStep step : steps) {
                 ExecutionContext ctxAtStart = currentContext;

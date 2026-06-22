@@ -214,14 +214,14 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
 
             boolean passed = operator.evaluate(actualValue, expectedValue);
 
-            Map<String, Object> details = new HashMap<>();
+            var details = new HashMap<String, Object>();
             details.put("metric", metricName);
             details.put("mockUrl", mockUrl);
             if (refTaskId != null && !refTaskId.isBlank()) details.put("refTaskId", refTaskId);
             if (targetName != null && !targetName.isBlank()) details.put("target", targetName);
             if (endpoint != null) details.put("endpoint", endpoint);
 
-            Evidence evidence = new Evidence(
+            var evidence = new Evidence(
                     actualValue,
                     expectedValue,
                     operator,

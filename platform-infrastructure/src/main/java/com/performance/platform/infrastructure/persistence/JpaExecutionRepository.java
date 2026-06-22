@@ -94,10 +94,10 @@ public class JpaExecutionRepository implements ExecutionRepository {
                 .orElseThrow(() -> new IllegalStateException(
                         "Execution not found: " + id.value()));
 
-        Map<String, String> phases = new LinkedHashMap<>(entity.phases());
+        var phases = new LinkedHashMap<String, String>(entity.phases());
         phases.put(phase.name(), status.name());
 
-        ExecutionStateEntity updated = new ExecutionStateEntity(
+        var updated = new ExecutionStateEntity(
                 entity.id(), entity.scenarioId(), entity.status(),
                 phases, entity.context(),
                 entity.startedAt(), Instant.now());

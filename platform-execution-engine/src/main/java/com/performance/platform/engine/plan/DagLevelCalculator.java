@@ -47,7 +47,7 @@ public final class DagLevelCalculator {
         }
 
         // Etape 1 : collecter tous les nœuds (steps + dependances referencees)
-        Set<TaskId> allNodes = new LinkedHashSet<>();
+        var allNodes = new LinkedHashSet<TaskId>();
         for (StepDefinition step : steps) {
             allNodes.add(step.id());
             List<TaskId> deps = step.dependsOn();
@@ -58,8 +58,8 @@ public final class DagLevelCalculator {
 
         // Etape 2 : construire le graphe et calculer les degres entrants
         // Arete : dep → step (la dependance doit s'executer avant le step)
-        Map<TaskId, Integer> inDegree = new LinkedHashMap<>();
-        Map<TaskId, List<TaskId>> adjacency = new LinkedHashMap<>();
+        var inDegree = new LinkedHashMap<TaskId, Integer>();
+        var adjacency = new LinkedHashMap<TaskId, List<TaskId>>();
 
         for (TaskId node : allNodes) {
             inDegree.put(node, 0);
@@ -76,8 +76,8 @@ public final class DagLevelCalculator {
         }
 
         // Etape 3 : BFS (Kahn) depuis les nœuds sans arete entrante
-        Map<TaskId, Integer> dagLevels = new LinkedHashMap<>();
-        Queue<TaskId> queue = new ArrayDeque<>();
+        var dagLevels = new LinkedHashMap<TaskId, Integer>();
+        var queue = new ArrayDeque<TaskId>();
 
         for (TaskId node : allNodes) {
             if (inDegree.get(node) == 0) {

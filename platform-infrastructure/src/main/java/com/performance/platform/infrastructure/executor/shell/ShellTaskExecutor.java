@@ -312,15 +312,15 @@ public class ShellTaskExecutor implements TaskExecutor, StatefulResourceCleaner 
      *         directory does not exist or is not a directory
      */
     private static ProcessBuilder buildProcessBuilder(ShellParameters params) {
-        List<String> fullCommand = new ArrayList<>();
+        var fullCommand = new ArrayList<String>();
         fullCommand.add(params.command());
         if (params.args() != null) {
             fullCommand.addAll(params.args());
         }
 
-        ProcessBuilder pb = new ProcessBuilder(fullCommand);
+        var pb = new ProcessBuilder(fullCommand);
         if (params.workingDir() != null && !params.workingDir().isBlank()) {
-            File dir = new File(params.workingDir());
+            var dir = new File(params.workingDir());
             if (!dir.isDirectory()) {
                 return null;
             }

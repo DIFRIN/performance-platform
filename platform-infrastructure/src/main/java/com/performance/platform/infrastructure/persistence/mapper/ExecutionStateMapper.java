@@ -104,7 +104,7 @@ public class ExecutionStateMapper {
      * nested {@code Map}).</p>
      */
     Map<String, Object> contextToMap(ExecutionContext ctx) {
-        Map<String, Object> map = new LinkedHashMap<>();
+        var map = new LinkedHashMap<String, Object>();
         map.put("executionId", ctx.executionId().value());
         map.put("scenarioId", ctx.scenarioId().value());
 
@@ -125,7 +125,7 @@ public class ExecutionStateMapper {
      * {@link Duration} to ISO-8601 string and {@link Throwable#getMessage()} to string.
      */
     Map<String, Object> taskResultToMap(TaskResult result) {
-        Map<String, Object> map = new LinkedHashMap<>();
+        var map = new LinkedHashMap<String, Object>();
         map.put("taskId", result.taskId().value());
         map.put("taskName", result.taskName());
         map.put("status", result.status().name());

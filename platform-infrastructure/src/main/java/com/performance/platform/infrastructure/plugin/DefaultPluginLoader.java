@@ -75,8 +75,8 @@ public class DefaultPluginLoader implements PluginLoader {
 
         log.info("action=plugin_loading_start pluginDirectory={}", pluginDirectory.toAbsolutePath());
 
-        List<PluginWarning> allWarnings = new ArrayList<>();
-        List<PluginError> allErrors = new ArrayList<>();
+        var allWarnings = new ArrayList<PluginWarning>();
+        var allErrors = new ArrayList<PluginError>();
         int jarsLoaded = 0;
         int executorsRegistered = 0;
 
@@ -87,7 +87,7 @@ public class DefaultPluginLoader implements PluginLoader {
             return new PluginLoadResult(0, 0, List.of(), allWarnings, allErrors);
         }
 
-        List<TaskExecutor> allExecutors = new ArrayList<>();
+        var allExecutors = new ArrayList<TaskExecutor>();
 
         for (Path jarPath : jarFiles) {
             String jarName = jarPath.getFileName().toString();
@@ -117,7 +117,7 @@ public class DefaultPluginLoader implements PluginLoader {
             }
         }
 
-        PluginLoadResult result = new PluginLoadResult(jarsLoaded, executorsRegistered,
+        var result = new PluginLoadResult(jarsLoaded, executorsRegistered,
                 allExecutors, allWarnings, allErrors);
 
         log.info("action=plugin_loading_complete jarsLoaded={} executorsRegistered={} warnings={} errors={}",
@@ -131,7 +131,7 @@ public class DefaultPluginLoader implements PluginLoader {
      * ordre de chargement deterministe.
      */
     private List<Path> listJarFiles(Path directory) {
-        List<Path> jars = new ArrayList<>();
+        var jars = new ArrayList<Path>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, "*.jar")) {
             for (Path entry : stream) {
                 jars.add(entry);
@@ -159,7 +159,7 @@ public class DefaultPluginLoader implements PluginLoader {
     private List<TaskExecutor> loadExecutorsFromJar(Path jarPath,
                                                      List<PluginWarning> warnings,
                                                      List<PluginError> errors) throws IOException {
-        List<TaskExecutor> executors = new ArrayList<>();
+        var executors = new ArrayList<TaskExecutor>();
         String jarName = jarPath.getFileName().toString();
 
         URLClassLoader classLoader = null;

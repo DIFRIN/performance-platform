@@ -248,7 +248,7 @@ public class TaskExecutionPipeline {
      * et {@link ExecutionContext#getFirst}.
      */
     static ExecutionContext toExecutionContext(PartialExecutionContext partial) {
-        Map<String, Map<String, TaskResult>> store = new HashMap<>();
+        var store = new HashMap<String, Map<String, TaskResult>>();
 
         for (var entry : partial.store().entrySet()) {
             var taskId = entry.getKey();

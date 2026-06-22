@@ -198,11 +198,11 @@ public class DeviceCheckTaskExecutor implements TaskExecutor, StatefulResourceCl
 
             consumer.subscribe(List.of(topic));
 
-            AtomicInteger messagesConsumed = new AtomicInteger(0);
-            AtomicInteger dbHits = new AtomicInteger(0);
-            AtomicInteger httpCalls = new AtomicInteger(0);
-            AtomicInteger messagesFailed = new AtomicInteger(0);
-            AtomicInteger messagesSkipped = new AtomicInteger(0);
+            var messagesConsumed = new AtomicInteger(0);
+            var dbHits = new AtomicInteger(0);
+            var httpCalls = new AtomicInteger(0);
+            var messagesFailed = new AtomicInteger(0);
+            var messagesSkipped = new AtomicInteger(0);
 
             long deadline = System.currentTimeMillis() + timeoutMs;
             long pollTimeout = Math.max(100, pollBatchMs);
@@ -376,7 +376,7 @@ public class DeviceCheckTaskExecutor implements TaskExecutor, StatefulResourceCl
 
     private KafkaConsumer<String, String> createKafkaConsumer(String bootstrapServers,
                                                               String groupId) {
-        Properties props = new Properties();
+        var props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());

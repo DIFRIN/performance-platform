@@ -14,7 +14,7 @@ public class KafkaClusterConfiguration {
 
     @Bean
     public KafkaClusterRegistry kafkaClusterRegistry(PlatformKafkaProperties props) {
-        KafkaClusterRegistry registry = new KafkaClusterRegistry(props.kafkaClusters());
+        var registry = new KafkaClusterRegistry(props.kafkaClusters());
         if (props.kafkaClusters().isEmpty()) {
             log.warn("action=no_kafka_cluster_configured prefix=platform.kafka-clusters");
         }

@@ -123,11 +123,11 @@ public class WireMockAssertionExecutor implements AssertionExecutor {
             boolean passed = operator.evaluate(actualCount, expectedCount);
 
             // 5. Build evidence
-            Map<String, Object> details = new HashMap<>();
+            var details = new HashMap<String, Object>();
             details.put("mockUrl", mockUrl);
             if (endpoint != null) details.put("endpoint", endpoint);
 
-            Evidence evidence = new Evidence(
+            var evidence = new Evidence(
                     actualCount,
                     expectedCount,
                     operator,

@@ -94,7 +94,7 @@ public class GatlingMetricAssertionExecutor implements AssertionExecutor {
             boolean passed = operator.evaluate(actualValue, expectedValue);
 
             // 7. Construire l'evidence
-            Map<String, Object> details = new HashMap<>();
+            var details = new HashMap<String, Object>();
             details.put("simulationClass", injectionResult.simulationClass());
             details.put("totalRequests", injectionResult.totalRequests());
             details.put("metric", metricName);
@@ -102,7 +102,7 @@ public class GatlingMetricAssertionExecutor implements AssertionExecutor {
             details.put("refTaskId", params.getOrDefault(PARAM_REF_TASK_ID,
                     injectionResult.taskId().value()));
 
-            Evidence evidence = new Evidence(
+            var evidence = new Evidence(
                     actualValue,
                     expectedValue,
                     operator,
