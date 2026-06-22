@@ -114,7 +114,7 @@
 | ISSUE-106 (old, superseded) | http-api-mock-agent-distributed.yaml scenario | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-106 below |
 | ISSUE-107 (old, superseded) | docker-compose-wiremock-agent.yaml | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-107 below |
 | ISSUE-108 (old, superseded) | README Mock-as-Agent + Device example-only | DELETED | PDR-025-v1 | SUPERSEDED — see new ISSUE-108 below |
-| ISSUE-103 | Remove standalone WireMock from docker-compose-sut.yaml | WAITING | PDR-025 | - |
+| ISSUE-103 | Remove standalone WireMock from docker-compose-sut.yaml | APPROVED | PDR-025 | - |
 | ISSUE-104 | Delete DevicePopulationTaskExecutor + DeviceCheckTaskExecutor | WAITING | PDR-025 | - |
 | ISSUE-105 | http-api-mock-agent-local.yaml scenario (LOCAL mode) | WAITING | PDR-025 | ISSUE-103 |
 | ISSUE-106 | http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED) | WAITING | PDR-025 | ISSUE-105 |
@@ -124,7 +124,7 @@
 | ISSUE-110 | Clean device entries from interfaces-registry | WAITING | PDR-025 | ISSUE-104,109 |
 | ISSUE-111 | AgentProperties @ConfigurationProperties record | DONE | PDR-026 | — |
 | ISSUE-112 | Create AgentRuntimeConfiguration @Configuration | DONE | PDR-026 | ISSUE-111 |
-| ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | APPROVED | PDR-026 | ISSUE-112 |
+| ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | DONE | PDR-026 | ISSUE-112 |
 | ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | WAITING | PDR-026 | ISSUE-112 |
 | ISSUE-115 | Add agent.supported-tasks to application-agent.yaml | WAITING | PDR-026 | ISSUE-111 |
 | ISSUE-116 | Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files | WAITING | PDR-026 | ISSUE-111 |
@@ -547,3 +547,7 @@
 | 2026-06-22 | ISSUE-113 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-22 | ISSUE-113 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-113 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-113 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-103 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-22 | ISSUE-103 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-22 | ISSUE-103 | IN_REVIEW → APPROVED | Reviewer approved |
