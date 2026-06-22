@@ -2,7 +2,7 @@
 
 **PDR** : PDR-025
 **Module** : `platform-deployment`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P0 (bloquant — WireMock standalone cree une confusion architecturale)
 **Bloquee par** : aucune
 **Estime** : S (< 1h)

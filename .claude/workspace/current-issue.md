@@ -1,11 +1,11 @@
-# ISSUE-103: Remove standalone WireMock from docker-compose-sut.yaml
+# ISSUE-104: Delete DevicePopulationTaskExecutor + DeviceCheckTaskExecutor from platform-infrastructure
 **Status**: APPROVED
 **PDR**: PDR-025
-**Module**: platform-deployment
-**Started**: 2026-06-22T20:46+02:00
-**IssueFile**: issues/ISSUE-103-remove-standalone-wiremock-sut.md
+**Module**: platform-infrastructure
+**Started**: 2026-06-22T20:53+02:00
+**IssueFile**: issues/ISSUE-104-delete-device-executors-from-infrastructure.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-103-remove-standalone-wiremock-sut.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-104-delete-device-executors-from-infrastructure.md`
 
 ## Reviewer Feedback
 (None yet)
