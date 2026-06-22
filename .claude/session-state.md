@@ -9,8 +9,8 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-22
-**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
-**Issue active** : aucune (ISSUE-101 DONE)
+**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Issue active** : ISSUE-102
 **Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
 **PDR parent** : PDR-024
 
@@ -19,28 +19,23 @@
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-101: APPROVED. 0 bloquant, 0 recommandation. 4 parse tests OK, BUILD SUCCESS (188 total).
+Reviewer — ISSUE-100 APPROVED: 0 bloquant, 1 recommandation PENDING ([PRECISION] agentTags silencieusement ignores). 4 parse tests OK, BUILD SUCCESS.
 **Prochaine action** :
-Developer — Commencer la prochaine Issue (ISSUE-100 reste WAITING, ISSUE-102 WAITING, verifier ISSUE-090/091/093/095)
+Developer — Appliquer recommandation [PRECISION] ou deferer a ISSUE-103, puis re-review
 **Fichiers modifies** (cette session) :
-- platform-deployment/examples/scenarios/device-api-local.yaml (ISSUE-101)
-- platform-deployment/examples/scenarios/device-api-distributed.yaml (ISSUE-101)
-- platform-app/src/main/resources/application-examples-local.yaml (ISSUE-101)
-- platform-app/src/main/resources/sql/seed-sut-devices.sql (ISSUE-101)
-- platform-scenario-dsl/src/test/.../IotScenarioParseTest.java (ISSUE-101)
-- .claude/progress.md, .claude/session-state.md
+- .claude/progress.md
+- .claude/session-state.md
 **Blocages** : aucun
 
 ---
 
 ## Historique Sessions (1 ligne par session)
 
-## Historique Sessions (1 ligne par session)
-
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
+| 2026-06-22 | Developer | ISSUE-100 | Scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) + application-examples-local.yaml. 4 parse tests OK, 188 total OK, BUILD SUCCESS, 0 inline URL, agentTags OK. | IN REVIEW |
 | 2026-06-22 | Developer | ISSUE-101 | Scenarios YAML device-api (LOCAL + DISTRIBUTED), application-examples-local.yaml (datasources.sut-db + device-api), seed-sut-devices.sql, 4 parse tests OK. | IN REVIEW |
-| 2026-06-22 | Developer | ISSUE-100 | Scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED), application-examples-local.yaml. 3 fichiers YAML + 2 tests. 186 tests OK, BUILD SUCCESS. | IN REVIEW |
+| 2026-06-22 | Developer | ISSUE-100 | Scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED), application-examples-local.yaml. 4 fichiers YAML + 2 tests. 186 tests OK, BUILD SUCCESS. | IN REVIEW |
 | 2026-06-20 | Developer | ISSUE-077 | platform-app: pom.xml (11 modules) + @SpringBootApplication + @Modulith + 4 tests, fat JAR 131 MB. | IN REVIEW |
 | 2026-06-20 | Reviewer | ISSUE-077 | Review APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. Commit. | DONE |
 | 2026-06-20 | Developer | ISSUE-078 | RuntimeMode + RuntimeRole + RuntimeModeResolver + EnvironmentPostProcessor + 24 tests, 28 total OK. | IN REVIEW |
