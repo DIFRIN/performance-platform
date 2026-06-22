@@ -119,15 +119,15 @@ public class DeviceCheckTaskExecutor implements TaskExecutor, StatefulResourceCl
 
         long startNanos = System.nanoTime();
         ExecutionId executionId = context.executionId();
-        String topic = Objects.toString(step.parameters().get("topic"), null);
-        String bootstrapServers = Objects.toString(step.parameters().get("bootstrapServers"), null);
-        String groupId = Objects.toString(step.parameters().get("groupId"), "device-check-consumer");
+        var topic = Objects.toString(step.parameters().get("topic"), null);
+        var bootstrapServers = Objects.toString(step.parameters().get("bootstrapServers"), null);
+        var groupId = Objects.toString(step.parameters().get("groupId"), "device-check-consumer");
         int maxMessages = parseParamInt(step, "maxMessages", DEFAULT_MAX_MESSAGES);
         String datasourceName = (String) step.parameters().get("datasource");
         String table = (String) step.parameters().get("table");
-        String deviceIdColumn = Objects.toString(step.parameters().get("deviceIdColumn"), "device_id");
-        String mockUrl = Objects.toString(step.parameters().get("mockUrl"), null);
-        String mockEndpoint = Objects.toString(step.parameters().get("mockEndpoint"), "/api/devices");
+        var deviceIdColumn = Objects.toString(step.parameters().get("deviceIdColumn"), "device_id");
+        var mockUrl = Objects.toString(step.parameters().get("mockUrl"), null);
+        var mockEndpoint = Objects.toString(step.parameters().get("mockEndpoint"), "/api/devices");
         int pollBatchMs = parseParamInt(step, "pollBatchMs", DEFAULT_POLL_BATCH_MS);
         long timeoutMs = step.timeout() != null ? step.timeout().toMillis() : DEFAULT_TIMEOUT_MS;
 
@@ -350,7 +350,7 @@ public class DeviceCheckTaskExecutor implements TaskExecutor, StatefulResourceCl
             throw new RuntimeException("Failed to serialize payload for device_id=" + deviceId, e);
         }
 
-        HttpRequest request = HttpRequest.newBuilder()
+        var request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
                 .header("Content-Type", "application/json")

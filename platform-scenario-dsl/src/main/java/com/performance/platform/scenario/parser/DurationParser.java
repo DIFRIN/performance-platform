@@ -30,7 +30,7 @@ public final class DurationParser {
         }
 
         String trimmed = input.trim();
-        Matcher matcher = DURATION_PATTERN.matcher(trimmed);
+        var matcher = DURATION_PATTERN.matcher(trimmed);
         if (!matcher.matches()) {
             throw new IllegalArgumentException(
                 "Invalid duration format: '" + input + "'. Expected format: <number><unit> where unit is ms, s, m, or h (e.g., 30s, 5m, 2h, 500ms)"

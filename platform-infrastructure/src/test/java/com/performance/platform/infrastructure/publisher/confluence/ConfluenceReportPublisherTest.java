@@ -210,7 +210,7 @@ class ConfluenceReportPublisherTest {
     @Test
     @DisplayName("should build valid Confluence JSON payload")
     void shouldBuildValidPayload() {
-        String payload = ConfluenceReportPublisher.buildConfluencePayload(
+        var payload = ConfluenceReportPublisher.buildConfluencePayload(
                 "Test Title", "SPACE", "123", "<p>body</p>");
 
         assertThat(payload).contains("\"type\":\"page\"");
@@ -223,7 +223,7 @@ class ConfluenceReportPublisherTest {
     @Test
     @DisplayName("should build payload without ancestors when parentPageId is blank")
     void shouldBuildPayloadWithoutAncestors() {
-        String payload = ConfluenceReportPublisher.buildConfluencePayload(
+        var payload = ConfluenceReportPublisher.buildConfluencePayload(
                 "Title", "SPACE", "", "<p>body</p>");
 
         assertThat(payload).doesNotContain("ancestors");
@@ -232,7 +232,7 @@ class ConfluenceReportPublisherTest {
     @Test
     @DisplayName("should escape JSON special characters in payload")
     void shouldEscapeJsonSpecialChars() {
-        String payload = ConfluenceReportPublisher.buildConfluencePayload(
+        var payload = ConfluenceReportPublisher.buildConfluencePayload(
                 "Title \"quoted\"", "SPACE", "", "<p>body</p>");
 
         assertThat(payload).contains("\\\"quoted\\\"");
@@ -245,7 +245,7 @@ class ConfluenceReportPublisherTest {
     @Test
     @DisplayName("should build HTML storage body with report data")
     void shouldBuildStorageBody() {
-        String body = ConfluenceReportPublisher.buildStorageBody(report);
+        var body = ConfluenceReportPublisher.buildStorageBody(report);
 
         assertThat(body).contains("<h1>Performance Report: test-scenario</h1>");
         assertThat(body).contains("<h2>Execution Summary</h2>");
@@ -273,7 +273,7 @@ class ConfluenceReportPublisherTest {
                 List.of(), List.of(), List.of(),
                 Verdict.SUCCESS, "minimal", Instant.now(), Duration.ofSeconds(1));
 
-        String body = ConfluenceReportPublisher.buildStorageBody(minimalReport);
+        var body = ConfluenceReportPublisher.buildStorageBody(minimalReport);
 
         assertThat(body).doesNotContain("<h2>Preparation</h2>");
         assertThat(body).doesNotContain("<h2>Injection</h2>");

@@ -302,7 +302,7 @@ class HttpExecutionTransportTest {
             transport.dispatchTask(request);
 
             assertThat(receivedBodies).hasSize(1);
-            String body = new String(receivedBodies.get(0));
+            var body = new String(receivedBodies.get(0));
             // Verify it's valid JSON and contains key fields
             assertThat(body).contains("\"taskName\"");
             assertThat(body).contains("load-test");
@@ -572,7 +572,7 @@ class HttpExecutionTransportTest {
             transport.dispatchTask(request);
 
             assertThat(receivedBodies).hasSize(1);
-            String body = new String(receivedBodies.get(0));
+            var body = new String(receivedBodies.get(0));
             assertThat(body).contains("http-request");
             assertThat(body).doesNotContain("\"@type\"");
         }

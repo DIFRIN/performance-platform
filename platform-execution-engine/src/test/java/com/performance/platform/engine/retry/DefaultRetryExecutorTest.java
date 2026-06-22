@@ -23,7 +23,7 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should return result on first attempt")
         void shouldReturnResultOnFirstAttempt() {
-            RetryPolicy policy = RetryPolicy.defaults();
+            var policy = RetryPolicy.defaults();
 
             String result = executor.executeWithRetry(policy, () -> "ok");
 
@@ -33,8 +33,8 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should succeed after transient failures")
         void shouldSucceedAfterTransientFailures() {
-            RetryPolicy policy = RetryPolicy.defaults();
-            AtomicInteger attempts = new AtomicInteger(0);
+            var policy = RetryPolicy.defaults();
+            var attempts = new AtomicInteger(0);
 
             String result = executor.executeWithRetry(policy, () -> {
                 int current = attempts.incrementAndGet();
@@ -51,8 +51,8 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should succeed with custom maxAttempts")
         void shouldSucceedWithCustomMaxAttempts() {
-            RetryPolicy policy = new RetryPolicy(5, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), Set.of());
-            AtomicInteger attempts = new AtomicInteger(0);
+            var policy = new RetryPolicy(5, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), Set.of());
+            var attempts = new AtomicInteger(0);
 
             String result = executor.executeWithRetry(policy, () -> {
                 int current = attempts.incrementAndGet();
@@ -74,7 +74,7 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should propagate last exception when maxAttempts exhausted")
         void shouldPropagateLastExceptionWhenMaxAttemptsExhausted() {
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), Set.of());
+            var policy = new RetryPolicy(3, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), Set.of());
             String expectedMessage = "Persistent failure";
 
             RuntimeException exception = assertThrows(RuntimeException.class,
@@ -88,8 +88,8 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should execute exactly maxAttempts times")
         void shouldExecuteExactlyMaxAttemptsTimes() {
-            RetryPolicy policy = new RetryPolicy(4, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), Set.of());
-            AtomicInteger attemptCount = new AtomicInteger(0);
+            var policy = new RetryPolicy(4, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), Set.of());
+            var attemptCount = new AtomicInteger(0);
 
             assertThrows(RuntimeException.class,
                     () -> executor.executeWithRetry(policy, () -> {
@@ -104,10 +104,10 @@ class DefaultRetryExecutorTest {
         @DisplayName("Should not retry on non-retryable exception")
         void shouldNotRetryOnNonRetryableException() {
             Set<Class<? extends Exception>> retryable = Set.of(IllegalStateException.class);
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), retryable);
+            var policy = new RetryPolicy(3, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), retryable);
 
             String expectedMessage = "Non-retryable error";
-            AtomicInteger attemptCount = new AtomicInteger(0);
+            var attemptCount = new AtomicInteger(0);
 
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> executor.executeWithRetry(policy, () -> {
@@ -123,8 +123,8 @@ class DefaultRetryExecutorTest {
         @DisplayName("Should retry on matching retryable exception")
         void shouldRetryOnMatchingRetryableException() {
             Set<Class<? extends Exception>> retryable = Set.of(IllegalStateException.class);
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), retryable);
-            AtomicInteger attempts = new AtomicInteger(0);
+            var policy = new RetryPolicy(3, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), retryable);
+            var attempts = new AtomicInteger(0);
 
             assertThrows(IllegalStateException.class,
                     () -> executor.executeWithRetry(policy, () -> {
@@ -139,8 +139,8 @@ class DefaultRetryExecutorTest {
         @DisplayName("Should retry on subclass of retryable exception")
         void shouldRetryOnSubclassOfRetryableException() {
             Set<Class<? extends Exception>> retryable = Set.of(RuntimeException.class);
-            RetryPolicy policy = new RetryPolicy(2, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), retryable);
-            AtomicInteger attempts = new AtomicInteger(0);
+            var policy = new RetryPolicy(2, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), retryable);
+            var attempts = new AtomicInteger(0);
 
             assertThrows(IllegalArgumentException.class,
                     () -> executor.executeWithRetry(policy, () -> {
@@ -154,8 +154,8 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should treat empty retryableExceptions as retry-all")
         void shouldTreatEmptyRetryableExceptionsAsRetryAll() {
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), Set.of());
-            AtomicInteger attempts = new AtomicInteger(0);
+            var policy = new RetryPolicy(3, Duration.ofMillis(10), 2.0, Duration.ofSeconds(10), Set.of());
+            var attempts = new AtomicInteger(0);
 
             assertThrows(IllegalArgumentException.class,
                     () -> executor.executeWithRetry(policy, () -> {
@@ -174,7 +174,7 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should compute correct delay with default policy (multiplier=2.0)")
         void shouldComputeCorrectDelayWithDefaultPolicy() {
-            RetryPolicy policy = RetryPolicy.defaults(); // initialDelay=1s, multiplier=2.0, maxDelay=30s
+            var policy = RetryPolicy.defaults(); // initialDelay=1s, multiplier=2.0, maxDelay=30s
 
             // Before attempt 1: initialDelay * 2^0 = 1000ms
             assertEquals(1000L, executor.computeDelayMs(policy, 1));
@@ -193,7 +193,7 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should cap delay at maxDelay")
         void shouldCapDelayAtMaxDelay() {
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(100), 10.0, Duration.ofMillis(500), Set.of());
+            var policy = new RetryPolicy(3, Duration.ofMillis(100), 10.0, Duration.ofMillis(500), Set.of());
 
             // 100 * 10^0 = 100
             assertEquals(100L, executor.computeDelayMs(policy, 1));
@@ -206,7 +206,7 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should compute correct delay with multiplier=1.0 (constant backoff)")
         void shouldComputeConstantDelayWithMultiplierOne() {
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(200), 1.0, Duration.ofSeconds(10), Set.of());
+            var policy = new RetryPolicy(3, Duration.ofMillis(200), 1.0, Duration.ofSeconds(10), Set.of());
 
             assertEquals(200L, executor.computeDelayMs(policy, 1));
             assertEquals(200L, executor.computeDelayMs(policy, 2));
@@ -216,7 +216,7 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should compute correct delay with multiplier=3.0")
         void shouldComputeCorrectDelayWithMultiplierThree() {
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(50), 3.0, Duration.ofSeconds(10), Set.of());
+            var policy = new RetryPolicy(3, Duration.ofMillis(50), 3.0, Duration.ofSeconds(10), Set.of());
 
             // 50 * 3^0 = 50
             assertEquals(50L, executor.computeDelayMs(policy, 1));
@@ -236,8 +236,8 @@ class DefaultRetryExecutorTest {
         void totalElapsedTimeShouldBeApproximatelySumOfBackoffDelays() {
             // maxAttempts=3, initialDelay=50ms, multiplier=2.0, maxDelay=200ms
             // Expected sleeps: 50ms + 100ms = 150ms total
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(50), 2.0, Duration.ofMillis(200), Set.of());
-            AtomicInteger attempts = new AtomicInteger(0);
+            var policy = new RetryPolicy(3, Duration.ofMillis(50), 2.0, Duration.ofMillis(200), Set.of());
+            var attempts = new AtomicInteger(0);
 
             long start = System.currentTimeMillis();
 
@@ -259,7 +259,7 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("First-attempt success should have negligible elapsed time")
         void firstAttemptSuccessShouldHaveNegligibleElapsedTime() {
-            RetryPolicy policy = new RetryPolicy(3, Duration.ofMillis(1000), 2.0, Duration.ofSeconds(30), Set.of());
+            var policy = new RetryPolicy(3, Duration.ofMillis(1000), 2.0, Duration.ofSeconds(30), Set.of());
 
             long start = System.currentTimeMillis();
             String result = executor.executeWithRetry(policy, () -> "instant");
@@ -277,7 +277,7 @@ class DefaultRetryExecutorTest {
         @Test
         @DisplayName("Should work with maxAttempts=1 (no retry)")
         void shouldWorkWithMaxAttemptsOne() {
-            RetryPolicy policy = new RetryPolicy(1, Duration.ofMillis(100), 2.0, Duration.ofSeconds(10), Set.of());
+            var policy = new RetryPolicy(1, Duration.ofMillis(100), 2.0, Duration.ofSeconds(10), Set.of());
 
             // Success case
             String result = executor.executeWithRetry(policy, () -> "ok");

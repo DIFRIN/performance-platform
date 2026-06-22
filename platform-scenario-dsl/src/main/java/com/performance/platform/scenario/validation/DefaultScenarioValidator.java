@@ -123,7 +123,7 @@ public class DefaultScenarioValidator implements ScenarioValidator {
 
         // --- Detection de cycle DAG ---
         Map<String, List<String>> dependsOnMap = buildDependsOnMap(scenario);
-        DagCycleDetector.DagAnalysisResult dagResult = DagCycleDetector.analyze(dependsOnMap);
+        var dagResult = DagCycleDetector.analyze(dependsOnMap);
 
         if (dagResult.hasCycle()) {
             errors.add(new ValidationError("dependsOn",

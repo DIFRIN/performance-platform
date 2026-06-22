@@ -61,7 +61,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-01: valid-minimal.yaml — parser only")
         void parseMinimalScenario() {
-            Path file = SCENARIOS_DIR.resolve("valid-minimal.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-minimal.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             assertNotNull(scenario);
@@ -80,7 +80,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-02: valid-minimal.yaml — full use case (parser + validator)")
         void parseMinimalScenarioWithValidation() {
-            Path file = SCENARIOS_DIR.resolve("valid-minimal.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-minimal.yaml");
             String yamlContent = readFileAsString(file);
             ScenarioDefinition scenario = useCase.parse(yamlContent);
 
@@ -91,7 +91,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-03: valid-full.yaml — all features present")
         void parseFullScenario() {
-            Path file = SCENARIOS_DIR.resolve("valid-full.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-full.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             assertNotNull(scenario);
@@ -121,7 +121,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-04: valid-full.yaml — full use case with validation passes")
         void parseFullScenarioWithValidation() {
-            Path file = SCENARIOS_DIR.resolve("valid-full.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-full.yaml");
             String yamlContent = readFileAsString(file);
             ScenarioDefinition scenario = useCase.parse(yamlContent);
 
@@ -132,7 +132,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-05: valid-full.yaml — dependsOn ordering is preserved")
         void parseFullScenarioDependsOn() {
-            Path file = SCENARIOS_DIR.resolve("valid-full.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-full.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             StepDefinition seedStep = scenario.steps().stream()
@@ -150,7 +150,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-06: valid-full.yaml — retry policy is parsed correctly")
         void parseFullScenarioRetryPolicy() {
-            Path file = SCENARIOS_DIR.resolve("valid-full.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-full.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             StepDefinition loadStep = scenario.steps().stream()
@@ -164,7 +164,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-07: valid-distributed.yaml — DISTRIBUTED mode")
         void parseDistributedScenario() {
-            Path file = SCENARIOS_DIR.resolve("valid-distributed.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-distributed.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             assertNotNull(scenario);
@@ -177,7 +177,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-08: valid-distributed.yaml — load models are parsed")
         void parseDistributedLoadModels() {
-            Path file = SCENARIOS_DIR.resolve("valid-distributed.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-distributed.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             assertNotNull(scenario.loadModels().get("constant-load"));
@@ -196,7 +196,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-10: invalid-missing-id.yaml — should reject")
         void rejectMissingId() {
-            Path file = SCENARIOS_DIR.resolve("invalid-missing-id.yaml");
+            var file = SCENARIOS_DIR.resolve("invalid-missing-id.yaml");
 
             assertThrows(ScenarioParsingException.class, () -> parser.parseFile(file));
         }
@@ -204,7 +204,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-11: invalid-cycle.yaml — should detect DAG cycle via validator")
         void rejectCycleInDependencies() throws Exception {
-            Path file = SCENARIOS_DIR.resolve("invalid-cycle.yaml");
+            var file = SCENARIOS_DIR.resolve("invalid-cycle.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
             // Parser accepts it (structural validity), validator catches the cycle
             var result = validator.validate(scenario);
@@ -221,7 +221,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-12: invalid-self-dependency.yaml — should reject self-dependency")
         void rejectSelfDependency() throws Exception {
-            Path file = SCENARIOS_DIR.resolve("invalid-self-dependency.yaml");
+            var file = SCENARIOS_DIR.resolve("invalid-self-dependency.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
             var result = validator.validate(scenario);
 
@@ -231,7 +231,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-13: invalid-duplicate-ids.yaml — should reject duplicate IDs")
         void rejectDuplicateIds() throws Exception {
-            Path file = SCENARIOS_DIR.resolve("invalid-duplicate-ids.yaml");
+            var file = SCENARIOS_DIR.resolve("invalid-duplicate-ids.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
             var result = validator.validate(scenario);
 
@@ -241,7 +241,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-14: invalid-bad-version.yaml — should reject bad version via validator")
         void rejectBadVersion() throws Exception {
-            Path file = SCENARIOS_DIR.resolve("invalid-bad-version.yaml");
+            var file = SCENARIOS_DIR.resolve("invalid-bad-version.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
             var result = validator.validate(scenario);
 
@@ -253,7 +253,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-15: invalid-missing-phase.yaml — parser rejects missing phase")
         void handleMissingPhase() {
-            Path file = SCENARIOS_DIR.resolve("invalid-missing-phase.yaml");
+            var file = SCENARIOS_DIR.resolve("invalid-missing-phase.yaml");
             assertThrows(ScenarioParsingException.class,
                     () -> parser.parseFile(file));
         }
@@ -263,7 +263,7 @@ class ScenarioDslContractE2ETest {
         void handleUnknownTaskName() throws Exception {
             // Unknown task names are accepted at parse time
             // (task resolution happens at execution time)
-            Path file = SCENARIOS_DIR.resolve("invalid-unknown-task.yaml");
+            var file = SCENARIOS_DIR.resolve("invalid-unknown-task.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             assertNotNull(scenario);
@@ -302,7 +302,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-21: Scenario with no load models should parse")
         void parseScenarioWithoutLoadModels() {
-            Path file = SCENARIOS_DIR.resolve("valid-minimal.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-minimal.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             assertNotNull(scenario);
@@ -370,7 +370,7 @@ class ScenarioDslContractE2ETest {
         @DisplayName("TC-30: Full round-trip — parse YAML, validate, inspect all phases")
         void fullRoundTrip() {
             // Parse the most complex scenario
-            Path file = SCENARIOS_DIR.resolve("valid-full.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-full.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
             var result = validator.validate(scenario);
 
@@ -407,7 +407,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-31: Full use case with validation throws on validation failure")
         void useCaseRejectsInvalidScenario() {
-            Path file = SCENARIOS_DIR.resolve("invalid-cycle.yaml");
+            var file = SCENARIOS_DIR.resolve("invalid-cycle.yaml");
             String yamlContent = readFileAsString(file);
 
             assertThrows(ScenarioValidationException.class,
@@ -417,7 +417,7 @@ class ScenarioDslContractE2ETest {
         @Test
         @DisplayName("TC-32: Context propagation structure — requiredContexts parsed")
         void requiredContextsAreParsed() {
-            Path file = SCENARIOS_DIR.resolve("valid-full.yaml");
+            var file = SCENARIOS_DIR.resolve("valid-full.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             // seed-test-data requires purge-customer-db context

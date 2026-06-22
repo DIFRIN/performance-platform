@@ -324,7 +324,7 @@ class ShellTaskExecutorTest {
         void shouldDestroyAllRunningProcessesOnGlobalCleanup() throws IOException {
             // Use a temp file as signal: the process creates it on start,
             // the test awaits its existence instead of Thread.sleep().
-            Path startedFile = Files.createTempFile("shell-cleanup-1-", ".signal");
+            var startedFile = Files.createTempFile("shell-cleanup-1-", ".signal");
             String signalCmd = "touch " + startedFile + " && sleep 30";
 
             var step = new StepDefinition(
@@ -334,7 +334,7 @@ class ShellTaskExecutorTest {
                     List.of(), List.of(), Duration.ofSeconds(70), null);
 
             // Execute in a separate thread so we can cleanup while running
-            Thread execThread = new Thread(() -> {
+            var execThread = new Thread(() -> {
                 executor.execute(contextWithId("exec-cleanup-1"), step);
             });
             execThread.start();
@@ -354,7 +354,7 @@ class ShellTaskExecutorTest {
         @Test
         @DisplayName("should destroy specific process on execution-scoped cleanup")
         void shouldDestroySpecificProcessOnExecutionCleanup() throws IOException {
-            Path startedFile = Files.createTempFile("shell-cleanup-2-", ".signal");
+            var startedFile = Files.createTempFile("shell-cleanup-2-", ".signal");
             String signalCmd = "touch " + startedFile + " && sleep 30";
 
             var step = new StepDefinition(
@@ -364,7 +364,7 @@ class ShellTaskExecutorTest {
                     List.of(), List.of(), Duration.ofSeconds(70), null);
 
             // Start in separate thread
-            Thread execThread = new Thread(() -> {
+            var execThread = new Thread(() -> {
                 executor.execute(contextWithId("exec-cleanup-2"), step);
             });
             execThread.start();

@@ -310,7 +310,7 @@ class DefaultPluginRegistryTest {
         void namesForEmptyPhase() {
             // With no executors in INJECTION, the set is empty -> actually we did register one
             // So test with a fresh empty registry
-            DefaultPluginRegistry empty = new DefaultPluginRegistry(List.of(), emptyLoader(), "/nonexistent");
+            var empty = new DefaultPluginRegistry(List.of(), emptyLoader(), "/nonexistent");
             assertThat(empty.namesFor(Phase.PREPARATION)).isEmpty();
             assertThat(empty.namesFor(Phase.INJECTION)).isEmpty();
             assertThat(empty.namesFor(Phase.ASSERTION)).isEmpty();
@@ -339,10 +339,10 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("external executor overrides internal on same (phase, name)")
         void externalOverridesInternal() {
-            TaskExecutor internalDb = new InternalDatabaseExecutor();
-            TaskExecutor externalDb = new ExternalDatabaseOverrideExecutor();
+            var internalDb = new InternalDatabaseExecutor();
+            var externalDb = new ExternalDatabaseOverrideExecutor();
 
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(internalDb),
                     loaderWith(List.of(externalDb)),
                     "./nonexistent");
@@ -356,10 +356,10 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("internal executor is still registered when no collision")
         void noCollisionPreservesInternal() {
-            TaskExecutor internalShell = new InternalShellExecutor();
-            TaskExecutor externalSeeder = new ExternalSeederExecutor();
+            var internalShell = new InternalShellExecutor();
+            var externalSeeder = new ExternalSeederExecutor();
 
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(internalShell),
                     loaderWith(List.of(externalSeeder)),
                     "./nonexistent");
@@ -381,10 +381,10 @@ class DefaultPluginRegistryTest {
         @DisplayName("external executor from different phase doesn't collide")
         void noCrossPhaseCollision() {
             // Same name "test" but different phases — no collision
-            TaskExecutor internalPrep = new InternalDatabaseExecutor(); // name="database", PREPARATION
-            TaskExecutor externalInj = new ExternalInjectorExecutor();  // name="custom-injector", INJECTION
+            var internalPrep = new InternalDatabaseExecutor(); // name="database", PREPARATION
+            var externalInj = new ExternalInjectorExecutor();  // name="custom-injector", INJECTION
 
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(internalPrep),
                     loaderWith(List.of(externalInj)),
                     "./nonexistent");
@@ -405,7 +405,7 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("executors are distributed to correct phases based on annotation")
         void correctPhaseDistribution() {
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(new InternalDatabaseExecutor(), new InternalGatlingExecutor(),
                             new InternalAssertionExecutor()),
                     loaderWith(List.of(new ExternalSeederExecutor(), new ExternalInjectorExecutor(),
@@ -435,7 +435,7 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("null pluginDir with empty internal executors creates empty registry")
         void skipsExternalWhenDirDoesNotExist() {
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(new InternalShellExecutor()),
                     emptyLoader(),
                     "/path/that/does/not/exist/plugins");
@@ -452,7 +452,7 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("no internal and no external executors")
         void emptyRegistry() {
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(), emptyLoader(), "/nonexistent");
 
             assertThat(registry.contains(Phase.PREPARATION, "anything")).isFalse();
@@ -464,7 +464,7 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("lookup throws on empty registry")
         void lookupThrowsOnEmptyRegistry() {
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(), emptyLoader(), "/nonexistent");
 
             assertThatThrownBy(() -> registry.lookup(Phase.PREPARATION, "anything"))
@@ -483,7 +483,7 @@ class DefaultPluginRegistryTest {
         void loadsFromExistingDirectory(@TempDir Path tempDir) {
             // PluginLoader is called with the temp dir — it returns empty result
             // because there are no JAR files
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(new InternalShellExecutor()),
                     emptyLoader(),
                     tempDir.toString());
@@ -501,7 +501,7 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("constructor throws when internal executor has no plugin annotation")
         void rejectsInternalUnannotated() {
-            TaskExecutor unannotated = new UnannotatedExecutor();
+            var unannotated = new UnannotatedExecutor();
             assertThatThrownBy(() -> new DefaultPluginRegistry(
                     List.of(unannotated), emptyLoader(), "/nonexistent"))
                     .isInstanceOf(IllegalStateException.class)
@@ -512,7 +512,7 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("constructor throws when external executor has no annotation")
         void rejectsExternalUnannotated() {
-            TaskExecutor unannotated = new UnannotatedExecutor();
+            var unannotated = new UnannotatedExecutor();
             assertThatThrownBy(() -> new DefaultPluginRegistry(
                     List.of(),
                     loaderWith(List.of(unannotated)),
@@ -532,7 +532,7 @@ class DefaultPluginRegistryTest {
         @Test
         @DisplayName("returned set is unmodifiable")
         void returnedSetIsUnmodifiable() {
-            DefaultPluginRegistry registry = new DefaultPluginRegistry(
+            var registry = new DefaultPluginRegistry(
                     List.of(new InternalShellExecutor()),
                     emptyLoader(),
                     "/nonexistent");

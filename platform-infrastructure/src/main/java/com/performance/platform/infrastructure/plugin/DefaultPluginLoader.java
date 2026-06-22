@@ -104,13 +104,13 @@ public class DefaultPluginLoader implements PluginLoader {
                 }
             } catch (IOException e) {
                 // JAR could not be opened at all (corrupted ZIP, missing file, etc.)
-                PluginError error = PluginError.of(jarName,
+                var error = PluginError.of(jarName,
                         "Failed to open JAR: " + e.getMessage(), e);
                 allErrors.add(error);
                 log.warn("action=jar_open_failed jar={} message={}", jarName, e.getMessage(), e);
             } catch (Exception e) {
                 // Unexpected error — still count as attempted but record error
-                PluginError error = PluginError.of(jarName,
+                var error = PluginError.of(jarName,
                         "Failed to process JAR: " + e.getMessage(), e);
                 allErrors.add(error);
                 log.warn("action=jar_load_failed jar={} message={}", jarName, e.getMessage(), e);

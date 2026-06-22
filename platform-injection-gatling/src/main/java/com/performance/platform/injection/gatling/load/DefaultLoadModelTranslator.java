@@ -300,7 +300,7 @@ public class DefaultLoadModelTranslator implements LoadModelTranslator {
                         "got " + prevTime + " -> " + currTime);
             }
 
-            Duration segment = Duration.ofSeconds((long) segmentDuration);
+            var segment = Duration.ofSeconds((long) segmentDuration);
             steps.add(rampUsersPerSec(prevRate).to(currRate).during(segment));
         }
         return List.copyOf(steps);

@@ -45,33 +45,33 @@ class PdfReportRendererTest {
         htmlRenderer = new HtmlReportRenderer();
         pdfRenderer = new PdfReportRenderer(htmlRenderer);
 
-        ReportId reportId = ReportId.generate();
-        ScenarioId scenarioId = new ScenarioId("test-scenario");
-        Instant now = Instant.now();
+        var reportId = ReportId.generate();
+        var scenarioId = new ScenarioId("test-scenario");
+        var now = Instant.now();
 
         // Preparation entry
-        TaskReportEntry prepEntry = new TaskReportEntry(
+        var prepEntry = new TaskReportEntry(
                 new TaskId("prep-1"), "database-setup", TaskStatus.SUCCESS,
                 Duration.ofSeconds(2), Map.of("rows", 100)
         );
 
         // Injection entry with KPIs
-        InjectionResult injResult = new InjectionResult(
+        var injResult = new InjectionResult(
                 new TaskId("inj-1"), "com.example.Simulation", Duration.ofSeconds(10),
                 1000, 990, 10, 1.0, 100.0,
                 10, 15, 20, 25, 30, 35, 5, 8.5,
                 Path.of("/tmp/gatling"), Map.of()
         );
-        InjectionReportEntry injEntry = new InjectionReportEntry(
+        var injEntry = new InjectionReportEntry(
                 new TaskId("inj-1"), injResult, Path.of("/tmp/gatling")
         );
 
         // Assertion entry
-        AssertionResult assertResult = new AssertionResult(
+        var assertResult = new AssertionResult(
                 new TaskId("assert-1"), AssertionStatus.PASSED, "throughput >= 50",
                 null, Duration.ofMillis(50), now
         );
-        AssertionReportEntry assertEntry = new AssertionReportEntry(
+        var assertEntry = new AssertionReportEntry(
                 new TaskId("assert-1"), assertResult, null
         );
 
@@ -131,7 +131,7 @@ class PdfReportRendererTest {
             // OpenHTMLToPDF embeds document-level metadata (Producer, Creator)
             // in the uncompressed PDF trailer/catalog. Verify structural markers.
             byte[] pdf = pdfRenderer.render(report);
-            String pdfString = new String(pdf, StandardCharsets.ISO_8859_1);
+            var pdfString = new String(pdf, StandardCharsets.ISO_8859_1);
 
             // PDF must contain a catalog (structural requirement)
             assertTrue(pdfString.contains("/Type"),
@@ -145,7 +145,7 @@ class PdfReportRendererTest {
         @Test
         @DisplayName("should produce different content for different reports")
         void shouldProduceDifferentPdfsForDifferentReports() {
-            CampaignReport report2 = new CampaignReport(
+            var report2 = new CampaignReport(
                     ReportId.generate(), new ScenarioId("sc2"), "Another Campaign", "1.0",
                     List.of(), Map.of(),
                     new EnvironmentInfo(List.of(), "21", Map.of()),
@@ -173,7 +173,7 @@ class PdfReportRendererTest {
                 assertEquals(PDF_MAGIC[i], pdf[i], "Must start with %PDF magic");
             }
 
-            String pdfString = new String(pdf, StandardCharsets.ISO_8859_1);
+            var pdfString = new String(pdf, StandardCharsets.ISO_8859_1);
             assertTrue(pdfString.contains("%%EOF"), "PDF must have %%EOF trailer");
             assertTrue(pdfString.contains("/Type"), "PDF must contain /Type marker");
         }
@@ -190,7 +190,7 @@ class PdfReportRendererTest {
                 assertEquals(PDF_MAGIC[i], pdf[i], "Must start with %PDF magic");
             }
 
-            String pdfString = new String(pdf, StandardCharsets.ISO_8859_1);
+            var pdfString = new String(pdf, StandardCharsets.ISO_8859_1);
             assertTrue(pdfString.contains("%%EOF"), "PDF must have %%EOF trailer");
             assertTrue(pdfString.contains("/Type"), "PDF must contain /Type marker");
         }
@@ -212,7 +212,7 @@ class PdfReportRendererTest {
         @DisplayName("should produce a valid PDF with %%EOF trailer")
         void shouldContainEofTrailer() {
             byte[] pdf = pdfRenderer.render(report);
-            String pdfString = new String(pdf, StandardCharsets.ISO_8859_1);
+            var pdfString = new String(pdf, StandardCharsets.ISO_8859_1);
             assertTrue(pdfString.contains("%%EOF"),
                     "PDF must contain %%EOF trailer marker");
         }
@@ -238,13 +238,13 @@ class PdfReportRendererTest {
             // Given: HtmlReportRenderer throws RenderException
             RenderException originalException =
                     new RenderException("HTML render failed for reportId=test-id");
-            HtmlReportRenderer faultyRenderer = new HtmlReportRenderer() {
+            var faultyRenderer = new HtmlReportRenderer() {
                 @Override
                 public byte[] render(CampaignReport report) throws RenderException {
                     throw originalException;
                 }
             };
-            PdfReportRenderer renderer = new PdfReportRenderer(faultyRenderer);
+            var renderer = new PdfReportRenderer(faultyRenderer);
 
             // When/Then: the original RenderException is rethrown, not wrapped
             RenderException thrown = assertThrows(RenderException.class,
@@ -257,14 +257,14 @@ class PdfReportRendererTest {
         @DisplayName("should wrap generic exceptions in RenderException")
         void shouldWrapGenericExceptionInRenderException() {
             // Given: HtmlReportRenderer throws a RuntimeException
-            RuntimeException rootCause = new RuntimeException("Unexpected JVM crash");
-            HtmlReportRenderer faultyRenderer = new HtmlReportRenderer() {
+            var rootCause = new RuntimeException("Unexpected JVM crash");
+            var faultyRenderer = new HtmlReportRenderer() {
                 @Override
                 public byte[] render(CampaignReport report) throws RenderException {
                     throw rootCause;
                 }
             };
-            PdfReportRenderer renderer = new PdfReportRenderer(faultyRenderer);
+            var renderer = new PdfReportRenderer(faultyRenderer);
 
             // When/Then: RuntimeException is wrapped in RenderException
             RenderException thrown = assertThrows(RenderException.class,

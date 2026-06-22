@@ -583,7 +583,7 @@ class SocketExecutionTransportTest {
         void shouldSerializeTaskMessageWithTypeField() throws Exception {
             var request = sampleRequest("serialize-test");
             var json = objectMapper.valueToTree(request);
-            String message = SocketExecutionTransport.serializeMessage(
+            var message = SocketExecutionTransport.serializeMessage(
                     SocketExecutionTransport.TYPE_TASK, json);
 
             assertThat(message).contains("\"@type\":\"TASK\"");
@@ -596,7 +596,7 @@ class SocketExecutionTransportTest {
         void shouldSerializeSignalMessageWithTypeField() throws Exception {
             var signal = sampleSignal();
             var json = objectMapper.valueToTree(signal);
-            String message = SocketExecutionTransport.serializeMessage(
+            var message = SocketExecutionTransport.serializeMessage(
                     SocketExecutionTransport.TYPE_SIGNAL, json);
 
             assertThat(message).contains("\"@type\":\"SIGNAL\"");
@@ -608,7 +608,7 @@ class SocketExecutionTransportTest {
         void shouldSerializeEventMessageWithTypeField() throws Exception {
             var event = sampleEvent();
             var json = objectMapper.valueToTree(event);
-            String message = SocketExecutionTransport.serializeMessage(
+            var message = SocketExecutionTransport.serializeMessage(
                     SocketExecutionTransport.TYPE_EVENT, json);
 
             assertThat(message).contains("\"@type\":\"EVENT\"");
@@ -624,7 +624,7 @@ class SocketExecutionTransportTest {
                     Map.of("host", "localhost"),
                     Instant.now());
             var json = objectMapper.valueToTree(lifecycleEvent);
-            String message = SocketExecutionTransport.serializeMessage(
+            var message = SocketExecutionTransport.serializeMessage(
                     SocketExecutionTransport.TYPE_AGENT_EVENT, json);
 
             assertThat(message).contains("\"@type\":\"AGENT_EVENT\"");

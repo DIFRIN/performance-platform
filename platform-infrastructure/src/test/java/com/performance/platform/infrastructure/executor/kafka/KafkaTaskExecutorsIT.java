@@ -79,7 +79,7 @@ class KafkaTaskExecutorsIT {
      * executor).
      */
     private void seedMessages(String topic, int count) {
-        Properties props = new Properties();
+        var props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
@@ -98,7 +98,7 @@ class KafkaTaskExecutorsIT {
      * executor).
      */
     private int consumeAll(String topic) {
-        Properties props = new Properties();
+        var props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers());
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-verifier-" + UUID.randomUUID());
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
@@ -521,14 +521,14 @@ class KafkaTaskExecutorsIT {
         @Test
         @DisplayName("should replace {index} placeholder")
         void shouldReplaceIndexPlaceholder() {
-            String result = KafkaProducerTaskExecutor.resolveTemplate("msg-{index}", 42);
+            var result = KafkaProducerTaskExecutor.resolveTemplate("msg-{index}", 42);
             assertThat(result).isEqualTo("msg-42");
         }
 
         @Test
         @DisplayName("should replace {timestamp} placeholder")
         void shouldReplaceTimestampPlaceholder() {
-            String result = KafkaProducerTaskExecutor.resolveTemplate("ts-{timestamp}", 1);
+            var result = KafkaProducerTaskExecutor.resolveTemplate("ts-{timestamp}", 1);
             assertThat(result).startsWith("ts-");
             assertThat(result).isNotEqualTo("ts-{timestamp}");
         }
@@ -536,7 +536,7 @@ class KafkaTaskExecutorsIT {
         @Test
         @DisplayName("should return template as-is when no placeholders")
         void shouldReturnAsIsWhenNoPlaceholders() {
-            String result = KafkaProducerTaskExecutor.resolveTemplate("plain message", 1);
+            var result = KafkaProducerTaskExecutor.resolveTemplate("plain message", 1);
             assertThat(result).isEqualTo("plain message");
         }
     }

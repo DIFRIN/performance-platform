@@ -82,7 +82,7 @@ class YamlScenarioParserTest {
         @Test
         @DisplayName("parse reference YAML from InputStream successfully")
         void parseReferenceYamlFromInputStream() {
-            InputStream is = new ByteArrayInputStream(REFERENCE_YAML.getBytes(StandardCharsets.UTF_8));
+            var is = new ByteArrayInputStream(REFERENCE_YAML.getBytes(StandardCharsets.UTF_8));
             ScenarioDefinition scenario = parser.parse(is);
 
             assertNotNull(scenario);

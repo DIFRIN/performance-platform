@@ -20,7 +20,7 @@ class DagCycleDetectorTest {
         @Test
         @DisplayName("empty graph has no cycles")
         void emptyGraph() {
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(Map.of());
+            var result = DagCycleDetector.analyze(Map.of());
             assertFalse(result.hasCycle());
             assertTrue(result.topologicalOrder().isEmpty());
         }
@@ -28,7 +28,7 @@ class DagCycleDetectorTest {
         @Test
         @DisplayName("null graph has no cycles")
         void nullGraph() {
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(null);
+            var result = DagCycleDetector.analyze(null);
             assertFalse(result.hasCycle());
         }
 
@@ -38,7 +38,7 @@ class DagCycleDetectorTest {
             Map<String, List<String>> graph = new LinkedHashMap<>();
             graph.put("A", List.of());
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertFalse(result.hasCycle());
             assertEquals(List.of("A"), result.topologicalOrder());
             assertEquals(0, result.topologicalIndex().get("A"));
@@ -52,7 +52,7 @@ class DagCycleDetectorTest {
             graph.put("B", List.of("A"));
             graph.put("C", List.of("B"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertFalse(result.hasCycle());
             assertEquals(3, result.topologicalOrder().size());
             // A before B, B before C
@@ -69,7 +69,7 @@ class DagCycleDetectorTest {
             graph.put("C", List.of("A"));
             graph.put("D", List.of("B", "C"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertFalse(result.hasCycle());
             assertEquals(4, result.topologicalOrder().size());
             // A must be first, D must be last
@@ -88,7 +88,7 @@ class DagCycleDetectorTest {
             graph.put("B", List.of());
             graph.put("C", List.of());
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertFalse(result.hasCycle());
             assertEquals(3, result.topologicalOrder().size());
             // All nodes are present
@@ -106,7 +106,7 @@ class DagCycleDetectorTest {
             graph.put("X", List.of());
             graph.put("Y", List.of("X"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertFalse(result.hasCycle());
             assertEquals(4, result.topologicalOrder().size());
             assertTrue(result.topologicalIndex().get("A") < result.topologicalIndex().get("B"));
@@ -125,7 +125,7 @@ class DagCycleDetectorTest {
             graph.put("A", List.of("B"));
             graph.put("B", List.of("A"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertTrue(result.hasCycle());
         }
 
@@ -135,7 +135,7 @@ class DagCycleDetectorTest {
             Map<String, List<String>> graph = new LinkedHashMap<>();
             graph.put("A", List.of("A"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertTrue(result.hasCycle());
         }
 
@@ -147,7 +147,7 @@ class DagCycleDetectorTest {
             graph.put("B", List.of("A"));
             graph.put("C", List.of("B"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertTrue(result.hasCycle());
         }
 
@@ -161,7 +161,7 @@ class DagCycleDetectorTest {
             graph.put("C", List.of("B", "D"));
             graph.put("D", List.of("C"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertTrue(result.hasCycle());
         }
 
@@ -172,7 +172,7 @@ class DagCycleDetectorTest {
             graph.put("A", List.of("B"));
             graph.put("B", List.of("A"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertTrue(result.hasCycle());
             // With a cycle, topological order should be incomplete
             assertTrue(result.topologicalOrder().size() < 2);
@@ -190,7 +190,7 @@ class DagCycleDetectorTest {
             Map<String, List<String>> graph = new LinkedHashMap<>();
             graph.put("B", List.of("A"));
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertFalse(result.hasCycle());
             assertEquals(2, result.topologicalOrder().size());
             // A comes before B
@@ -203,7 +203,7 @@ class DagCycleDetectorTest {
             Map<String, List<String>> graph = new LinkedHashMap<>();
             graph.put("A", List.of());
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertThrows(UnsupportedOperationException.class, () -> result.topologicalOrder().add("X"));
         }
 
@@ -213,7 +213,7 @@ class DagCycleDetectorTest {
             Map<String, List<String>> graph = new LinkedHashMap<>();
             graph.put("A", List.of());
 
-            DagCycleDetector.DagAnalysisResult result = DagCycleDetector.analyze(graph);
+            var result = DagCycleDetector.analyze(graph);
             assertThrows(UnsupportedOperationException.class, () -> result.topologicalIndex().put("X", 0));
         }
     }

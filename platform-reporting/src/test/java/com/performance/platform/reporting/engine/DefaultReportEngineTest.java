@@ -113,11 +113,11 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should build CampaignReport from ExecutionState with preparation tasks")
         void shouldBuildCampaignReportFromPreparationTasks() {
-            TaskId taskId = new TaskId("task-1");
-            TaskResult result = TaskResult.success(taskId, "database-setup", Duration.ofSeconds(2), Map.of("rows", 100));
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var taskId = new TaskId("task-1");
+            var result = TaskResult.success(taskId, "database-setup", Duration.ofSeconds(2), Map.of("rows", 100));
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskId.value(), "agent-1", result);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(5)
             );
@@ -139,19 +139,19 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should classify injection tasks via InjectionResult in outputs")
         void shouldClassifyInjectionTasks() throws Exception {
-            TaskId injTaskId = new TaskId("inj-1");
-            InjectionResult injResult = new InjectionResult(
+            var injTaskId = new TaskId("inj-1");
+            var injResult = new InjectionResult(
                     injTaskId, "Simulation", Duration.ofSeconds(10),
                     1000, 990, 10, 1.0, 100.0,
                     10, 15, 20, 25, 30, 35, 5, 8.5,
                     Path.of("/tmp/gatling"), Map.of()
             );
-            TaskResult taskResult = TaskResult.success(injTaskId, "gatling-injection",
+            var taskResult = TaskResult.success(injTaskId, "gatling-injection",
                     Duration.ofSeconds(10), Map.of("injectionResult", injResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injTaskId.value(), "agent-1", taskResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(15)
             );
@@ -168,17 +168,17 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should classify assertion tasks via AssertionResult in outputs")
         void shouldClassifyAssertionTasks() {
-            TaskId assertTaskId = new TaskId("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertTaskId = new TaskId("assert-1");
+            var assertResult = new AssertionResult(
                     assertTaskId, AssertionStatus.PASSED, "metric ok",
                     null, Duration.ofMillis(50), now
             );
-            TaskResult taskResult = TaskResult.success(assertTaskId, "gatling-metric",
+            var taskResult = TaskResult.success(assertTaskId, "gatling-metric",
                     Duration.ofMillis(50), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertTaskId.value(), "agent-1", taskResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1)
             );
@@ -193,17 +193,17 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should compute correct WARNING verdict when assertion FAILED")
         void shouldComputeWarningVerdict() {
-            TaskId assertTaskId = new TaskId("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertTaskId = new TaskId("assert-1");
+            var assertResult = new AssertionResult(
                     assertTaskId, AssertionStatus.FAILED, "threshold exceeded",
                     null, Duration.ofMillis(10), now
             );
-            TaskResult taskResult = TaskResult.success(assertTaskId, "gatling-metric",
+            var taskResult = TaskResult.success(assertTaskId, "gatling-metric",
                     Duration.ofMillis(10), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertTaskId.value(), "agent-1", taskResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1)
             );
@@ -217,17 +217,17 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should compute correct FAILED verdict when assertion ERROR")
         void shouldComputeFailedVerdict() {
-            TaskId assertTaskId = new TaskId("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertTaskId = new TaskId("assert-1");
+            var assertResult = new AssertionResult(
                     assertTaskId, AssertionStatus.ERROR, "evaluation error",
                     null, Duration.ofMillis(10), now
             );
-            TaskResult taskResult = TaskResult.success(assertTaskId, "gatling-metric",
+            var taskResult = TaskResult.success(assertTaskId, "gatling-metric",
                     Duration.ofMillis(10), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertTaskId.value(), "agent-1", taskResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1)
             );
@@ -240,31 +240,31 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should build execution summary with counts and durations")
         void shouldBuildExecutionSummary() {
-            TaskId prepId = new TaskId("prep-1");
-            TaskResult prepResult = TaskResult.success(prepId, "db-setup",
+            var prepId = new TaskId("prep-1");
+            var prepResult = TaskResult.success(prepId, "db-setup",
                     Duration.ofSeconds(1), Map.of());
-            TaskId injId = new TaskId("inj-1");
-            InjectionResult injResult = new InjectionResult(
+            var injId = new TaskId("inj-1");
+            var injResult = new InjectionResult(
                     injId, "Sim", Duration.ofSeconds(5),
                     100, 100, 0, 0.0, 20.0,
                     5, 10, 15, 20, 25, 30, 2, 7.5,
                     Path.of("/tmp/g"), Map.of()
             );
-            TaskResult injTaskResult = TaskResult.success(injId, "gatling",
+            var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(5), Map.of("injectionResult", injResult));
-            TaskId assertId = new TaskId("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertId = new TaskId("assert-1");
+            var assertResult = new AssertionResult(
                     assertId, AssertionStatus.PASSED, "ok",
                     null, Duration.ofMillis(100), now
             );
-            TaskResult assertTaskResult = TaskResult.success(assertId, "check",
+            var assertTaskResult = TaskResult.success(assertId, "check",
                     Duration.ofMillis(100), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
                     .with(injId.value(), "agent-1", injTaskResult)
                     .with(assertId.value(), "agent-1", assertTaskResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(10)
             );
@@ -287,8 +287,8 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should handle execution state with empty context")
         void shouldHandleEmptyContext() {
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId);
-            ExecutionState state = new ExecutionState(
+            var context = ExecutionContext.initial(executionId, scenarioId);
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1)
             );
@@ -305,12 +305,12 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should collect agent IDs from context")
         void shouldCollectAgentIds() {
-            TaskId taskId = new TaskId("task-1");
-            TaskResult result = TaskResult.success(taskId, "setup", Duration.ofSeconds(1), Map.of());
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var taskId = new TaskId("task-1");
+            var result = TaskResult.success(taskId, "setup", Duration.ofSeconds(1), Map.of());
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskId.value(), "agent-alpha", result);
 
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(2)
             );
@@ -323,12 +323,12 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should include FAILED task in summary counts")
         void shouldIncludeFailedTasks() {
-            TaskId failId = new TaskId("fail-1");
-            TaskResult failResult = TaskResult.failed(failId, "bad-task", Duration.ofSeconds(1),
+            var failId = new TaskId("fail-1");
+            var failResult = TaskResult.failed(failId, "bad-task", Duration.ofSeconds(1),
                     "boom", new RuntimeException("boom"));
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(failId.value(), "agent-1", failResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(5)
             );
@@ -342,12 +342,12 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should include SKIPPED task in summary counts")
         void shouldIncludeSkippedTasks() {
-            TaskId skipId = new TaskId("skip-1");
-            TaskResult skipResult = TaskResult.skipped(skipId, "optional-task", "not needed");
+            var skipId = new TaskId("skip-1");
+            var skipResult = TaskResult.skipped(skipId, "optional-task", "not needed");
             // Skipped tasks use Duration.ZERO
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(skipId.value(), "agent-1", skipResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(5)
             );
@@ -376,15 +376,15 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should generate report and publish ReportGenerated event")
         void shouldGenerateAndPublishEvent() {
-            ScenarioFinished event = new ScenarioFinished(executionId, scenarioId, Verdict.SUCCESS,
+            var event = new ScenarioFinished(executionId, scenarioId, Verdict.SUCCESS,
                     Duration.ofSeconds(5), now);
 
             // Put state in the repository so it can be found
-            TaskId taskId = new TaskId("task-1");
-            TaskResult result = TaskResult.success(taskId, "setup", Duration.ofSeconds(1), Map.of());
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var taskId = new TaskId("task-1");
+            var result = TaskResult.success(taskId, "setup", Duration.ofSeconds(1), Map.of());
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskId.value(), "agent-1", result);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(5)
             );
@@ -404,7 +404,7 @@ class DefaultReportEngineTest {
         @Test
         @DisplayName("should skip generation when execution state not found")
         void shouldSkipWhenStateNotFound() {
-            ScenarioFinished event = new ScenarioFinished(executionId, scenarioId, Verdict.SUCCESS,
+            var event = new ScenarioFinished(executionId, scenarioId, Verdict.SUCCESS,
                     Duration.ofSeconds(5), now);
             // Don't put anything in the repository
 
@@ -416,7 +416,7 @@ class DefaultReportEngineTest {
         @DisplayName("should not propagate exception when generation fails")
         void shouldNotPropagateException() {
             // Use a bad executionId that causes generation to fail
-            ScenarioFinished event = new ScenarioFinished(
+            var event = new ScenarioFinished(
                     new ExecutionId("non-existent"), scenarioId, Verdict.SUCCESS,
                     Duration.ofSeconds(5), now);
             // Repository returns empty → method logs warning and returns

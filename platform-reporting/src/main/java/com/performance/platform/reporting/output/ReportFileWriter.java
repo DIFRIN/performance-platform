@@ -89,7 +89,7 @@ public class ReportFileWriter {
                 execId, report.id().value());
 
         try {
-            Path baseDir = Path.of(outputDirectory, execId);
+            var baseDir = Path.of(outputDirectory, execId);
             Files.createDirectories(baseDir);
 
             // Ecrire le rapport dans chaque format configure

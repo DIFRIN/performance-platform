@@ -95,12 +95,12 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
 
         long startNanos = System.nanoTime();
         ExecutionId executionId = context.executionId();
-        String operation = Objects.toString(step.parameters().get("operation"), "PRODUCE").toUpperCase().trim();
-        String topic = Objects.toString(step.parameters().get("topic"), null);
+        var operation = Objects.toString(step.parameters().get("operation"), "PRODUCE").toUpperCase().trim();
+        var topic = Objects.toString(step.parameters().get("topic"), null);
         String clusterName = (String) step.parameters().get("cluster");
         String bootstrapServers = (String) step.parameters().get("bootstrapServers");
         int messageCount = parseMessageCount(step);
-        String messageTemplate = Objects.toString(step.parameters().get("messageTemplate"), "perf-message-{index}");
+        var messageTemplate = Objects.toString(step.parameters().get("messageTemplate"), "perf-message-{index}");
         int batchSize = parseBatchSize(step);
         long timeoutMs = step.timeout() != null ? step.timeout().toMillis() : DEFAULT_TIMEOUT_MS;
 
@@ -186,7 +186,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
             // Final flush to ensure all messages are sent
             kafkaTemplate.flush();
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     OUTPUT_MESSAGES_PRODUCED, produced.get(),
                     OUTPUT_MESSAGES_FAILED, failed.get()
@@ -302,7 +302,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 

@@ -138,7 +138,7 @@ public class ShellTaskExecutor implements TaskExecutor, StatefulResourceCleaner 
         Objects.requireNonNull(step, "step must not be null");
 
         long startNanos = System.nanoTime();
-        ShellParameters params = ShellParameters.from(step);
+        var params = ShellParameters.from(step);
 
         if (params.command() == null || params.command().isBlank()) {
             return fail(step, startNanos, "Required parameter '" + PARAM_COMMAND + "' is missing or blank");
@@ -213,7 +213,7 @@ public class ShellTaskExecutor implements TaskExecutor, StatefulResourceCleaner 
         }
 
         processesByExecution.remove(executionKey);
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
 
         if (output.timedOut()) {
             log.error("action=shell_timeout executionId={} command={} timeout={}s stepId={}",
@@ -417,12 +417,12 @@ public class ShellTaskExecutor implements TaskExecutor, StatefulResourceCleaner 
     // ── Helpers: result construction ──────────────────────────────────────────
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message, Throwable cause) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, cause);
     }
 

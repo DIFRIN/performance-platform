@@ -300,14 +300,14 @@ class KafkaProducerTaskExecutorTest {
         @Test
         @DisplayName("should replace {index} placeholder")
         void shouldReplaceIndexPlaceholder() {
-            String result = KafkaProducerTaskExecutor.resolveTemplate("msg-{index}", 42);
+            var result = KafkaProducerTaskExecutor.resolveTemplate("msg-{index}", 42);
             assertThat(result).isEqualTo("msg-42");
         }
 
         @Test
         @DisplayName("should replace {timestamp} placeholder")
         void shouldReplaceTimestampPlaceholder() {
-            String result = KafkaProducerTaskExecutor.resolveTemplate("ts-{timestamp}", 1);
+            var result = KafkaProducerTaskExecutor.resolveTemplate("ts-{timestamp}", 1);
             assertThat(result).startsWith("ts-");
             assertThat(result).isNotEqualTo("ts-{timestamp}");
         }
@@ -315,7 +315,7 @@ class KafkaProducerTaskExecutorTest {
         @Test
         @DisplayName("should replace both placeholders in same template")
         void shouldReplaceBothPlaceholders() {
-            String result = KafkaProducerTaskExecutor.resolveTemplate("{index}-{timestamp}", 7);
+            var result = KafkaProducerTaskExecutor.resolveTemplate("{index}-{timestamp}", 7);
             assertThat(result).startsWith("7-");
             assertThat(result).doesNotContain("{index}");
             assertThat(result).doesNotContain("{timestamp}");
@@ -324,7 +324,7 @@ class KafkaProducerTaskExecutorTest {
         @Test
         @DisplayName("should return template as-is when no placeholders")
         void shouldReturnAsIsWhenNoPlaceholders() {
-            String result = KafkaProducerTaskExecutor.resolveTemplate("plain message", 1);
+            var result = KafkaProducerTaskExecutor.resolveTemplate("plain message", 1);
             assertThat(result).isEqualTo("plain message");
         }
     }

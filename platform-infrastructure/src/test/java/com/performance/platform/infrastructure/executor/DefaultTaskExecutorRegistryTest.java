@@ -67,7 +67,7 @@ class DefaultTaskExecutorRegistryTest {
             TaskExecutor e2 = stubExecutor("kafka-producer");
             TaskExecutor e3 = stubExecutor("http-request");
 
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(List.of(e1, e2, e3));
+            var registry = new DefaultTaskExecutorRegistry(List.of(e1, e2, e3));
 
             assertThat(registry.getSupportedTaskNames())
                     .containsExactlyInAnyOrder("database", "kafka-producer", "http-request");
@@ -76,7 +76,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should handle empty list gracefully")
         void shouldHandleEmptyListGracefully() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
+            var registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
 
             assertThat(registry.getSupportedTaskNames()).isEmpty();
         }
@@ -85,7 +85,7 @@ class DefaultTaskExecutorRegistryTest {
         @DisplayName("should handle list with one element")
         void shouldHandleSingleElement() {
             TaskExecutor executor = stubExecutor("database");
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(List.of(executor));
+            var registry = new DefaultTaskExecutorRegistry(List.of(executor));
 
             assertThat(registry.getSupportedTaskNames()).containsExactly("database");
         }
@@ -98,7 +98,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should add new executor to registry")
         void shouldAddNewExecutorToRegistry() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
+            var registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
             TaskExecutor executor = stubExecutor("database");
 
             registry.register(executor);
@@ -109,7 +109,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should replace existing executor with same taskName")
         void shouldReplaceExistingExecutorWithSameTaskName() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
+            var registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
             TaskExecutor first = stubExecutor("database");
             TaskExecutor second = stubExecutor("database");
 
@@ -123,7 +123,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should throw NullPointerException when executor is null")
         void shouldThrowWhenExecutorIsNull() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
+            var registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
 
             assertThatThrownBy(() -> registry.register(null))
                     .isInstanceOf(NullPointerException.class)
@@ -133,7 +133,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should throw when executor taskName is null")
         void shouldThrowWhenExecutorTaskNameIsNull() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
+            var registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
 
             assertThatThrownBy(() -> registry.register(nullTaskNameExecutor()))
                     .isInstanceOf(NullPointerException.class);
@@ -148,7 +148,7 @@ class DefaultTaskExecutorRegistryTest {
         @DisplayName("should return the correct executor for a registered taskName")
         void shouldReturnCorrectExecutorForRegisteredTaskName() {
             TaskExecutor dbExecutor = stubExecutor("database");
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(List.of(dbExecutor));
+            var registry = new DefaultTaskExecutorRegistry(List.of(dbExecutor));
 
             TaskExecutor resolved = registry.getFor("database");
 
@@ -158,7 +158,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should throw UnsupportedTaskNameException for unknown taskName")
         void shouldThrowForUnknownTaskName() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
+            var registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
 
             assertThatThrownBy(() -> registry.getFor("unknown"))
                     .isInstanceOf(UnsupportedTaskNameException.class)
@@ -171,7 +171,7 @@ class DefaultTaskExecutorRegistryTest {
             TaskExecutor dbExecutor = stubExecutor("database");
             TaskExecutor kafkaExecutor = stubExecutor("kafka-producer");
             TaskExecutor httpExecutor = stubExecutor("http-request");
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(
+            var registry = new DefaultTaskExecutorRegistry(
                     List.of(dbExecutor, kafkaExecutor, httpExecutor));
 
             assertThat(registry.getFor("database")).isSameAs(dbExecutor);
@@ -187,7 +187,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should return empty set for empty registry")
         void shouldReturnEmptySetForEmptyRegistry() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
+            var registry = new DefaultTaskExecutorRegistry(Collections.emptyList());
 
             Set<String> names = registry.getSupportedTaskNames();
 
@@ -197,7 +197,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should return all registered task names")
         void shouldReturnAllRegisteredTaskNames() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(
+            var registry = new DefaultTaskExecutorRegistry(
                     List.of(stubExecutor("database"), stubExecutor("http-request")));
 
             Set<String> names = registry.getSupportedTaskNames();
@@ -208,7 +208,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should return unmodifiable set")
         void shouldReturnUnmodifiableSet() {
-            DefaultTaskExecutorRegistry registry = new DefaultTaskExecutorRegistry(
+            var registry = new DefaultTaskExecutorRegistry(
                     List.of(stubExecutor("database")));
 
             Set<String> names = registry.getSupportedTaskNames();
@@ -225,7 +225,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should store the taskName that caused the exception")
         void shouldStoreTaskName() {
-            UnsupportedTaskNameException exception = new UnsupportedTaskNameException("missing-executor");
+            var exception = new UnsupportedTaskNameException("missing-executor");
 
             assertThat(exception.getTaskName()).isEqualTo("missing-executor");
             assertThat(exception.getMessage()).contains("missing-executor");
@@ -234,7 +234,7 @@ class DefaultTaskExecutorRegistryTest {
         @Test
         @DisplayName("should be a RuntimeException")
         void shouldBeRuntimeException() {
-            UnsupportedTaskNameException exception = new UnsupportedTaskNameException("test");
+            var exception = new UnsupportedTaskNameException("test");
 
             assertThat(exception).isInstanceOf(RuntimeException.class);
         }

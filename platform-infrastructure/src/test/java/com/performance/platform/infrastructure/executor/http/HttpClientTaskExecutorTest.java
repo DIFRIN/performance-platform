@@ -36,13 +36,13 @@ class HttpClientTaskExecutorTest {
     void setUp(com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo wmRuntimeInfo) {
         this.wmRuntimeInfo = wmRuntimeInfo;
         String baseUrl = "http://localhost:" + wmRuntimeInfo.getHttpPort();
-        HttpTargetProperties props = new HttpTargetProperties(
+        var props = new HttpTargetProperties(
                 baseUrl, Duration.ofSeconds(2), Duration.ofSeconds(5),
                 Map.of(),
                 Map.of("health", "/actuator/health",
                        "reset", "/__admin/requests",
                        "devices", "/api/devices"));
-        RestClient.Builder builder = RestClient.builder();
+        var builder = RestClient.builder();
         targetRegistry = new HttpTargetRegistry(Map.of("test-target", props), builder);
         executor = new HttpClientTaskExecutor(targetRegistry);
     }

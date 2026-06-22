@@ -78,12 +78,12 @@ public class DefaultGatlingRunner implements GatlingRunner {
         try {
             if (!config.systemProperties().isEmpty()) {
                 config.systemProperties().forEach((k, v) -> {
-                    String old = System.getProperty(k);
+                    var old = System.getProperty(k);
                     if (old != null) previousSysProps.put(k, old);
                     System.setProperty(k, v);
                 });
             }
-            String oldSimId = System.setProperty(SIM_ID_PROPERTY, config.simulationId());
+            var oldSimId = System.setProperty(SIM_ID_PROPERTY, config.simulationId());
             if (oldSimId != null) previousSysProps.put(SIM_ID_PROPERTY, oldSimId);
 
             // 4. Construire les arguments CLI Gatling

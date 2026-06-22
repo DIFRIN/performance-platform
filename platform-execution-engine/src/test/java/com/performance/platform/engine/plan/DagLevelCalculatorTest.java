@@ -180,11 +180,11 @@ class DagLevelCalculatorTest {
         @Test
         @DisplayName("cross-phase dependency: injection step depends on preparation step")
         void crossPhaseDependency() {
-            StepDefinition prep = new StepDefinition(
+            var prep = new StepDefinition(
                     TaskId.of("prep-db"), "prep-db", Phase.PREPARATION,
                     Map.of(), List.of(), List.of(), null, null
             );
-            StepDefinition inject = new StepDefinition(
+            var inject = new StepDefinition(
                     TaskId.of("inject"), "inject", Phase.INJECTION,
                     Map.of(), List.of(TaskId.of("prep-db")), List.of(), null, null
             );

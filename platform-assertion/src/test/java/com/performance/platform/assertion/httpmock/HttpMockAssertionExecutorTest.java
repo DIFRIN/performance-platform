@@ -74,7 +74,7 @@ class HttpMockAssertionExecutorTest {
     private static final ScenarioId SCENARIO_ID = new ScenarioId("scenario-001");
 
     private static HttpTargetRegistry defaultRegistry() {
-        HttpTargetProperties props = new HttpTargetProperties(
+        var props = new HttpTargetProperties(
                 "http://localhost:8090",
                 Duration.ofSeconds(1),
                 Duration.ofSeconds(5),
@@ -93,7 +93,7 @@ class HttpMockAssertionExecutorTest {
     // --- Context helpers ---
 
     private ExecutionContext contextWithMockUrl(String url) {
-        TaskResult result = TaskResult.success(MOCK_TASK_ID, "mock-server",
+        var result = TaskResult.success(MOCK_TASK_ID, "mock-server",
                 Duration.ofSeconds(5),
                 Map.of("url", url, "port", 8090));
         return ExecutionContext.initial(EXEC_ID, SCENARIO_ID)
@@ -105,7 +105,7 @@ class HttpMockAssertionExecutorTest {
     }
 
     private ExecutionContext contextWithoutUrl() {
-        TaskResult result = TaskResult.success(MOCK_TASK_ID, "mock-server",
+        var result = TaskResult.success(MOCK_TASK_ID, "mock-server",
                 Duration.ofSeconds(5),
                 Map.of("port", 8090)); // no "url" key
         return ExecutionContext.initial(EXEC_ID, SCENARIO_ID)

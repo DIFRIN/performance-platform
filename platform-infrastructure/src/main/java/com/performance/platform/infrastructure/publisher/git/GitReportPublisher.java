@@ -294,7 +294,7 @@ public class GitReportPublisher implements ReportPublisher {
             String summaryHtml = buildSummaryHtml(report);
             String tasksHtml = buildTasksHtml(report);
 
-            String html = String.format(HTML_REPORT_TEMPLATE,
+            var html = String.format(HTML_REPORT_TEMPLATE,
                     escapeHtml(report.scenarioName()),
                     escapeHtml(report.scenarioName()),
                     escapeHtml(verdictClass),
@@ -404,7 +404,7 @@ public class GitReportPublisher implements ReportPublisher {
      * Strips secrets from command arguments for safe logging.
      */
     private static String[] sanitizeCommand(String[] command) {
-        String[] sanitized = new String[command.length];
+        var sanitized = new String[command.length];
         for (int i = 0; i < command.length; i++) {
             String arg = command[i];
             if (arg != null && (arg.contains("@") && (arg.startsWith("https://")))) {

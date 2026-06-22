@@ -52,10 +52,10 @@ class PluginBootstrapTest {
 
     @Test
     void shouldLoadPluginsWhenEnabled() {
-        PluginLoadResult expected = new PluginLoadResult(3, 5, List.of(), List.of(), List.of());
+        var expected = new PluginLoadResult(3, 5, List.of(), List.of(), List.of());
         when(loader.load(any(Path.class))).thenReturn(expected);
 
-        PluginProperties props = new PluginProperties(tempDir.toString(), true);
+        var props = new PluginProperties(tempDir.toString(), true);
         bootstrap = new PluginBootstrap(loader, props);
 
         bootstrap.run(args);
@@ -66,7 +66,7 @@ class PluginBootstrapTest {
 
     @Test
     void shouldSkipLoadingWhenDisabled() {
-        PluginProperties props = new PluginProperties("/tmp/plugins", false);
+        var props = new PluginProperties("/tmp/plugins", false);
         bootstrap = new PluginBootstrap(loader, props);
 
         bootstrap.run(args);
@@ -76,7 +76,7 @@ class PluginBootstrapTest {
 
     @Test
     void shouldSkipLoadingWhenDirIsNotDirectory() {
-        PluginProperties props = new PluginProperties("/nonexistent/plugins", true);
+        var props = new PluginProperties("/nonexistent/plugins", true);
         bootstrap = new PluginBootstrap(loader, props);
 
         assertDoesNotThrow(() -> bootstrap.run(args));
@@ -86,14 +86,14 @@ class PluginBootstrapTest {
 
     @Test
     void shouldNotCrashOnPluginLoadErrors() {
-        PluginLoadResult resultWithErrors = new PluginLoadResult(
+        var resultWithErrors = new PluginLoadResult(
                 2, 4, List.of(),
                 List.of(new PluginWarning("plugin-a.jar", "name collision")),
                 List.of(PluginError.of("corrupt.jar", "invalid JAR", new RuntimeException("boom")))
         );
         when(loader.load(any(Path.class))).thenReturn(resultWithErrors);
 
-        PluginProperties props = new PluginProperties(tempDir.toString(), true);
+        var props = new PluginProperties(tempDir.toString(), true);
         bootstrap = new PluginBootstrap(loader, props);
 
         // Must not throw — CF-06: invalid JAR generates warning, not crash
@@ -106,7 +106,7 @@ class PluginBootstrapTest {
     void shouldPropagateLoaderException() {
         when(loader.load(any(Path.class))).thenThrow(new RuntimeException("unexpected"));
 
-        PluginProperties props = new PluginProperties(tempDir.toString(), true);
+        var props = new PluginProperties(tempDir.toString(), true);
         bootstrap = new PluginBootstrap(loader, props);
 
         // Bootstrap should not catch loader exceptions — let Spring handle
@@ -119,15 +119,15 @@ class PluginBootstrapTest {
 
     @Test
     void shouldLogWarningsFromPluginLoadResult() {
-        PluginWarning warning = new PluginWarning("plugin-b.jar", "name collision detected");
-        PluginLoadResult resultWithWarnings = new PluginLoadResult(
+        var warning = new PluginWarning("plugin-b.jar", "name collision detected");
+        var resultWithWarnings = new PluginLoadResult(
                 5, 8, List.of(),
                 List.of(warning),
                 List.of()
         );
         when(loader.load(any(Path.class))).thenReturn(resultWithWarnings);
 
-        PluginProperties props = new PluginProperties(tempDir.toString(), true);
+        var props = new PluginProperties(tempDir.toString(), true);
         bootstrap = new PluginBootstrap(loader, props);
 
         assertDoesNotThrow(() -> bootstrap.run(args));
@@ -136,15 +136,15 @@ class PluginBootstrapTest {
 
     @Test
     void shouldLogErrorsFromPluginLoadResult() {
-        PluginError error = PluginError.of("bad.jar", "class not found", new ClassNotFoundException("test"));
-        PluginLoadResult resultWithErrors = new PluginLoadResult(
+        var error = PluginError.of("bad.jar", "class not found", new ClassNotFoundException("test"));
+        var resultWithErrors = new PluginLoadResult(
                 2, 3, List.of(),
                 List.of(),
                 List.of(error)
         );
         when(loader.load(any(Path.class))).thenReturn(resultWithErrors);
 
-        PluginProperties props = new PluginProperties(tempDir.toString(), true);
+        var props = new PluginProperties(tempDir.toString(), true);
         bootstrap = new PluginBootstrap(loader, props);
 
         assertDoesNotThrow(() -> bootstrap.run(args));
@@ -153,10 +153,10 @@ class PluginBootstrapTest {
 
     @Test
     void shouldHandleEmptyDirectoryGracefully() {
-        PluginLoadResult empty = new PluginLoadResult(0, 0, List.of(), List.of(), List.of());
+        var empty = new PluginLoadResult(0, 0, List.of(), List.of(), List.of());
         when(loader.load(any(Path.class))).thenReturn(empty);
 
-        PluginProperties props = new PluginProperties(tempDir.toString(), true);
+        var props = new PluginProperties(tempDir.toString(), true);
         bootstrap = new PluginBootstrap(loader, props);
 
         assertDoesNotThrow(() -> bootstrap.run(args));

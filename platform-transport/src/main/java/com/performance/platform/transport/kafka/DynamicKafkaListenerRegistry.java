@@ -315,7 +315,7 @@ public class DynamicKafkaListenerRegistry {
      */
     private KafkaMessageListenerContainer<String, byte[]> createContainer(
             String topic, String groupId, MessageListener<String, byte[]> listener) {
-        ContainerProperties props = new ContainerProperties(topic);
+        var props = new ContainerProperties(topic);
         props.setGroupId(groupId);
         props.setMessageListener(listener);
         props.setAckMode(ContainerProperties.AckMode.RECORD);

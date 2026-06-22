@@ -75,7 +75,7 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("returns empty result when platform.plugins.enabled is false")
         void returnsEmptyWhenDisabled(@TempDir Path tempDir) {
-            DefaultPluginLoader disabledLoader = new DefaultPluginLoader(false);
+            var disabledLoader = new DefaultPluginLoader(false);
             PluginLoadResult result = disabledLoader.load(tempDir);
 
             assertThat(result.jarsLoaded()).isZero();
@@ -221,7 +221,7 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("warnings list is unmodifiable")
         void warningsListIsUnmodifiable() {
-            PluginLoadResult result = new PluginLoadResult(0, 0,
+            var result = new PluginLoadResult(0, 0,
                     java.util.List.of(),
                     java.util.List.of(new PluginWarning("test.jar", "warning message")),
                     java.util.List.of());
@@ -232,7 +232,7 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("errors list is unmodifiable")
         void errorsListIsUnmodifiable() {
-            PluginLoadResult result = new PluginLoadResult(0, 0,
+            var result = new PluginLoadResult(0, 0,
                     java.util.List.of(),
                     java.util.List.of(),
                     java.util.List.of(PluginError.of("test.jar", "error message")));
@@ -249,7 +249,7 @@ class DefaultPluginLoaderTest {
             var mutableErrors = new java.util.ArrayList<PluginError>();
             mutableErrors.add(PluginError.of("b.jar", "error"));
 
-            PluginLoadResult result = new PluginLoadResult(1, 2, mutableExecutors, mutableWarnings, mutableErrors);
+            var result = new PluginLoadResult(1, 2, mutableExecutors, mutableWarnings, mutableErrors);
 
             // Mutate original lists
             mutableExecutors.add(null);
@@ -281,7 +281,7 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("externalExecutors list is unmodifiable")
         void externalExecutorsListIsUnmodifiable() {
-            PluginLoadResult result = new PluginLoadResult(0, 0,
+            var result = new PluginLoadResult(0, 0,
                     java.util.List.of(new ValidPreparationPlugin()),
                     java.util.List.of(),
                     java.util.List.of());
@@ -297,8 +297,8 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("PluginError.of with cause creates correct instance")
         void ofWithCause() {
-            Exception cause = new RuntimeException("boom");
-            PluginError error = PluginError.of("test.jar", "failure message", cause);
+            var cause = new RuntimeException("boom");
+            var error = PluginError.of("test.jar", "failure message", cause);
             assertThat(error.pluginJar()).isEqualTo("test.jar");
             assertThat(error.message()).isEqualTo("failure message");
             assertThat(error.cause()).isSameAs(cause);
@@ -307,7 +307,7 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("PluginError.of without cause has null cause")
         void ofWithoutCause() {
-            PluginError error = PluginError.of("test.jar", "failure message");
+            var error = PluginError.of("test.jar", "failure message");
             assertThat(error.pluginJar()).isEqualTo("test.jar");
             assertThat(error.message()).isEqualTo("failure message");
             assertThat(error.cause()).isNull();
@@ -337,7 +337,7 @@ class DefaultPluginLoaderTest {
         @Test
         @DisplayName("constructs valid PluginWarning")
         void validWarning() {
-            PluginWarning warning = new PluginWarning("test.jar", "warning message");
+            var warning = new PluginWarning("test.jar", "warning message");
             assertThat(warning.pluginJar()).isEqualTo("test.jar");
             assertThat(warning.message()).isEqualTo("warning message");
         }

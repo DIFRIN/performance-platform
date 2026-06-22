@@ -425,7 +425,7 @@ class SignalsTest {
         void agentSignalMethodsAccessible() {
             var id = signal();
             var ts = now();
-            AgentSignal sig = new ScenarioRestartSignal(id, null, "RESTART", ts);
+            var sig = new ScenarioRestartSignal(id, null, "RESTART", ts);
 
             assertEquals(id, sig.id());
             assertEquals(ts, sig.issuedAt());

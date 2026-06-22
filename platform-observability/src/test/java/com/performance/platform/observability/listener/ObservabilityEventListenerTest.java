@@ -48,11 +48,11 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should record task duration with taskName from result")
         void shouldRecordTaskDuration() {
-            ExecutionId executionId = new ExecutionId("exec-001");
-            TaskId taskId = new TaskId("task-001");
-            AgentId agentId = new AgentId("agent-001");
-            Duration duration = Duration.ofMillis(500);
-            TaskResult result = TaskResult.success(taskId, "gatling", duration,
+            var executionId = new ExecutionId("exec-001");
+            var taskId = new TaskId("task-001");
+            var agentId = new AgentId("agent-001");
+            var duration = Duration.ofMillis(500);
+            var result = TaskResult.success(taskId, "gatling", duration,
                     Map.of("requests", 100));
 
             var event = new TaskCompleted(executionId, taskId, agentId, result,
@@ -69,12 +69,12 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should handle task with different taskNames")
         void shouldRecordDifferentTaskNames() {
-            ExecutionId executionId = new ExecutionId("exec-001");
-            TaskId t1 = new TaskId("task-001");
-            TaskId t2 = new TaskId("task-002");
-            Duration duration = Duration.ofMillis(100);
-            TaskResult r1 = TaskResult.success(t1, "shell", duration, Map.of());
-            TaskResult r2 = TaskResult.success(t2, "kafka-consumer", duration, Map.of());
+            var executionId = new ExecutionId("exec-001");
+            var t1 = new TaskId("task-001");
+            var t2 = new TaskId("task-002");
+            var duration = Duration.ofMillis(100);
+            var r1 = TaskResult.success(t1, "shell", duration, Map.of());
+            var r2 = TaskResult.success(t2, "kafka-consumer", duration, Map.of());
 
             var event1 = new TaskCompleted(executionId, t1, new AgentId("agent-001"),
                     r1, duration, Instant.now());
@@ -105,9 +105,9 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should increment failure counter with unknown taskName")
         void shouldIncrementFailureCounter() {
-            ExecutionId executionId = new ExecutionId("exec-001");
-            TaskId taskId = new TaskId("task-001");
-            AgentId agentId = new AgentId("agent-001");
+            var executionId = new ExecutionId("exec-001");
+            var taskId = new TaskId("task-001");
+            var agentId = new AgentId("agent-001");
 
             var event = new TaskFailed(executionId, taskId, agentId,
                     "Connection timeout", 3, Instant.now());
@@ -122,9 +122,9 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should handle multiple failures for same task")
         void shouldHandleMultipleFailures() {
-            ExecutionId executionId = new ExecutionId("exec-001");
-            TaskId taskId = new TaskId("task-001");
-            AgentId agentId = new AgentId("agent-001");
+            var executionId = new ExecutionId("exec-001");
+            var taskId = new TaskId("task-001");
+            var agentId = new AgentId("agent-001");
 
             var event1 = new TaskFailed(executionId, taskId, agentId,
                     "Timeout", 1, Instant.now());
@@ -156,7 +156,7 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should record phase duration with ZERO for PREPARATION")
         void shouldRecordPreparationPhase() {
-            ExecutionId executionId = new ExecutionId("exec-001");
+            var executionId = new ExecutionId("exec-001");
 
             var event = new PhaseCompleted(executionId, Phase.PREPARATION,
                     PhaseStatus.COMPLETED, Instant.now());
@@ -171,7 +171,7 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should record phase duration with ZERO for INJECTION")
         void shouldRecordInjectionPhase() {
-            ExecutionId executionId = new ExecutionId("exec-001");
+            var executionId = new ExecutionId("exec-001");
 
             var event = new PhaseCompleted(executionId, Phase.INJECTION,
                     PhaseStatus.COMPLETED, Instant.now());
@@ -186,7 +186,7 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should record phase duration with ZERO for ASSERTION")
         void shouldRecordAssertionPhase() {
-            ExecutionId executionId = new ExecutionId("exec-001");
+            var executionId = new ExecutionId("exec-001");
 
             var event = new PhaseCompleted(executionId, Phase.ASSERTION,
                     PhaseStatus.FAILED, Instant.now());
@@ -215,9 +215,9 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should record execution duration")
         void shouldRecordExecutionDuration() {
-            ExecutionId executionId = new ExecutionId("exec-001");
-            ScenarioId scenarioId = new ScenarioId("scenario-001");
-            Duration duration = Duration.ofSeconds(120);
+            var executionId = new ExecutionId("exec-001");
+            var scenarioId = new ScenarioId("scenario-001");
+            var duration = Duration.ofSeconds(120);
 
             var event = new ScenarioFinished(executionId, scenarioId,
                     Verdict.SUCCESS, duration, Instant.now());
@@ -232,9 +232,9 @@ class ObservabilityEventListenerTest {
         @Test
         @DisplayName("should record execution duration for FAILED verdict")
         void shouldRecordForFailedVerdict() {
-            ExecutionId executionId = new ExecutionId("exec-002");
-            ScenarioId scenarioId = new ScenarioId("scenario-002");
-            Duration duration = Duration.ofSeconds(30);
+            var executionId = new ExecutionId("exec-002");
+            var scenarioId = new ScenarioId("scenario-002");
+            var duration = Duration.ofSeconds(30);
 
             var event = new ScenarioFinished(executionId, scenarioId,
                     Verdict.FAILED, duration, Instant.now());

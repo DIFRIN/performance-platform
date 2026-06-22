@@ -83,7 +83,7 @@ public class KafkaAssertionExecutor implements AssertionExecutor {
     public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(step, "step must not be null");
-        Instant start = Instant.now();
+        var start = Instant.now();
 
         try {
             Map<String, Object> params = step.parameters();
@@ -97,7 +97,7 @@ public class KafkaAssertionExecutor implements AssertionExecutor {
             String groupId = getStringParam(params, PARAM_GROUP_ID, null);
 
             // 2. Valider la metrique
-            String outputKey = METRIC_TO_OUTPUT_KEY.get(metricName);
+            var outputKey = METRIC_TO_OUTPUT_KEY.get(metricName);
             if (outputKey == null) {
                 return buildErrorResult(step, start,
                         "Unsupported metric: '" + metricName
@@ -151,7 +151,7 @@ public class KafkaAssertionExecutor implements AssertionExecutor {
             String description = buildDescription(metricName, actualValue,
                     expectedValue, operator, passed);
 
-            Duration evaluationDuration = Duration.between(start, Instant.now());
+            var evaluationDuration = Duration.between(start, Instant.now());
 
             log.info("action=kafka_assertion_evaluated executionId={} assertionId={} "
                      + "metric={} refTaskId={} actual={} expected={} operator={} status={}",
@@ -256,7 +256,7 @@ public class KafkaAssertionExecutor implements AssertionExecutor {
                                               Instant start,
                                               String errorMessage,
                                               Map<String, Object> params) {
-        Duration duration = Duration.between(start, Instant.now());
+        var duration = Duration.between(start, Instant.now());
         return new AssertionResult(
                 step.id(),
                 AssertionStatus.ERROR,

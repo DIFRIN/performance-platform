@@ -44,7 +44,7 @@ public class PluginBootstrap implements ApplicationRunner {
             return;
         }
 
-        Path pluginDir = Path.of(props.dir());
+        var pluginDir = Path.of(props.dir());
         if (!Files.isDirectory(pluginDir)) {
             log.warn("action=plugin_loading_skipped reason=not_a_directory dir={}", pluginDir);
             return;

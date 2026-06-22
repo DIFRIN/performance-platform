@@ -178,7 +178,7 @@ class DatabaseTaskExecutorIT {
         @Test
         @DisplayName("should execute script and return scriptExecuted")
         void shouldExecuteScript() throws Exception {
-            Path script = Files.createTempFile("populate-orders", ".sql");
+            var script = Files.createTempFile("populate-orders", ".sql");
             script.toFile().deleteOnExit();
             Files.writeString(script, """
                     INSERT INTO orders (customer_name, amount) VALUES ('Diana', 400.00);

@@ -61,7 +61,7 @@ class GatlingMetricAssertionExecutorTest {
     }
 
     private static ExecutionContext contextWithResult(InjectionResult result) {
-        TaskResult taskResult = TaskResult.success(
+        var taskResult = TaskResult.success(
                 TASK_ID, "gatling", Duration.ofSeconds(120),
                 Map.of("injectionResult", result));
         return ExecutionContext.initial(EXEC_ID, SCENARIO_ID)
@@ -192,13 +192,13 @@ class GatlingMetricAssertionExecutorTest {
     @Test
     @DisplayName("should resolve InjectionResult by refTaskId")
     void shouldResolveByRefTaskId() {
-        TaskId refTaskId = new TaskId("injection-042");
-        InjectionResult refResult = new InjectionResult(
+        var refTaskId = new TaskId("injection-042");
+        var refResult = new InjectionResult(
                 refTaskId, "com.example.OtherSim",
                 Duration.ofSeconds(60), 5000, 4900, 100,
                 2.0, 83.3, 30L, 60L, 100L, 180L, 300L, 450L, 5L, 45.0,
                 Path.of("/tmp/report"), Map.of());
-        TaskResult taskResult = TaskResult.success(
+        var taskResult = TaskResult.success(
                 refTaskId, "gatling", Duration.ofSeconds(60),
                 Map.of("injectionResult", refResult));
         ExecutionContext ctx = emptyContext()
@@ -317,7 +317,7 @@ class GatlingMetricAssertionExecutorTest {
         @Test
         @DisplayName("should handle context with no InjectionResult-typed outputs")
         void shouldErrorWhenNoInjectionResultType() {
-            TaskResult unrelatedResult = TaskResult.success(
+            var unrelatedResult = TaskResult.success(
                     TASK_ID, "some-task", Duration.ofSeconds(10),
                     Map.of("someKey", "someStringValue"));
             ExecutionContext ctx = emptyContext()

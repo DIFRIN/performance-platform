@@ -64,7 +64,7 @@ class KafkaExecutionTransportIT {
 
     @BeforeEach
     void setUp() {
-        String uid = UUID.randomUUID().toString().substring(0, 8);
+        var uid = UUID.randomUUID().toString().substring(0, 8);
         props = new KafkaTransportProperties(
                 kafka.getBootstrapServers(),
                 "agents-tasks-" + uid,

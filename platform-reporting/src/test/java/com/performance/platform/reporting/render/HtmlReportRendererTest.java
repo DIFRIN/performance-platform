@@ -41,33 +41,33 @@ class HtmlReportRendererTest {
     void setUp() {
         renderer = new HtmlReportRenderer();
 
-        ReportId reportId = ReportId.generate();
-        ScenarioId scenarioId = new ScenarioId("test-scenario");
-        Instant now = Instant.now();
+        var reportId = ReportId.generate();
+        var scenarioId = new ScenarioId("test-scenario");
+        var now = Instant.now();
 
         // Preparation entry
-        TaskReportEntry prepEntry = new TaskReportEntry(
+        var prepEntry = new TaskReportEntry(
                 new TaskId("prep-1"), "database-setup", TaskStatus.SUCCESS,
                 Duration.ofSeconds(2), Map.of("rows", 100)
         );
 
         // Injection entry with KPIs
-        InjectionResult injResult = new InjectionResult(
+        var injResult = new InjectionResult(
                 new TaskId("inj-1"), "com.example.Simulation", Duration.ofSeconds(10),
                 1000, 990, 10, 1.0, 100.0,
                 10, 15, 20, 25, 30, 35, 5, 8.5,
                 Path.of("/tmp/gatling"), Map.of()
         );
-        InjectionReportEntry injEntry = new InjectionReportEntry(
+        var injEntry = new InjectionReportEntry(
                 new TaskId("inj-1"), injResult, Path.of("/tmp/gatling")
         );
 
         // Assertion entry
-        AssertionResult assertResult = new AssertionResult(
+        var assertResult = new AssertionResult(
                 new TaskId("assert-1"), AssertionStatus.PASSED, "throughput >= 50",
                 null, Duration.ofMillis(50), now
         );
-        AssertionReportEntry assertEntry = new AssertionReportEntry(
+        var assertEntry = new AssertionReportEntry(
                 new TaskId("assert-1"), assertResult, null
         );
 
@@ -104,7 +104,7 @@ class HtmlReportRendererTest {
         @DisplayName("should produce HTML containing scenario name and verdict")
         void shouldContainScenarioNameAndVerdict() {
             byte[] html = renderer.render(report);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("Test Campaign"));
             assertTrue(content.contains("SUCCESS"));
             assertTrue(content.contains("badge-success"));
@@ -114,7 +114,7 @@ class HtmlReportRendererTest {
         @DisplayName("should contain preparation table with task info")
         void shouldContainPreparationTable() {
             byte[] html = renderer.render(report);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("database-setup"));
             assertTrue(content.contains("SUCCESS"));
         }
@@ -123,7 +123,7 @@ class HtmlReportRendererTest {
         @DisplayName("should contain injection KPIs")
         void shouldContainInjectionKPIs() {
             byte[] html = renderer.render(report);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("com.example.Simulation"));
             assertTrue(content.contains("1000")); // totalRequests
             assertTrue(content.contains("Throughput")); // KPI label
@@ -134,7 +134,7 @@ class HtmlReportRendererTest {
         @DisplayName("should contain assertion results")
         void shouldContainAssertionResults() {
             byte[] html = renderer.render(report);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("throughput &gt;= 50")); // HTML-escaped
             assertTrue(content.contains("PASSED"));
         }
@@ -143,7 +143,7 @@ class HtmlReportRendererTest {
         @DisplayName("should contain execution summary")
         void shouldContainExecutionSummary() {
             byte[] html = renderer.render(report);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("3")); // totalTasks (check in table context)
         }
 
@@ -151,7 +151,7 @@ class HtmlReportRendererTest {
         @DisplayName("should contain environment info")
         void shouldContainEnvironmentInfo() {
             byte[] html = renderer.render(report);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("agent-1"));
             assertTrue(content.contains("25")); // JVM version
         }
@@ -161,7 +161,7 @@ class HtmlReportRendererTest {
         void shouldHandleWarningVerdict() {
             CampaignReport warnReport = buildReportWithVerdict(Verdict.WARNING, "Some failed");
             byte[] html = renderer.render(warnReport);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("badge-warning"));
             assertTrue(content.contains("WARNING"));
             assertTrue(content.contains("Some failed"));
@@ -172,7 +172,7 @@ class HtmlReportRendererTest {
         void shouldHandleFailedVerdict() {
             CampaignReport failReport = buildReportWithVerdict(Verdict.FAILED, "Critical error");
             byte[] html = renderer.render(failReport);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("badge-failed"));
             assertTrue(content.contains("FAILED"));
         }
@@ -182,7 +182,7 @@ class HtmlReportRendererTest {
         void shouldHandleEmptyLists() {
             CampaignReport emptyReport = buildReportWithVerdict(Verdict.SUCCESS, null);
             byte[] html = renderer.render(emptyReport);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertTrue(content.contains("No preparation tasks"));
             assertTrue(content.contains("No injection tasks"));
             assertTrue(content.contains("No assertion tasks"));
@@ -191,7 +191,7 @@ class HtmlReportRendererTest {
         @Test
         @DisplayName("should HTML-escape special characters")
         void shouldEscapeSpecialChars() {
-            CampaignReport escapeReport = new CampaignReport(
+            var escapeReport = new CampaignReport(
                     ReportId.generate(), new ScenarioId("sc"), "<script>alert('xss')</script>", "1.0",
                     List.of(), Map.of(),
                     new EnvironmentInfo(List.of(), "25", Map.of()),
@@ -200,7 +200,7 @@ class HtmlReportRendererTest {
                     Verdict.SUCCESS, null, Instant.now(), Duration.ZERO
             );
             byte[] html = renderer.render(escapeReport);
-            String content = new String(html, StandardCharsets.UTF_8);
+            var content = new String(html, StandardCharsets.UTF_8);
             assertFalse(content.contains("<script>"));
             assertTrue(content.contains("&lt;script&gt;"));
         }

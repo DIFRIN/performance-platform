@@ -265,7 +265,7 @@ class ExecutionEngineE2ETest {
                 public String getSupportedTaskName() { return "database"; }
             });
 
-            AtomicBoolean gatlingCalled = new AtomicBoolean(false);
+            var gatlingCalled = new AtomicBoolean(false);
             taskExecutorLookup.registerTask("gatling", new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
@@ -288,10 +288,10 @@ class ExecutionEngineE2ETest {
         @DisplayName("E2E-13: Retry mechanism recovers from transient failure")
         void retryMechanismRecovers() {
             // Use a step with explicit retry policy to ensure retries are triggered
-            RetryPolicy retryPolicy = new RetryPolicy(3, Duration.ofMillis(10),
+            var retryPolicy = new RetryPolicy(3, Duration.ofMillis(10),
                     2.0, Duration.ofMillis(100), Set.of(RuntimeException.class));
 
-            ScenarioDefinition scenario = new ScenarioDefinition(
+            var scenario = new ScenarioDefinition(
                     sId("retry-recovery"), "E2E retry-recovery", "1.0",
                     List.of("e2e"), Map.of(), ExecutionMode.LOCAL,
                     List.of(new StepDefinition(t("flaky-task"), "database", Phase.PREPARATION,
@@ -302,7 +302,7 @@ class ExecutionEngineE2ETest {
             ExecutionPlan plan = buildPlan(scenario, scenario.steps());
             planMap.put(scenario.id().value(), plan);
 
-            AtomicInteger attempts = new AtomicInteger(0);
+            var attempts = new AtomicInteger(0);
             taskExecutorLookup.registerTask("database", new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
@@ -353,7 +353,7 @@ class ExecutionEngineE2ETest {
                     new FixedResultTaskExecutor("gatling", Duration.ofMillis(20),
                             Map.of("p95Ms", 600L)));
 
-            AtomicBoolean assertionExecuted = new AtomicBoolean(false);
+            var assertionExecuted = new AtomicBoolean(false);
             taskExecutorLookup.registerAssertion("gatling-metric", new AssertionExecutor() {
                 @Override
                 public AssertionResult evaluate(ExecutionContext ctx, StepDefinition st) {
@@ -421,10 +421,10 @@ class ExecutionEngineE2ETest {
         @Test
         @DisplayName("E2E-30: Independent tasks at same level execute in parallel")
         void independentTasksExecuteInParallel() throws Exception {
-            CountDownLatch latchA = new CountDownLatch(1);
-            CountDownLatch latchB = new CountDownLatch(1);
-            CountDownLatch startedA = new CountDownLatch(1);
-            CountDownLatch startedB = new CountDownLatch(1);
+            var latchA = new CountDownLatch(1);
+            var latchB = new CountDownLatch(1);
+            var startedA = new CountDownLatch(1);
+            var startedB = new CountDownLatch(1);
 
             ScenarioDefinition scenario = buildScenario("parallel-tasks",
                     List.of(
@@ -455,7 +455,7 @@ class ExecutionEngineE2ETest {
                 public String getSupportedTaskName() { return "shell"; }
             });
 
-            Thread execThread = new Thread(() -> engine.execute(scenario));
+            var execThread = new Thread(() -> engine.execute(scenario));
             execThread.start();
 
             boolean bothStarted = startedA.await(2, TimeUnit.SECONDS)
@@ -481,7 +481,7 @@ class ExecutionEngineE2ETest {
         @Test
         @DisplayName("E2E-40: Cancel on unknown execution ID does not throw")
         void cancelUnknownExecutionDoesNotThrow() {
-            ExecutionId unknownId = ExecutionId.generate();
+            var unknownId = ExecutionId.generate();
             // cancel() on unknown ID should be a no-op, not throw
             assertDoesNotThrow(() -> engine.cancel(unknownId));
         }
@@ -508,7 +508,7 @@ class ExecutionEngineE2ETest {
             ExecutionPlan plan = buildPlan(scenario, scenario.steps());
             planMap.put(scenario.id().value(), plan);
 
-            AtomicInteger setupCalls = new AtomicInteger(0);
+            var setupCalls = new AtomicInteger(0);
             taskExecutorLookup.registerTask("database", new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
@@ -520,7 +520,7 @@ class ExecutionEngineE2ETest {
                 public String getSupportedTaskName() { return "database"; }
             });
 
-            AtomicInteger checkCalls = new AtomicInteger(0);
+            var checkCalls = new AtomicInteger(0);
             taskExecutorLookup.registerAssertion("database-assertion", new AssertionExecutor() {
                 @Override
                 public AssertionResult evaluate(ExecutionContext ctx, StepDefinition st) {
@@ -586,13 +586,13 @@ class ExecutionEngineE2ETest {
     }
 
     private ExecutionPlan buildPlan(ScenarioDefinition scenario, List<StepDefinition> steps) {
-        ExecutionId eid = ExecutionId.generate();
+        var eid = ExecutionId.generate();
         List<ExecutionStep> prep = new ArrayList<>();
         List<ExecutionStep> injection = new ArrayList<>();
         List<ExecutionStep> assertion = new ArrayList<>();
 
         for (StepDefinition step : steps) {
-            ExecutionStep execStep = new ExecutionStep(step, step.dependsOn(),
+            var execStep = new ExecutionStep(step, step.dependsOn(),
                     step.dependsOn().isEmpty() ? 0 : 1,
                     Set.copyOf(step.requiredContexts()));
             switch (step.phase()) {
