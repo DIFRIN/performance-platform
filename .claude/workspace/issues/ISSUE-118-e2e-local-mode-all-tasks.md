@@ -2,7 +2,7 @@
 
 **PDR** : PDR-026
 **Module** : `platform-app`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P0 (verification bout-en-bout du mode LOCAL)
 **Bloquee par** : ISSUE-113 (LocalAgent cablage doit etre DONE)
 **Estime** : L (3-6h)
