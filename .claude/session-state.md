@@ -9,10 +9,10 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-22
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
-**Issue active** : ISSUE-099 (IN REVIEW)
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
+**Issue active** : ISSUE-100 (WAITING)
 **Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
-**PDR parent** : PDR-023
+**PDR parent** : PDR-024
 
 ---
 
