@@ -1,0 +1,43 @@
+scenario:
+  id: e2e-local-multi-tasks
+  name: "E2E Local Mode - Multi-Task Execution"
+  version: "1.0.0"
+  execution:
+    mode: LOCAL
+  steps:
+    - id: prep-mock
+      task: mock-server
+      phase: PREPARATION
+      parameters:
+        port: 0
+      timeout: 30s
+
+    - id: inject-gatling
+      task: gatling
+      phase: INJECTION
+      dependsOn: [prep-mock]
+      parameters:
+        simulation: test.SimpleSimulation
+      timeout: 30s
+
+    - id: assert-http
+      task: http-mock
+      phase: ASSERTION
+      dependsOn: [inject-gatling]
+      parameters:
+        metric: receivedCalls
+        operator: GTE
+        value: 1
+        refTaskId: prep-mock
+      timeout: 30s
+
+    - id: assert-gatling
+      task: gatling-metric
+      phase: ASSERTION
+      dependsOn: [inject-gatling]
+      parameters:
+        metric: p99ResponseTimeMs
+        operator: LT
+        value: 1000
+        refTaskId: inject-gatling
+      timeout: 30s

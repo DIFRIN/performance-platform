@@ -2,7 +2,7 @@
 
 **PDR** : PDR-026
 **Module** : `platform-deployment`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P0 (cleanup obligatoire ADR-015)
 **Bloquee par** : ISSUE-111 (AgentProperties doit exister, car c'est la cible du mapping)
 **Estime** : M (1-3h)
