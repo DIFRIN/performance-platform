@@ -1,0 +1,114 @@
+# =============================================================================
+# Scénario : Device API — Mode LOCAL (plateforme)
+# SUT-B : POST HTTP → DB lookup → Kafka produce
+#
+# Prérequis :
+#   docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
+#   java -jar platform-app.jar --spring.profiles.active=local,examples-local
+#
+# Configuration technique dans application-examples-local.yaml :
+#   platform.datasources.sut-db    → jdbc:postgresql://localhost:5433/sut_devices
+#   platform.kafka-clusters.iot-sut → localhost:9093 / topic: device-events
+#   platform.http-targets.device-api → http://localhost:8084
+# =============================================================================
+scenario:
+  id: device-api-local
+  name: "Test SUT-B Device API — mode LOCAL"
+  version: "1.0"
+  tags: [device-api, local]
+  metadata:
+    owner: perf-team
+    sut: device-api
+  execution: { mode: LOCAL }
+
+  steps:
+    - id: reset-devices
+      task: database
+      phase: PREPARATION
+      parameters:
+        datasource: sut-db
+        operation: PURGE
+        table: devices
+      timeout: 30s
+
+    # PURGE avant POPULATE car ON CONFLICT DO NOTHING
+    - id: seed-devices
+      task: database
+      phase: PREPARATION
+      dependsOn: [reset-devices]
+      requiredContexts: [reset-devices]
+      parameters:
+        datasource: sut-db
+        operation: POPULATE
+        scriptPath: "classpath:sql/seed-sut-devices.sql"
+      timeout: 2m
+
+    - id: warmup
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [seed-devices]
+      requiredContexts: [seed-devices]
+      parameters:
+        target: device-api
+        method: POST
+        path: submit-event
+        body: '{"device_id":"device-0001"}'
+        expectedStatus: 200
+      timeout: 10s
+
+    - id: check-health
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [warmup]
+      requiredContexts: [warmup]
+      parameters:
+        target: device-api
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: load-test
+      task: gatling
+      phase: INJECTION
+      dependsOn: [check-health]
+      requiredContexts: [check-health]
+      parameters:
+        target: device-api
+        simulation: DeviceApiSimulation
+        path: submit-event
+        method: POST
+        queryParams:
+          device_id: "device-{index}"
+        contentType: application/json
+      timeout: 5m
+
+    - id: assert-kafka-produced
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [load-test]
+      requiredContexts: [load-test]
+      parameters:
+        cluster: iot-sut
+        topic: device-events
+        expectedMinCount: 50000
+        operator: GREATER_THAN_OR_EQUAL
+      timeout: 2m
+
+    - id: assert-db-intact
+      task: database
+      phase: ASSERTION
+      dependsOn: [load-test]
+      requiredContexts: [load-test]
+      parameters:
+        datasource: sut-db
+        query: "SELECT COUNT(*) FROM devices WHERE is_active = true"
+        expectedValue: 10000
+        operator: EQUAL
+      timeout: 1m
+
+loadModels:
+  device-api-ramp:
+    type: RAMP
+    target: 1000
+    duration: 60s

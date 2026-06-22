@@ -1,0 +1,110 @@
+# =============================================================================
+# Scénario : Device API — Mode DISTRIBUTED (plateforme)
+# SUT-B : POST HTTP → DB lookup → Kafka produce
+#
+# Prérequis :
+#   - docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
+#   - plateforme DISTRIBUTED : orchestrateur + 2 agents
+#
+# Différences vs local :
+#   - Charge 10 000 req/s au lieu de 1 000
+#   - agentTags: sur les steps pour distribuer sur agents spécialisés
+#   - Pas de warmup — l'orchestrateur gère le scheduling distribué
+#   - Aucune URL inline — uniquement références logiques (target:, cluster:, topic:)
+# =============================================================================
+scenario:
+  id: device-api-distributed
+  name: "Test SUT-B Device API — mode DISTRIBUTED, cible 10 000 req/s"
+  version: "1.0"
+  tags: [device-api, distributed]
+  metadata:
+    owner: perf-team
+    sut: device-api
+  execution: { mode: DISTRIBUTED }
+
+  steps:
+    # Step 1 : Vider la table devices avant re-seed
+    - id: reset-devices
+      task: database
+      phase: PREPARATION
+      parameters:
+        datasource: sut-db
+        operation: PURGE
+        table: devices
+      timeout: 30s
+
+    # Step 2 : Repeupler la table devices
+    - id: seed-devices
+      task: database
+      phase: PREPARATION
+      dependsOn: [reset-devices]
+      requiredContexts: [reset-devices]
+      parameters:
+        datasource: sut-db
+        operation: POPULATE
+        scriptPath: "classpath:sql/seed-sut-devices.sql"
+      timeout: 2m
+
+    # Step 3 : Vérifier que device-api est prêt
+    - id: check-health
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [seed-devices]
+      requiredContexts: [seed-devices]
+      parameters:
+        target: device-api
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 30s
+
+    # Step 4 : Charge 10 000 users — ramp 120s
+    # agentTags: [gatling, high-memory] — agent spécialisé Gatling avec RAM suffisante
+    - id: load-test
+      task: gatling
+      phase: INJECTION
+      dependsOn: [check-health]
+      requiredContexts: [check-health]
+      agentTags: [gatling, high-memory]
+      parameters:
+        target: device-api
+        simulation: DeviceApiHighLoadSimulation
+        path: submit-event
+        method: POST
+        queryParams:
+          device_id: "device-{index}"
+      timeout: 5m
+
+    # Step 5 : Vérifier les événements Kafka
+    - id: assert-kafka-produced
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [load-test]
+      requiredContexts: [load-test]
+      agentTags: [kafka, standard]
+      parameters:
+        cluster: iot-sut
+        topic: device-events
+        expectedMinCount: 500000
+        operator: GREATER_THAN_OR_EQUAL
+      timeout: 2m
+
+    # Step 6 : Vérifier intégrité base de données
+    - id: assert-db-intact
+      task: database
+      phase: ASSERTION
+      dependsOn: [load-test]
+      requiredContexts: [load-test]
+      agentTags: [standard]
+      parameters:
+        datasource: sut-db
+        query: "SELECT COUNT(*) FROM devices WHERE is_active = true"
+        expectedValue: 10000
+        operator: EQUAL
+      timeout: 1m
+
+loadModels:
+  device-api-high-ramp:
+    type: RAMP
+    target: 10000
+    duration: 120s
