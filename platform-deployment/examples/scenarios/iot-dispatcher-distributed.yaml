@@ -13,7 +13,7 @@
 #
 # Differences vs local :
 #   - messageCount: 10000 (charge plus importante)
-#   - agentTags: sur les steps Kafka et Gatling pour distribuer sur agents specialises
+#   - Configuration-driven : les steps sont routés via agent.supported-tasks (ADR-015)
 #   - injection: task: gatling (HTTP monitoring via target: iot-dispatcher-health)
 #     au lieu de kafka-producer direct
 #   - Aucune URL inline — uniquement references logiques (target:, cluster:, topic:)
@@ -41,13 +41,12 @@ scenario:
       timeout: 30s
 
     # Step 2 : Precharger 10 000 commandes IoT dans Kafka
-    # agentTags: [kafka, standard] — distribue sur un agent specialise kafka
+    # Cet agent doit avoir "kafka-producer" dans son agent.supported-tasks
     - id: preload-iot-commands
       task: kafka-producer
       phase: PREPARATION
       dependsOn: [reset-wiremock]
       requiredContexts: [reset-wiremock]
-      agentTags: [kafka, standard]
       parameters:
         cluster: iot-sut
         topic: iot-commands
@@ -56,14 +55,13 @@ scenario:
       timeout: 5m
 
     # Step 3 : Injection Gatling (500 users, 60s ramp-up)
-    # agentTags: [gatling, high-memory] — agent avec plus de RAM pour Gatling
+    # Cet agent doit avoir "gatling" dans son agent.supported-tasks
     # target: iot-dispatcher-health -> platform.http-targets.iot-dispatcher-health.base-url
     - id: inject-load
       task: gatling
       phase: INJECTION
       dependsOn: [preload-iot-commands]
       requiredContexts: [preload-iot-commands]
-      agentTags: [gatling, high-memory]
       parameters:
         target: iot-dispatcher-health
         simulation: IotDispatcherMonitorSimulation

@@ -8,7 +8,7 @@
 #
 # Routing : broadcast par l'orchestrateur, filtrage cote agent via
 # TaskSpecializationFilter base sur agent.supported-tasks (configuration-driven).
-# Aucun agentTags dans le scenario — le routing est par task name uniquement.
+# Configuration-driven via agent.supported-tasks (ADR-015). Le routing est par task name uniquement.
 #
 # Configuration des agents (dans docker-compose ou application.yml) :
 #   mock-agent:     agent.supported-tasks: [mock-server, http-client]

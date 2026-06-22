@@ -8,7 +8,7 @@
 #
 # Différences vs local :
 #   - Charge 10 000 req/s au lieu de 1 000
-#   - agentTags: sur les steps pour distribuer sur agents spécialisés
+#   - Configuration-driven : les steps sont routés via agent.supported-tasks (ADR-015)
 #   - Pas de warmup — l'orchestrateur gère le scheduling distribué
 #   - Aucune URL inline — uniquement références logiques (target:, cluster:, topic:)
 # =============================================================================
@@ -59,13 +59,12 @@ scenario:
       timeout: 30s
 
     # Step 4 : Charge 10 000 users — ramp 120s
-    # agentTags: [gatling, high-memory] — agent spécialisé Gatling avec RAM suffisante
+    # Cet agent doit avoir "gatling" dans son agent.supported-tasks
     - id: load-test
       task: gatling
       phase: INJECTION
       dependsOn: [check-health]
       requiredContexts: [check-health]
-      agentTags: [gatling, high-memory]
       parameters:
         target: device-api
         simulation: DeviceApiHighLoadSimulation
@@ -81,7 +80,6 @@ scenario:
       phase: ASSERTION
       dependsOn: [load-test]
       requiredContexts: [load-test]
-      agentTags: [kafka, standard]
       parameters:
         cluster: iot-sut
         topic: device-events
@@ -95,7 +93,6 @@ scenario:
       phase: ASSERTION
       dependsOn: [load-test]
       requiredContexts: [load-test]
-      agentTags: [standard]
       parameters:
         datasource: sut-db
         query: "SELECT COUNT(*) FROM devices WHERE is_active = true"

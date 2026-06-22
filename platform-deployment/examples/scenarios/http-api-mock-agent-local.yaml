@@ -9,7 +9,7 @@
 #
 # En LOCAL : tout est dans la meme JVM. La specialisation des agents est
 # non-pertinente — LocalAgent declare tous les supportedTaskNames.
-# Aucun agentTags dans le scenario (pas de routing distribue).
+# Configuration-driven via agent.supported-tasks (ADR-015). En LOCAL, pas de routing distribué.
 #
 # Prerequis :
 #   java -jar platform-app.jar --spring.profiles.active=local,examples-local
@@ -31,7 +31,7 @@ scenario:
   steps:
     # Step 1 — Preparation : Demarrer WireMock in-process (agent local)
     # Port: 0 = auto-assign. Outputs stockes dans ExecutionContext["spawn-mock"].
-    # Pas de agentTags — en LOCAL, tous les tasks sont disponibles.
+    # En LOCAL, tous les tasks sont disponibles dans la même JVM — pas de routing.
     - id: spawn-mock
       task: mock-server
       phase: PREPARATION
