@@ -2,7 +2,7 @@
 
 **PDR** : PDR-025
 **Module** : `.claude/workspace` (fichiers de tracking IA uniquement)
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P2 (normal — maintenance du registre, non bloquant)
 **Bloquee par** : ISSUE-104 et ISSUE-109 (device code + scenario supprimes, le registre doit refleter l'etat reel)
 **Estime** : S (< 1h)

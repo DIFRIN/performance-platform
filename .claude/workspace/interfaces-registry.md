@@ -344,12 +344,12 @@
 | Livrable | Statut | PDR | Issue |
 |---|---|---|---|
 | `docker-compose-sut.yaml` (wiremock removed) | ⬜ PLANNED | PDR-025 | ISSUE-103 |
-| `DevicePopulationTaskExecutor` + `DeviceCheckTaskExecutor` DELETED | ❌ TO DELETE | PDR-025 | ISSUE-104 |
+| `DevicePopulationTaskExecutor` + `DeviceCheckTaskExecutor` DELETED | ❌ REMOVED | PDR-025 | ISSUE-104 (example-only code deleted from production module) |
 | `scenarios/http-api-mock-agent-local.yaml` | ⬜ PLANNED | PDR-025 | ISSUE-105 |
 | `scenarios/http-api-mock-agent-distributed.yaml` | ⬜ PLANNED | PDR-025 | ISSUE-106 |
 | `docker-compose-wiremock-agent.yaml` | ⬜ PLANNED | PDR-025 | ISSUE-107 |
 | `README.md` Mock-as-Agent architecture | ⬜ PLANNED | PDR-025 | ISSUE-108 |
-| `scenarios/device-check-perf.yaml` DELETED | ❌ TO DELETE | PDR-025 | ISSUE-109 |
+| `scenarios/device-check-perf.yaml` DELETED | ❌ REMOVED | PDR-025 | ISSUE-109 (depends on deleted executors) |
 | Device entries cleanup in interfaces-registry | — | PDR-025 | ISSUE-110 |
 
 ## Model: Agent Specialization (Configuration-Driven) — ADR-015

@@ -119,9 +119,9 @@
 | ISSUE-105 | Create http-api-mock-agent-local.yaml scenario (LOCAL mode) | DONE | PDR-025 | ISSUE-103 |
 | ISSUE-106 | Create http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED mode) | DONE | PDR-025 | ISSUE-105 |
 | ISSUE-107 | Create docker-compose-wiremock-agent.yaml | DONE | PDR-025 | ISSUE-103 |
-| ISSUE-108 | Update README with Mock-as-Agent architecture documentation | APPROVED | PDR-025 | ISSUE-103,104,105,106,107 |
+| ISSUE-108 | Update README with Mock-as-Agent architecture documentation | DONE | PDR-025 | ISSUE-103,104,105,106,107 |
 | ISSUE-109 | Delete legacy device-check-perf.yaml scenario | DONE | PDR-025 | ISSUE-104 |
-| ISSUE-110 | Clean device entries from interfaces-registry | WAITING | PDR-025 | ISSUE-104,109 |
+| ISSUE-110 | Clean device entries from interfaces-registry | APPROVED | PDR-025 | ISSUE-104,109 |
 | ISSUE-111 | AgentProperties @ConfigurationProperties record | DONE | PDR-026 | — |
 | ISSUE-112 | Create AgentRuntimeConfiguration @Configuration | DONE | PDR-026 | ISSUE-111 |
 | ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | DONE | PDR-026 | ISSUE-112 |
@@ -591,3 +591,7 @@
 | 2026-06-22 | ISSUE-108 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-22 | ISSUE-108 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-108 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-108 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-110 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-22 | ISSUE-110 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-22 | ISSUE-110 | IN_REVIEW → APPROVED | Reviewer approved |
