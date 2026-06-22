@@ -13,5 +13,44 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(mvn *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(git *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(mkdir -p *)",
+      "Bash(chmod *)",
+      "Bash(bash .claude/scripts/*)",
+      "Bash(javap *)",
+      "Bash(curl -s *)",
+      "Bash(jar *)",
+      "Bash(unzip *)",
+      "Bash(echo *)",
+      "Bash(sort *)",
+      "Bash(xargs *)",
+      "Bash(rm *)",
+      "Bash(cp *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(wc *)",
+      "Bash(tee *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(cut *)",
+      "Bash(tr *)",
+      "Bash(python3 *)",
+      "Bash(java *)",
+      "Bash(docker *)",
+      "Bash(node *)",
+      "Bash(bash -n *)",
+      "Read(*)",
+      "Write(.claude/**)",
+      "Edit(.claude/**)",
+      "Skill(*)"
+    ]
   }
 }

@@ -1,7 +1,7 @@
 # Guide — Démarrage du Projet
 
 > Ce guide répond à : "J'ai ce repo, par où je commence ?"
-> À lire UNE SEULE FOIS au démarrage. Ensuite, suivre `.claude/roadmap.md` et `.claude/current-task.md`.
+> À lire UNE SEULE FOIS au démarrage. Ensuite, suivre `.claude/knowledge/roadmap.md` et `.claude/workspace/current-task.md`.
 
 ---
 
@@ -19,10 +19,10 @@ Avant de lancer le premier agent, vérifier :
 
 ```
 Lire dans cet ordre (20 minutes) :
-1. .claude/glossary.md          ← Le vocabulaire. Tout le reste en dépend.
-2. .claude/architecture.md      ← La structure Maven + règles de dépendances
-3. .claude/constraints.md       ← Ce qui ne change jamais
-4. .claude/roadmap.md           ← Les 10 phases dans l'ordre
+1. .claude/knowledge/glossary.md          ← Le vocabulaire. Tout le reste en dépend.
+2. .claude/knowledge/architecture.md      ← La structure Maven + règles de dépendances
+3. .claude/knowledge/constraints.md       ← Ce qui ne change jamais
+4. .claude/knowledge/roadmap.md           ← Les 10 phases dans l'ordre
 5. CLAUDE.md            ← Comment les agents travaillent
 ```
 
@@ -41,16 +41,16 @@ Utiliser le prompt dans : .claude/agents/system-designer.md
 Le System Designer va :
 1. Lire toutes les specs (15-20 min)
 2. Proposer la liste des PDRs (validation humaine requise)
-3. Créer les fichiers `.claude/pdr/PDR-XXX.md` et `.claude/issues/ISSUE-XXX.md`
-4. Initialiser `.claude/progress.md` avec tous les PDRs et Issues
+3. Créer les fichiers `.claude/workspace/pdr/PDR-XXX.md` et `.claude/workspace/issues/ISSUE-XXX.md`
+4. Initialiser `.claude/workspace/progress.md` avec tous les PDRs et Issues
 
-**Ne pas activer le Developer avant que `.claude/progress.md` soit initialisé.**
+**Ne pas activer le Developer avant que `.claude/workspace/progress.md` soit initialisé.**
 
 ---
 
 ## Étape 3 — Préparer la Première Session Developer
 
-Après que `.claude/progress.md` est initialisé :
+Après que `.claude/workspace/progress.md` est initialisé :
 
 ```markdown
 ## Tâche Courante
@@ -66,10 +66,10 @@ toutes les classes du domaine (entités, value objects, events)
 telles que définies dans le glossaire et les interfaces de spec-01/02.
 
 ## Specs de Référence
-- `.claude/specifications/01-scenario-dsl.md` section 6 (modèle de données)
-- `.claude/specifications/02-execution-engine.md` sections 2, 3, 4
-- `.claude/architecture.md` section 2 (structure Maven)
-- `.claude/skills/hexagonal-architecture.md`
+- `.claude/knowledge/specs/01-scenario-dsl.md` section 6 (modèle de données)
+- `.claude/knowledge/specs/02-execution-engine.md` sections 2, 3, 4
+- `.claude/knowledge/architecture.md` section 2 (structure Maven)
+- `.claude/knowledge/skills/hexagonal-architecture.md`
 
 ## Périmètre de la Tâche
 
@@ -86,8 +86,8 @@ telles que définies dans le glossaire et les interfaces de spec-01/02.
 
 ## Interfaces à Respecter
 
-Voir `.claude/specifications/01-scenario-dsl.md` section 6 et
-`.claude/specifications/02-execution-engine.md` sections 3 et 4.
+Voir `.claude/knowledge/specs/01-scenario-dsl.md` section 6 et
+`.claude/knowledge/specs/02-execution-engine.md` sections 3 et 4.
 
 ## Critères de Done
 - [ ] `mvn compile` passe sur tous les modules
@@ -105,8 +105,8 @@ Voir `.claude/specifications/01-scenario-dsl.md` section 6 et
 Instruction d'activation :
 "Tu es l'agent Architect de ce projet.
 Lis agents/architect.md.
-Lis architecture.md, constraints.md, .claude/adr/*.md.
-Valide que .claude/current-task.md pour la Phase 1 est cohérent
+Lis architecture.md, constraints.md, .claude/knowledge/adr/*.md.
+Valide que .claude/workspace/current-task.md pour la Phase 1 est cohérent
 avec les specs et l'architecture. Identifie tout manque
 avant de laisser le Developer démarrer."
 ```
@@ -141,8 +141,8 @@ Ne JAMAIS mixer les rôles dans une même session.
 
 | Besoin | Fichier |
 |---|---|
-| Comprendre le vocabulaire | `.claude/glossary.md` |
-| Voir où on en est | `.claude/roadmap.md` + `.claude/feature-summaries/README.md` |
-| Savoir quoi faire maintenant | `.claude/current-task.md` |
-| Décisions architecturales | `.claude/adr/*.md` |
+| Comprendre le vocabulaire | `.claude/knowledge/glossary.md` |
+| Voir où on en est | `.claude/knowledge/roadmap.md` + `.claude/workspace/progress.md` |
+| Savoir quoi faire maintenant | `.claude/workspace/current-task.md` |
+| Décisions architecturales | `.claude/knowledge/adr/*.md` |
 | Comment les agents collaborent | `.claude/guides/agent-orchestration.md` |

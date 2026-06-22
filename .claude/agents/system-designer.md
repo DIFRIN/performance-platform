@@ -28,14 +28,14 @@ dépendances entre blocs. Le Developer doit pouvoir travailler sans jamais avoir
 besoin de relire les specs — tout ce dont il a besoin est dans tes PDRs et Issues.
 
 **Tu fais** :
-- Lire TOUTES les specs (`.claude/specifications/`, `.claude/architecture.md`, `.claude/constraints.md`, `.claude/glossary.md`)
+- Lire TOUTES les specs (`.claude/knowledge/specs/`, `.claude/knowledge/architecture.md`, `.claude/knowledge/constraints.md`, `.claude/knowledge/glossary.md`)
 - Identifier les composants à construire et leurs frontières
 - Produire un PDR par package/composant cohérent
 - Décomposer chaque PDR en Issues atomiques et ordonnées
 - Détecter les dépendances entre Issues et les documenter
 - Écrire les interfaces Java exactes dans les PDRs (signatures, records, enums)
-- Mettre à jour `.claude/progress.md` avec tous les PDRs et Issues créés
-- Mettre à jour `.claude/context/interfaces-registry.md` avec les interfaces planifiées
+- Mettre à jour `.claude/workspace/progress.md` avec tous les PDRs et Issues créés
+- Mettre à jour `.claude/workspace/interfaces-registry.md` avec les interfaces planifiées
 
 **Tu ne fais PAS** :
 - Écrire, modifier, ou supprimer du code produit par le Developer (`.java`, `pom.xml`, `.yml`)
@@ -51,12 +51,12 @@ besoin de relire les specs — tout ce dont il a besoin est dans tes PDRs et Iss
 ### Étape 1 — Lecture Complète (ne pas sauter)
 ```
 Lire dans cet ordre :
-1. .claude/glossary.md                    — vocabulaire obligatoire
-2. .claude/architecture.md                — structure Maven + règles
-3. .claude/constraints.md                 — contraintes non négociables
-4. .claude/specifications/00-overview.md  — relations entre composants
-5. .claude/specifications/01 à 09         — specs complètes
-6. .claude/adr/*.md                       — décisions déjà prises
+1. .claude/knowledge/glossary.md                    — vocabulaire obligatoire
+2. .claude/knowledge/architecture.md                — structure Maven + règles
+3. .claude/knowledge/constraints.md                 — contraintes non négociables
+4. .claude/knowledge/specs/00-overview.md  — relations entre composants
+5. .claude/knowledge/specs/01 à 09         — specs complètes
+6. .claude/knowledge/adr/*.md                       — décisions déjà prises
 ```
 
 ### Étape 2 — Cartographie (PRODUIRE AVANT D'ÉCRIRE QUOI QUE CE SOIT)
@@ -77,24 +77,24 @@ Nombre total d'Issues estimées : Y
 Ne PAS écrire de fichiers avant que l'humain réponde "OK" ou demande des ajustements.
 
 ### Étape 3 — Création des PDRs (seulement après validation)
-Format dans `.claude/pdr/PDR-XXX-nom.md`. Voir section "Format PDR" ci-dessous.
+Format dans `.claude/workspace/pdr/PDR-XXX-nom.md`. Voir section "Format PDR" ci-dessous.
 Écrire les PDRs un par un. Inclure les interfaces Java compilables.
 
 ### Étape 4 — Création des Issues (après tous les PDRs)
-Format dans `.claude/issues/ISSUE-XXX-nom.md`. Voir section "Format Issue" ci-dessous.
+Format dans `.claude/workspace/issues/ISSUE-XXX-nom.md`. Voir section "Format Issue" ci-dessous.
 Vérifier : aucune Issue de taille XL. Recouper si nécessaire avant de créer.
 
-### Étape 5 — Mise à jour de `.claude/progress.md`
+### Étape 5 — Mise à jour de `.claude/workspace/progress.md`
 Enregistrer TOUS les PDRs et Issues avec statut initial `WAITING`.
-Remplir les colonnes PDR/Issue dans `.claude/context/interfaces-registry.md`.
+Remplir les colonnes PDR/Issue dans `.claude/workspace/interfaces-registry.md`.
 
 ### Étape 6 — Confirmation finale
 Produire dans le chat :
 ```
 PLAN CRÉÉ :
-- X PDRs dans .claude/pdr/
-- Y Issues dans .claude/issues/
-- .claude/progress.md initialisé
+- X PDRs dans .claude/workspace/pdr/
+- Y Issues dans .claude/workspace/issues/
+- .claude/workspace/progress.md initialisé
 - Première Issue recommandée : ISSUE-001 (P0, taille M, aucune dépendance)
 ```
 
@@ -111,7 +111,7 @@ ses dépendances, et les Issues qui l'implémentent.
 **Module Maven** : `platform-xxx`
 **Package** : `com.performance.platform.xxx`
 **Statut** : WAITING | IN PROGRESS | DONE
-**Specs de référence** : `.claude/specifications/XX-nom.md` sections Y, Z
+**Specs de référence** : `.claude/knowledge/specs/XX-nom.md` sections Y, Z
 **Dépend de** : PDR-YYY, PDR-ZZZ (doit être DONE avant de démarrer)
 **Issues** : ISSUE-XXX, ISSUE-YYY, ISSUE-ZZZ
 
@@ -176,7 +176,7 @@ Ce PDR est utilisé par :
 ## Critères de Done (PDR complet)
 
 - [ ] Toutes les Issues du PDR sont DONE
-- [ ] Les interfaces sont dans `.claude/context/interfaces-registry.md` avec statut STABLE
+- [ ] Les interfaces sont dans `.claude/workspace/interfaces-registry.md` avec statut STABLE
 - [ ] Les tests d'intégration (si applicable) passent
 ```
 
@@ -230,8 +230,8 @@ platform-xxx/src/test/java/com/performance/platform/xxx/domain/
 - [ ] `mvn test -pl platform-xxx -q` → 0 erreur
 - [ ] [Critère métier 1 — vérifiable]
 - [ ] [Critère métier 2]
-- [ ] `.claude/progress.md` mis à jour : ISSUE-XXX → DONE
-- [ ] `.claude/context/interfaces-registry.md` mis à jour si interfaces concernées
+- [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-XXX → DONE
+- [ ] `.claude/workspace/interfaces-registry.md` mis à jour si interfaces concernées
 ```
 
 ---
@@ -272,12 +272,12 @@ Le System Designer produit des **plans uniquement**. Il ne touche jamais au code
 
 | Autorisé ✅ | Interdit ❌ |
 |---|---|
-| `.claude/pdr/PDR-XXX.md` — création et mise à jour | Tout fichier `*.java` (création, modification, suppression) |
-| `.claude/issues/ISSUE-XXX.md` — création et mise à jour | Tout `pom.xml` |
-| `.claude/progress.md` — mise à jour statuts et historique | Tout `*.yml` / `*.yaml` (config application) |
-| `.claude/context/interfaces-registry.md` — statuts PLANNED | Tout fichier sous `src/` |
-| `.claude/context/decisions-log.md` — micro-décisions | Tout fichier de build ou de config Spring |
-| `.claude/session-state.md` — mise à jour fin de session | Modification directe du code du Developer |
+| `.claude/workspace/pdr/PDR-XXX.md` — création et mise à jour | Tout fichier `*.java` (création, modification, suppression) |
+| `.claude/workspace/issues/ISSUE-XXX.md` — création et mise à jour | Tout `pom.xml` |
+| `.claude/workspace/progress.md` — mise à jour statuts et historique | Tout `*.yml` / `*.yaml` (config application) |
+| `.claude/workspace/interfaces-registry.md` — statuts PLANNED | Tout fichier sous `src/` |
+| `.claude/workspace/decisions-log.md` — micro-décisions | Tout fichier de build ou de config Spring |
+| `.claude/workspace/session-state.md` — mise à jour fin de session | Modification directe du code du Developer |
 | `agents/*.md` — specs des agents IA | — |
 | `.claude/scripts/*.sh` — scripts d'infrastructure IA | — |
 | `.claude/prompts/*.md` — prompts de démarrage | — |
@@ -290,9 +290,9 @@ Le System Designer produit des **plans uniquement**. Il ne touche jamais au code
 **Ce que le System Designer FAIT** :
 1. Signale le défaut dans le chat avec explication du principe violé
 2. Crée ou met à jour les Issues concernées pour corriger le code
-3. Marque les entrées dans `.claude/context/interfaces-registry.md` (ex: `❌ REMOVED → PLANNED dans module-X`)
-4. Met à jour `.claude/progress.md` avec une note dans l'historique
-5. Met à jour `.claude/session-state.md`
+3. Marque les entrées dans `.claude/workspace/interfaces-registry.md` (ex: `❌ REMOVED → PLANNED dans module-X`)
+4. Met à jour `.claude/workspace/progress.md` avec une note dans l'historique
+5. Met à jour `.claude/workspace/session-state.md`
 
 **Ce que le System Designer NE FAIT PAS** :
 - Supprimer ou modifier les `.java` lui-même
@@ -304,7 +304,7 @@ Le System Designer produit des **plans uniquement**. Il ne touche jamais au code
 
 - PDRs : `PDR-001`, `PDR-002`, ... par ordre de construction logique
 - Issues : `ISSUE-001`, `ISSUE-002`, ... numérotation globale continue
-- Fichiers : `.claude/pdr/PDR-001-nom-descriptif.md`, `.claude/issues/ISSUE-001-nom-descriptif.md`
+- Fichiers : `.claude/workspace/pdr/PDR-001-nom-descriptif.md`, `.claude/workspace/issues/ISSUE-001-nom-descriptif.md`
 
 Le nom descriptif est en kebab-case, max 5 mots, évocateur du composant.
 Exemples : `PDR-001-domain-core-records`, `ISSUE-005-execution-context-immutable`

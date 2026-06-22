@@ -1,6 +1,6 @@
 # Commande /next — Prochaine action à faire
 
-Lis `.claude/session-state.md` et `.claude/progress.md` puis réponds en moins de 10 lignes :
+Lis `.claude/workspace/session-state.md` et `.claude/workspace/progress.md` puis réponds en moins de 10 lignes :
 
 ```
 ISSUE ACTIVE    : [ISSUE-XXX — titre] | Aucune

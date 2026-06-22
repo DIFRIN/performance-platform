@@ -17,10 +17,5 @@ tester()    { python3 "$(_perf_root)/scripts/agent.py" tester           "$@"; }
 devloop()   { bash "$(_perf_root)/.claude/scripts/dev-loop.sh" "$@"; }
 
 perf-status() {
-  local pf="$(_perf_root)/progress.md"
-  echo "═══ Performance Platform ═══"
-  echo "IN PROGRESS : $(grep -c 'IN PROGRESS' "$pf" 2>/dev/null || echo 0)"
-  echo "IN REVIEW   : $(grep -c 'IN REVIEW'   "$pf" 2>/dev/null || echo 0)"
-  echo "DONE        : $(grep -c 'DONE'         "$pf" 2>/dev/null || echo 0)"
-  echo "WAITING     : $(grep -c 'WAITING'      "$pf" 2>/dev/null || echo 0)"
+  bash "$(_perf_root)/.claude/scripts/progress-status.sh"
 }

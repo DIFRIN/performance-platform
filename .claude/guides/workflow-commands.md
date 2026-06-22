@@ -39,8 +39,8 @@ rm -rf pp-ai/
 
 # Vérifier la structure
 ls -la
-# Attendu : CLAUDE.md  agents/  .claude/adr/  .claude/context/  .claude/guides/  .claude/issues/  .claude/pdr/
-#           .claude/progress.md  .claude/prompts/  .claude/session-state.md  .claude/specifications/  .claude/skills/
+# Attendu : CLAUDE.md  agents/  .claude/knowledge/adr/  .claude/workspace/  .claude/guides/  .claude/workspace/issues/  .claude/workspace/pdr/
+#           .claude/workspace/progress.md  .claude/prompts/  .claude/workspace/session-state.md  .claude/knowledge/specs/  .claude/knowledge/skills/
 
 git add .
 git commit -m "chore: init ai-project structure"
@@ -66,7 +66,7 @@ git add . && git commit -m "chore: init project skeleton"
 
 ## PHASE 1 — System Designer (une seule fois avant de coder)
 
-> **But** : transformer les specs en PDRs et Issues dans `.claude/progress.md`.
+> **But** : transformer les specs en PDRs et Issues dans `.claude/workspace/progress.md`.
 > Après cette phase, le Developer n'a plus jamais besoin de lire les specs.
 
 ### Session 1.A — Lancer le System Designer
@@ -81,21 +81,21 @@ claude-design
 
 ```
 @system-designer produis les PDRs et Issues pour ce projet.
-2. .claude/glossary.md
-3. .claude/architecture.md
-4. .claude/constraints.md
-5. .claude/specifications/00-overview.md
-6. .claude/specifications/01-scenario-dsl.md
-7. .claude/specifications/02-execution-engine.md
-8. .claude/specifications/03-task-framework.md
-9. .claude/specifications/04-agent-runtime.md
-10. .claude/specifications/05-transport-layer.md
-11. .claude/specifications/06-injection-gatling.md
-12. .claude/specifications/07-assertion-framework.md
-13. .claude/specifications/08-report-engine.md
-14. .claude/specifications/09-deployment.md
-15. .claude/adr/*.md
-16. .claude/context/interfaces-registry.md
+2. .claude/knowledge/glossary.md
+3. .claude/knowledge/architecture.md
+4. .claude/knowledge/constraints.md
+5. .claude/knowledge/specs/00-overview.md
+6. .claude/knowledge/specs/01-scenario-dsl.md
+7. .claude/knowledge/specs/02-execution-engine.md
+8. .claude/knowledge/specs/03-task-framework.md
+9. .claude/knowledge/specs/04-agent-runtime.md
+10. .claude/knowledge/specs/05-transport-layer.md
+11. .claude/knowledge/specs/06-injection-gatling.md
+12. .claude/knowledge/specs/07-assertion-framework.md
+13. .claude/knowledge/specs/08-report-engine.md
+14. .claude/knowledge/specs/09-deployment.md
+15. .claude/knowledge/adr/*.md
+16. .claude/workspace/interfaces-registry.md
 
 MISSION :
 Après lecture, produire d'abord la liste des PDRs proposés (titres + modules uniquement).
@@ -118,19 +118,19 @@ Puis procède à la création.
 ```
 
 **→ Le System Designer crée :**
-- `.claude/pdr/PDR-001-*.md` ... `.claude/pdr/PDR-NNN-*.md`
-- `.claude/issues/ISSUE-001-*.md` ... `.claude/issues/ISSUE-NNN-*.md`
-- Met à jour `.claude/progress.md`
-- Met à jour `.claude/context/interfaces-registry.md`
+- `.claude/workspace/pdr/PDR-001-*.md` ... `.claude/workspace/pdr/PDR-NNN-*.md`
+- `.claude/workspace/issues/ISSUE-001-*.md` ... `.claude/workspace/issues/ISSUE-NNN-*.md`
+- Met à jour `.claude/workspace/progress.md`
+- Met à jour `.claude/workspace/interfaces-registry.md`
 
 ### 0.3 — Commit après System Designer
 
 ```bash
-git add .claude/pdr/ .claude/issues/ .claude/progress.md .claude/context/interfaces-registry.md
+git add .claude/workspace/pdr/ .claude/workspace/issues/ .claude/workspace/progress.md .claude/workspace/interfaces-registry.md
 git commit -m "feat: system designer — PDRs and Issues created
 
 $(grep -c 'PDR-' progress.md) PDRs, $(grep -c 'ISSUE-' progress.md) Issues
-First actionable: $(grep -m1 'WAITING' .claude/issues/*.md 2>/dev/null | head -1 | cut -d/ -f2)"
+First actionable: $(grep -m1 'WAITING' .claude/workspace/issues/*.md 2>/dev/null | head -1 | cut -d/ -f2)"
 ```
 
 ---
@@ -148,10 +148,10 @@ First actionable: $(grep -m1 'WAITING' .claude/issues/*.md 2>/dev/null | head -1
 
 ```bash
 # Voir les Issues en cours
-grep -A1 "IN PROGRESS\|IN REVIEW" .claude/progress.md | grep "ISSUE-"
+grep -A1 "IN PROGRESS\|IN REVIEW" .claude/workspace/progress.md | grep "ISSUE-"
 
 # Voir la prochaine Issue disponible
-grep -B1 "WAITING" .claude/progress.md | grep "ISSUE-" | head -5
+grep -B1 "WAITING" .claude/workspace/progress.md | grep "ISSUE-" | head -5
 
 # Résumé rapide
 echo "IN PROGRESS : $(grep -c 'IN PROGRESS' progress.md)"
@@ -191,7 +191,7 @@ git commit -m "feat(ISSUE-XXX): <titre de l'issue>
 
 - Fichiers créés : [liste]
 - Tests : X unitaires ajoutés
-- .claude/progress.md : WAITING → IN REVIEW"
+- .claude/workspace/progress.md : WAITING → IN REVIEW"
 ```
 
 ---
@@ -213,7 +213,7 @@ git commit -m "feat(ISSUE-XXX): <titre de l'issue>
 #### CAS A — APPROVED ✅
 
 ```bash
-git add .claude/progress.md .claude/context/interfaces-registry.md
+git add .claude/workspace/progress.md .claude/workspace/interfaces-registry.md
 git commit -m "review(ISSUE-XXX): APPROVED
 
 Reviewer: APPROVED au 1er cycle
@@ -254,8 +254,8 @@ Rapport précédent :
 
 FICHIERS À LIRE :
 1. agents/reviewer.md   — section "Règles de Décision" uniquement
-2. .claude/issues/ISSUE-XXX.md  — critères de done
-3. .claude/pdr/PDR-XXX.md       — si points ARCH concernaient des interfaces
+2. .claude/workspace/issues/ISSUE-XXX.md  — critères de done
+3. .claude/workspace/pdr/PDR-XXX.md       — si points ARCH concernaient des interfaces
 
 Vérifier UNIQUEMENT les points BLOQUANTS du rapport précédent.
 ```
@@ -274,7 +274,7 @@ Vérifier UNIQUEMENT les points BLOQUANTS du rapport précédent.
 
 ```bash
 # Si l'Architect produit un ADR
-git add .claude/adr/ADR-00X-*.md
+git add .claude/knowledge/adr/ADR-00X-*.md
 git commit -m "arch: ADR-00X — [titre de la décision]"
 ```
 
@@ -296,16 +296,16 @@ L'Issue suivante vient d'être APPROVED par le Reviewer :
 
 FICHIERS À LIRE :
 1. agents/tester.md                 — section "Phase X" uniquement
-2. .claude/issues/ISSUE-XXX.md              — composants à tester
-3. .claude/pdr/PDR-XXX.md                   — interfaces exactes
-4. .claude/progress.md                      — voir quelles Issues sont DONE (éviter doublons)
+2. .claude/workspace/issues/ISSUE-XXX.md              — composants à tester
+3. .claude/workspace/pdr/PDR-XXX.md                   — interfaces exactes
+4. .claude/workspace/progress.md                      — voir quelles Issues sont DONE (éviter doublons)
 
 PROCESSUS :
 1. Définis ton plan de test
 2. Écris les tests d'intégration Testcontainers
 3. Exécute et rapport
-4. Mets à jour .claude/feature-summaries/README.md
-5. Mets à jour .claude/session-state.md
+4. Mets à jour .claude/workspace/progress.md
+5. Mets à jour .claude/workspace/session-state.md
 ```
 
 ```bash
@@ -331,7 +331,7 @@ claude-dev
 **Puis :**
 
 ```
-Lis .claude/session-state.md et progress.md. Dis-moi quelle Issue est active et quelle est la prochaine action.
+Lis .claude/workspace/session-state.md et progress.md. Dis-moi quelle Issue est active et quelle est la prochaine action.
 ```
 
 **→ Selon la réponse, copier le prompt correspondant depuis `.claude/prompts/`.**
@@ -349,7 +349,7 @@ Lis .claude/session-state.md et progress.md. Dis-moi quelle Issue est active et 
 | Corrections post-review | `claude-dev` | `@developer Le Reviewer a demandé des corrections...` |
 | Re-review | `claude-dev` | `@reviewer re-review ISSUE-XXX` |
 | Tests d'intégration | `claude-dev` | `@tester` |
-| Reprise / état | `claude-dev` | `Lis .claude/session-state.md et progress.md, état actuel ?` |
+| Reprise / état | `claude-dev` | `Lis .claude/workspace/session-state.md et progress.md, état actuel ?` |
 
 ---
 
@@ -368,7 +368,7 @@ Lis .claude/session-state.md et progress.md. Dis-moi quelle Issue est active et 
 ```bash
 # État global
 echo "=== PROGRESS ===" && \
-grep -E "WAITING|IN PROGRESS|IN REVIEW|✅ DONE|BLOCKED" .claude/progress.md | \
+grep -E "WAITING|IN PROGRESS|IN REVIEW|✅ DONE|BLOCKED" .claude/workspace/progress.md | \
   awk '{print $NF}' | sort | uniq -c | sort -rn
 
 # Build global

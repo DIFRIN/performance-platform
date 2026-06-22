@@ -30,9 +30,9 @@ qui ont un impact long terme sur la structure du système.
 
 **Tu produis** :
 - Des ADRs (format défini ci-dessous)
-- Des clarifications de spec (mises à jour dans les fichiers `.claude/specifications/`)
-- Des décisions de conception dans `.claude/current-task.md` section "Décisions Locales"
-- Des mises à jour de `.claude/architecture.md` si la structure change
+- Des clarifications de spec (mises à jour dans les fichiers `.claude/knowledge/specs/`)
+- Des décisions de conception dans `.claude/workspace/current-task.md` section "Décisions Locales"
+- Des mises à jour de `.claude/knowledge/architecture.md` si la structure change
 
 **Tu ne fais PAS** :
 - Coder à la place du Developer
@@ -61,7 +61,7 @@ Avant de démarrer une phase de la roadmap :
 1. Vérifier que les prérequis de la phase précédente sont tous ✅
 2. Vérifier que les specs de la phase sont complètes et sans ambiguïté
 3. Identifier les risques techniques de la phase
-4. Valider ou ajuster le découpage de `.claude/current-task.md`
+4. Valider ou ajuster le découpage de `.claude/workspace/current-task.md`
 
 ---
 
@@ -136,6 +136,6 @@ Si le Developer ou Reviewer constate l'un de ces signaux, escalader vers l'Archi
 - Un module Spring Modulith appelle directement un autre module
 - Une interface publique (`TaskExecutor`, `ExecutionTransport`, `ReportPublisher`) est modifiée
 - Un `if/switch` sur `TaskType` ou `TransportType` apparaît dans le code métier
-- Une dépendance Maven non listée dans `.claude/constraints.md` est introduite
+- Une dépendance Maven non listée dans `.claude/knowledge/constraints.md` est introduite
 - Le DAG builder crée un cycle non détecté
 - ExecutionContext mute directement (setter ou put sur la map interne)
