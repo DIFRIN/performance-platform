@@ -37,7 +37,7 @@ public class SocketConnectionRegistry {
      * @throws IOException si la creation du writer echoue
      */
     public ManagedConnection register(Socket socket) throws IOException {
-        ManagedConnection connection = new ManagedConnection(socket);
+        var connection = new ManagedConnection(socket);
         connections.add(connection);
         log.info("action=connection_registered total={}", connections.size());
         return connection;

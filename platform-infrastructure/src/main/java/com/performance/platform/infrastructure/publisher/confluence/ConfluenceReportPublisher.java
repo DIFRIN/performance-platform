@@ -120,7 +120,7 @@ public class ConfluenceReportPublisher implements ReportPublisher {
                 report.id().value(), url, spaceKey);
 
         try {
-            HttpRequest request = HttpRequest.newBuilder()
+            var request = HttpRequest.newBuilder()
                     .uri(URI.create(apiUrl))
                     .header("Authorization", "Bearer " + token)
                     .header("Content-Type", "application/json")

@@ -101,7 +101,7 @@ public class LocalExecutionEngine implements ExecutionEngine {
         ExecutionId executionId = plan.id();
         AtomicBoolean cancelled = cancelFlags.get(executionId.value());
         ExecutionContext ctx = plan.initialContext();
-        Instant start = Instant.now();
+        var start = Instant.now();
         boolean hasFailure = false;
         Verdict verdict = Verdict.SUCCESS;
 
@@ -182,7 +182,7 @@ public class LocalExecutionEngine implements ExecutionEngine {
             executionRepository.save(state);
         }
 
-        Duration totalDuration = Duration.between(start, Instant.now());
+        var totalDuration = Duration.between(start, Instant.now());
         eventPublisher.publishEvent(new ScenarioFinished(
                 executionId, scenarioId, verdict, totalDuration, Instant.now()));
         log.info("action=scenario_finished executionId={} verdict={} durationMs={}",
@@ -297,7 +297,7 @@ public class LocalExecutionEngine implements ExecutionEngine {
     }
 
     private ExecutionState createInitialState(ExecutionId id, ScenarioId scenarioId, ExecutionContext context) {
-        Instant now = Instant.now();
+        var now = Instant.now();
         Map<Phase, PhaseStatus> phases = new EnumMap<>(Phase.class);
         phases.put(Phase.PREPARATION, PhaseStatus.PENDING);
         phases.put(Phase.INJECTION, PhaseStatus.PENDING);

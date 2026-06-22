@@ -98,16 +98,16 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-01: Full pipeline with RAMP load model produces successful result")
         void rampLoadModelFullPipeline() {
-            StubRunner runner = new StubRunner();
+            var runner = new StubRunner();
             runner.returnsDir(RESULTS_DIR);
 
-            TaskId taskId = TaskId.of("gatling-task-1");
+            var taskId = TaskId.of("gatling-task-1");
             InjectionResult injectionResult = buildInjectionResult(taskId, "com.example.RampSimulation",
                     Duration.ofSeconds(60), 10000, 9500, 500, 5.0, 40.5);
-            StubParser parser = new StubParser();
+            var parser = new StubParser();
             parser.returns(injectionResult);
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
             StepDefinition step = buildGatlingStep(taskId,
                     Map.of("simulation", "com.example.RampSimulation",
@@ -137,13 +137,13 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-02: CONSTANT load model")
         void constantLoadModelProducesCorrectConfig() {
-            StubRunner runner = new StubRunner();
-            StubParser parser = new StubParser()
+            var runner = new StubRunner();
+            var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("const-test"),
                             "com.example.ConstantSimulation", Duration.ofSeconds(30),
                             5000, 5000, 0, 0.0, 20.0));
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
             StepDefinition step = buildGatlingStep(TaskId.of("const-test"),
                     Map.of("simulation", "com.example.ConstantSimulation",
@@ -161,16 +161,16 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-03: BURST load model passed as type reference")
         void burstLoadModelType() {
-            StubRunner runner = new StubRunner();
-            StubParser parser = new StubParser()
+            var runner = new StubRunner();
+            var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("burst-test"),
                             "com.example.BurstSimulation", Duration.ofSeconds(10),
                             2000, 1800, 200, 10.0, 20.0));
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
             // Use a LoadModel record with BURST type
-            LoadModel model = new LoadModel(LoadModelType.BURST, Map.of(
+            var model = new LoadModel(LoadModelType.BURST, Map.of(
                     "usersPerSecond", 1000,
                     "duration", "1m",
                     "burstDuration", "10s"));
@@ -185,15 +185,15 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-04: LoadModel passed as LoadModel record directly")
         void loadModelAsRecord() {
-            StubRunner runner = new StubRunner();
-            StubParser parser = new StubParser()
+            var runner = new StubRunner();
+            var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("record-test"),
                             "com.example.SpikeSimulation", Duration.ofSeconds(30),
                             2000, 1900, 100, 5.0, 15.0));
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
-            LoadModel model = new LoadModel(LoadModelType.SPIKE, Map.of(
+            var model = new LoadModel(LoadModelType.SPIKE, Map.of(
                     "usersPerSecond", 500,
                     "duration", "2m"));
 
@@ -217,14 +217,14 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-10: GatlingExecutionException produces FAILED TaskResult")
         void runnerExceptionProducesFailedResult() {
-            StubRunner runner = new StubRunner()
+            var runner = new StubRunner()
                     .throwsException(new GatlingExecutionException("Simulation crashed",
                             new RuntimeException("OOM")));
-            StubParser parser = new StubParser()
+            var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("fail-test"),
                             "x", Duration.ofSeconds(1), 1, 1, 0, 0.0, 1.0));
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
             StepDefinition step = buildGatlingStep(TaskId.of("fail-test"),
                     Map.of("simulation", "com.example.FailingSimulation",
@@ -240,12 +240,12 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-11: ResultParsingException produces FAILED TaskResult")
         void parsingExceptionProducesFailedResult() {
-            StubRunner runner = new StubRunner();
-            StubParser parser = new StubParser()
+            var runner = new StubRunner();
+            var parser = new StubParser()
                     .throwsException(new ResultParsingException("stats.json corrupted",
                             new RuntimeException("Parse error")));
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
             StepDefinition step = buildGatlingStep(TaskId.of("parse-fail"),
                     Map.of("simulation", "com.example.CorruptedSimulation",
@@ -261,14 +261,14 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-12: Missing simulation parameter produces FAILED")
         void missingSimulationParameterFails() {
-            StubRunner runner = new StubRunner();
-            StubParser parser = new StubParser()
+            var runner = new StubRunner();
+            var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("no-sim"),
                             "x", Duration.ofSeconds(1), 1, 1, 0, 0.0, 1.0));
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
-            StepDefinition step = new StepDefinition(
+            var step = new StepDefinition(
                     TaskId.of("no-sim"), "gatling", Phase.INJECTION,
                     Map.of("loadModel", Map.of("type", "CONSTANT",
                             "usersPerSecond", 100, "duration", "1m")),
@@ -292,12 +292,12 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-20: Cleanup is idempotent and does not throw")
         void cleanupIsIdempotent() {
-            StubRunner runner = new StubRunner();
-            StubParser parser = new StubParser()
+            var runner = new StubRunner();
+            var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("cleanup-test"),
                             "x", Duration.ofSeconds(1), 1, 1, 0, 0.0, 1.0));
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
             StepDefinition step = buildGatlingStep(TaskId.of("cleanup-test"),
                     Map.of("simulation", "com.example.CleanupSimulation",
@@ -322,11 +322,11 @@ class GatlingPipelineE2ETest {
         @Test
         @DisplayName("E2E-G-30: Sequential simulations produce distinct results")
         void sequentialSimulations() {
-            StubRunner runner = new StubRunner();
+            var runner = new StubRunner();
             runner.returnsDir(RESULTS_DIR);
 
-            AtomicInteger callCount = new AtomicInteger(0);
-            StubParser parser = new StubParser() {
+            var callCount = new AtomicInteger(0);
+            var parser = new StubParser() {
                 @Override
                 public InjectionResult parse(Path dir, TaskId taskId) {
                     int seq = callCount.incrementAndGet();
@@ -336,10 +336,10 @@ class GatlingPipelineE2ETest {
                 }
             };
 
-            GatlingTaskExecutor executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(runner, parser);
 
             for (int i = 1; i <= 3; i++) {
-                TaskId taskId = TaskId.of("seq-" + i);
+                var taskId = TaskId.of("seq-" + i);
                 StepDefinition step = buildGatlingStep(taskId,
                         Map.of("simulation", "com.example.SeqSimulation",
                                 "loadModel", Map.of("type", "CONSTANT",

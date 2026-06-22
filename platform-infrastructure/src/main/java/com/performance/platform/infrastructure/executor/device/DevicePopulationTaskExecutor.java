@@ -81,7 +81,7 @@ public class DevicePopulationTaskExecutor implements TaskExecutor, StatefulResou
         Objects.requireNonNull(step, "step must not be null");
 
         long startNanos = System.nanoTime();
-        String operation = Objects.toString(step.parameters().get("operation"), "")
+        var operation = Objects.toString(step.parameters().get("operation"), "")
                 .toUpperCase().trim();
         String datasourceName = (String) step.parameters().get("datasource");
         String table = (String) step.parameters().get("table");
@@ -143,7 +143,7 @@ public class DevicePopulationTaskExecutor implements TaskExecutor, StatefulResou
             var jdbc = new JdbcTemplate(ds);
             int rowsAffected = jdbc.update(sql);
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     OUTPUT_PURGED_ROWS, rowsAffected,
                     OUTPUT_DURATION, formatDuration(elapsed)
@@ -172,7 +172,7 @@ public class DevicePopulationTaskExecutor implements TaskExecutor, StatefulResou
                                        DataSource ds, String table) {
         int count = parseParamInt(step, "count", DEFAULT_COUNT);
         int batchSize = Math.max(1, parseParamInt(step, "batchSize", DEFAULT_BATCH_SIZE));
-        String prefix = Objects.toString(step.parameters().get("deviceIdPrefix"), DEFAULT_PREFIX);
+        var prefix = Objects.toString(step.parameters().get("deviceIdPrefix"), DEFAULT_PREFIX);
 
         if (count <= 0) {
             return fail(step, startNanos, "Parameter 'count' must be positive, got: " + count);
@@ -229,7 +229,7 @@ public class DevicePopulationTaskExecutor implements TaskExecutor, StatefulResou
                 throw e;
             }
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     OUTPUT_DEVICES_INSERTED, inserted,
                     OUTPUT_DURATION, formatDuration(elapsed)
@@ -265,12 +265,12 @@ public class DevicePopulationTaskExecutor implements TaskExecutor, StatefulResou
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message, Throwable cause) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, cause);
     }
 

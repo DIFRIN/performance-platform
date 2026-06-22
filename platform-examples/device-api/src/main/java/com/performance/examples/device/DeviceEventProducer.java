@@ -25,7 +25,7 @@ public class DeviceEventProducer {
      * Message : {"device_id":"xxx","known":true,"timestamp":1234567890}
      */
     public void publish(String deviceId, boolean known) {
-        String message = String.format(
+        var message = String.format(
                 "{\"device_id\":\"%s\",\"known\":%b,\"timestamp\":%d}",
                 deviceId, known, System.currentTimeMillis());
         kafkaTemplate.send(eventsTopic, deviceId, message);

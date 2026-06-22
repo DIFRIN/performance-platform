@@ -61,9 +61,9 @@ class AssertionPipelineE2ETest {
         @Test
         @DisplayName("E2E-AS-01: Multiple assertion types evaluated in sequence")
         void multipleAssertionTypes() {
-            AtomicInteger gatlingCalls = new AtomicInteger(0);
-            AtomicInteger dbCalls = new AtomicInteger(0);
-            AtomicInteger fileCalls = new AtomicInteger(0);
+            var gatlingCalls = new AtomicInteger(0);
+            var dbCalls = new AtomicInteger(0);
+            var fileCalls = new AtomicInteger(0);
 
             registry.register(new AssertionExecutor() {
                 @Override
@@ -120,7 +120,7 @@ class AssertionPipelineE2ETest {
             registry.register(new AssertionExecutor() {
                 @Override
                 public AssertionResult evaluate(ExecutionContext ctx, StepDefinition step) {
-                    Evidence evidence = new Evidence(
+                    var evidence = new Evidence(
                             320, 500, AssertionOperator.LT,
                             "ms", Map.of("percentile", "p95", "sample", 10000));
                     return new AssertionResult(step.id(), AssertionStatus.PASSED,
@@ -267,7 +267,7 @@ class AssertionPipelineE2ETest {
         @Test
         @DisplayName("E2E-AS-12: Single assertion fails -> overall verdict is FAIL")
         void singleAssertionFails() {
-            AtomicInteger callCount = new AtomicInteger(0);
+            var callCount = new AtomicInteger(0);
             registry.register(new AssertionExecutor() {
                 @Override
                 public AssertionResult evaluate(ExecutionContext ctx, StepDefinition step) {
@@ -336,7 +336,7 @@ class AssertionPipelineE2ETest {
         @Test
         @DisplayName("E2E-AS-21: Many concurrent assertion calls work correctly")
         void concurrentAssertions() throws Exception {
-            AtomicInteger callCount = new AtomicInteger(0);
+            var callCount = new AtomicInteger(0);
             registry.register(new AssertionExecutor() {
                 @Override
                 public AssertionResult evaluate(ExecutionContext ctx, StepDefinition step) {
@@ -349,7 +349,7 @@ class AssertionPipelineE2ETest {
             });
 
             int threads = 10;
-            Thread[] threadArray = new Thread[threads];
+            var threadArray = new Thread[threads];
             for (int i = 0; i < threads; i++) {
                 final int idx = i;
                 threadArray[i] = new Thread(() -> {

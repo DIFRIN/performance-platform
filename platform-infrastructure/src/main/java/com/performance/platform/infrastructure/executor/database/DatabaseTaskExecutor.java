@@ -68,7 +68,7 @@ public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceClean
         Objects.requireNonNull(step, "step must not be null");
 
         long startNanos = System.nanoTime();
-        String operation = Objects.toString(step.parameters().get("operation"), "").toUpperCase().trim();
+        var operation = Objects.toString(step.parameters().get("operation"), "").toUpperCase().trim();
         String datasourceName = (String) step.parameters().get("datasource");
         long timeoutMs = step.timeout() != null ? step.timeout().toMillis() : 30_000L;
 
@@ -132,7 +132,7 @@ public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceClean
             var jdbc = new JdbcTemplate(ds);
             int rowsAffected = jdbc.update(sql);
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     "rowsAffected", rowsAffected,
                     "duration", formatDuration(elapsed)
@@ -186,7 +186,7 @@ public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceClean
 
             populator.populate(conn);
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     "scriptExecuted", scriptPath,
                     "duration", formatDuration(elapsed)
@@ -207,7 +207,7 @@ public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceClean
      * Produit un {@link TaskResult} d'échec avec le message et la cause donnés.
      */
     private TaskResult fail(StepDefinition step, long startNanos, String message, Throwable cause) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, cause);
     }
 

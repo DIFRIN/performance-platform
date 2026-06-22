@@ -104,8 +104,8 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
 
         long startNanos = System.nanoTime();
         ExecutionId executionId = context.executionId();
-        String operation = Objects.toString(step.parameters().get("operation"), "CONSUME").toUpperCase().trim();
-        String topic = Objects.toString(step.parameters().get("topic"), null);
+        var operation = Objects.toString(step.parameters().get("operation"), "CONSUME").toUpperCase().trim();
+        var topic = Objects.toString(step.parameters().get("topic"), null);
         String clusterName = (String) step.parameters().get("cluster");
         String bootstrapServers = (String) step.parameters().get("bootstrapServers");
         String groupId = (String) step.parameters().get("groupId");

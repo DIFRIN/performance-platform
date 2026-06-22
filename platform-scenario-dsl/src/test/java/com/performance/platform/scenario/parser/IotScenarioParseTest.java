@@ -20,7 +20,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("iot-dispatcher-local.yaml is parseable")
     void parseLocalScenario() throws Exception {
-        Path file = Path.of(BASE, "iot-dispatcher-local.yaml");
+        var file = Path.of(BASE, "iot-dispatcher-local.yaml");
         ScenarioDefinition scenario = parser.parseFile(file);
 
         assertEquals("iot-dispatcher-local", scenario.id().value());
@@ -33,7 +33,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("iot-dispatcher-distributed.yaml is parseable")
     void parseDistributedScenario() throws Exception {
-        Path file = Path.of(BASE, "iot-dispatcher-distributed.yaml");
+        var file = Path.of(BASE, "iot-dispatcher-distributed.yaml");
         try {
             ScenarioDefinition scenario = parser.parseFile(file);
             assertEquals("iot-dispatcher-distributed", scenario.id().value());
@@ -50,7 +50,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("device-api-local.yaml is parseable")
     void parseDeviceApiLocalScenario() throws Exception {
-        Path file = Path.of(BASE, "device-api-local.yaml");
+        var file = Path.of(BASE, "device-api-local.yaml");
         ScenarioDefinition scenario = parser.parseFile(file);
 
         assertEquals("device-api-local", scenario.id().value());
@@ -67,7 +67,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("device-api-distributed.yaml is parseable")
     void parseDeviceApiDistributedScenario() throws Exception {
-        Path file = Path.of(BASE, "device-api-distributed.yaml");
+        var file = Path.of(BASE, "device-api-distributed.yaml");
         try {
             ScenarioDefinition scenario = parser.parseFile(file);
             assertEquals("device-api-distributed", scenario.id().value());

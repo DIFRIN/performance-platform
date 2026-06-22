@@ -87,7 +87,7 @@ public class TaskResultMapper {
     public TaskResult toDomain(TaskResultEntity entity) {
         Objects.requireNonNull(entity, "entity required");
 
-        TaskId taskId = TaskId.of(entity.taskId());
+        var taskId = TaskId.of(entity.taskId());
         Map<String, Object> rawOutputs = entity.outputs();
 
         // Extract metadata and build clean outputs

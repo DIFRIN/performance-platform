@@ -106,14 +106,14 @@ class LocalFlowE2ETest {
     @BeforeAll
     static void setUp() throws Exception {
         // 1. PostgreSQL: Flyway migrations
-        Flyway flyway = Flyway.configure()
+        var flyway = Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                 .locations("classpath:db/migration")
                 .load();
         flyway.migrate();
 
         // 2. Hibernate SessionFactory
-        Configuration cfg = new Configuration();
+        var cfg = new Configuration();
         cfg.setProperty(AvailableSettings.JAKARTA_JDBC_URL, postgres.getJdbcUrl());
         cfg.setProperty(AvailableSettings.JAKARTA_JDBC_USER, postgres.getUsername());
         cfg.setProperty(AvailableSettings.JAKARTA_JDBC_PASSWORD, postgres.getPassword());
@@ -124,18 +124,18 @@ class LocalFlowE2ETest {
         sessionFactory = cfg.buildSessionFactory();
 
         // 3. ExecutionRepository (raw JPA, no Spring Data dependency)
-        ExecutionStateMapper stateMapper = new ExecutionStateMapper();
-        TaskResultMapper taskResultMapper = new TaskResultMapper();
+        var stateMapper = new ExecutionStateMapper();
+        var taskResultMapper = new TaskResultMapper();
         executionRepository = new RawJpaExecutionRepository(
                 sessionFactory, stateMapper, taskResultMapper);
 
         // 4. Task executors (no-arg constructors, no dependencies)
-        FilesystemTaskExecutor filesystemExecutor = new FilesystemTaskExecutor();
-        ShellTaskExecutor shellExecutor = new ShellTaskExecutor();
-        FileAssertionExecutor fileAssertionExecutor = new FileAssertionExecutor();
+        var filesystemExecutor = new FilesystemTaskExecutor();
+        var shellExecutor = new ShellTaskExecutor();
+        var fileAssertionExecutor = new FileAssertionExecutor();
 
         // 5. TaskExecutorLookup (simple map lookup)
-        TaskExecutorLookup lookup = new TaskExecutorLookup() {
+        var lookup = new TaskExecutorLookup() {
             @Override
             public TaskExecutor findTaskExecutor(String taskName) {
                 return switch (taskName) {
@@ -153,20 +153,20 @@ class LocalFlowE2ETest {
         };
 
         // 6. Supporting components
-        ExecutionPlanBuilder planBuilder = new DefaultExecutionPlanBuilder();
-        RetryExecutor retryExecutor = new DefaultRetryExecutor();
+        var planBuilder = new DefaultExecutionPlanBuilder();
+        var retryExecutor = new DefaultRetryExecutor();
         List<Object> publishedEvents = new ArrayList<>();
         ApplicationEventPublisher eventPublisher = publishedEvents::add;
 
         // 7. LocalExecutionEngine
-        LocalExecutionEngine engine = new LocalExecutionEngine(
+        var engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
                 eventPublisher, lookup);
 
         // 8. Scenario parsing
-        YamlScenarioParser parser = new YamlScenarioParser();
-        DefaultScenarioValidator validator = new DefaultScenarioValidator();
-        ScenarioParsingUseCase parsingUseCase = new DefaultScenarioParsingService(parser, validator);
+        var parser = new YamlScenarioParser();
+        var validator = new DefaultScenarioValidator();
+        var parsingUseCase = new DefaultScenarioParsingService(parser, validator);
 
         // 9. Use cases
         ExecuteScenarioUseCase executeUseCase = scenario -> {
@@ -177,7 +177,7 @@ class LocalFlowE2ETest {
             }
         };
 
-        GetExecutionStatusUseCase statusUseCase = new GetExecutionStatusUseCase() {
+        var statusUseCase = new GetExecutionStatusUseCase() {
             @Override
             public ExecutionStatus getStatus(ExecutionId id) {
                 return executionRepository.findById(id)
@@ -215,7 +215,7 @@ class LocalFlowE2ETest {
         };
 
         // 11. ScenarioController with MockMvc
-        ScenarioController controller = new ScenarioController(
+        var controller = new ScenarioController(
                 parsingUseCase, executeUseCase, statusUseCase,
                 cancelUseCase, reportUseCase);
 
@@ -236,7 +236,7 @@ class LocalFlowE2ETest {
     void shouldCompleteFullE2EFlow() throws Exception {
         // ---- Phase 1: Submit YAML via API ----
 
-        String yaml = Files.readString(
+        var yaml = Files.readString(
                 Path.of("src/test/resources/scenarios/e2e-local.yaml"));
 
         String responseJson = mockMvc.perform(post("/api/v1/scenarios")
@@ -291,7 +291,7 @@ class LocalFlowE2ETest {
 
         // ---- Phase 5: Verify persisted ExecutionState ----
 
-        ExecutionId execId = ExecutionId.of(executionId);
+        var execId = ExecutionId.of(executionId);
         Optional<ExecutionState> persisted = executionRepository.findById(execId);
         assertThat(persisted).isPresent();
         ExecutionState state = persisted.get();
@@ -388,7 +388,7 @@ class LocalFlowE2ETest {
                         new java.util.LinkedHashMap<>(entity.phases());
                 phases.put(phase.name(), status.name());
 
-                ExecutionStateEntity updated = new ExecutionStateEntity(
+                var updated = new ExecutionStateEntity(
                         entity.id(), entity.scenarioId(), entity.status(),
                         phases, entity.context(),
                         entity.startedAt(), java.time.Instant.now());

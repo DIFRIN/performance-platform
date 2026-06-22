@@ -145,28 +145,28 @@ class DurationParserTest {
         @Test
         @DisplayName("null input returns default")
         void nullReturnsDefault() {
-            Duration defaultDuration = Duration.ofMinutes(5);
+            var defaultDuration = Duration.ofMinutes(5);
             assertEquals(defaultDuration, DurationParser.parseOrDefault(null, defaultDuration));
         }
 
         @Test
         @DisplayName("blank input returns default")
         void blankReturnsDefault() {
-            Duration defaultDuration = Duration.ofMinutes(5);
+            var defaultDuration = Duration.ofMinutes(5);
             assertEquals(defaultDuration, DurationParser.parseOrDefault("", defaultDuration));
         }
 
         @Test
         @DisplayName("valid input returns parsed value")
         void validReturnsParsed() {
-            Duration defaultDuration = Duration.ofMinutes(5);
+            var defaultDuration = Duration.ofMinutes(5);
             assertEquals(Duration.ofSeconds(30), DurationParser.parseOrDefault("30s", defaultDuration));
         }
 
         @Test
         @DisplayName("invalid input still throws")
         void invalidStillThrows() {
-            Duration defaultDuration = Duration.ofMinutes(5);
+            var defaultDuration = Duration.ofMinutes(5);
             assertThrows(IllegalArgumentException.class,
                 () -> DurationParser.parseOrDefault("bad", defaultDuration));
         }

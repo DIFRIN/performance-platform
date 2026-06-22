@@ -155,7 +155,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         ExecutionId executionId = plan.id();
         AtomicBoolean cancelled = cancelFlags(executionId);
         ExecutionContext ctx = plan.initialContext();
-        Instant start = Instant.now();
+        var start = Instant.now();
         boolean hasFailure = false;
         Verdict verdict = Verdict.SUCCESS;
 
@@ -262,7 +262,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
             // Mark skippable steps
             for (ExecutionStep step : classification.skippable()) {
                 StepDefinition stepDef = step.step();
-                TaskResult skippedResult = TaskResult.skipped(stepDef.id(), stepDef.taskName(), "dependency failed");
+                var skippedResult = TaskResult.skipped(stepDef.id(), stepDef.taskName(), "dependency failed");
                 currentContext = currentContext.with(stepDef.id().value(), "agent-remote", skippedResult);
                 anyFailed = true;
             }
@@ -324,10 +324,10 @@ public class RemoteExecutionEngine implements ExecutionEngine {
             log.info("action=agent_available taskName={} executionId={}", stepDef.taskName(), executionId.value());
 
             // 2. Build partial context
-            PartialExecutionContext partialCtx = PartialContextBuilder.build(context, execStep.requiredContextKeys());
+            var partialCtx = PartialContextBuilder.build(context, execStep.requiredContextKeys());
 
             // 3. Create request (broadcast, pas de targetAgentId)
-            MessageId messageId = MessageId.generate();
+            var messageId = MessageId.generate();
             RetryPolicy retry = stepDef.retryPolicy() != null ? stepDef.retryPolicy() : RetryPolicy.defaults();
             var request = new TaskExecutionRequest(
                     messageId, executionId, stepDef, partialCtx, Instant.now(), retry);
@@ -359,7 +359,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         for (PendingDispatch pending : dispatched) {
             if (cancelled.get()) {
                 // Annulation: marquer comme failed et sortir
-                TaskResult cancelResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
+                var cancelResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
                         Duration.ZERO, "Execution cancelled", null);
                 currentContext = currentContext.with(pending.taskId.value(), "agent-remote", cancelResult);
                 anyFailed = true;
@@ -368,7 +368,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
             boolean completed = awaitCompletion(pending, deadlineMs, cancelled);
             if (!completed) {
                 // Timeout — mark as failed
-                TaskResult timeoutResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
+                var timeoutResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
                         config.taskExecutionTimeout(), "Task execution timed out", null);
                 currentContext = currentContext.with(pending.taskId.value(), "agent-remote", timeoutResult);
                 anyFailed = true;
@@ -492,7 +492,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         tracker.onFailed(pending.messageId, event.agentId(), error);
 
         // Creer un TaskResult failed et le stocker
-        TaskResult failedResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
+        var failedResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
                 Duration.ZERO, error, null);
         pending.results.put(event.agentId(), failedResult);
 
@@ -517,7 +517,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         Map<String, Object> payload = event.payload();
 
         String statusStr = (String) payload.getOrDefault(PAYLOAD_STATUS, "SUCCESS");
-        TaskStatus status = TaskStatus.valueOf(statusStr);
+        var status = TaskStatus.valueOf(statusStr);
 
         Duration duration;
         Object durationObj = payload.get(PAYLOAD_DURATION_MS);
@@ -582,7 +582,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
             executionRepository.save(exec.state);
         }
 
-        Duration totalDuration = Duration.between(start, Instant.now());
+        var totalDuration = Duration.between(start, Instant.now());
         eventPublisher.publishEvent(new ScenarioFinished(
                 executionId, scenarioId, verdict, totalDuration, Instant.now()));
         log.info("action=scenario_finished executionId={} verdict={} durationMs={}",
@@ -659,7 +659,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
     }
 
     private ExecutionState createInitialState(ExecutionId id, ScenarioId scenarioId, ExecutionContext context) {
-        Instant now = Instant.now();
+        var now = Instant.now();
         Map<Phase, PhaseStatus> phases = new EnumMap<>(Phase.class);
         phases.put(Phase.PREPARATION, PhaseStatus.PENDING);
         phases.put(Phase.INJECTION, PhaseStatus.PENDING);

@@ -153,7 +153,7 @@ class GatlingTaskExecutorTest {
     void shouldAcceptLoadModelInstanceDirectly() {
         stubRunner.returnsDir(RESULTS_DIR);
         stubParser.returns(SUCCESS_RESULT);
-        LoadModel loadModel = new LoadModel(LoadModelType.SPIKE,
+        var loadModel = new LoadModel(LoadModelType.SPIKE,
                 Map.of("users", 100, "peak", "5s"));
         StepDefinition step = createStep(Map.of(
                 GatlingTaskExecutor.PARAM_SIMULATION, "com.example.Simulation",

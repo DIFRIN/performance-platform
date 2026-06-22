@@ -43,7 +43,7 @@ class ExecutionContextMdcFilterTest {
         @Test
         @DisplayName("should put executionId value in MDC")
         void shouldSetExecutionId() {
-            ExecutionId id = new ExecutionId("exec-001");
+            var id = new ExecutionId("exec-001");
             filter.setExecutionId(id);
             assertThat(MDC.get(ExecutionContextMdcFilter.MDC_EXECUTION_ID))
                     .isEqualTo("exec-001");
@@ -66,7 +66,7 @@ class ExecutionContextMdcFilterTest {
         @Test
         @DisplayName("should put scenarioId value in MDC")
         void shouldSetScenarioId() {
-            ScenarioId id = new ScenarioId("scenario-001");
+            var id = new ScenarioId("scenario-001");
             filter.setScenarioId(id);
             assertThat(MDC.get(ExecutionContextMdcFilter.MDC_SCENARIO_ID))
                     .isEqualTo("scenario-001");
@@ -89,7 +89,7 @@ class ExecutionContextMdcFilterTest {
         @Test
         @DisplayName("should put taskId value in MDC")
         void shouldSetTaskId() {
-            TaskId id = new TaskId("task-001");
+            var id = new TaskId("task-001");
             filter.setTaskId(id);
             assertThat(MDC.get(ExecutionContextMdcFilter.MDC_TASK_ID))
                     .isEqualTo("task-001");
@@ -112,7 +112,7 @@ class ExecutionContextMdcFilterTest {
         @Test
         @DisplayName("should put agentId value in MDC")
         void shouldSetAgentId() {
-            AgentId id = new AgentId("agent-001");
+            var id = new AgentId("agent-001");
             filter.setAgentId(id);
             assertThat(MDC.get(ExecutionContextMdcFilter.MDC_AGENT_ID))
                     .isEqualTo("agent-001");

@@ -170,10 +170,10 @@ public class ExecutionStateMapper {
      * a {@link RuntimeException} with the error message is created instead.
      */
     TaskResult mapToTaskResult(Map<String, Object> map) {
-        TaskId taskId = TaskId.of((String) map.get("taskId"));
+        var taskId = TaskId.of((String) map.get("taskId"));
         String taskName = (String) map.get("taskName");
-        TaskStatus status = TaskStatus.valueOf((String) map.get("status"));
-        Duration duration = Duration.parse((String) map.get("duration"));
+        var status = TaskStatus.valueOf((String) map.get("status"));
+        var duration = Duration.parse((String) map.get("duration"));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> outputs = (Map<String, Object>) map.getOrDefault("outputs", Map.of());
@@ -183,7 +183,7 @@ public class ExecutionStateMapper {
                 ? new RuntimeException(errorMessage)
                 : null;
 
-        Instant completedAt = Instant.parse((String) map.get("completedAt"));
+        var completedAt = Instant.parse((String) map.get("completedAt"));
         return new TaskResult(taskId, taskName, status, duration, outputs, errorMessage, cause, completedAt);
     }
 }

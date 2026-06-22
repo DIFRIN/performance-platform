@@ -155,7 +155,7 @@ public class HttpClientTaskExecutor implements TaskExecutor {
 
         int status = entity.getStatusCode().value();
         String respBody = entity.getBody() != null ? entity.getBody() : "";
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
 
         log.info("action=http_response statusCode={} durationMs={} executionId={}",
                 status, elapsed.toMillis(), executionId);
@@ -195,7 +195,7 @@ public class HttpClientTaskExecutor implements TaskExecutor {
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 }

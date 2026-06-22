@@ -82,7 +82,7 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder {
         assertionSteps.sort(BY_DAG_LEVEL);
 
         // 5. Construction du plan avec contexte initial vide
-        ExecutionId executionId = ExecutionId.generate();
+        var executionId = ExecutionId.generate();
         return new ExecutionPlan(
                 executionId,
                 scenario.id(),

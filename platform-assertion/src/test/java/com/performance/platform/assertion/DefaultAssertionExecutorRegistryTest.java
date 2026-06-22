@@ -42,8 +42,8 @@ class DefaultAssertionExecutorRegistryTest {
     @Test
     @DisplayName("should register executors from constructor list")
     void shouldRegisterExecutorsFromConstructor() {
-        AssertionExecutor gatling = new StubAssertionExecutor("gatling-metric");
-        AssertionExecutor db = new StubAssertionExecutor("database");
+        var gatling = new StubAssertionExecutor("gatling-metric");
+        var db = new StubAssertionExecutor("database");
         DefaultAssertionExecutorRegistry registry =
                 new DefaultAssertionExecutorRegistry(List.of(gatling, db));
 
@@ -54,7 +54,7 @@ class DefaultAssertionExecutorRegistryTest {
     @Test
     @DisplayName("should resolve executor by assertion name")
     void shouldResolveExecutorByName() {
-        AssertionExecutor gatling = new StubAssertionExecutor("gatling-metric");
+        var gatling = new StubAssertionExecutor("gatling-metric");
         DefaultAssertionExecutorRegistry registry =
                 new DefaultAssertionExecutorRegistry(List.of(gatling));
 
@@ -76,7 +76,7 @@ class DefaultAssertionExecutorRegistryTest {
     void shouldSupportManualRegistration() {
         DefaultAssertionExecutorRegistry registry =
                 new DefaultAssertionExecutorRegistry(List.of());
-        AssertionExecutor kafka = new StubAssertionExecutor("kafka");
+        var kafka = new StubAssertionExecutor("kafka");
 
         registry.register(kafka);
 
@@ -87,8 +87,8 @@ class DefaultAssertionExecutorRegistryTest {
     @Test
     @DisplayName("should replace executor when registering same name")
     void shouldReplaceOnDuplicateName() {
-        AssertionExecutor v1 = new StubAssertionExecutor("http-mock");
-        AssertionExecutor v2 = new StubAssertionExecutor("http-mock");
+        var v1 = new StubAssertionExecutor("http-mock");
+        var v2 = new StubAssertionExecutor("http-mock");
         DefaultAssertionExecutorRegistry registry =
                 new DefaultAssertionExecutorRegistry(List.of(v1, v2));
 

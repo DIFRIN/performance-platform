@@ -210,7 +210,7 @@ class S3ReportPublisherTest {
     @DisplayName("should skip Gatling upload when output directory is missing")
     void shouldSkipGatlingUploadWhenDirMissing() {
         var taskId = TaskId.of("inj-1");
-        Path missingDir = Path.of("/nonexistent/gatling");
+        var missingDir = Path.of("/nonexistent/gatling");
         var injectionResult = new InjectionResult(taskId, "com.example.Test",
                 Duration.ofSeconds(5), 100, 98, 2, 2.0, 20.0,
                 10, 20, 30, 50, 100, 200, 5, 15.0,
@@ -318,7 +318,7 @@ class S3ReportPublisherTest {
     @Test
     @DisplayName("should build valid HTML report")
     void shouldBuildValidHtmlReport() {
-        String html = S3ReportPublisher.buildHtmlReport(report);
+        var html = S3ReportPublisher.buildHtmlReport(report);
 
         assertThat(html).contains("<!DOCTYPE html>");
         assertThat(html).contains("<title>Performance Report: test-scenario</title>");
@@ -344,7 +344,7 @@ class S3ReportPublisherTest {
                 List.of(), List.of(), List.of(),
                 Verdict.FAILED, "minimal", Instant.now(), Duration.ofSeconds(1));
 
-        String html = S3ReportPublisher.buildHtmlReport(minimalReport);
+        var html = S3ReportPublisher.buildHtmlReport(minimalReport);
 
         assertThat(html).doesNotContain("<h2>Preparation</h2>");
         assertThat(html).doesNotContain("<h2>Injection</h2>");
@@ -361,7 +361,7 @@ class S3ReportPublisherTest {
     void shouldSerializeToValidJson() throws Exception {
         byte[] jsonBytes = publisher.serializeToJson(report);
 
-        String json = new String(jsonBytes, java.nio.charset.StandardCharsets.UTF_8);
+        var json = new String(jsonBytes, java.nio.charset.StandardCharsets.UTF_8);
         assertThat(json).contains("\"scenarioName\"");
         assertThat(json).contains("\"test-scenario\"");
         assertThat(json).contains("\"verdict\"");
@@ -381,9 +381,9 @@ class S3ReportPublisherTest {
                         + ".s3." + TEST_REGION + ".amazonaws.com/test-key"))
                 .build();
         byte[] payload = "hello".getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        Instant now = Instant.parse("2025-01-15T10:30:00Z");
+        var now = Instant.parse("2025-01-15T10:30:00Z");
 
-        String auth = S3ReportPublisher.awsSign(request,
+        var auth = S3ReportPublisher.awsSign(request,
                 TEST_BUCKET + ".s3." + TEST_REGION + ".amazonaws.com",
                 TEST_REGION, payload, now, credentials);
 
@@ -430,7 +430,7 @@ class S3ReportPublisherTest {
     @Test
     @DisplayName("should choose path-style for custom endpoints")
     void shouldUsePathStyleForCustomEndpoints() {
-        String path = S3ReportPublisher.s3Path("my-bucket", "prefix/report.json",
+        var path = S3ReportPublisher.s3Path("my-bucket", "prefix/report.json",
                 "localhost:12345");
         assertThat(path).isEqualTo("/my-bucket/prefix/report.json");
     }
@@ -438,7 +438,7 @@ class S3ReportPublisherTest {
     @Test
     @DisplayName("should choose virtual-hosted-style for real S3")
     void shouldUseVirtualHostedStyleForRealS3() {
-        String path = S3ReportPublisher.s3Path("my-bucket", "prefix/report.json",
+        var path = S3ReportPublisher.s3Path("my-bucket", "prefix/report.json",
                 "my-bucket.s3.us-east-1.amazonaws.com");
         assertThat(path).isEqualTo("/prefix/report.json");
     }

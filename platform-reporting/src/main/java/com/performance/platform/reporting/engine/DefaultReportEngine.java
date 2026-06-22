@@ -112,9 +112,9 @@ public class DefaultReportEngine implements ReportEngine {
     @Override
     public CampaignReport generate(ExecutionState state) throws ReportGenerationException {
         try {
-            ReportId reportId = ReportId.generate();
+            var reportId = ReportId.generate();
             ScenarioId scenarioId = state.scenarioId();
-            Instant generatedAt = Instant.now();
+            var generatedAt = Instant.now();
 
             // Collecter les taskIds et classer par phase
             List<String> prepTaskIds = new ArrayList<>();
@@ -130,7 +130,7 @@ public class DefaultReportEngine implements ReportEngine {
             List<AssertionReportEntry> assertionResults = buildAssertionEntries(state, assertTaskIds);
 
             // Calculer le verdict
-            Verdict verdict = VerdictCalculator.calculate(assertionResults);
+            var verdict = VerdictCalculator.calculate(assertionResults);
 
             // Construire le résumé d'exécution
             ExecutionSummary executionSummary = buildExecutionSummary(
@@ -227,7 +227,7 @@ public class DefaultReportEngine implements ReportEngine {
         for (String taskIdStr : taskIds) {
             Optional<InjectionResult> injOpt = state.context().getFirst(taskIdStr, InjectionResult.class);
             injOpt.ifPresent(inj -> {
-                TaskId taskId = new TaskId(taskIdStr);
+                var taskId = new TaskId(taskIdStr);
                 entries.add(new InjectionReportEntry(taskId, inj, inj.gatlingReportDirectory()));
             });
         }
@@ -240,7 +240,7 @@ public class DefaultReportEngine implements ReportEngine {
         for (String taskIdStr : taskIds) {
             Optional<AssertionResult> assertOpt = state.context().getFirst(taskIdStr, AssertionResult.class);
             assertOpt.ifPresent(ar -> {
-                TaskId taskId = new TaskId(taskIdStr);
+                var taskId = new TaskId(taskIdStr);
                 entries.add(new AssertionReportEntry(taskId, ar, ar.evidence()));
             });
         }
@@ -261,10 +261,10 @@ public class DefaultReportEngine implements ReportEngine {
     private ExecutionSummary buildExecutionSummary(List<TaskReportEntry> prep,
                                                     List<InjectionReportEntry> inj,
                                                     List<AssertionReportEntry> assert_) {
-        AtomicInteger total = new AtomicInteger();
-        AtomicInteger successful = new AtomicInteger();
-        AtomicInteger failed = new AtomicInteger();
-        AtomicInteger skipped = new AtomicInteger();
+        var total = new AtomicInteger();
+        var successful = new AtomicInteger();
+        var failed = new AtomicInteger();
+        var skipped = new AtomicInteger();
 
         AtomicReference<Duration> prepDuration = new AtomicReference<>(Duration.ZERO);
         AtomicReference<Duration> injDuration = new AtomicReference<>(Duration.ZERO);

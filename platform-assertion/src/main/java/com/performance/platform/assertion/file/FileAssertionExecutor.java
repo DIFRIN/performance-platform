@@ -88,7 +88,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
     public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(step, "step must not be null");
-        Instant start = Instant.now();
+        var start = Instant.now();
 
         try {
             Map<String, Object> params = step.parameters();
@@ -96,7 +96,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
             // 1. Extraire les parametres
             String pathStr = getRequiredStringParam(params, PARAM_PATH);
             String check = getRequiredStringParam(params, PARAM_CHECK).toUpperCase();
-            Path filePath = Path.of(pathStr);
+            var filePath = Path.of(pathStr);
 
             // 2. Executer le check approprie
             return switch (check) {
@@ -136,7 +136,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
         boolean exists = Files.exists(filePath);
         AssertionStatus status = exists ? AssertionStatus.PASSED : AssertionStatus.FAILED;
         String fileState = exists ? "exists" : "does not exist";
-        String description = String.format("%s: file %s %s",
+        var description = String.format("%s: file %s %s",
                 exists ? "PASSED" : "FAILED", filePath, fileState);
 
         var evidence = new Evidence(
@@ -154,7 +154,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
         boolean exists = Files.exists(filePath);
         AssertionStatus status = exists ? AssertionStatus.FAILED : AssertionStatus.PASSED;
         String fileState = exists ? "exists" : "does not exist";
-        String description = String.format("%s: file %s %s",
+        var description = String.format("%s: file %s %s",
                 exists ? "FAILED" : "PASSED", filePath, fileState);
 
         var evidence = new Evidence(
@@ -212,7 +212,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
 
         boolean match = actualHex.equalsIgnoreCase(expectedHex);
         AssertionStatus status = match ? AssertionStatus.PASSED : AssertionStatus.FAILED;
-        String description = String.format("%s: checksum %s (expected %s) %s",
+        var description = String.format("%s: checksum %s (expected %s) %s",
                 match ? "PASSED" : "FAILED", actualHex.substring(0, 8) + "...",
                 expectedHex.substring(0, 8) + "...",
                 match ? "matches" : "mismatch");
@@ -263,7 +263,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
         boolean passed = operator.evaluate((double) actualSize, sizeBytes);
         AssertionStatus status = passed ? AssertionStatus.PASSED : AssertionStatus.FAILED;
         String operatorStr = operator == AssertionOperator.GT ? ">" : "<";
-        String description = String.format("%s: size %,d bytes %s %,d bytes",
+        var description = String.format("%s: size %,d bytes %s %,d bytes",
                 passed ? "PASSED" : "FAILED", actualSize,
                 operatorStr, (long) sizeBytes);
 
@@ -288,7 +288,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
      */
     private String sha256Hex(Path filePath) throws IOException {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            var digest = MessageDigest.getInstance("SHA-256");
             byte[] buffer = new byte[8192];
             try (InputStream in = Files.newInputStream(filePath)) {
                 int read;
@@ -336,7 +336,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
     private AssertionResult buildResult(StepDefinition step, Instant start,
                                          AssertionStatus status, String description,
                                          Evidence evidence) {
-        Duration duration = Duration.between(start, Instant.now());
+        var duration = Duration.between(start, Instant.now());
         return new AssertionResult(
                 step.id(),
                 status,
@@ -350,7 +350,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
                                               Instant start,
                                               String errorMessage,
                                               Map<String, Object> params) {
-        Duration duration = Duration.between(start, Instant.now());
+        var duration = Duration.between(start, Instant.now());
         return new AssertionResult(
                 step.id(),
                 AssertionStatus.ERROR,

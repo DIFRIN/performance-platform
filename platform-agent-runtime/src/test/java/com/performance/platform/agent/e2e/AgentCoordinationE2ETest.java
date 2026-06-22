@@ -62,11 +62,11 @@ class AgentCoordinationE2ETest {
         @Timeout(value = 30)
         void singleAgentCompletesSupportedTask() {
             AgentDescriptor desc = buildDescriptor("agent-1", Set.of("database"));
-            TaskSpecializationFilter filter = new DefaultTaskSpecializationFilter(
+            var filter = new DefaultTaskSpecializationFilter(
                     Set.of("database"), desc.id());
-            AgentRegistrationPort regPort = new TransportAgentRegistration(transport);
+            var regPort = new TransportAgentRegistration(transport);
 
-            TaskExecutor executor = new TaskExecutor() {
+            var executor = new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition step) {
                     return TaskResult.success(step.id(), "database", Duration.ofMillis(5),
@@ -76,7 +76,7 @@ class AgentCoordinationE2ETest {
                 public String getSupportedTaskName() { return "database"; }
             };
 
-            DistributedAgentRuntime runtime = new DistributedAgentRuntime(
+            var runtime = new DistributedAgentRuntime(
                     transport, filter, regPort, desc,
                     Duration.ofSeconds(5), Duration.ofSeconds(60),
                     List.of(executor), List.of());
@@ -99,11 +99,11 @@ class AgentCoordinationE2ETest {
         @Timeout(value = 30)
         void unsupportedTaskIgnored() {
             AgentDescriptor desc = buildDescriptor("agent-db", Set.of("database"));
-            TaskSpecializationFilter filter = new DefaultTaskSpecializationFilter(
+            var filter = new DefaultTaskSpecializationFilter(
                     Set.of("database"), desc.id());
-            AgentRegistrationPort regPort = new TransportAgentRegistration(transport);
+            var regPort = new TransportAgentRegistration(transport);
 
-            DistributedAgentRuntime runtime = new DistributedAgentRuntime(
+            var runtime = new DistributedAgentRuntime(
                     transport, filter, regPort, desc,
                     Duration.ofSeconds(5), Duration.ofSeconds(60),
                     List.of(), List.of());
@@ -127,11 +127,11 @@ class AgentCoordinationE2ETest {
         @Timeout(value = 30)
         void taskFailureProducesFailedEvent() {
             AgentDescriptor desc = buildDescriptor("fail-agent", Set.of("database"));
-            TaskSpecializationFilter filter = new DefaultTaskSpecializationFilter(
+            var filter = new DefaultTaskSpecializationFilter(
                     Set.of("database"), desc.id());
-            AgentRegistrationPort regPort = new TransportAgentRegistration(transport);
+            var regPort = new TransportAgentRegistration(transport);
 
-            TaskExecutor executor = new TaskExecutor() {
+            var executor = new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition step) {
                     return TaskResult.failed(step.id(), "database", Duration.ofMillis(5),
@@ -141,7 +141,7 @@ class AgentCoordinationE2ETest {
                 public String getSupportedTaskName() { return "database"; }
             };
 
-            DistributedAgentRuntime runtime = new DistributedAgentRuntime(
+            var runtime = new DistributedAgentRuntime(
                     transport, filter, regPort, desc,
                     Duration.ofSeconds(5), Duration.ofSeconds(60),
                     List.of(executor), List.of());
@@ -199,7 +199,7 @@ class AgentCoordinationE2ETest {
         @DisplayName("E2E-A-20: Cleaner invoked on ScenarioRestartSignal")
         @Timeout(value = 30)
         void cleanerInvokedOnRestart() {
-            AtomicInteger cleanupCount = new AtomicInteger(0);
+            var cleanupCount = new AtomicInteger(0);
             StatefulResourceCleaner cleaner = (executionId) -> cleanupCount.incrementAndGet();
 
             DistributedAgentRuntime runtime = buildRuntime("cleaner", Set.of("shell"),
@@ -226,7 +226,7 @@ class AgentCoordinationE2ETest {
         @DisplayName("E2E-A-30: Multiple tasks dispatched are all executed")
         @Timeout(value = 60)
         void concurrentTaskDispatch() {
-            TaskExecutor executor = new TaskExecutor() {
+            var executor = new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition step) {
                     try { Thread.sleep(100); } catch (InterruptedException e) {
@@ -272,9 +272,9 @@ class AgentCoordinationE2ETest {
     private DistributedAgentRuntime buildRuntime(String name, Set<String> supportedTasks,
                                                   List<StatefulResourceCleaner> cleaners) {
         AgentDescriptor desc = buildDescriptor(name, supportedTasks);
-        TaskSpecializationFilter filter = new DefaultTaskSpecializationFilter(
+        var filter = new DefaultTaskSpecializationFilter(
                 supportedTasks, desc.id());
-        AgentRegistrationPort regPort = new TransportAgentRegistration(transport);
+        var regPort = new TransportAgentRegistration(transport);
 
         return new DistributedAgentRuntime(
                 transport, filter, regPort, desc,
@@ -286,9 +286,9 @@ class AgentCoordinationE2ETest {
                                                               Set<String> supportedTasks,
                                                               TaskExecutor executor) {
         AgentDescriptor desc = buildDescriptor(name, supportedTasks);
-        TaskSpecializationFilter filter = new DefaultTaskSpecializationFilter(
+        var filter = new DefaultTaskSpecializationFilter(
                 supportedTasks, desc.id());
-        AgentRegistrationPort regPort = new TransportAgentRegistration(transport);
+        var regPort = new TransportAgentRegistration(transport);
 
         return new DistributedAgentRuntime(
                 transport, filter, regPort, desc,

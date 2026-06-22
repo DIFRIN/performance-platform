@@ -28,7 +28,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should have RUNTIME retention")
         void shouldHaveRuntimeRetention() {
-            Retention retention = Preparation.class.getAnnotation(Retention.class);
+            var retention = Preparation.class.getAnnotation(Retention.class);
             assertNotNull(retention, "@Preparation must have @Retention");
             assertEquals(RetentionPolicy.RUNTIME, retention.value(),
                     "@Preparation must have RetentionPolicy.RUNTIME");
@@ -37,7 +37,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should target TYPE")
         void shouldTargetType() {
-            Target target = Preparation.class.getAnnotation(Target.class);
+            var target = Preparation.class.getAnnotation(Target.class);
             assertNotNull(target, "@Preparation must have @Target");
             assertEquals(1, target.value().length, "@Preparation must target exactly one element type");
             assertEquals(ElementType.TYPE, target.value()[0],
@@ -47,7 +47,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should be @Documented")
         void shouldBeDocumented() {
-            Documented documented = Preparation.class.getAnnotation(Documented.class);
+            var documented = Preparation.class.getAnnotation(Documented.class);
             assertNotNull(documented, "@Preparation must be @Documented");
         }
 
@@ -77,7 +77,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should have RUNTIME retention")
         void shouldHaveRuntimeRetention() {
-            Retention retention = Injection.class.getAnnotation(Retention.class);
+            var retention = Injection.class.getAnnotation(Retention.class);
             assertNotNull(retention, "@Injection must have @Retention");
             assertEquals(RetentionPolicy.RUNTIME, retention.value(),
                     "@Injection must have RetentionPolicy.RUNTIME");
@@ -86,7 +86,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should target TYPE")
         void shouldTargetType() {
-            Target target = Injection.class.getAnnotation(Target.class);
+            var target = Injection.class.getAnnotation(Target.class);
             assertNotNull(target, "@Injection must have @Target");
             assertEquals(1, target.value().length, "@Injection must target exactly one element type");
             assertEquals(ElementType.TYPE, target.value()[0],
@@ -96,7 +96,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should be @Documented")
         void shouldBeDocumented() {
-            Documented documented = Injection.class.getAnnotation(Documented.class);
+            var documented = Injection.class.getAnnotation(Documented.class);
             assertNotNull(documented, "@Injection must be @Documented");
         }
 
@@ -126,7 +126,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should have RUNTIME retention")
         void shouldHaveRuntimeRetention() {
-            Retention retention = Assertion.class.getAnnotation(Retention.class);
+            var retention = Assertion.class.getAnnotation(Retention.class);
             assertNotNull(retention, "@Assertion must have @Retention");
             assertEquals(RetentionPolicy.RUNTIME, retention.value(),
                     "@Assertion must have RetentionPolicy.RUNTIME");
@@ -135,7 +135,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should target TYPE")
         void shouldTargetType() {
-            Target target = Assertion.class.getAnnotation(Target.class);
+            var target = Assertion.class.getAnnotation(Target.class);
             assertNotNull(target, "@Assertion must have @Target");
             assertEquals(1, target.value().length, "@Assertion must target exactly one element type");
             assertEquals(ElementType.TYPE, target.value()[0],
@@ -145,7 +145,7 @@ class AnnotationsRetentionTest {
         @Test
         @DisplayName("should be @Documented")
         void shouldBeDocumented() {
-            Documented documented = Assertion.class.getAnnotation(Documented.class);
+            var documented = Assertion.class.getAnnotation(Documented.class);
             assertNotNull(documented, "@Assertion must be @Documented");
         }
 
@@ -206,19 +206,19 @@ class AnnotationsRetentionTest {
     @Test
     @DisplayName("annotation values should be readable at runtime via reflection")
     void shouldReadAnnotationValuesAtRuntime() {
-        Preparation prep = AnnotatedDummy.class.getAnnotation(Preparation.class);
+        var prep = AnnotatedDummy.class.getAnnotation(Preparation.class);
         assertNotNull(prep, "Preparation annotation must be visible at runtime");
         assertEquals("dummy-prep", prep.name());
         assertEquals("1.0.0", prep.version());
         assertEquals("Dummy preparation executor", prep.description());
 
-        Injection inj = AnnotatedDummy.class.getAnnotation(Injection.class);
+        var inj = AnnotatedDummy.class.getAnnotation(Injection.class);
         assertNotNull(inj, "Injection annotation must be visible at runtime");
         assertEquals("dummy-inj", inj.name());
         assertEquals("2.0.0", inj.version());
         assertEquals("Dummy injection executor", inj.description());
 
-        Assertion asrt = AnnotatedDummy.class.getAnnotation(Assertion.class);
+        var asrt = AnnotatedDummy.class.getAnnotation(Assertion.class);
         assertNotNull(asrt, "Assertion annotation must be visible at runtime");
         assertEquals("dummy-asrt", asrt.name());
         assertEquals("1.5.0", asrt.version());

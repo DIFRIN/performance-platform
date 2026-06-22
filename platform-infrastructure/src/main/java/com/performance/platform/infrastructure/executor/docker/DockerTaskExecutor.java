@@ -154,7 +154,7 @@ public class DockerTaskExecutor implements TaskExecutor, StatefulResourceCleaner
 
     private TaskResult executeStart(StepDefinition step, long startNanos,
                                      String executionKey) {
-        StartParams p = StartParams.from(step);
+        var p = StartParams.from(step);
         if (!p.hasImage()) {
             return fail(step, startNanos, "Required parameter 'image' is missing or blank");
         }
@@ -179,7 +179,7 @@ public class DockerTaskExecutor implements TaskExecutor, StatefulResourceCleaner
                     "Container did not become healthy within " + p.healthTimeout() + "s");
         }
 
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         log.info("action=docker_start_complete containerId={} image={} executionKey={} duration={} stepId={}",
                 containerId, p.image(), executionKey, formatDuration(elapsed), step.id().value());
 
@@ -197,14 +197,14 @@ public class DockerTaskExecutor implements TaskExecutor, StatefulResourceCleaner
         if (containerId == null || containerId.isBlank()) {
             Set<String> ids = containersByExecution.remove(executionKey);
             if (ids == null || ids.isEmpty()) {
-                Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+                var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
                 log.info("action=docker_stop_noop executionKey={}", executionKey);
                 return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.of());
             }
             for (String id : ids) {
                 stopSafely(id);
             }
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
                     Map.of(OUTPUT_STATUS, "stopped"));
         }
@@ -216,7 +216,7 @@ public class DockerTaskExecutor implements TaskExecutor, StatefulResourceCleaner
             ids.remove(containerId);
         }
 
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
                 Map.of(OUTPUT_CONTAINER_ID, containerId, OUTPUT_STATUS, "stopped"));
     }
@@ -237,7 +237,7 @@ public class DockerTaskExecutor implements TaskExecutor, StatefulResourceCleaner
             return fail(step, startNanos, "Failed to pull image: " + e.getMessage(), e);
         }
 
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         log.info("action=docker_pull_complete image={} duration={} stepId={}",
                 image, formatDuration(elapsed), step.id().value());
 
@@ -342,13 +342,13 @@ public class DockerTaskExecutor implements TaskExecutor, StatefulResourceCleaner
     // ── Result helpers ────────────────────────────────────────────────────
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message,
                             Throwable cause) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, cause);
     }
 

@@ -131,7 +131,7 @@ class DefaultAgentAvailabilityCheckerTest {
             var registry = new FixedResponseStub(false);
             var checker = new DefaultAgentAvailabilityChecker(registry);
 
-            Duration shortTimeout = Duration.ofMillis(100);
+            var shortTimeout = Duration.ofMillis(100);
 
             long start = System.currentTimeMillis();
             NoAvailableAgentException ex = assertThrows(
@@ -152,7 +152,7 @@ class DefaultAgentAvailabilityCheckerTest {
             var registry = new DelayedStub(1);
             var checker = new DefaultAgentAvailabilityChecker(registry);
 
-            Duration timeout = Duration.ofSeconds(5);
+            var timeout = Duration.ofSeconds(5);
 
             long start = System.currentTimeMillis();
             assertDoesNotThrow(() ->
@@ -171,7 +171,7 @@ class DefaultAgentAvailabilityCheckerTest {
             var checker = new DefaultAgentAvailabilityChecker(registry);
 
             // Timeout tres court — 1ms
-            Duration tinyTimeout = Duration.ofMillis(1);
+            var tinyTimeout = Duration.ofMillis(1);
 
             long start = System.currentTimeMillis();
             assertThrows(NoAvailableAgentException.class,

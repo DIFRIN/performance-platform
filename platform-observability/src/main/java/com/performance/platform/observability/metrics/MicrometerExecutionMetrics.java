@@ -90,7 +90,7 @@ public class MicrometerExecutionMetrics implements ExecutionMetrics {
         Objects.requireNonNull(taskId, "taskId must not be null");
         Objects.requireNonNull(taskName, "taskName must not be null");
 
-        Counter counter = Counter.builder(METRIC_TASK_FAILURES_TOTAL)
+        var counter = Counter.builder(METRIC_TASK_FAILURES_TOTAL)
                 .tag(TAG_TASK_NAME, taskName)
                 .description("Total task failures")
                 .register(registry);

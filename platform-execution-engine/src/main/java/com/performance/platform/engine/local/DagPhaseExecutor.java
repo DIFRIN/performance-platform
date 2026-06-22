@@ -108,7 +108,7 @@ public class DagPhaseExecutor {
             // Mark skippable steps
             for (ExecutionStep step : classification.skippable()) {
                 StepDefinition stepDef = step.step();
-                TaskResult skippedResult = TaskResult.skipped(stepDef.id(), stepDef.taskName(), "dependency failed");
+                var skippedResult = TaskResult.skipped(stepDef.id(), stepDef.taskName(), "dependency failed");
                 currentContext = currentContext.with(stepDef.id().value(), LOCAL_AGENT, skippedResult);
                 publishTaskSkipped(eventPublisher, currentContext.executionId(), stepDef.id(), skippedResult);
                 anyFailed = true;
@@ -238,7 +238,7 @@ public class DagPhaseExecutor {
                 ? stepDef.retryPolicy()
                 : RetryPolicy.defaults();
 
-        Instant start = Instant.now();
+        var start = Instant.now();
 
         try {
             TaskResult result;
@@ -247,13 +247,13 @@ public class DagPhaseExecutor {
             } else {
                 result = executePreparationOrInjectionStep(stepDef, context, lookup, policy);
             }
-            Duration duration = Duration.between(start, Instant.now());
+            var duration = Duration.between(start, Instant.now());
             log.info("action=step_completed taskId={} taskName={} status={} durationMs={}",
                     stepDef.id().value(), stepDef.taskName(), result.status(), duration.toMillis());
             return new StepExecutionResult(stepDef.id(), result);
         } catch (Exception e) {
-            Duration duration = Duration.between(start, Instant.now());
-            TaskResult failedResult = TaskResult.failed(
+            var duration = Duration.between(start, Instant.now());
+            var failedResult = TaskResult.failed(
                     stepDef.id(), stepDef.taskName(), duration, e.getMessage(), e);
             log.warn("action=step_exhausted taskId={} taskName={} durationMs={} error={}",
                     stepDef.id().value(), stepDef.taskName(), duration.toMillis(), e.getMessage());
@@ -332,8 +332,8 @@ public class DagPhaseExecutor {
             TaskResult result,
             Phase phase) {
 
-        AgentId agentId = AgentId.of(LOCAL_AGENT);
-        Instant now = Instant.now();
+        var agentId = AgentId.of(LOCAL_AGENT);
+        var now = Instant.now();
 
         if (result.isSuccess()) {
             publisher.publishEvent(new TaskCompleted(
@@ -353,7 +353,7 @@ public class DagPhaseExecutor {
             TaskResult result) {
 
         // Publier comme TaskCompleted pour que les listeners puissent suivre
-        AgentId agentId = AgentId.of(LOCAL_AGENT);
+        var agentId = AgentId.of(LOCAL_AGENT);
         publisher.publishEvent(new TaskCompleted(
                 executionId, taskId, agentId, result, Duration.ZERO, Instant.now()));
     }

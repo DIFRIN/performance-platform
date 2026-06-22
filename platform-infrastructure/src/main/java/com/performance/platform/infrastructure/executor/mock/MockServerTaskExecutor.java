@@ -162,7 +162,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
         String url = server.baseUrl();
         serversByExecution.put(executionKey, server);
 
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         Map<String, Object> outputs = Map.of(
                 OUTPUT_PORT, actualPort,
                 OUTPUT_URL, url
@@ -179,13 +179,13 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
         if (server != null && server.isRunning()) {
             int port = server.port();
             server.stop();
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             log.info("action=mock_server_stopped executionKey={} port={} duration={}",
                     executionKey, port, formatDuration(elapsed));
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.of());
         }
         log.info("action=mock_server_stop_noop executionKey={}", executionKey);
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.of());
     }
 
@@ -195,7 +195,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
             return fail(step, startNanos, "No running embedded WireMock for executionKey=" + executionKey);
         }
         server.resetAll();
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         log.info("action=mock_server_reset executionKey={} duration={}", executionKey, formatDuration(elapsed));
         return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.of());
     }
@@ -210,7 +210,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
         String url = server.baseUrl();
         long count = server.countRequestsMatching(RequestPatternBuilder.allRequests().build()).getCount();
 
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         Map<String, Object> outputs = Map.of(
                 OUTPUT_PORT, port,
                 OUTPUT_URL, url,
@@ -300,7 +300,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
                 return fail(step, startNanos, "External WireMock at " + baseUrl + " returned null response");
             }
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     OUTPUT_PORT, port,
                     OUTPUT_URL, baseUrl
@@ -322,7 +322,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
         WireMock.configureFor(host, port);
         try {
             WireMock.resetAllRequests();
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
 
             log.info("action=mock_server_external_reset executionId={} url={} duration={} stepId={}",
                     executionId, baseUrl, formatDuration(elapsed), step.id().value());
@@ -342,7 +342,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
             var countResult = adminClient.countRequestsMatching(RequestPatternBuilder.allRequests().build());
             long count = countResult.getCount();
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             Map<String, Object> outputs = Map.of(
                     OUTPUT_URL, baseUrl,
                     OUTPUT_TOTAL_REQUESTS, count
@@ -414,12 +414,12 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message, Throwable cause) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, cause);
     }
 

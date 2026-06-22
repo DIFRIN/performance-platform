@@ -58,7 +58,7 @@ public class GatlingMetricAssertionExecutor implements AssertionExecutor {
     public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(step, "step must not be null");
-        Instant start = Instant.now();
+        var start = Instant.now();
 
         try {
             Map<String, Object> params = step.parameters();
@@ -114,7 +114,7 @@ public class GatlingMetricAssertionExecutor implements AssertionExecutor {
             String description = buildDescription(metricName, actualValue,
                     expectedValue, operator, unit, passed);
 
-            Duration evaluationDuration = Duration.between(start, Instant.now());
+            var evaluationDuration = Duration.between(start, Instant.now());
 
             log.info("action=assertion_evaluated executionId={} assertionId={} metric={} actual={} "
                      + "expected={} operator={} status={}",
@@ -222,7 +222,7 @@ public class GatlingMetricAssertionExecutor implements AssertionExecutor {
                                               Instant start,
                                               String errorMessage,
                                               Map<String, Object> params) {
-        Duration duration = Duration.between(start, Instant.now());
+        var duration = Duration.between(start, Instant.now());
         return new AssertionResult(
                 step.id(),
                 AssertionStatus.ERROR,

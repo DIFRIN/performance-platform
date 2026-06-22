@@ -88,7 +88,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
         }
 
         // 2. Load external plugins (handle non-existent directory gracefully)
-        Path dir = Path.of(pluginDir);
+        var dir = Path.of(pluginDir);
         PluginLoadResult result;
         try {
             result = loader.load(dir);

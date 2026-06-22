@@ -97,7 +97,7 @@ class DefaultGatlingResultParserTest {
         Path statsFile = tempDir.resolve("stats.json");
         Files.writeString(statsFile, STATS_JSON_CONTENT);
 
-        TaskId taskId = TaskId.of("task-1");
+        var taskId = TaskId.of("task-1");
         InjectionResult result = parser.parse(tempDir, taskId);
 
         assertThat(result.taskId()).isEqualTo(taskId);
@@ -126,7 +126,7 @@ class DefaultGatlingResultParserTest {
         Path statsFile = tempDir.resolve("stats.json");
         Files.writeString(statsFile, CONTENTS_JSON_CONTENT);
 
-        TaskId taskId = TaskId.of("task-2");
+        var taskId = TaskId.of("task-2");
         InjectionResult result = parser.parse(tempDir, taskId);
 
         assertThat(result.totalRequests()).isEqualTo(500);
@@ -150,7 +150,7 @@ class DefaultGatlingResultParserTest {
         Files.createDirectory(jsDir);
         Files.writeString(jsDir.resolve("stats.json"), STATS_JSON_CONTENT);
 
-        TaskId taskId = TaskId.of("task-3");
+        var taskId = TaskId.of("task-3");
         InjectionResult result = parser.parse(tempDir, taskId);
 
         assertThat(result.totalRequests()).isEqualTo(1000);
@@ -165,7 +165,7 @@ class DefaultGatlingResultParserTest {
         @Test
         @DisplayName("should throw ResultParsingException when stats.json is missing")
         void shouldThrowWhenStatsJsonMissing(@TempDir Path tempDir) {
-            TaskId taskId = TaskId.of("task-missing");
+            var taskId = TaskId.of("task-missing");
 
             assertThatThrownBy(() -> parser.parse(tempDir, taskId))
                     .isInstanceOf(ResultParsingException.class)
@@ -177,7 +177,7 @@ class DefaultGatlingResultParserTest {
         void shouldThrowWhenJsonIsMalformed(@TempDir Path tempDir) throws IOException {
             Files.writeString(tempDir.resolve("stats.json"), "{not valid json");
 
-            TaskId taskId = TaskId.of("task-malformed");
+            var taskId = TaskId.of("task-malformed");
 
             assertThatThrownBy(() -> parser.parse(tempDir, taskId))
                     .isInstanceOf(ResultParsingException.class)
@@ -190,7 +190,7 @@ class DefaultGatlingResultParserTest {
             Files.writeString(tempDir.resolve("stats.json"),
                     "{\"stats\":[{\"numberOfRequests\":{\"ok\":1,\"ko\":0}}]}");
 
-            TaskId taskId = TaskId.of("task-missing-field");
+            var taskId = TaskId.of("task-missing-field");
 
             assertThatThrownBy(() -> parser.parse(tempDir, taskId))
                     .isInstanceOf(ResultParsingException.class)
@@ -203,7 +203,7 @@ class DefaultGatlingResultParserTest {
             Files.writeString(tempDir.resolve("stats.json"),
                     "{\"unknown\":{}}");
 
-            TaskId taskId = TaskId.of("task-unknown-format");
+            var taskId = TaskId.of("task-unknown-format");
 
             assertThatThrownBy(() -> parser.parse(tempDir, taskId))
                     .isInstanceOf(ResultParsingException.class)

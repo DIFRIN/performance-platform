@@ -48,26 +48,26 @@ public class ReportRendererContractTest {
     // ── Shared fixtures ──
 
     private static CampaignReport createFullReport(Verdict verdict, String reason) {
-        ReportId reportId = ReportId.generate();
-        ScenarioId scenarioId = new ScenarioId("contract-test");
-        Instant now = Instant.now();
+        var reportId = ReportId.generate();
+        var scenarioId = new ScenarioId("contract-test");
+        var now = Instant.now();
 
-        TaskReportEntry prepEntry = new TaskReportEntry(
+        var prepEntry = new TaskReportEntry(
                 new TaskId("prep-1"), "database-setup", TaskStatus.SUCCESS,
                 Duration.ofSeconds(2), Map.of("rows", 42));
 
-        InjectionResult injResult = new InjectionResult(
+        var injResult = new InjectionResult(
                 new TaskId("inj-1"), "com.example.Simulation", Duration.ofSeconds(10),
                 1000, 990, 10, 1.0, 100.0,
                 10, 15, 20, 25, 30, 35, 5, 8.5,
                 Path.of("/tmp/gatling"), Map.of());
-        InjectionReportEntry injEntry = new InjectionReportEntry(
+        var injEntry = new InjectionReportEntry(
                 new TaskId("inj-1"), injResult, Path.of("/tmp/gatling"));
 
-        AssertionResult assertResult = new AssertionResult(
+        var assertResult = new AssertionResult(
                 new TaskId("assert-1"), AssertionStatus.PASSED, "p95 < 100ms",
                 null, Duration.ofMillis(50), now);
-        AssertionReportEntry assertEntry = new AssertionReportEntry(
+        var assertEntry = new AssertionReportEntry(
                 new TaskId("assert-1"), assertResult, null);
 
         return new CampaignReport(
@@ -120,7 +120,7 @@ public class ReportRendererContractTest {
         void renderMustProduceUtf8Html() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             // Must contain HTML structural elements (from template or fallback)
             assertTrue(content.contains("<html") || content.contains("<body") || content.contains("<table"),
                     "HTML output must contain structural markup");
@@ -131,7 +131,7 @@ public class ReportRendererContractTest {
         void renderMustIncludeScenarioName() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             assertTrue(content.contains("Contract Test Campaign"),
                     "HTML must contain the scenario name");
         }
@@ -141,7 +141,7 @@ public class ReportRendererContractTest {
         void renderMustIncludeVerdict() {
             CampaignReport report = createFullReport(Verdict.WARNING, "Some assertions failed");
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             assertTrue(content.contains("WARNING"),
                     "HTML must contain the verdict string");
         }
@@ -153,7 +153,7 @@ public class ReportRendererContractTest {
             byte[] result = renderer.render(report);
             assertNotNull(result);
             assertTrue(result.length > 0, "Empty report must still produce valid HTML");
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             assertTrue(content.contains("SUCCESS"),
                     "Empty report HTML must contain verdict");
         }
@@ -161,7 +161,7 @@ public class ReportRendererContractTest {
         @Test
         @DisplayName("render() must escape XSS vectors in scenario name")
         void renderMustEscapeXss() {
-            CampaignReport report = new CampaignReport(
+            var report = new CampaignReport(
                     ReportId.generate(), new ScenarioId("sc"),
                     "<script>alert('xss')</script>", "1.0",
                     List.of(), Map.of(),
@@ -170,7 +170,7 @@ public class ReportRendererContractTest {
                     List.of(), List.of(), List.of(),
                     Verdict.SUCCESS, null, Instant.now(), Duration.ZERO);
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             // The script tag must be escaped, not rendered as executable HTML
             assertFalse(content.contains("<script>"),
                     "Script tags must be HTML-escaped");
@@ -221,7 +221,7 @@ public class ReportRendererContractTest {
         void renderMustProducePrettyPrintedJson() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             assertTrue(content.contains("\n  ") || content.contains("\n\t"),
                     "JSON must be pretty-printed with indentation");
         }
@@ -231,7 +231,7 @@ public class ReportRendererContractTest {
         void renderMustIncludeAllTopLevelFields() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             // All CampaignReport fields must appear in the JSON
             assertTrue(content.contains("\"scenarioName\""));
             assertTrue(content.contains("\"scenarioVersion\""));
@@ -248,7 +248,7 @@ public class ReportRendererContractTest {
         void renderMustSerializeInstantAsIsoString() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             // generatedAt should be an ISO-8601 string, not a numeric timestamp
             assertTrue(content.contains("\"generatedAt\" : \""));
         }
@@ -260,14 +260,14 @@ public class ReportRendererContractTest {
             byte[] result = renderer.render(report);
             assertNotNull(result);
             assertTrue(result.length > 0);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             assertTrue(content.contains("\"verdict\""));
         }
 
         @Test
         @DisplayName("render() must preserve special characters in scenario name")
         void renderMustPreserveSpecialChars() {
-            CampaignReport report = new CampaignReport(
+            var report = new CampaignReport(
                     ReportId.generate(), new ScenarioId("sc"),
                     "Test \"quoted\" & ampersand", "1.0",
                     List.of(), Map.of(),
@@ -276,7 +276,7 @@ public class ReportRendererContractTest {
                     List.of(), List.of(), List.of(),
                     Verdict.SUCCESS, null, Instant.now(), Duration.ZERO);
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.UTF_8);
+            var content = new String(result, StandardCharsets.UTF_8);
             // JSON must properly escape quotes, but preserve the content
             assertTrue(content.contains("quoted") && content.contains("ampersand"),
                     "Special characters must be present in JSON output");
@@ -337,7 +337,7 @@ public class ReportRendererContractTest {
         void renderMustContainEofTrailer() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.ISO_8859_1);
+            var content = new String(result, StandardCharsets.ISO_8859_1);
             assertTrue(content.contains("%%EOF"),
                     "PDF must contain %%EOF trailer marker");
         }
@@ -347,7 +347,7 @@ public class ReportRendererContractTest {
         void renderMustContainStructuralMarkers() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
             byte[] result = renderer.render(report);
-            String content = new String(result, StandardCharsets.ISO_8859_1);
+            var content = new String(result, StandardCharsets.ISO_8859_1);
             assertTrue(content.contains("/Type"),
                     "PDF must contain /Type marker");
             assertTrue(content.contains("/Page"),
@@ -424,13 +424,13 @@ public class ReportRendererContractTest {
             byte[] html = htmlRenderer.render(report);
             byte[] pdf = pdfRenderer.render(report);
 
-            String htmlContent = new String(html, StandardCharsets.UTF_8);
+            var htmlContent = new String(html, StandardCharsets.UTF_8);
             assertTrue(htmlContent.contains("Contract Test Campaign"),
                     "HTML must contain scenario name");
 
             // PDF contains the text embedded (may be in compressed streams,
             // but the text content from OpenHTMLToPDF is usually uncompressed in simple cases)
-            String pdfContent = new String(pdf, StandardCharsets.ISO_8859_1);
+            var pdfContent = new String(pdf, StandardCharsets.ISO_8859_1);
             assertTrue(pdfContent.length() > 0,
                     "PDF must contain content");
         }
@@ -441,7 +441,7 @@ public class ReportRendererContractTest {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
 
             byte[] json = jsonRenderer.render(report);
-            String jsonContent = new String(json, StandardCharsets.UTF_8);
+            var jsonContent = new String(json, StandardCharsets.UTF_8);
 
             // JSON must contain the same logical data
             assertTrue(jsonContent.contains("Contract Test Campaign"));

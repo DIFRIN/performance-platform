@@ -136,7 +136,7 @@ class ReportingPipelineE2ETest {
     @AfterEach
     void cleanup() throws IOException {
         // Clean up any "reports/" directory created by default output tests
-        Path defaultReports = Path.of("reports");
+        var defaultReports = Path.of("reports");
         if (Files.exists(defaultReports)) {
             deleteRecursively(defaultReports);
         }
@@ -154,12 +154,12 @@ class ReportingPipelineE2ETest {
         @DisplayName("should execute full pipeline: state -> report -> 3 formats on disk")
         void shouldExecuteFullPipeline() throws IOException {
             // Given: an ExecutionState with one preparation task
-            TaskId taskId = TaskId.of("prep-1");
-            TaskResult result = TaskResult.success(taskId, "database-purge",
+            var taskId = TaskId.of("prep-1");
+            var result = TaskResult.success(taskId, "database-purge",
                     Duration.ofSeconds(3), Map.of("rows_deleted", 500));
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskId.value(), "agent-1", result);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(5));
 
@@ -185,9 +185,9 @@ class ReportingPipelineE2ETest {
             assertTrue(pdfBytes.length > 4);
 
             // When: write to disk
-            ReportProperties props = new ReportProperties(tempDir.toString(),
+            var props = new ReportProperties(tempDir.toString(),
                     List.of(ReportFormat.HTML, ReportFormat.JSON, ReportFormat.PDF));
-            ReportFileWriter writer = new ReportFileWriter(
+            var writer = new ReportFileWriter(
                     List.of(htmlRenderer, jsonRenderer, pdfRenderer), props);
             Path outputDir = writer.write(executionId, report);
 
@@ -199,12 +199,12 @@ class ReportingPipelineE2ETest {
             assertTrue(Files.exists(outputDir.resolve("campaign.pdf")));
 
             // Then: HTML file contains report data
-            String htmlContent = Files.readString(outputDir.resolve("campaign.html"));
+            var htmlContent = Files.readString(outputDir.resolve("campaign.html"));
             assertTrue(htmlContent.contains("database-purge"));
             assertTrue(htmlContent.contains("SUCCESS"));
 
             // Then: JSON file contains report data
-            String jsonContent = Files.readString(outputDir.resolve("campaign.json"));
+            var jsonContent = Files.readString(outputDir.resolve("campaign.json"));
             assertTrue(jsonContent.contains("database-purge"));
             assertTrue(jsonContent.contains("SUCCESS"));
 
@@ -219,11 +219,11 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should generate SUCCESS verdict when no assertions present")
         void shouldGenerateSuccessWhenNoAssertions() {
-            TaskId taskId = TaskId.of("prep-1");
-            TaskResult result = TaskResult.success(taskId, "setup", Duration.ofSeconds(1), Map.of());
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var taskId = TaskId.of("prep-1");
+            var result = TaskResult.success(taskId, "setup", Duration.ofSeconds(1), Map.of());
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskId.value(), "agent-1", result);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(2));
 
@@ -246,44 +246,44 @@ class ReportingPipelineE2ETest {
         @DisplayName("should handle preparation + injection + assertion phases with correct classification")
         void shouldHandleAllThreePhases() throws IOException {
             // Given: 2 prep tasks, 1 injection, 2 assertions
-            TaskId prepA = TaskId.of("prep-a");
-            TaskResult prepResultA = TaskResult.success(prepA, "db-setup",
+            var prepA = TaskId.of("prep-a");
+            var prepResultA = TaskResult.success(prepA, "db-setup",
                     Duration.ofSeconds(1), Map.of("rows", 42));
 
-            TaskId prepB = TaskId.of("prep-b");
-            TaskResult prepResultB = TaskResult.success(prepB, "kafka-monitor",
+            var prepB = TaskId.of("prep-b");
+            var prepResultB = TaskResult.success(prepB, "kafka-monitor",
                     Duration.ofMillis(500), Map.of());
 
-            TaskId injId = TaskId.of("inj-1");
-            InjectionResult injResult = new InjectionResult(
+            var injId = TaskId.of("inj-1");
+            var injResult = new InjectionResult(
                     injId, "com.example.ApiSimulation", Duration.ofSeconds(15),
                     5000, 4950, 50, 1.0, 333.3,
                     20, 35, 50, 60, 80, 200, 5, 45.0,
                     tempDir.resolve("gatling-src"), Map.of("scenario", "api-test"));
-            TaskResult injTaskResult = TaskResult.success(injId, "gatling",
+            var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(15), Map.of("injectionResult", injResult));
 
-            TaskId assertA = TaskId.of("assert-a");
-            AssertionResult assertResultA = new AssertionResult(
+            var assertA = TaskId.of("assert-a");
+            var assertResultA = new AssertionResult(
                     assertA, AssertionStatus.PASSED, "p95 < 100ms",
                     null, Duration.ofMillis(10), now);
-            TaskResult assertTaskResultA = TaskResult.success(assertA, "gatling-metric",
+            var assertTaskResultA = TaskResult.success(assertA, "gatling-metric",
                     Duration.ofMillis(10), Map.of("assertionResult", assertResultA));
 
-            TaskId assertB = TaskId.of("assert-b");
-            AssertionResult assertResultB = new AssertionResult(
+            var assertB = TaskId.of("assert-b");
+            var assertResultB = new AssertionResult(
                     assertB, AssertionStatus.PASSED, "errorRate < 2%",
                     null, Duration.ofMillis(5), now);
-            TaskResult assertTaskResultB = TaskResult.success(assertB, "gatling-metric",
+            var assertTaskResultB = TaskResult.success(assertB, "gatling-metric",
                     Duration.ofMillis(5), Map.of("assertionResult", assertResultB));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepA.value(), "agent-1", prepResultA)
                     .with(prepB.value(), "agent-1", prepResultB)
                     .with(injId.value(), "agent-1", injTaskResult)
                     .with(assertA.value(), "agent-1", assertTaskResultA)
                     .with(assertB.value(), "agent-1", assertTaskResultB);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(20));
 
@@ -319,9 +319,9 @@ class ReportingPipelineE2ETest {
             assertTrue(pdf.length > 4);
 
             // Then: Write to disk and verify all 3 files
-            ReportProperties props = new ReportProperties(tempDir.toString(),
+            var props = new ReportProperties(tempDir.toString(),
                     List.of(ReportFormat.HTML, ReportFormat.JSON, ReportFormat.PDF));
-            ReportFileWriter writer = new ReportFileWriter(
+            var writer = new ReportFileWriter(
                     List.of(htmlRenderer, jsonRenderer, pdfRenderer), props);
             Path outputDir = writer.write(executionId, report);
 
@@ -332,16 +332,16 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should produce WARNING verdict when any assertion FAILED")
         void shouldProduceWarningVerdict() {
-            TaskId assertId = TaskId.of("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertId = TaskId.of("assert-1");
+            var assertResult = new AssertionResult(
                     assertId, AssertionStatus.FAILED, "p99 > threshold",
                     null, Duration.ofMillis(10), now);
-            TaskResult assertTaskResult = TaskResult.success(assertId, "gatling-metric",
+            var assertTaskResult = TaskResult.success(assertId, "gatling-metric",
                     Duration.ofMillis(10), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertId.value(), "agent-1", assertTaskResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1));
 
@@ -353,39 +353,39 @@ class ReportingPipelineE2ETest {
 
             // Render HTML must use warning badge
             byte[] html = htmlRenderer.render(report);
-            String htmlContent = new String(html, StandardCharsets.UTF_8);
+            var htmlContent = new String(html, StandardCharsets.UTF_8);
             assertTrue(htmlContent.contains("WARNING") || htmlContent.contains("warning"));
         }
 
         @Test
         @DisplayName("should produce FAILED verdict when any assertion ERROR (priority over FAILED)")
         void shouldProduceFailedVerdictWithErrorPriority() {
-            TaskId assertA = TaskId.of("assert-a");
-            AssertionResult passedResult = new AssertionResult(
+            var assertA = TaskId.of("assert-a");
+            var passedResult = new AssertionResult(
                     assertA, AssertionStatus.PASSED, "all good", null,
                     Duration.ofMillis(10), now);
-            TaskResult passedTaskResult = TaskResult.success(assertA, "gatling-metric",
+            var passedTaskResult = TaskResult.success(assertA, "gatling-metric",
                     Duration.ofMillis(10), Map.of("assertionResult", passedResult));
 
-            TaskId assertB = TaskId.of("assert-b");
-            AssertionResult failedResult = new AssertionResult(
+            var assertB = TaskId.of("assert-b");
+            var failedResult = new AssertionResult(
                     assertB, AssertionStatus.FAILED, "threshold breached", null,
                     Duration.ofMillis(10), now);
-            TaskResult failedTaskResult = TaskResult.success(assertB, "gatling-metric",
+            var failedTaskResult = TaskResult.success(assertB, "gatling-metric",
                     Duration.ofMillis(10), Map.of("assertionResult", failedResult));
 
-            TaskId assertC = TaskId.of("assert-c");
-            AssertionResult errorResult = new AssertionResult(
+            var assertC = TaskId.of("assert-c");
+            var errorResult = new AssertionResult(
                     assertC, AssertionStatus.ERROR, "evaluation crashed", null,
                     Duration.ofMillis(10), now);
-            TaskResult errorTaskResult = TaskResult.success(assertC, "gatling-metric",
+            var errorTaskResult = TaskResult.success(assertC, "gatling-metric",
                     Duration.ofMillis(10), Map.of("assertionResult", errorResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", passedTaskResult)
                     .with(assertB.value(), "agent-1", failedTaskResult)
                     .with(assertC.value(), "agent-1", errorTaskResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1));
 
@@ -398,7 +398,7 @@ class ReportingPipelineE2ETest {
 
             // Render HTML must use failed badge
             byte[] html = htmlRenderer.render(report);
-            String htmlContent = new String(html, StandardCharsets.UTF_8);
+            var htmlContent = new String(html, StandardCharsets.UTF_8);
             assertTrue(htmlContent.contains("FAILED") || htmlContent.contains("failed"));
         }
     }
@@ -414,20 +414,20 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should collect distinct agent IDs from multiple agents")
         void shouldCollectDistinctAgentIds() {
-            TaskId taskA = TaskId.of("task-a");
-            TaskResult resultA = TaskResult.success(taskA, "check-db",
+            var taskA = TaskId.of("task-a");
+            var resultA = TaskResult.success(taskA, "check-db",
                     Duration.ofSeconds(1), Map.of());
 
-            TaskId taskB = TaskId.of("task-b");
-            TaskResult resultB = TaskResult.success(taskB, "check-kafka",
+            var taskB = TaskId.of("task-b");
+            var resultB = TaskResult.success(taskB, "check-kafka",
                     Duration.ofSeconds(1), Map.of());
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskA.value(), "agent-alpha", resultA)
                     .with(taskB.value(), "agent-beta", resultB)
                     .with(taskA.value(), "agent-gamma", resultA); // same task, different agent
 
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(2));
 
@@ -443,21 +443,21 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should generate report with tasks distributed across agents")
         void shouldHandleTasksAcrossMultipleAgents() throws IOException {
-            TaskId injId = TaskId.of("inj-1");
-            InjectionResult injResult = new InjectionResult(
+            var injId = TaskId.of("inj-1");
+            var injResult = new InjectionResult(
                     injId, "Sim", Duration.ofSeconds(5),
                     100, 100, 0, 0.0, 20.0,
                     5, 10, 15, 20, 25, 30, 3, 8.0,
                     tempDir.resolve("gatling-multi"), Map.of());
-            TaskResult injTaskResult = TaskResult.success(injId, "gatling",
+            var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(5), Map.of("injectionResult", injResult));
 
             // Same task executed by 2 different agents (multi-claim scenario)
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injId.value(), "agent-east", injTaskResult)
                     .with(injId.value(), "agent-west", injTaskResult);
 
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(5));
 
@@ -477,9 +477,9 @@ class ReportingPipelineE2ETest {
             assertTrue(pdf.length > 4);
 
             // Write to disk
-            ReportProperties props = new ReportProperties(tempDir.toString(),
+            var props = new ReportProperties(tempDir.toString(),
                     List.of(ReportFormat.HTML, ReportFormat.JSON, ReportFormat.PDF));
-            ReportFileWriter writer = new ReportFileWriter(
+            var writer = new ReportFileWriter(
                     List.of(htmlRenderer, jsonRenderer, pdfRenderer), props);
             Path outputDir = writer.write(executionId, report);
 
@@ -500,8 +500,8 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should handle empty execution state gracefully")
         void shouldHandleEmptyState() throws IOException {
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId);
-            ExecutionState state = new ExecutionState(
+            var context = ExecutionContext.initial(executionId, scenarioId);
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1));
 
@@ -521,9 +521,9 @@ class ReportingPipelineE2ETest {
             assertTrue(json.length > 0);
             assertTrue(pdf.length > 4);
 
-            ReportProperties props = new ReportProperties(tempDir.toString(),
+            var props = new ReportProperties(tempDir.toString(),
                     List.of(ReportFormat.HTML, ReportFormat.JSON, ReportFormat.PDF));
-            ReportFileWriter writer = new ReportFileWriter(
+            var writer = new ReportFileWriter(
                     List.of(htmlRenderer, jsonRenderer, pdfRenderer), props);
             Path outputDir = writer.write(executionId, report);
             assertTrue(Files.exists(outputDir.resolve("campaign.html")));
@@ -532,23 +532,23 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should handle scenario with FAILED and SKIPPED tasks")
         void shouldHandleFailedAndSkippedTasks() {
-            TaskId failId = TaskId.of("fail-1");
-            TaskResult failResult = TaskResult.failed(failId, "crash-task",
+            var failId = TaskId.of("fail-1");
+            var failResult = TaskResult.failed(failId, "crash-task",
                     Duration.ofSeconds(1), "connection refused", new RuntimeException("boom"));
 
-            TaskId skipId = TaskId.of("skip-1");
-            TaskResult skipResult = TaskResult.skipped(skipId, "optional-task",
+            var skipId = TaskId.of("skip-1");
+            var skipResult = TaskResult.skipped(skipId, "optional-task",
                     "dependency failed");
 
-            TaskId okId = TaskId.of("ok-1");
-            TaskResult okResult = TaskResult.success(okId, "db-check",
+            var okId = TaskId.of("ok-1");
+            var okResult = TaskResult.success(okId, "db-check",
                     Duration.ofMillis(500), Map.of());
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(failId.value(), "agent-1", failResult)
                     .with(skipId.value(), "agent-1", skipResult)
                     .with(okId.value(), "agent-1", okResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(3));
 
@@ -565,7 +565,7 @@ class ReportingPipelineE2ETest {
 
             // HTML must contain all statuses
             byte[] html = htmlRenderer.render(report);
-            String htmlContent = new String(html, StandardCharsets.UTF_8);
+            var htmlContent = new String(html, StandardCharsets.UTF_8);
             assertTrue(htmlContent.contains("FAILED"));
             assertTrue(htmlContent.contains("SKIPPED"));
             assertTrue(htmlContent.contains("SUCCESS"));
@@ -574,15 +574,15 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should handle report generation for scenario with many tasks (no OOM)")
         void shouldHandleLargeState() {
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId);
+            var context = ExecutionContext.initial(executionId, scenarioId);
             int taskCount = 50;
             for (int i = 0; i < taskCount; i++) {
-                TaskId tid = TaskId.of("task-" + i);
-                TaskResult result = TaskResult.success(tid, "prep-" + i,
+                var tid = TaskId.of("task-" + i);
+                var result = TaskResult.success(tid, "prep-" + i,
                         Duration.ofMillis(10), Map.of("index", i));
                 context = context.with(tid.value(), "agent-1", result);
             }
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1));
 
@@ -604,12 +604,12 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should include JVM version in environment info")
         void shouldIncludeJvmVersion() {
-            TaskId taskId = TaskId.of("t1");
-            TaskResult result = TaskResult.success(taskId, "setup",
+            var taskId = TaskId.of("t1");
+            var result = TaskResult.success(taskId, "setup",
                     Duration.ofMillis(10), Map.of());
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskId.value(), "agent-1", result);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1));
 
@@ -621,7 +621,7 @@ class ReportingPipelineE2ETest {
 
             // Must appear in HTML
             byte[] html = htmlRenderer.render(report);
-            String htmlContent = new String(html, StandardCharsets.UTF_8);
+            var htmlContent = new String(html, StandardCharsets.UTF_8);
             assertTrue(htmlContent.contains(report.environment().jvmVersion()));
         }
 
@@ -629,20 +629,20 @@ class ReportingPipelineE2ETest {
         @DisplayName("should write report to custom output directory")
         void shouldWriteToCustomOutputDirectory() throws IOException {
             Path customDir = tempDir.resolve("custom-reports");
-            TaskId taskId = TaskId.of("t1");
-            TaskResult result = TaskResult.success(taskId, "setup",
+            var taskId = TaskId.of("t1");
+            var result = TaskResult.success(taskId, "setup",
                     Duration.ofMillis(10), Map.of());
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskId.value(), "agent-1", result);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(1));
 
             CampaignReport report = engine.generate(state);
 
-            ReportProperties props = new ReportProperties(customDir.toString(),
+            var props = new ReportProperties(customDir.toString(),
                     List.of(ReportFormat.HTML, ReportFormat.JSON));
-            ReportFileWriter writer = new ReportFileWriter(
+            var writer = new ReportFileWriter(
                     List.of(htmlRenderer, jsonRenderer), props);
             Path outputDir = writer.write(executionId, report);
 
@@ -661,26 +661,26 @@ class ReportingPipelineE2ETest {
             Files.createDirectories(gatlingSource.resolve("js"));
             Files.writeString(gatlingSource.resolve("js").resolve("stats.json"), "{\"meanResponseTime\": 50}");
 
-            TaskId injId = TaskId.of("inj-1");
-            InjectionResult injResult = new InjectionResult(
+            var injId = TaskId.of("inj-1");
+            var injResult = new InjectionResult(
                     injId, "com.example.ApiSimulation", Duration.ofSeconds(10),
                     100, 100, 0, 0.0, 10.0,
                     5, 10, 15, 20, 25, 30, 3, 8.0,
                     gatlingSource, Map.of());
-            TaskResult injTaskResult = TaskResult.success(injId, "gatling",
+            var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(10), Map.of("injectionResult", injResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injId.value(), "agent-1", injTaskResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(10));
 
             CampaignReport report = engine.generate(state);
 
-            ReportProperties props = new ReportProperties(tempDir.toString(),
+            var props = new ReportProperties(tempDir.toString(),
                     List.of(ReportFormat.HTML));
-            ReportFileWriter writer = new ReportFileWriter(List.of(htmlRenderer), props);
+            var writer = new ReportFileWriter(List.of(htmlRenderer), props);
             Path outputDir = writer.write(executionId, report);
 
             // Gatling directory must be copied
@@ -696,16 +696,16 @@ class ReportingPipelineE2ETest {
         @Test
         @DisplayName("should handle TIMEOUT task status in summary")
         void shouldHandleTimeoutStatus() {
-            TaskId timeoutId = TaskId.of("timeout-1");
+            var timeoutId = TaskId.of("timeout-1");
             // Create a TIMEOUT result using the full constructor
-            TaskResult timeoutResult = new TaskResult(
+            var timeoutResult = new TaskResult(
                     timeoutId, "slow-task", TaskStatus.TIMEOUT,
                     Duration.ofSeconds(30), Map.of(), "Operation timed out",
                     new java.util.concurrent.TimeoutException("timeout"), Instant.now());
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(timeoutId.value(), "agent-1", timeoutResult);
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     executionId, scenarioId, ExecutionStatus.COMPLETED,
                     Map.of(), context, now, now.plusSeconds(30));
 

@@ -63,7 +63,7 @@ class JpaExecutionRepositoryIT {
     @BeforeAll
     static void setUp() {
         // 1. Run Flyway migrations before Hibernate validates the schema
-        Flyway flyway = Flyway.configure()
+        var flyway = Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                 .locations("classpath:db/migration")
                 .load();
@@ -108,7 +108,7 @@ class JpaExecutionRepositoryIT {
 
         @Bean
         DataSource dataSource() {
-            HikariConfig config = new HikariConfig();
+            var config = new HikariConfig();
             config.setJdbcUrl(postgres.getJdbcUrl());
             config.setUsername(postgres.getUsername());
             config.setPassword(postgres.getPassword());
@@ -117,14 +117,14 @@ class JpaExecutionRepositoryIT {
 
         @Bean
         LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
-            LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
+            var emf = new LocalContainerEntityManagerFactoryBean();
             emf.setDataSource(dataSource);
             emf.setPackagesToScan("com.performance.platform.infrastructure.persistence");
             emf.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
             // Hibernate 6.6 SessionFactory implements EntityManagerFactory;
             // avoid proxy interface conflict with Spring 7.0 EntityManagerFactoryInfo mixin
             emf.setEntityManagerFactoryInterface(jakarta.persistence.EntityManagerFactory.class);
-            Properties props = new Properties();
+            var props = new Properties();
             props.setProperty("hibernate.hbm2ddl.auto", "validate");
             props.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
             props.setProperty("hibernate.format_sql", "true");
@@ -164,7 +164,7 @@ class JpaExecutionRepositoryIT {
         phases.put(Phase.PREPARATION, PhaseStatus.COMPLETED);
         phases.put(Phase.INJECTION, PhaseStatus.RUNNING);
 
-        ExecutionContext ctx = ExecutionContext.initial(executionId, scenarioId);
+        var ctx = ExecutionContext.initial(executionId, scenarioId);
 
         return new ExecutionState(
                 executionId,
@@ -186,8 +186,8 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("should persist and retrieve an execution state")
         void shouldPersistAndRetrieve() {
-            ExecutionId id = ExecutionId.generate();
-            ScenarioId scenarioId = ScenarioId.of("scenario-" + ExecutionId.generate().value());
+            var id = ExecutionId.generate();
+            var scenarioId = ScenarioId.of("scenario-" + ExecutionId.generate().value());
             ExecutionState state = createTestState(id, scenarioId);
 
             repository.save(state);
@@ -207,7 +207,7 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("should return empty optional for unknown execution")
         void shouldReturnEmptyForUnknownId() {
-            ExecutionId unknownId = ExecutionId.generate();
+            var unknownId = ExecutionId.generate();
 
             Optional<ExecutionState> found = repository.findById(unknownId);
 
@@ -222,8 +222,8 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("re-saving same ID should update, not duplicate")
         void shouldUpdateOnReSave() {
-            ExecutionId id = ExecutionId.generate();
-            ScenarioId scenarioId = ScenarioId.of("scenario-" + ExecutionId.generate().value());
+            var id = ExecutionId.generate();
+            var scenarioId = ScenarioId.of("scenario-" + ExecutionId.generate().value());
             ExecutionState original = createTestState(id, scenarioId);
 
             repository.save(original);
@@ -234,8 +234,8 @@ class JpaExecutionRepositoryIT {
             updatedPhases.put(Phase.INJECTION, PhaseStatus.COMPLETED);
             updatedPhases.put(Phase.ASSERTION, PhaseStatus.RUNNING);
 
-            ExecutionContext ctx2 = ExecutionContext.initial(id, scenarioId);
-            ExecutionState updated = new ExecutionState(
+            var ctx2 = ExecutionContext.initial(id, scenarioId);
+            var updated = new ExecutionState(
                     id, scenarioId,
                     ExecutionStatus.RUNNING,
                     updatedPhases,
@@ -262,8 +262,8 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("should update a specific phase status")
         void shouldUpdatePhase() {
-            ExecutionId id = ExecutionId.generate();
-            ScenarioId scenarioId = ScenarioId.of("scenario-" + ExecutionId.generate().value());
+            var id = ExecutionId.generate();
+            var scenarioId = ScenarioId.of("scenario-" + ExecutionId.generate().value());
             ExecutionState state = createTestState(id, scenarioId);
             repository.save(state);
 
@@ -280,7 +280,7 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("should throw when execution not found")
         void shouldThrowWhenExecutionNotFound() {
-            ExecutionId unknownId = ExecutionId.generate();
+            var unknownId = ExecutionId.generate();
 
             assertThatThrownBy(() -> repository.updatePhase(unknownId, Phase.PREPARATION, PhaseStatus.COMPLETED))
                     .isInstanceOf(IllegalStateException.class)
@@ -295,15 +295,15 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("should store and retrieve task results by execution and task")
         void shouldStoreAndRetrieveTaskResults() {
-            ExecutionId executionId = ExecutionId.generate();
-            TaskId taskId = TaskId.of("task-load-inject");
-            AgentId agent1 = AgentId.generate();
-            AgentId agent2 = AgentId.generate();
+            var executionId = ExecutionId.generate();
+            var taskId = TaskId.of("task-load-inject");
+            var agent1 = AgentId.generate();
+            var agent2 = AgentId.generate();
 
-            TaskResult result1 = TaskResult.success(
+            var result1 = TaskResult.success(
                     taskId, "load-inject", Duration.ofMillis(1500),
                     Map.of("throughput", 500.0));
-            TaskResult result2 = TaskResult.success(
+            var result2 = TaskResult.success(
                     taskId, "load-inject", Duration.ofMillis(1200),
                     Map.of("throughput", 480.0));
 
@@ -323,17 +323,17 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("saveTaskResult upsert should replace existing result for same agent")
         void shouldUpsertTaskResult() {
-            ExecutionId executionId = ExecutionId.generate();
-            TaskId taskId = TaskId.of("task-retry");
-            AgentId agent = AgentId.generate();
+            var executionId = ExecutionId.generate();
+            var taskId = TaskId.of("task-retry");
+            var agent = AgentId.generate();
 
-            TaskResult first = TaskResult.failed(
+            var first = TaskResult.failed(
                     taskId, "task-retry", Duration.ofMillis(500),
                     "timeout", new RuntimeException("timeout"));
             repository.saveTaskResult(executionId, taskId, agent, first);
 
             // Upsert with success
-            TaskResult second = TaskResult.success(
+            var second = TaskResult.success(
                     taskId, "task-retry", Duration.ofMillis(800),
                     Map.of("rows", 100));
             repository.saveTaskResult(executionId, taskId, agent, second);
@@ -349,8 +349,8 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("should return empty map when no task results exist")
         void shouldReturnEmptyMapForNoResults() {
-            ExecutionId executionId = ExecutionId.generate();
-            TaskId taskId = TaskId.of("task-nonexistent");
+            var executionId = ExecutionId.generate();
+            var taskId = TaskId.of("task-nonexistent");
 
             Map<AgentId, TaskResult> results = repository.getTaskResults(executionId, taskId);
 
@@ -360,13 +360,13 @@ class JpaExecutionRepositoryIT {
         @Test
         @DisplayName("should not return results for different execution or task")
         void shouldNotCrossPolluteResults() {
-            ExecutionId exec1 = ExecutionId.generate();
-            ExecutionId exec2 = ExecutionId.generate();
-            TaskId taskA = TaskId.of("task-a");
-            TaskId taskB = TaskId.of("task-b");
-            AgentId agent = AgentId.generate();
+            var exec1 = ExecutionId.generate();
+            var exec2 = ExecutionId.generate();
+            var taskA = TaskId.of("task-a");
+            var taskB = TaskId.of("task-b");
+            var agent = AgentId.generate();
 
-            TaskResult result = TaskResult.success(
+            var result = TaskResult.success(
                     taskA, "task-a", Duration.ofMillis(100), Map.of("val", 1));
             repository.saveTaskResult(exec1, taskA, agent, result);
 

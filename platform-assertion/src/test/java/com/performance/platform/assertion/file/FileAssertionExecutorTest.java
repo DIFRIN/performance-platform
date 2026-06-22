@@ -498,7 +498,7 @@ class FileAssertionExecutorTest {
     // --- Checksum helper ---
 
     private static String sha256Hex(Path filePath) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        var digest = MessageDigest.getInstance("SHA-256");
         byte[] hash = digest.digest(Files.readAllBytes(filePath));
         return HexFormat.of().formatHex(hash);
     }

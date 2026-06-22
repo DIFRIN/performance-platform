@@ -37,11 +37,11 @@ class TaskResultMapperTest {
     @Test
     @DisplayName("should round-trip domain -> entity -> domain preserving all fields")
     void shouldRoundTripDomainToEntityToDomain() {
-        ExecutionId execId = ExecutionId.of("exec-001");
-        TaskId taskId = TaskId.of("task-db");
-        AgentId agentId = AgentId.of("agent-001");
+        var execId = ExecutionId.of("exec-001");
+        var taskId = TaskId.of("task-db");
+        var agentId = AgentId.of("agent-001");
 
-        TaskResult original = new TaskResult(
+        var original = new TaskResult(
                 taskId,
                 "database-seed",
                 TaskStatus.SUCCESS,
@@ -70,11 +70,11 @@ class TaskResultMapperTest {
     @Test
     @DisplayName("should round-trip failed task result preserving error info")
     void shouldRoundTripFailedTaskResult() {
-        ExecutionId execId = ExecutionId.of("exec-002");
-        TaskId taskId = TaskId.of("task-fail");
-        AgentId agentId = AgentId.of("agent-002");
+        var execId = ExecutionId.of("exec-002");
+        var taskId = TaskId.of("task-fail");
+        var agentId = AgentId.of("agent-002");
 
-        TaskResult original = TaskResult.failed(
+        var original = TaskResult.failed(
                 taskId, "http-request", Duration.ofMillis(500),
                 "Connection timeout", new RuntimeException("Connection timeout"));
 
@@ -93,11 +93,11 @@ class TaskResultMapperTest {
     @Test
     @DisplayName("should round-trip task result with empty outputs")
     void shouldRoundTripWithEmptyOutputs() {
-        ExecutionId execId = ExecutionId.generate();
-        TaskId taskId = TaskId.of("task-empty");
-        AgentId agentId = AgentId.generate();
+        var execId = ExecutionId.generate();
+        var taskId = TaskId.of("task-empty");
+        var agentId = AgentId.generate();
 
-        TaskResult original = TaskResult.success(
+        var original = TaskResult.success(
                 taskId, "noop", Duration.ZERO, Map.of());
 
         TaskResultEntity entity = mapper.toEntity(execId, taskId, agentId, original);
@@ -111,9 +111,9 @@ class TaskResultMapperTest {
     @Test
     @DisplayName("should preserve round-trip with non-string output values")
     void shouldPreserveNonStringOutputValues() {
-        ExecutionId execId = ExecutionId.generate();
-        TaskId taskId = TaskId.of("task-mixed");
-        AgentId agentId = AgentId.generate();
+        var execId = ExecutionId.generate();
+        var taskId = TaskId.of("task-mixed");
+        var agentId = AgentId.generate();
 
         Map<String, Object> rawOutputs = Map.of(
                 "count", 42,
@@ -122,7 +122,7 @@ class TaskResultMapperTest {
                 "tags", Map.of("env", "staging", "region", "eu-west-1")
         );
 
-        TaskResult original = new TaskResult(
+        var original = new TaskResult(
                 taskId, "mixed-outputs", TaskStatus.SUCCESS,
                 Duration.ofMillis(100), rawOutputs, null, null, Instant.now());
 
@@ -138,12 +138,12 @@ class TaskResultMapperTest {
     @Test
     @DisplayName("should handle null completedAt in entity")
     void shouldRoundTripWithNullCompletedAt() {
-        ExecutionId execId = ExecutionId.generate();
-        TaskId taskId = TaskId.of("task-null");
-        AgentId agentId = AgentId.generate();
+        var execId = ExecutionId.generate();
+        var taskId = TaskId.of("task-null");
+        var agentId = AgentId.generate();
 
         // Create entity directly with null completedAt
-        TaskResultId id = new TaskResultId(
+        var id = new TaskResultId(
                 execId.value(), taskId.value(), agentId.value());
 
         Map<String, Object> meta = new java.util.HashMap<>();
@@ -156,7 +156,7 @@ class TaskResultMapperTest {
         outputs.put(TaskResultMapper.META_KEY, meta);
         outputs.put("progress", "50%");
 
-        TaskResultEntity entity = new TaskResultEntity(
+        var entity = new TaskResultEntity(
                 id, TaskStatus.FAILED, outputs, null);
 
         TaskResult restored = mapper.toDomain(entity);
@@ -177,11 +177,11 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("should build composite key from three IDs")
         void shouldBuildCompositeKey() {
-            ExecutionId execId = ExecutionId.of("exec-key");
-            TaskId taskId = TaskId.of("task-key");
-            AgentId agentId = AgentId.of("agent-key");
+            var execId = ExecutionId.of("exec-key");
+            var taskId = TaskId.of("task-key");
+            var agentId = AgentId.of("agent-key");
 
-            TaskResult result = TaskResult.success(
+            var result = TaskResult.success(
                     taskId, "test", Duration.ZERO, Map.of());
 
             TaskResultEntity entity = mapper.toEntity(execId, taskId, agentId, result);
@@ -195,11 +195,11 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("should embed metadata in outputs")
         void shouldEmbedMetadataInOutputs() {
-            ExecutionId execId = ExecutionId.generate();
-            TaskId taskId = TaskId.of("task-meta");
-            AgentId agentId = AgentId.generate();
+            var execId = ExecutionId.generate();
+            var taskId = TaskId.of("task-meta");
+            var agentId = AgentId.generate();
 
-            TaskResult result = new TaskResult(
+            var result = new TaskResult(
                     taskId, "meta-task", TaskStatus.SUCCESS,
                     Duration.ofMillis(350), Map.of("key", "value"),
                     null, null, Instant.now());
@@ -218,11 +218,11 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("should embed error metadata in outputs")
         void shouldEmbedErrorMetadata() {
-            ExecutionId execId = ExecutionId.generate();
-            TaskId taskId = TaskId.of("task-err");
-            AgentId agentId = AgentId.generate();
+            var execId = ExecutionId.generate();
+            var taskId = TaskId.of("task-err");
+            var agentId = AgentId.generate();
 
-            TaskResult result = TaskResult.failed(
+            var result = TaskResult.failed(
                     taskId, "failing-task", Duration.ofSeconds(1),
                     "something broke", new RuntimeException("something broke"));
 
@@ -278,7 +278,7 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("should reconstruct taskId from entity composite key")
         void shouldReconstructTaskIdFromCompositeKey() {
-            TaskResultId id = new TaskResultId("exec-xyz", "task-xyz", "agent-xyz");
+            var id = new TaskResultId("exec-xyz", "task-xyz", "agent-xyz");
 
             Map<String, Object> meta = new java.util.HashMap<>();
             meta.put("taskName", "reconstructed");
@@ -289,7 +289,7 @@ class TaskResultMapperTest {
             Map<String, Object> outputs = new java.util.HashMap<>();
             outputs.put(TaskResultMapper.META_KEY, meta);
 
-            TaskResultEntity entity = new TaskResultEntity(
+            var entity = new TaskResultEntity(
                     id, TaskStatus.SUCCESS, outputs,
                     Instant.parse("2026-06-19T10:00:00Z"));
 
@@ -302,11 +302,11 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("should strip metadata from outputs")
         void shouldStripMetadataFromOutputs() {
-            ExecutionId execId = ExecutionId.generate();
-            TaskId taskId = TaskId.of("task-strip");
-            AgentId agentId = AgentId.generate();
+            var execId = ExecutionId.generate();
+            var taskId = TaskId.of("task-strip");
+            var agentId = AgentId.generate();
 
-            TaskResult original = new TaskResult(
+            var original = new TaskResult(
                     taskId, "strip-task", TaskStatus.SUCCESS,
                     Duration.ofMillis(100),
                     Map.of("data", "payload"),
@@ -322,10 +322,10 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("should handle entity with no metadata key gracefully")
         void shouldHandleNoMetadataKey() {
-            TaskResultId id = new TaskResultId("exec-no-meta", "task-no-meta", "agent-no");
+            var id = new TaskResultId("exec-no-meta", "task-no-meta", "agent-no");
             Map<String, Object> outputs = Map.of("payload", "no-meta-here");
 
-            TaskResultEntity entity = new TaskResultEntity(
+            var entity = new TaskResultEntity(
                     id, TaskStatus.SUCCESS, outputs,
                     Instant.parse("2026-06-19T10:00:00Z"));
 
@@ -356,7 +356,7 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("buildOutputsWithMetadata should preserve user outputs and add meta")
         void shouldBuildOutputsWithMetadata() {
-            TaskResult result = new TaskResult(
+            var result = new TaskResult(
                     TaskId.of("t"), "helper-task", TaskStatus.SUCCESS,
                     Duration.ofSeconds(10), Map.of("x", 1, "y", 2),
                     null, null, Instant.now());
@@ -376,9 +376,9 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("extractMetadata should extract from meta entry")
         void shouldExtractMetadata() {
-            TaskId taskId = TaskId.of("task-extract");
+            var taskId = TaskId.of("task-extract");
 
-            TaskResult original = new TaskResult(
+            var original = new TaskResult(
                     taskId, "extract-me", TaskStatus.SUCCESS,
                     Duration.ofMillis(750), Map.of(), "some error",
                     new RuntimeException("some error"), Instant.now());
@@ -406,9 +406,9 @@ class TaskResultMapperTest {
         @Test
         @DisplayName("stripMetadata should remove _meta_ key")
         void shouldStripMetadata() {
-            TaskId taskId = TaskId.of("task-strip2");
+            var taskId = TaskId.of("task-strip2");
 
-            TaskResult original = TaskResult.success(
+            var original = TaskResult.success(
                     taskId, "strip-me", Duration.ofMillis(10), Map.of("a", "b"));
 
             Map<String, Object> built = mapper.buildOutputsWithMetadata(original);

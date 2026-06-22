@@ -40,17 +40,17 @@ class ExecutionStateMapperTest {
     @Test
     @DisplayName("should round-trip domain -> entity -> domain preserving all fields")
     void shouldRoundTripDomainToEntityToDomain() {
-        ExecutionId execId = ExecutionId.generate();
-        ScenarioId scId = ScenarioId.of("sc-roundtrip");
-        TaskId taskId = TaskId.of("task-1");
+        var execId = ExecutionId.generate();
+        var scId = ScenarioId.of("sc-roundtrip");
+        var taskId = TaskId.of("task-1");
 
-        TaskResult result = TaskResult.success(
+        var result = TaskResult.success(
                 taskId, "db-prep", Duration.ofMillis(450), Map.of("rows", 100));
 
-        ExecutionContext ctx = ExecutionContext.initial(execId, scId)
+        var ctx = ExecutionContext.initial(execId, scId)
                 .with(taskId.value(), "agent-1", result);
 
-        ExecutionState original = new ExecutionState(
+        var original = new ExecutionState(
                 execId,
                 scId,
                 ExecutionStatus.RUNNING,
@@ -97,10 +97,10 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should convert domain ExecutionState to entity")
         void shouldConvertToEntity() {
-            ExecutionId execId = ExecutionId.of("exec-001");
-            ScenarioId scId = ScenarioId.of("sc-001");
+            var execId = ExecutionId.of("exec-001");
+            var scId = ScenarioId.of("sc-001");
 
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     execId,
                     scId,
                     ExecutionStatus.STARTED,
@@ -125,10 +125,10 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should convert phase statuses to string-keyed map")
         void shouldConvertPhaseStatusesToStringMap() {
-            ExecutionId execId = ExecutionId.generate();
-            ScenarioId scId = ScenarioId.of("sc-phases");
+            var execId = ExecutionId.generate();
+            var scId = ScenarioId.of("sc-phases");
 
-            ExecutionState state = new ExecutionState(
+            var state = new ExecutionState(
                     execId, scId, ExecutionStatus.COMPLETED,
                     Map.of(Phase.PREPARATION, PhaseStatus.COMPLETED,
                            Phase.INJECTION, PhaseStatus.COMPLETED,
@@ -158,7 +158,7 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should convert entity to domain ExecutionState")
         void shouldConvertToDomain() {
-            ExecutionStateEntity entity = new ExecutionStateEntity(
+            var entity = new ExecutionStateEntity(
                     "exec-002", "sc-002", ExecutionStatus.COMPLETED,
                     Map.of("PREPARATION", "COMPLETED", "ASSERTION", "COMPLETED"),
                     Map.of("executionId", "exec-002",
@@ -185,7 +185,7 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should handle empty phase statuses gracefully")
         void shouldHandleEmptyPhaseStatuses() {
-            ExecutionStateEntity entity = new ExecutionStateEntity(
+            var entity = new ExecutionStateEntity(
                     "exec-003", "sc-003", ExecutionStatus.STARTED,
                     Map.of(),
                     Map.of("executionId", "exec-003",
@@ -202,7 +202,7 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should handle unknown phase names gracefully via valueOf")
         void shouldThrowOnUnknownPhase() {
-            ExecutionStateEntity entity = new ExecutionStateEntity(
+            var entity = new ExecutionStateEntity(
                     "exec-004", "sc-004", ExecutionStatus.STARTED,
                     Map.of("UNKNOWN_PHASE", "COMPLETED"),
                     Map.of("executionId", "exec-004",
@@ -230,17 +230,17 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should round-trip ExecutionContext with multiple tasks and agents")
         void shouldRoundTripContextWithMultipleTasks() {
-            ExecutionId execId = ExecutionId.of("exec-ctx");
-            ScenarioId scId = ScenarioId.of("sc-ctx");
+            var execId = ExecutionId.of("exec-ctx");
+            var scId = ScenarioId.of("sc-ctx");
 
-            TaskResult r1 = TaskResult.success(
+            var r1 = TaskResult.success(
                     TaskId.of("t1"), "prep-db", Duration.ofSeconds(2),
                     Map.of("tables", 5));
-            TaskResult r2 = TaskResult.failed(
+            var r2 = TaskResult.failed(
                     TaskId.of("t2"), "load-http", Duration.ofMillis(500),
                     "connection refused", new RuntimeException("connection refused"));
 
-            ExecutionContext ctx = ExecutionContext.initial(execId, scId)
+            var ctx = ExecutionContext.initial(execId, scId)
                     .with("t1", "agent-A", r1)
                     .with("t2", "agent-B", r2);
 
@@ -271,7 +271,7 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should handle empty store map")
         void shouldHandleEmptyStore() {
-            ExecutionContext ctx = ExecutionContext.initial(
+            var ctx = ExecutionContext.initial(
                     ExecutionId.of("exec-empty"), ScenarioId.of("sc-empty"));
 
             Map<String, Object> map = mapper.contextToMap(ctx);
@@ -307,7 +307,7 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should round-trip successful TaskResult via map")
         void shouldRoundTripSuccessfulTaskResult() {
-            TaskResult original = TaskResult.success(
+            var original = TaskResult.success(
                     TaskId.of("task-ok"), "http-get", Duration.ofMillis(120),
                     Map.of("status", 200, "body", "OK"));
 
@@ -327,7 +327,7 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should round-trip failed TaskResult via map")
         void shouldRoundTripFailedTaskResult() {
-            TaskResult original = TaskResult.failed(
+            var original = TaskResult.failed(
                     TaskId.of("task-fail"), "kafka-produce", Duration.ofSeconds(5),
                     "broker not available", new RuntimeException("broker not available"));
 
@@ -343,7 +343,7 @@ class ExecutionStateMapperTest {
         @Test
         @DisplayName("should handle TaskResult with null cause")
         void shouldHandleNullCause() {
-            TaskResult original = new TaskResult(
+            var original = new TaskResult(
                     TaskId.of("t-nocause"), "no-cause-task", TaskStatus.SKIPPED,
                     Duration.ZERO, Map.of(), "skipped reason", null,
                     Instant.parse("2026-06-19T10:00:00Z"));

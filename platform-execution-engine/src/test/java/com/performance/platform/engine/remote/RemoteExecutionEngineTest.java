@@ -97,7 +97,7 @@ class RemoteExecutionEngineTest {
 
     private ExecutionPlan buildPlan(ScenarioDefinition s, List<ExecutionStep> prep,
                                      List<ExecutionStep> injection, List<ExecutionStep> assertion) {
-        ExecutionId eid = ExecutionId.generate();
+        var eid = ExecutionId.generate();
         return new ExecutionPlan(eid, s.id(), prep, injection, assertion,
                 ExecutionContext.initial(eid, s.id()));
     }
@@ -143,7 +143,7 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("s1", List.of(step("s1", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, config, eventPublisher);
 
@@ -169,7 +169,7 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("s2", steps);
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, config, eventPublisher);
 
@@ -195,7 +195,7 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("s3", List.of(step("s3", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, config, eventPublisher);
 
@@ -227,7 +227,7 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("c1", List.of(step("c1", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, config, eventPublisher);
 
@@ -235,7 +235,7 @@ class RemoteExecutionEngineTest {
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
 
             TaskExecutionRequest req = transport.dispatchedRequests.get(0);
-            AgentId agentId = AgentId.generate();
+            var agentId = AgentId.generate();
             transport.fireEvent(new ExecutionEvent(
                     EventId.generate(), req.executionId(), req.id(), agentId,
                     ExecutionEvent.TASK_CLAIMED, Map.of(), Instant.now()));
@@ -251,10 +251,10 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("c2", List.of(step("c2", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            ExecutionConfig allComplete = new ExecutionConfig(
+            var allComplete = new ExecutionConfig(
                     config.taskAvailabilityTimeout(), config.taskExecutionTimeout(),
                     config.workInProgressResetInterval(), TaskCompletionPolicy.ALL_COMPLETE);
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, allComplete, eventPublisher);
 
@@ -262,8 +262,8 @@ class RemoteExecutionEngineTest {
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
 
             TaskExecutionRequest req = transport.dispatchedRequests.get(0);
-            AgentId a1 = AgentId.generate();
-            AgentId a2 = AgentId.generate();
+            var a1 = AgentId.generate();
+            var a2 = AgentId.generate();
 
             transport.fireEvent(claimedEvent(req, a1));
             transport.fireEvent(claimedEvent(req, a2));
@@ -286,7 +286,7 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("cp1", List.of(step("cp1", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, config, eventPublisher);
 
@@ -294,8 +294,8 @@ class RemoteExecutionEngineTest {
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
 
             TaskExecutionRequest req = transport.dispatchedRequests.get(0);
-            AgentId a1 = AgentId.generate();
-            AgentId a2 = AgentId.generate();
+            var a1 = AgentId.generate();
+            var a2 = AgentId.generate();
 
             transport.fireEvent(claimedEvent(req, a1));
             transport.fireEvent(claimedEvent(req, a2));
@@ -312,10 +312,10 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("cp2", List.of(step("cp2", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            ExecutionConfig allCompleteCfg = new ExecutionConfig(
+            var allCompleteCfg = new ExecutionConfig(
                     config.taskAvailabilityTimeout(), config.taskExecutionTimeout(),
                     config.workInProgressResetInterval(), TaskCompletionPolicy.ALL_COMPLETE);
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, allCompleteCfg, eventPublisher);
 
@@ -323,8 +323,8 @@ class RemoteExecutionEngineTest {
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
 
             TaskExecutionRequest req = transport.dispatchedRequests.get(0);
-            AgentId a1 = AgentId.generate();
-            AgentId a2 = AgentId.generate();
+            var a1 = AgentId.generate();
+            var a2 = AgentId.generate();
 
             transport.fireEvent(claimedEvent(req, a1));
             transport.fireEvent(claimedEvent(req, a2));
@@ -345,10 +345,10 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("cp3", List.of(step("cp3", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            ExecutionConfig allCompleteCfg = new ExecutionConfig(
+            var allCompleteCfg = new ExecutionConfig(
                     config.taskAvailabilityTimeout(), config.taskExecutionTimeout(),
                     config.workInProgressResetInterval(), TaskCompletionPolicy.ALL_COMPLETE);
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, allCompleteCfg, eventPublisher);
 
@@ -356,7 +356,7 @@ class RemoteExecutionEngineTest {
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
 
             TaskExecutionRequest req = transport.dispatchedRequests.get(0);
-            AgentId a1 = AgentId.generate();
+            var a1 = AgentId.generate();
 
             transport.fireEvent(claimedEvent(req, a1));
             transport.fireEvent(new ExecutionEvent(
@@ -383,10 +383,10 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("e1", List.of(step("e1", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            ExecutionConfig shortCfg = new ExecutionConfig(
+            var shortCfg = new ExecutionConfig(
                     Duration.ofMillis(100), Duration.ofSeconds(10),
                     Duration.ofSeconds(3), TaskCompletionPolicy.FIRST_COMPLETE);
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, shortCfg, eventPublisher);
 
@@ -406,10 +406,10 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("e2", List.of(step("e2", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            ExecutionConfig tinyCfg = new ExecutionConfig(
+            var tinyCfg = new ExecutionConfig(
                     Duration.ofSeconds(30), Duration.ofMillis(300),
                     Duration.ofSeconds(10), TaskCompletionPolicy.FIRST_COMPLETE);
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, tinyCfg, eventPublisher);
 
@@ -430,10 +430,10 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("e3", steps);
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            ExecutionConfig shortCfg = new ExecutionConfig(
+            var shortCfg = new ExecutionConfig(
                     Duration.ofSeconds(5), Duration.ofMillis(200),
                     Duration.ofSeconds(3), TaskCompletionPolicy.FIRST_COMPLETE);
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, shortCfg, eventPublisher);
 
@@ -461,10 +461,10 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("g1", List.of(step("g1", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            ExecutionConfig longCfg = new ExecutionConfig(
+            var longCfg = new ExecutionConfig(
                     Duration.ofSeconds(5), Duration.ofSeconds(60),
                     Duration.ofSeconds(10), TaskCompletionPolicy.ALL_COMPLETE);
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, longCfg, eventPublisher);
 
@@ -494,7 +494,7 @@ class RemoteExecutionEngineTest {
             ScenarioDefinition sc = scenario("ep1", List.of(step("ep1", "db-init", Phase.PREPARATION)));
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, config, eventPublisher);
 
@@ -527,10 +527,10 @@ class RemoteExecutionEngineTest {
             planMap.put(sc.id().value(), buildSimplePlan(sc));
 
             // Use short timeout so engine completes quickly without external events
-            ExecutionConfig fastCfg = new ExecutionConfig(
+            var fastCfg = new ExecutionConfig(
                     Duration.ofSeconds(5), Duration.ofMillis(200),
                     Duration.ofSeconds(3), TaskCompletionPolicy.FIRST_COMPLETE);
-            RemoteExecutionEngine engine = new RemoteExecutionEngine(
+            var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
                     executionRepository, fastCfg, eventPublisher);
 
@@ -573,7 +573,7 @@ class RemoteExecutionEngineTest {
     // ---- Thread helpers ----
 
     Thread startInThread(Runnable r) {
-        Thread t = Thread.ofVirtual().name("test-engine").unstarted(r);
+        var t = Thread.ofVirtual().name("test-engine").unstarted(r);
         t.start();
         return t;
     }

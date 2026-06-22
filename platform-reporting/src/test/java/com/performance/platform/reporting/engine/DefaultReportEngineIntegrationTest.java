@@ -117,12 +117,12 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should classify tasks with InjectionResult as injection phase")
         void shouldClassifyInjectionTasksCorrectly() {
-            TaskId injId = TaskId.of("inj-1");
+            var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "Sim", Duration.ofSeconds(5));
-            TaskResult taskResult = TaskResult.success(injId, "gatling",
+            var taskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(5), Map.of("inj-data", injResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injId.value(), "agent-1", taskResult);
             ExecutionState state = createState(context);
 
@@ -138,14 +138,14 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should classify tasks with AssertionResult as assertion phase")
         void shouldClassifyAssertionTasksCorrectly() {
-            TaskId assertId = TaskId.of("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertId = TaskId.of("assert-1");
+            var assertResult = new AssertionResult(
                     assertId, AssertionStatus.PASSED, "check passed",
                     null, Duration.ofMillis(10), now);
-            TaskResult taskResult = TaskResult.success(assertId, "metric-check",
+            var taskResult = TaskResult.success(assertId, "metric-check",
                     Duration.ofMillis(10), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertId.value(), "agent-1", taskResult);
             ExecutionState state = createState(context);
 
@@ -161,12 +161,12 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should classify tasks with neither InjectionResult nor AssertionResult as preparation")
         void shouldClassifyGenericTasksAsPreparation() {
-            TaskId prepId = TaskId.of("prep-1");
+            var prepId = TaskId.of("prep-1");
             // TaskResult with generic outputs, no InjectionResult or AssertionResult
-            TaskResult taskResult = TaskResult.success(prepId, "shell-cleanup",
+            var taskResult = TaskResult.success(prepId, "shell-cleanup",
                     Duration.ofSeconds(1), Map.of("files_deleted", 10, "exit_code", 0));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", taskResult);
             ExecutionState state = createState(context);
 
@@ -182,25 +182,25 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("should classify mixed tasks into correct phases")
         void shouldClassifyMixedTasks() {
             // Preparation: no InjectionResult or AssertionResult
-            TaskId prepId = TaskId.of("prep-1");
-            TaskResult prepResult = TaskResult.success(prepId, "db-purge",
+            var prepId = TaskId.of("prep-1");
+            var prepResult = TaskResult.success(prepId, "db-purge",
                     Duration.ofSeconds(2), Map.of("rows", 100));
 
             // Injection: has InjectionResult in outputs
-            TaskId injId = TaskId.of("inj-1");
+            var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "MySim", Duration.ofSeconds(5));
-            TaskResult injTaskResult = TaskResult.success(injId, "gatling",
+            var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(5), Map.of("injectionResult", injResult));
 
             // Assertion: has AssertionResult in outputs
-            TaskId assertId = TaskId.of("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertId = TaskId.of("assert-1");
+            var assertResult = new AssertionResult(
                     assertId, AssertionStatus.FAILED, "threshold breached",
                     null, Duration.ofMillis(20), now);
-            TaskResult assertTaskResult = TaskResult.success(assertId, "gatling-metric",
+            var assertTaskResult = TaskResult.success(assertId, "gatling-metric",
                     Duration.ofMillis(20), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
                     .with(injId.value(), "agent-1", injTaskResult)
                     .with(assertId.value(), "agent-1", assertTaskResult);
@@ -228,25 +228,25 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("should sum durations correctly across phases")
         void shouldSumDurationsCorrectly() {
             // Preparation: 2 sec
-            TaskId prepId = TaskId.of("prep-1");
-            TaskResult prepResult = TaskResult.success(prepId, "setup",
+            var prepId = TaskId.of("prep-1");
+            var prepResult = TaskResult.success(prepId, "setup",
                     Duration.ofSeconds(2), Map.of());
 
             // Injection: 10 sec
-            TaskId injId = TaskId.of("inj-1");
+            var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "Sim", Duration.ofSeconds(10));
-            TaskResult injTaskResult = TaskResult.success(injId, "gatling",
+            var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(10), Map.of("injectionResult", injResult));
 
             // Assertion: 0.5 sec
-            TaskId assertId = TaskId.of("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertId = TaskId.of("assert-1");
+            var assertResult = new AssertionResult(
                     assertId, AssertionStatus.PASSED, "ok",
                     null, Duration.ofMillis(500), now);
-            TaskResult assertTaskResult = TaskResult.success(assertId, "gatling-metric",
+            var assertTaskResult = TaskResult.success(assertId, "gatling-metric",
                     Duration.ofMillis(500), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
                     .with(injId.value(), "agent-1", injTaskResult)
                     .with(assertId.value(), "agent-1", assertTaskResult);
@@ -263,16 +263,16 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should compute total duration as sum of all phase durations")
         void shouldComputeTotalDuration() {
-            TaskId prepId = TaskId.of("prep-1");
-            TaskResult prepResult = TaskResult.success(prepId, "setup",
+            var prepId = TaskId.of("prep-1");
+            var prepResult = TaskResult.success(prepId, "setup",
                     Duration.ofSeconds(1), Map.of());
 
-            TaskId injId = TaskId.of("inj-1");
+            var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "Sim", Duration.ofSeconds(3));
-            TaskResult injTaskResult = TaskResult.success(injId, "gatling",
+            var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(3), Map.of("injectionResult", injResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
                     .with(injId.value(), "agent-1", injTaskResult);
             ExecutionState state = createState(context);
@@ -280,24 +280,24 @@ class DefaultReportEngineIntegrationTest {
             CampaignReport report = engine.generate(state);
 
             // totalDuration = sum of all task durations across all phases
-            Duration expectedTotal = Duration.ofSeconds(1).plus(Duration.ofSeconds(3));
+            var expectedTotal = Duration.ofSeconds(1).plus(Duration.ofSeconds(3));
             assertEquals(expectedTotal, report.totalDuration());
         }
 
         @Test
         @DisplayName("should handle multiple injections with correct summary")
         void shouldHandleMultipleInjections() {
-            TaskId injA = TaskId.of("inj-a");
+            var injA = TaskId.of("inj-a");
             InjectionResult injResultA = createInjectionResult(injA, "SimA", Duration.ofSeconds(5));
-            TaskResult taskResultA = TaskResult.success(injA, "gatling",
+            var taskResultA = TaskResult.success(injA, "gatling",
                     Duration.ofSeconds(5), Map.of("injectionResult", injResultA));
 
-            TaskId injB = TaskId.of("inj-b");
+            var injB = TaskId.of("inj-b");
             InjectionResult injResultB = createInjectionResult(injB, "SimB", Duration.ofSeconds(8));
-            TaskResult taskResultB = TaskResult.success(injB, "gatling",
+            var taskResultB = TaskResult.success(injB, "gatling",
                     Duration.ofSeconds(8), Map.of("injectionResult", injResultB));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injA.value(), "agent-1", taskResultA)
                     .with(injB.value(), "agent-1", taskResultB);
             ExecutionState state = createState(context);
@@ -322,15 +322,15 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should publish ReportGenerated event with correct fields after generation")
         void shouldPublishReportGeneratedEvent() {
-            TaskId taskId = TaskId.of("t1");
-            TaskResult result = TaskResult.success(taskId, "setup",
+            var taskId = TaskId.of("t1");
+            var result = TaskResult.success(taskId, "setup",
                     Duration.ofSeconds(1), Map.of());
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(taskId.value(), "agent-1", result);
             ExecutionState state = createState(context);
             repository.put(state);
 
-            ScenarioFinished event = new ScenarioFinished(executionId, scenarioId,
+            var event = new ScenarioFinished(executionId, scenarioId,
                     Verdict.SUCCESS, Duration.ofSeconds(5), now);
             engine.onScenarioFinished(event);
 
@@ -347,7 +347,7 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("should not publish event when execution state is not found")
         void shouldNotPublishWhenStateNotFound() {
             // No state in repository
-            ScenarioFinished event = new ScenarioFinished(executionId, scenarioId,
+            var event = new ScenarioFinished(executionId, scenarioId,
                     Verdict.SUCCESS, Duration.ofSeconds(5), now);
 
             assertDoesNotThrow(() -> engine.onScenarioFinished(event));
@@ -359,7 +359,7 @@ class DefaultReportEngineIntegrationTest {
         void shouldNotPropagateListenerException() {
             // State exists but will throw when we try to generate with corrupt data
             // Actually the listener catches exceptions, so even if state is bad it handles it
-            ScenarioFinished event = new ScenarioFinished(
+            var event = new ScenarioFinished(
                     ExecutionId.of("non-existent-id"), scenarioId,
                     Verdict.SUCCESS, Duration.ofSeconds(5), now);
 
@@ -370,24 +370,24 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should generate correct report from listener-driven path")
         void shouldGenerateCorrectReportFromListener() {
-            TaskId prepId = TaskId.of("prep-1");
-            TaskResult prepResult = TaskResult.success(prepId, "db-migrate",
+            var prepId = TaskId.of("prep-1");
+            var prepResult = TaskResult.success(prepId, "db-migrate",
                     Duration.ofSeconds(2), Map.of());
 
-            TaskId assertId = TaskId.of("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertId = TaskId.of("assert-1");
+            var assertResult = new AssertionResult(
                     assertId, AssertionStatus.PASSED, "row count matches",
                     null, Duration.ofMillis(100), now);
-            TaskResult assertTaskResult = TaskResult.success(assertId, "database-assertion",
+            var assertTaskResult = TaskResult.success(assertId, "database-assertion",
                     Duration.ofMillis(100), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
                     .with(assertId.value(), "agent-1", assertTaskResult);
             ExecutionState state = createState(context);
             repository.put(state);
 
-            ScenarioFinished event = new ScenarioFinished(executionId, scenarioId,
+            var event = new ScenarioFinished(executionId, scenarioId,
                     Verdict.SUCCESS, Duration.ofSeconds(5), now);
             engine.onScenarioFinished(event);
 
@@ -409,21 +409,21 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("SUCCESS when all assertions PASSED or SKIPPED")
         void successWhenAllPassedOrSkipped() {
-            TaskId assertA = TaskId.of("assert-a");
-            AssertionResult passedResult = new AssertionResult(
+            var assertA = TaskId.of("assert-a");
+            var passedResult = new AssertionResult(
                     assertA, AssertionStatus.PASSED, "p95 ok", null,
                     Duration.ofMillis(10), now);
-            TaskResult taskResultA = TaskResult.success(assertA, "check",
+            var taskResultA = TaskResult.success(assertA, "check",
                     Duration.ofMillis(10), Map.of("assertionResult", passedResult));
 
-            TaskId assertB = TaskId.of("assert-b");
-            AssertionResult skippedResult = new AssertionResult(
+            var assertB = TaskId.of("assert-b");
+            var skippedResult = new AssertionResult(
                     assertB, AssertionStatus.SKIPPED, "no data to check", null,
                     Duration.ofMillis(5), now);
-            TaskResult taskResultB = TaskResult.success(assertB, "check",
+            var taskResultB = TaskResult.success(assertB, "check",
                     Duration.ofMillis(5), Map.of("assertionResult", skippedResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskResultA)
                     .with(assertB.value(), "agent-1", taskResultB);
             ExecutionState state = createState(context);
@@ -438,21 +438,21 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("WARNING when at least one FAILED and no ERROR")
         void warningWhenFailedNoError() {
-            TaskId assertA = TaskId.of("assert-a");
-            AssertionResult passedResult = new AssertionResult(
+            var assertA = TaskId.of("assert-a");
+            var passedResult = new AssertionResult(
                     assertA, AssertionStatus.PASSED, "ok", null,
                     Duration.ofMillis(10), now);
-            TaskResult taskResultA = TaskResult.success(assertA, "check",
+            var taskResultA = TaskResult.success(assertA, "check",
                     Duration.ofMillis(10), Map.of("assertionResult", passedResult));
 
-            TaskId assertB = TaskId.of("assert-b");
-            AssertionResult failedResult = new AssertionResult(
+            var assertB = TaskId.of("assert-b");
+            var failedResult = new AssertionResult(
                     assertB, AssertionStatus.FAILED, "threshold exceeded", null,
                     Duration.ofMillis(10), now);
-            TaskResult taskResultB = TaskResult.success(assertB, "check",
+            var taskResultB = TaskResult.success(assertB, "check",
                     Duration.ofMillis(10), Map.of("assertionResult", failedResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskResultA)
                     .with(assertB.value(), "agent-1", taskResultB);
             ExecutionState state = createState(context);
@@ -467,21 +467,21 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("FAILED when at least one ERROR regardless of other statuses")
         void failedWhenErrorPresent() {
-            TaskId assertA = TaskId.of("assert-a");
-            AssertionResult passedResult = new AssertionResult(
+            var assertA = TaskId.of("assert-a");
+            var passedResult = new AssertionResult(
                     assertA, AssertionStatus.PASSED, "ok", null,
                     Duration.ofMillis(10), now);
-            TaskResult taskResultA = TaskResult.success(assertA, "check",
+            var taskResultA = TaskResult.success(assertA, "check",
                     Duration.ofMillis(10), Map.of("assertionResult", passedResult));
 
-            TaskId assertB = TaskId.of("assert-b");
-            AssertionResult errorResult = new AssertionResult(
+            var assertB = TaskId.of("assert-b");
+            var errorResult = new AssertionResult(
                     assertB, AssertionStatus.ERROR, "null pointer in evaluator", null,
                     Duration.ofMillis(5), now);
-            TaskResult taskResultB = TaskResult.success(assertB, "check",
+            var taskResultB = TaskResult.success(assertB, "check",
                     Duration.ofMillis(5), Map.of("assertionResult", errorResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskResultA)
                     .with(assertB.value(), "agent-1", taskResultB);
             ExecutionState state = createState(context);
@@ -496,28 +496,28 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("ERROR has priority over FAILED — multiple assertions")
         void errorPriorityOverFailed() {
-            TaskId assertA = TaskId.of("assert-a");
-            AssertionResult failedA = new AssertionResult(
+            var assertA = TaskId.of("assert-a");
+            var failedA = new AssertionResult(
                     assertA, AssertionStatus.FAILED, "threshold A", null,
                     Duration.ofMillis(10), now);
-            TaskResult taskResultA = TaskResult.success(assertA, "check",
+            var taskResultA = TaskResult.success(assertA, "check",
                     Duration.ofMillis(10), Map.of("assertionResult", failedA));
 
-            TaskId assertB = TaskId.of("assert-b");
-            AssertionResult failedB = new AssertionResult(
+            var assertB = TaskId.of("assert-b");
+            var failedB = new AssertionResult(
                     assertB, AssertionStatus.FAILED, "threshold B", null,
                     Duration.ofMillis(10), now);
-            TaskResult taskResultB = TaskResult.success(assertB, "check",
+            var taskResultB = TaskResult.success(assertB, "check",
                     Duration.ofMillis(10), Map.of("assertionResult", failedB));
 
-            TaskId assertC = TaskId.of("assert-c");
-            AssertionResult errorC = new AssertionResult(
+            var assertC = TaskId.of("assert-c");
+            var errorC = new AssertionResult(
                     assertC, AssertionStatus.ERROR, "crash", null,
                     Duration.ofMillis(5), now);
-            TaskResult taskResultC = TaskResult.success(assertC, "check",
+            var taskResultC = TaskResult.success(assertC, "check",
                     Duration.ofMillis(5), Map.of("assertionResult", errorC));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskResultA)
                     .with(assertB.value(), "agent-1", taskResultB)
                     .with(assertC.value(), "agent-1", taskResultC);
@@ -543,21 +543,21 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should generate report with only SKIPPED assertions")
         void shouldHandleOnlySkippedAssertions() {
-            TaskId skipA = TaskId.of("skip-a");
-            AssertionResult skippedA = new AssertionResult(
+            var skipA = TaskId.of("skip-a");
+            var skippedA = new AssertionResult(
                     skipA, AssertionStatus.SKIPPED, "no data", null,
                     Duration.ofMillis(1), now);
-            TaskResult taskResultA = TaskResult.success(skipA, "check",
+            var taskResultA = TaskResult.success(skipA, "check",
                     Duration.ofMillis(1), Map.of("assertionResult", skippedA));
 
-            TaskId skipB = TaskId.of("skip-b");
-            AssertionResult skippedB = new AssertionResult(
+            var skipB = TaskId.of("skip-b");
+            var skippedB = new AssertionResult(
                     skipB, AssertionStatus.SKIPPED, "dependency failed", null,
                     Duration.ofMillis(1), now);
-            TaskResult taskResultB = TaskResult.success(skipB, "check",
+            var taskResultB = TaskResult.success(skipB, "check",
                     Duration.ofMillis(1), Map.of("assertionResult", skippedB));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(skipA.value(), "agent-1", taskResultA)
                     .with(skipB.value(), "agent-1", taskResultB);
             ExecutionState state = createState(context);
@@ -575,14 +575,14 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("should handle SCENARIO status FAILED in assertion")
         void shouldHandleFailedAssertionStatusInVerdict() {
             // Testing FAILED assertion status (not ERROR)
-            TaskId assertId = TaskId.of("assert-1");
-            AssertionResult failedAssert = new AssertionResult(
+            var assertId = TaskId.of("assert-1");
+            var failedAssert = new AssertionResult(
                     assertId, AssertionStatus.FAILED, "p99 exceeded 100ms", null,
                     Duration.ofMillis(15), now);
-            TaskResult taskResult = TaskResult.success(assertId, "gatling-metric",
+            var taskResult = TaskResult.success(assertId, "gatling-metric",
                     Duration.ofMillis(15), Map.of("assertionResult", failedAssert));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertId.value(), "agent-1", taskResult);
             ExecutionState state = createState(context);
 
@@ -608,19 +608,19 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("should produce valid report with mixed injection and assertion taskName values")
         void shouldHandleVariousTaskNames() {
             // Various task names as strings (not enums)
-            TaskId injId = TaskId.of("inj-1");
+            var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "MySim", Duration.ofSeconds(3));
-            TaskResult injTask = TaskResult.success(injId, "gatling-http-injection",
+            var injTask = TaskResult.success(injId, "gatling-http-injection",
                     Duration.ofSeconds(3), Map.of("injectionResult", injResult));
 
-            TaskId assertId = TaskId.of("assert-1");
-            AssertionResult assertResult = new AssertionResult(
+            var assertId = TaskId.of("assert-1");
+            var assertResult = new AssertionResult(
                     assertId, AssertionStatus.PASSED, "throughput >= 100", null,
                     Duration.ofMillis(30), now);
-            TaskResult assertTask = TaskResult.success(assertId, "custom-assertion-plugin",
+            var assertTask = TaskResult.success(assertId, "custom-assertion-plugin",
                     Duration.ofMillis(30), Map.of("assertionResult", assertResult));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injId.value(), "agent-1", injTask)
                     .with(assertId.value(), "agent-1", assertTask);
             ExecutionState state = createState(context);
@@ -648,23 +648,23 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should generate report with all verdict reason fields populated")
         void shouldPopulateAllVerdictReasonFields() {
-            TaskId assertA = TaskId.of("assert-a");
-            AssertionResult passedA = new AssertionResult(assertA, AssertionStatus.PASSED, "ok", null, Duration.ofMillis(5), now);
-            TaskResult taskA = TaskResult.success(assertA, "check", Duration.ofMillis(5), Map.of("assertionResult", passedA));
+            var assertA = TaskId.of("assert-a");
+            var passedA = new AssertionResult(assertA, AssertionStatus.PASSED, "ok", null, Duration.ofMillis(5), now);
+            var taskA = TaskResult.success(assertA, "check", Duration.ofMillis(5), Map.of("assertionResult", passedA));
 
-            TaskId assertB = TaskId.of("assert-b");
-            AssertionResult failedB = new AssertionResult(assertB, AssertionStatus.FAILED, "fail", null, Duration.ofMillis(5), now);
-            TaskResult taskB = TaskResult.success(assertB, "check", Duration.ofMillis(5), Map.of("assertionResult", failedB));
+            var assertB = TaskId.of("assert-b");
+            var failedB = new AssertionResult(assertB, AssertionStatus.FAILED, "fail", null, Duration.ofMillis(5), now);
+            var taskB = TaskResult.success(assertB, "check", Duration.ofMillis(5), Map.of("assertionResult", failedB));
 
-            TaskId assertC = TaskId.of("assert-c");
-            AssertionResult errorC = new AssertionResult(assertC, AssertionStatus.ERROR, "error", null, Duration.ofMillis(5), now);
-            TaskResult taskC = TaskResult.success(assertC, "check", Duration.ofMillis(5), Map.of("assertionResult", errorC));
+            var assertC = TaskId.of("assert-c");
+            var errorC = new AssertionResult(assertC, AssertionStatus.ERROR, "error", null, Duration.ofMillis(5), now);
+            var taskC = TaskResult.success(assertC, "check", Duration.ofMillis(5), Map.of("assertionResult", errorC));
 
-            TaskId assertD = TaskId.of("assert-d");
-            AssertionResult skippedD = new AssertionResult(assertD, AssertionStatus.SKIPPED, "skip", null, Duration.ofMillis(5), now);
-            TaskResult taskD = TaskResult.success(assertD, "check", Duration.ofMillis(5), Map.of("assertionResult", skippedD));
+            var assertD = TaskId.of("assert-d");
+            var skippedD = new AssertionResult(assertD, AssertionStatus.SKIPPED, "skip", null, Duration.ofMillis(5), now);
+            var taskD = TaskResult.success(assertD, "check", Duration.ofMillis(5), Map.of("assertionResult", skippedD));
 
-            ExecutionContext context = ExecutionContext.initial(executionId, scenarioId)
+            var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskA)
                     .with(assertB.value(), "agent-1", taskB)
                     .with(assertC.value(), "agent-1", taskC)

@@ -242,12 +242,12 @@ public class S3ReportPublisher implements ReportPublisher {
     private void putObject(String host, String region, String bucket,
                            String key, String contentType, byte[] payload,
                            String executionId) throws IOException, InterruptedException {
-        Instant now = Instant.now();
+        var now = Instant.now();
         String payloadHash = toHex(hash(payload));
         String s3Path = s3Path(bucket, key, host);
         String uri = buildS3Uri(host, s3Path);
 
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
+        var builder = HttpRequest.newBuilder()
                 .PUT(HttpRequest.BodyPublishers.ofByteArray(payload))
                 .uri(URI.create(uri))
                 .header("Content-Type", contentType)
@@ -309,7 +309,7 @@ public class S3ReportPublisher implements ReportPublisher {
                     String relativePath = gatlingDir.relativize(file).toString();
                     String s3Key = prefix + "/gatling/" + relativePath;
                     byte[] payload = Files.readAllBytes(file);
-                    String contentType = Files.probeContentType(file);
+                    var contentType = Files.probeContentType(file);
                     if (contentType == null) {
                         contentType = "application/octet-stream";
                     }
@@ -485,8 +485,8 @@ public class S3ReportPublisher implements ReportPublisher {
      */
     static String awsSign(HttpRequest request, String host, String region,
                           byte[] payload, Instant now, AwsCredentials credentials) {
-        String dateStamp = AWS_DATE_ONLY.format(now);
-        String amzDate = AWS_DATE_FORMAT.format(now);
+        var dateStamp = AWS_DATE_ONLY.format(now);
+        var amzDate = AWS_DATE_FORMAT.format(now);
         String payloadHash = toHex(hash(payload));
         String credentialScope = dateStamp + "/" + region + "/" + S3_SERVICE + "/aws4_request";
 
@@ -560,7 +560,7 @@ public class S3ReportPublisher implements ReportPublisher {
      */
     private static byte[] hmacSha256(byte[] key, byte[] data) {
         try {
-            Mac mac = Mac.getInstance("HmacSHA256");
+            var mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(key, "HmacSHA256"));
             return mac.doFinal(data);
         } catch (Exception e) {
@@ -607,9 +607,9 @@ public class S3ReportPublisher implements ReportPublisher {
      * Never logs the access key or secret key.
      */
     private static AwsCredentials resolveCredentials() {
-        String accessKeyId = System.getenv(AWS_ACCESS_KEY_ID_ENV);
-        String secretAccessKey = System.getenv(AWS_SECRET_ACCESS_KEY_ENV);
-        String sessionToken = System.getenv(AWS_SESSION_TOKEN_ENV);
+        var accessKeyId = System.getenv(AWS_ACCESS_KEY_ID_ENV);
+        var secretAccessKey = System.getenv(AWS_SECRET_ACCESS_KEY_ENV);
+        var sessionToken = System.getenv(AWS_SESSION_TOKEN_ENV);
 
         if (accessKeyId == null || accessKeyId.isBlank()
                 || secretAccessKey == null || secretAccessKey.isBlank()) {

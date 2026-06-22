@@ -44,9 +44,9 @@ class JsonReportRendererTest {
     void setUp() {
         renderer = new JsonReportRenderer();
 
-        ReportId reportId = ReportId.generate();
-        ScenarioId scenarioId = new ScenarioId("test-scenario");
-        Instant now = Instant.now();
+        var reportId = ReportId.generate();
+        var scenarioId = new ScenarioId("test-scenario");
+        var now = Instant.now();
 
         report = new CampaignReport(
                 reportId, scenarioId, "API Test", "1.0",
@@ -93,7 +93,7 @@ class JsonReportRendererTest {
             assertNotNull(json);
             assertTrue(json.length > 0);
 
-            String content = new String(json, StandardCharsets.UTF_8);
+            var content = new String(json, StandardCharsets.UTF_8);
             assertTrue(content.contains("API Test"));
             assertTrue(content.contains("SUCCESS"));
             assertTrue(content.contains("agent-1"));
@@ -103,7 +103,7 @@ class JsonReportRendererTest {
         @DisplayName("should produce pretty-printed JSON")
         void shouldBePrettyPrinted() {
             byte[] json = renderer.render(report);
-            String content = new String(json, StandardCharsets.UTF_8);
+            var content = new String(json, StandardCharsets.UTF_8);
             // Pretty print means the JSON has newlines and indentation
             assertTrue(content.contains("\n  "));
         }
@@ -112,7 +112,7 @@ class JsonReportRendererTest {
         @DisplayName("should serialize Instant as ISO string, not timestamp")
         void shouldSerializeInstantAsIso() {
             byte[] json = renderer.render(report);
-            String content = new String(json, StandardCharsets.UTF_8);
+            var content = new String(json, StandardCharsets.UTF_8);
             // Instant should be serialized as string like "2026-..." not as number
             assertTrue(content.contains("\"generatedAt\" : \""));
             assertFalse(content.contains("\"generatedAt\" : 1"));
@@ -122,7 +122,7 @@ class JsonReportRendererTest {
         @DisplayName("should serialize Duration in output")
         void shouldSerializeDuration() {
             byte[] json = renderer.render(report);
-            String content = new String(json, StandardCharsets.UTF_8);
+            var content = new String(json, StandardCharsets.UTF_8);
             // JavaTimeModule serializes Duration as numeric seconds + nanos
             assertTrue(content.contains("\"seconds\"") || content.contains("\"totalDuration\""));
         }
@@ -131,7 +131,7 @@ class JsonReportRendererTest {
         @DisplayName("should contain injection metrics")
         void shouldContainInjectionMetrics() {
             byte[] json = renderer.render(report);
-            String content = new String(json, StandardCharsets.UTF_8);
+            var content = new String(json, StandardCharsets.UTF_8);
             assertTrue(content.contains("p90Ms"));
             assertTrue(content.contains("throughput"));
             assertTrue(content.contains("Sim"));
@@ -141,7 +141,7 @@ class JsonReportRendererTest {
         @DisplayName("should contain environment info")
         void shouldContainEnvironmentInfo() {
             byte[] json = renderer.render(report);
-            String content = new String(json, StandardCharsets.UTF_8);
+            var content = new String(json, StandardCharsets.UTF_8);
             assertTrue(content.contains("agent-2"));
             assertTrue(content.contains("linux"));
         }
@@ -150,7 +150,7 @@ class JsonReportRendererTest {
         @DisplayName("should contain assertion results")
         void shouldContainAssertionResults() {
             byte[] json = renderer.render(report);
-            String content = new String(json, StandardCharsets.UTF_8);
+            var content = new String(json, StandardCharsets.UTF_8);
             assertTrue(content.contains("p99 < 50ms"));
             assertTrue(content.contains("PASSED"));
         }
@@ -159,7 +159,7 @@ class JsonReportRendererTest {
         @DisplayName("should contain tags and metadata")
         void shouldContainTagsAndMetadata() {
             byte[] json = renderer.render(report);
-            String content = new String(json, StandardCharsets.UTF_8);
+            var content = new String(json, StandardCharsets.UTF_8);
             assertTrue(content.contains("smoke"));
             assertTrue(content.contains("staging"));
         }
@@ -167,7 +167,7 @@ class JsonReportRendererTest {
         @Test
         @DisplayName("should render empty report without error")
         void shouldRenderEmptyReport() {
-            CampaignReport empty = new CampaignReport(
+            var empty = new CampaignReport(
                     ReportId.generate(), new ScenarioId("empty"), "Empty", "1.0",
                     List.of(), Map.of(),
                     new EnvironmentInfo(List.of(), "25", Map.of()),

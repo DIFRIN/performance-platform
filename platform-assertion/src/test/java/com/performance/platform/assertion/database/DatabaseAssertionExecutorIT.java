@@ -53,7 +53,7 @@ class DatabaseAssertionExecutorIT {
 
     @BeforeAll
     static void setUp() {
-        PGSimpleDataSource pgDataSource = new PGSimpleDataSource();
+        var pgDataSource = new PGSimpleDataSource();
         pgDataSource.setUrl(postgres.getJdbcUrl());
         pgDataSource.setUser(postgres.getUsername());
         pgDataSource.setPassword(postgres.getPassword());

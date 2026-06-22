@@ -45,7 +45,7 @@ class PortsCompileTest {
 
     @Test
     void executionRepositoryCompiles() {
-        ExecutionRepository repo = new ExecutionRepository() {
+        var repo = new ExecutionRepository() {
             @Override
             public void save(ExecutionState state) { /* no-op */ }
 
@@ -66,7 +66,7 @@ class PortsCompileTest {
             }
         };
 
-        ExecutionState state = new ExecutionState(
+        var state = new ExecutionState(
                 EXEC_ID, SCENARIO_ID, ExecutionStatus.STARTED,
                 Map.of(Phase.PREPARATION, PhaseStatus.PENDING),
                 ExecutionContext.initial(EXEC_ID, SCENARIO_ID),
@@ -81,7 +81,7 @@ class PortsCompileTest {
         repo.updatePhase(EXEC_ID, Phase.INJECTION, PhaseStatus.RUNNING);
         assertDoesNotThrow(() -> repo.updatePhase(EXEC_ID, Phase.INJECTION, PhaseStatus.RUNNING));
 
-        TaskResult result = TaskResult.success(TASK_ID, "test-task", Duration.ofMillis(100), Map.of());
+        var result = TaskResult.success(TASK_ID, "test-task", Duration.ofMillis(100), Map.of());
         repo.saveTaskResult(EXEC_ID, TASK_ID, AGENT_ID, result);
         assertDoesNotThrow(() -> repo.saveTaskResult(EXEC_ID, TASK_ID, AGENT_ID, result));
 
@@ -93,7 +93,7 @@ class PortsCompileTest {
     @Test
     void executionRepositoryMultiClaim() {
         // Verifie que saveTaskResult accepte N appels pour le meme taskId (ADR-011)
-        ExecutionRepository repo = new ExecutionRepository() {
+        var repo = new ExecutionRepository() {
             private AgentId lastAgentId;
             private TaskResult lastResult;
 
@@ -120,11 +120,11 @@ class PortsCompileTest {
             }
         };
 
-        AgentId agentA = AgentId.generate();
-        AgentId agentB = AgentId.generate();
+        var agentA = AgentId.generate();
+        var agentB = AgentId.generate();
 
-        TaskResult resultA = TaskResult.success(TASK_ID, "multi-claim", Duration.ofMillis(50), Map.of());
-        TaskResult resultB = TaskResult.success(TASK_ID, "multi-claim", Duration.ofMillis(75), Map.of());
+        var resultA = TaskResult.success(TASK_ID, "multi-claim", Duration.ofMillis(50), Map.of());
+        var resultB = TaskResult.success(TASK_ID, "multi-claim", Duration.ofMillis(75), Map.of());
 
         repo.saveTaskResult(EXEC_ID, TASK_ID, agentA, resultA);
         repo.saveTaskResult(EXEC_ID, TASK_ID, agentB, resultB);
@@ -137,7 +137,7 @@ class PortsCompileTest {
 
     @Test
     void agentRegistryPortCompiles() {
-        AgentRegistryPort registry = new AgentRegistryPort() {
+        var registry = new AgentRegistryPort() {
             @Override
             public void onAgentRegistered(AgentDescriptor descriptor) { /* no-op */ }
 
@@ -171,7 +171,7 @@ class PortsCompileTest {
             }
         };
 
-        AgentDescriptor descriptor = new AgentDescriptor(
+        var descriptor = new AgentDescriptor(
                 AGENT_ID, "test-agent", "localhost", 9090, null,
                 Set.of("test-task"),
                 new AgentCapabilities(4, "1.0.0"),
@@ -182,7 +182,7 @@ class PortsCompileTest {
         registry.onAgentRegistered(descriptor);
         assertDoesNotThrow(() -> registry.onAgentRegistered(descriptor));
 
-        AgentHeartbeat heartbeat = new AgentHeartbeat(AGENT_ID, AgentState.IDLE, 0, Instant.now());
+        var heartbeat = new AgentHeartbeat(AGENT_ID, AgentState.IDLE, 0, Instant.now());
         registry.onAgentHeartbeat(AGENT_ID, heartbeat);
         assertDoesNotThrow(() -> registry.onAgentHeartbeat(AGENT_ID, heartbeat));
 
@@ -210,7 +210,7 @@ class PortsCompileTest {
     void findByTaskNameNoFiltering() {
         // Regle specifique : findByTaskName ne fait AUCUNE selection
         // Retourne tous les agents competents (ceux qui declarent la tache)
-        AgentRegistryPort registry = new AgentRegistryPort() {
+        var registry = new AgentRegistryPort() {
             @Override
             public void onAgentRegistered(AgentDescriptor descriptor) {}
 
@@ -252,7 +252,7 @@ class PortsCompileTest {
 
     @Test
     void reportPublisherPortCompiles() {
-        ReportPublisherPort publisher = new ReportPublisherPort() {
+        var publisher = new ReportPublisherPort() {
             @Override
             public void publish(ReportId reportId, ExecutionId executionId) { /* no-op */ }
         };
@@ -263,15 +263,15 @@ class PortsCompileTest {
 
     @Test
     void reportPublisherWithDifferentIds() {
-        ReportPublisherPort publisher = new ReportPublisherPort() {
+        var publisher = new ReportPublisherPort() {
             @Override
             public void publish(ReportId reportId, ExecutionId executionId) { /* no-op */ }
         };
 
-        ReportId r1 = ReportId.generate();
-        ReportId r2 = ReportId.generate();
-        ExecutionId e1 = ExecutionId.generate();
-        ExecutionId e2 = ExecutionId.generate();
+        var r1 = ReportId.generate();
+        var r2 = ReportId.generate();
+        var e1 = ExecutionId.generate();
+        var e2 = ExecutionId.generate();
 
         assertDoesNotThrow(() -> publisher.publish(r1, e1));
         assertDoesNotThrow(() -> publisher.publish(r2, e2));

@@ -185,7 +185,7 @@ class GitReportPublisherTest {
     @Test
     @DisplayName("should inject token into HTTPS URL")
     void shouldInjectTokenIntoUrl() {
-        String result = GitReportPublisher.buildAuthenticatedUrl(
+        var result = GitReportPublisher.buildAuthenticatedUrl(
                 TEST_REPO_URL, TEST_TOKEN, null, null);
         assertThat(result).isEqualTo("https://ghp_testToken123@github.com/test-org/test-repo.git");
     }
@@ -193,7 +193,7 @@ class GitReportPublisherTest {
     @Test
     @DisplayName("should inject username and password into HTTPS URL")
     void shouldInjectUsernamePasswordIntoUrl() {
-        String result = GitReportPublisher.buildAuthenticatedUrl(
+        var result = GitReportPublisher.buildAuthenticatedUrl(
                 TEST_REPO_URL, null, TEST_USERNAME, TEST_PASSWORD);
         assertThat(result).isEqualTo(
                 "https://testuser:testpass@github.com/test-org/test-repo.git");
@@ -202,7 +202,7 @@ class GitReportPublisherTest {
     @Test
     @DisplayName("should return original URL when no auth")
     void shouldReturnOriginalUrlWhenNoAuth() {
-        String result = GitReportPublisher.buildAuthenticatedUrl(
+        var result = GitReportPublisher.buildAuthenticatedUrl(
                 TEST_REPO_URL, null, null, null);
         assertThat(result).isEqualTo(TEST_REPO_URL);
     }
@@ -210,7 +210,7 @@ class GitReportPublisherTest {
     @Test
     @DisplayName("should prefer token over username/password")
     void shouldPreferTokenOverUsernamePassword() {
-        String result = GitReportPublisher.buildAuthenticatedUrl(
+        var result = GitReportPublisher.buildAuthenticatedUrl(
                 TEST_REPO_URL, TEST_TOKEN, TEST_USERNAME, TEST_PASSWORD);
         assertThat(result).isEqualTo("https://ghp_testToken123@github.com/test-org/test-repo.git");
     }
@@ -218,7 +218,7 @@ class GitReportPublisherTest {
     @Test
     @DisplayName("should handle blank token (fall back to username/password)")
     void shouldFallBackToUsernamePasswordWhenTokenBlank() {
-        String result = GitReportPublisher.buildAuthenticatedUrl(
+        var result = GitReportPublisher.buildAuthenticatedUrl(
                 TEST_REPO_URL, "  ", TEST_USERNAME, TEST_PASSWORD);
         assertThat(result).isEqualTo(
                 "https://testuser:testpass@github.com/test-org/test-repo.git");
@@ -227,7 +227,7 @@ class GitReportPublisherTest {
     @Test
     @DisplayName("should handle null username with password")
     void shouldHandleNullUsernameWithPassword() {
-        String result = GitReportPublisher.buildAuthenticatedUrl(
+        var result = GitReportPublisher.buildAuthenticatedUrl(
                 TEST_REPO_URL, null, null, TEST_PASSWORD);
         assertThat(result).isEqualTo(TEST_REPO_URL);
     }
@@ -235,7 +235,7 @@ class GitReportPublisherTest {
     @Test
     @DisplayName("should handle null password with username")
     void shouldHandleNullPasswordWithUsername() {
-        String result = GitReportPublisher.buildAuthenticatedUrl(
+        var result = GitReportPublisher.buildAuthenticatedUrl(
                 TEST_REPO_URL, null, TEST_USERNAME, null);
         assertThat(result).isEqualTo(TEST_REPO_URL);
     }
@@ -387,7 +387,7 @@ class GitReportPublisherTest {
      * Runs a raw git command (for test setup only, no authentication).
      */
     private static void runGitRaw(Path workDir, String... command) throws Exception {
-        ProcessBuilder pb = new ProcessBuilder(command)
+        var pb = new ProcessBuilder(command)
                 .directory(workDir.toFile())
                 .redirectErrorStream(true);
         Process process = pb.start();
@@ -397,7 +397,7 @@ class GitReportPublisherTest {
             throw new RuntimeException("Git command timed out: " + String.join(" ", command));
         }
         if (process.exitValue() != 0) {
-            String output = new String(process.getInputStream().readAllBytes());
+            var output = new String(process.getInputStream().readAllBytes());
             throw new RuntimeException("Git command failed: " + String.join(" ", command)
                     + " — " + output);
         }

@@ -35,14 +35,14 @@ class EntitiesMappingIT {
     @BeforeAll
     static void setUp() {
         // Run Flyway migrations
-        Flyway flyway = Flyway.configure()
+        var flyway = Flyway.configure()
                 .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                 .locations("classpath:db/migration")
                 .load();
         flyway.migrate();
 
         // Build Hibernate SessionFactory programmatically
-        Configuration cfg = new Configuration();
+        var cfg = new Configuration();
         cfg.setProperty(AvailableSettings.JAKARTA_JDBC_URL, postgres.getJdbcUrl());
         cfg.setProperty(AvailableSettings.JAKARTA_JDBC_USER, postgres.getUsername());
         cfg.setProperty(AvailableSettings.JAKARTA_JDBC_PASSWORD, postgres.getPassword());
@@ -135,10 +135,10 @@ class EntitiesMappingIT {
 
     @Test
     void compositeKeyShouldAllowMultipleAgentsForSameTask() {
-        ExecutionId executionId = ExecutionId.generate();
-        TaskId taskId = TaskId.of("task-load-inject");
-        AgentId agent1 = AgentId.generate();
-        AgentId agent2 = AgentId.generate();
+        var executionId = ExecutionId.generate();
+        var taskId = TaskId.of("task-load-inject");
+        var agent1 = AgentId.generate();
+        var agent2 = AgentId.generate();
 
         EntityManager em = sessionFactory.createEntityManager();
         em.getTransaction().begin();

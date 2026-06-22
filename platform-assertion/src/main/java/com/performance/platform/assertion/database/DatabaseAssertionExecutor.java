@@ -75,7 +75,7 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
     public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(step, "step must not be null");
-        Instant start = Instant.now();
+        var start = Instant.now();
 
         try {
             Map<String, Object> params = step.parameters();
@@ -122,7 +122,7 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
             String description = buildDescription(query, actualValue,
                     expectedValue, operator, passed);
 
-            Duration evaluationDuration = Duration.between(start, Instant.now());
+            var evaluationDuration = Duration.between(start, Instant.now());
 
             log.info("action=db_assertion_evaluated executionId={} assertionId={} "
                      + "datasource={} actual={} expected={} operator={} status={}",
@@ -267,7 +267,7 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
                                               Instant start,
                                               String errorMessage,
                                               Map<String, Object> params) {
-        Duration duration = Duration.between(start, Instant.now());
+        var duration = Duration.between(start, Instant.now());
         return new AssertionResult(
                 step.id(),
                 AssertionStatus.ERROR,

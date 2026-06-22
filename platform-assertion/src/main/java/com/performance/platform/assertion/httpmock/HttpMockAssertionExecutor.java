@@ -134,7 +134,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(step, "step must not be null");
-        Instant start = Instant.now();
+        var start = Instant.now();
 
         try {
             Map<String, Object> params = step.parameters();
@@ -232,7 +232,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
             String description = buildDescription(metricName, actualValue,
                     expectedValue, operator, passed);
 
-            Duration evaluationDuration = Duration.between(start, Instant.now());
+            var evaluationDuration = Duration.between(start, Instant.now());
 
             log.info("action=http_mock_assertion_evaluated executionId={} assertionId={} "
                      + "metric={} refTaskId={} target={} actual={} expected={} operator={} status={}",
@@ -298,7 +298,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
 
     double fetchRequestCount(String baseUrl) {
         String url = baseUrl.replaceAll("/+$", "") + ADMIN_REQUESTS_COUNT_PATH;
-        HttpRequest request = HttpRequest.newBuilder()
+        var request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
                 .GET()
@@ -335,7 +335,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
             throw new IllegalArgumentException(
                     "Empty response from WireMock admin API");
         }
-        Matcher matcher = COUNT_PATTERN.matcher(json);
+        var matcher = COUNT_PATTERN.matcher(json);
         if (matcher.find()) {
             return Double.parseDouble(matcher.group(1));
         }
@@ -406,7 +406,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
                                               Instant start,
                                               String errorMessage,
                                               Map<String, Object> params) {
-        Duration duration = Duration.between(start, Instant.now());
+        var duration = Duration.between(start, Instant.now());
         return new AssertionResult(
                 step.id(),
                 AssertionStatus.ERROR,

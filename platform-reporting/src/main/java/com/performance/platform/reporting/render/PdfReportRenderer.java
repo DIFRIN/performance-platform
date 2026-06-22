@@ -43,7 +43,7 @@ public class PdfReportRenderer implements ReportRenderer {
             byte[] html = htmlRenderer.render(report);
 
             try (OutputStream os = new ByteArrayOutputStream()) {
-                PdfRendererBuilder builder = new PdfRendererBuilder();
+                var builder = new PdfRendererBuilder();
                 builder.withHtmlContent(new String(html, java.nio.charset.StandardCharsets.UTF_8),
                         null);
                 builder.toStream(os);

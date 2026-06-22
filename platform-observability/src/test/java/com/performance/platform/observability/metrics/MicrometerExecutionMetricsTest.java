@@ -39,7 +39,7 @@ class MicrometerExecutionMetricsTest {
         @Test
         @DisplayName("should record execution duration timer")
         void shouldRecordExecutionDuration() {
-            ExecutionId execId = new ExecutionId("exec-001");
+            var execId = new ExecutionId("exec-001");
 
             metrics.recordExecutionDuration(execId, Duration.ofSeconds(30));
 
@@ -55,7 +55,7 @@ class MicrometerExecutionMetricsTest {
         @Test
         @DisplayName("should allow multiple recordings on same execution")
         void shouldAllowMultipleRecordings() {
-            ExecutionId execId = new ExecutionId("exec-001");
+            var execId = new ExecutionId("exec-001");
 
             metrics.recordExecutionDuration(execId, Duration.ofSeconds(10));
             metrics.recordExecutionDuration(execId, Duration.ofSeconds(20));
@@ -91,7 +91,7 @@ class MicrometerExecutionMetricsTest {
         @Test
         @DisplayName("should record task duration with taskName tag")
         void shouldRecordTaskDuration() {
-            TaskId taskId = new TaskId("task-001");
+            var taskId = new TaskId("task-001");
 
             metrics.recordTaskDuration(taskId, "gatling", Duration.ofMillis(500));
 
@@ -105,8 +105,8 @@ class MicrometerExecutionMetricsTest {
         @Test
         @DisplayName("should differentiate tasks by taskName tag")
         void shouldDifferentiateByTaskName() {
-            TaskId t1 = new TaskId("task-001");
-            TaskId t2 = new TaskId("task-002");
+            var t1 = new TaskId("task-001");
+            var t2 = new TaskId("task-002");
 
             metrics.recordTaskDuration(t1, "gatling", Duration.ofMillis(100));
             metrics.recordTaskDuration(t2, "shell", Duration.ofMillis(200));
@@ -156,7 +156,7 @@ class MicrometerExecutionMetricsTest {
         @Test
         @DisplayName("should increment failure counter")
         void shouldIncrementFailureCounter() {
-            TaskId taskId = new TaskId("task-001");
+            var taskId = new TaskId("task-001");
 
             metrics.incrementTaskFailure(taskId, "gatling");
             metrics.incrementTaskFailure(taskId, "gatling");

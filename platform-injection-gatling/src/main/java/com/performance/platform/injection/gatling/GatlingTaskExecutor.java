@@ -145,7 +145,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                 ? context.executionId().value() : FALLBACK_EXECUTION_KEY;
 
         // 2. Construire la configuration Gatling
-        GatlingRunConfig config = new GatlingRunConfig(
+        var config = new GatlingRunConfig(
                 simulation,
                 loadModel,
                 systemProperties,
@@ -165,7 +165,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
             // 4. Parser les resultats
             InjectionResult injectionResult = parser.parse(gatlingResultsDir, step.id());
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
 
             log.info("action=gatling_execute_success executionId={} totalRequests={} "
                     + "errorRate={}% duration={} stepId={}",
@@ -178,19 +178,19 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                     Map.of(OUTPUT_RESULT, injectionResult));
 
         } catch (GatlingExecutionException e) {
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             log.error("action=gatling_execute_failed executionId={} stepId={} error={}",
                     executionKey, step.id().value(), e.getMessage());
             return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed,
                     "Gatling execution failed: " + e.getMessage(), e);
         } catch (ResultParsingException e) {
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             log.error("action=gatling_parse_failed executionId={} stepId={} error={}",
                     executionKey, step.id().value(), e.getMessage());
             return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed,
                     "Result parsing failed: " + e.getMessage(), e);
         } catch (Exception e) {
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             log.error("action=gatling_unexpected_error executionId={} stepId={}",
                     executionKey, step.id().value(), e);
             return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed,
@@ -329,7 +329,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 

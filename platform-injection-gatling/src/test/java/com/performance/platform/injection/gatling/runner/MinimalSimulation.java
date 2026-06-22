@@ -27,7 +27,7 @@ import static io.gatling.javaapi.http.HttpDsl.http;
 public class MinimalSimulation extends Simulation {
 
     {
-        String simId = System.getProperty("gatling.simulationId", "unknown");
+        var simId = System.getProperty("gatling.simulationId", "unknown");
         List<OpenInjectionStep> steps = SimulationInjectionHolder.get(simId);
 
         HttpProtocolBuilder httpProtocol = http

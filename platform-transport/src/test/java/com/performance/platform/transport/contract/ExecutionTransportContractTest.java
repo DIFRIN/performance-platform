@@ -181,7 +181,7 @@ class ExecutionTransportContractTest {
             var step = buildStep("verify-db", "database", Phase.PREPARATION);
             var ctx = PartialExecutionContext.empty(executionId, ScenarioId.of("test-scenario"));
             var retryPolicy = RetryPolicy.defaults();
-            Instant dispatchedAt = Instant.now();
+            var dispatchedAt = Instant.now();
 
             var request = new TaskExecutionRequest(messageId, executionId, step, ctx,
                     dispatchedAt, retryPolicy);

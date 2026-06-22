@@ -125,7 +125,7 @@ class LocalExecutionEngineTest {
             if (state != null) {
                 Map<Phase, PhaseStatus> updated = new java.util.EnumMap<>(state.phaseStatuses());
                 updated.put(phase, status);
-                ExecutionState newState = new ExecutionState(
+                var newState = new ExecutionState(
                         state.id(), state.scenarioId(), state.status(),
                         updated, state.context(), state.startedAt(), Instant.now());
                 persistedStates.put(id.value(), newState);
@@ -297,7 +297,7 @@ class LocalExecutionEngineTest {
 
     private ExecutionPlan buildPlan(ScenarioDefinition s, List<ExecutionStep> prep,
                                      List<ExecutionStep> injection, List<ExecutionStep> assertion) {
-        ExecutionId eid = ExecutionId.generate();
+        var eid = ExecutionId.generate();
         return new ExecutionPlan(eid, s.id(), prep, injection, assertion,
                 ExecutionContext.initial(eid, s.id()));
     }
@@ -499,13 +499,13 @@ class LocalExecutionEngineTest {
         @DisplayName("Steps at same dagLevel should execute in parallel")
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         void sameDagLevel_executedInParallel() throws Exception {
-            CountDownLatch latch = new CountDownLatch(2);
+            var latch = new CountDownLatch(2);
             List<String> executionOrder = new CopyOnWriteArrayList<>();
 
             StepDefinition stepA = step("A", "task-a", Phase.PREPARATION);
             StepDefinition stepB = step("B", "task-b", Phase.PREPARATION);
 
-            StubTaskExecutor execA = new StubTaskExecutor("task-a",
+            var execA = new StubTaskExecutor("task-a",
                     TaskResult.success(t("A"), "task-a", Duration.ofMillis(50), Map.of())) {
                 @Override
                 public TaskResult execute(ExecutionContext context, StepDefinition step) {
@@ -519,7 +519,7 @@ class LocalExecutionEngineTest {
                 }
             };
 
-            StubTaskExecutor execB = new StubTaskExecutor("task-b",
+            var execB = new StubTaskExecutor("task-b",
                     TaskResult.success(t("B"), "task-b", Duration.ofMillis(50), Map.of())) {
                 @Override
                 public TaskResult execute(ExecutionContext context, StepDefinition step) {
@@ -564,7 +564,7 @@ class LocalExecutionEngineTest {
             StepDefinition stepA = step("A", "task-a", Phase.PREPARATION);
             StepDefinition stepB = step("B", "task-b", Phase.PREPARATION, List.of(t("A")));
 
-            StubTaskExecutor execA = new StubTaskExecutor("task-a",
+            var execA = new StubTaskExecutor("task-a",
                     TaskResult.success(t("A"), "task-a", Duration.ofMillis(10), Map.of())) {
                 @Override
                 public TaskResult execute(ExecutionContext context, StepDefinition step) {
@@ -573,7 +573,7 @@ class LocalExecutionEngineTest {
                 }
             };
 
-            StubTaskExecutor execB = new StubTaskExecutor("task-b",
+            var execB = new StubTaskExecutor("task-b",
                     TaskResult.success(t("B"), "task-b", Duration.ofMillis(10), Map.of())) {
                 @Override
                 public TaskResult execute(ExecutionContext context, StepDefinition step) {
@@ -621,7 +621,7 @@ class LocalExecutionEngineTest {
                             TaskResult.failed(t("A"), "task-a", Duration.ofMillis(5), "error", null)));
 
             // task-b should NOT be called because B is skipped
-            StubTaskExecutor execB = new StubTaskExecutor("task-b",
+            var execB = new StubTaskExecutor("task-b",
                     TaskResult.success(t("B"), "task-b", Duration.ofMillis(1), Map.of()));
             taskExecutorLookup.registerTask("task-b", execB);
 
@@ -659,23 +659,23 @@ class LocalExecutionEngineTest {
 
             ScenarioDefinition s = scenario("sc-cancel", List.of(prepStep));
 
-            ExecutionId knownId = ExecutionId.of("cancel-test-001");
-            ExecutionPlan plan = new ExecutionPlan(knownId, s.id(),
+            var knownId = ExecutionId.of("cancel-test-001");
+            var plan = new ExecutionPlan(knownId, s.id(),
                     List.of(execStep(prepStep, List.of(), 0)),
                     List.of(), List.of(),
                     ExecutionContext.initial(knownId, s.id()));
             planMap.put(s.id().value(), plan);
 
-            CountDownLatch blockLatch = new CountDownLatch(1);
-            CountDownLatch executeLatch = new CountDownLatch(1);
+            var blockLatch = new CountDownLatch(1);
+            var executeLatch = new CountDownLatch(1);
 
-            StubTaskExecutor blockingExec = new StubTaskExecutor("init",
+            var blockingExec = new StubTaskExecutor("init",
                     TaskResult.success(t("prep-1"), "init", Duration.ofMillis(5), Map.of()),
                     executeLatch, blockLatch);
             taskExecutorLookup.registerTask("init", blockingExec);
 
             // Execute in separate thread
-            Thread execThread = new Thread(() -> engine.execute(s));
+            var execThread = new Thread(() -> engine.execute(s));
             execThread.start();
 
             // Wait for execution to start
@@ -713,7 +713,7 @@ class LocalExecutionEngineTest {
         @Test
         @DisplayName("getStatus throws for unknown execution")
         void getStatus_unknown_throws() {
-            ExecutionId fakeId = ExecutionId.of("non-existent");
+            var fakeId = ExecutionId.of("non-existent");
             assertThrows(ExecutionException.class, () -> engine.getStatus(fakeId));
         }
     }
@@ -729,7 +729,7 @@ class LocalExecutionEngineTest {
         @Test
         @DisplayName("Step with retry policy succeeds on retry")
         void retryPolicy_succeedsOnRetry() {
-            RetryPolicy retryPolicy = new RetryPolicy(3, Duration.ofMillis(1), 2.0,
+            var retryPolicy = new RetryPolicy(3, Duration.ofMillis(1), 2.0,
                     Duration.ofMillis(50), Set.of());
 
             StepDefinition prepStep = step("prep-1", "flaky", Phase.PREPARATION, List.of(), retryPolicy);
@@ -740,8 +740,8 @@ class LocalExecutionEngineTest {
                     List.of(), List.of());
 
             // Executor fails once, then succeeds on retry
-            AtomicBoolean failedOnce = new AtomicBoolean(false);
-            StubTaskExecutor executor = new StubTaskExecutor("flaky",
+            var failedOnce = new AtomicBoolean(false);
+            var executor = new StubTaskExecutor("flaky",
                     TaskResult.success(t("prep-1"), "flaky", Duration.ofMillis(5), Map.of())) {
                 @Override
                 public TaskResult execute(ExecutionContext context, StepDefinition step) {
@@ -768,7 +768,7 @@ class LocalExecutionEngineTest {
         @Test
         @DisplayName("Step with retry policy exhausted returns FAILED")
         void retryPolicy_exhausted_returnsFailed() {
-            RetryPolicy retryPolicy = new RetryPolicy(2, Duration.ofMillis(1), 2.0,
+            var retryPolicy = new RetryPolicy(2, Duration.ofMillis(1), 2.0,
                     Duration.ofMillis(50), Set.of());
 
             StepDefinition prepStep = step("prep-1", "broken", Phase.PREPARATION, List.of(), retryPolicy);
@@ -778,7 +778,7 @@ class LocalExecutionEngineTest {
                     List.of(execStep(prepStep, List.of(), 0)),
                     List.of(), List.of());
 
-            StubTaskExecutor executor = new StubTaskExecutor("broken",
+            var executor = new StubTaskExecutor("broken",
                     new RuntimeException("persistent error"));
             taskExecutorLookup.registerTask("broken", executor);
 
@@ -849,8 +849,8 @@ class LocalExecutionEngineTest {
         @Test
         @DisplayName("Empty steps list returns unchanged context")
         void emptySteps_returnsUnchangedContext() {
-            DagPhaseExecutor dpe = new DagPhaseExecutor(retryExecutor);
-            ExecutionContext ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
+            var dpe = new DagPhaseExecutor(retryExecutor);
+            var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
 
             var result = dpe.executePhase(List.of(), ctx, Phase.PREPARATION,
                     taskExecutorLookup, eventPublisher, new AtomicBoolean(false));
@@ -867,8 +867,8 @@ class LocalExecutionEngineTest {
             ExecutionStep esA = execStep(stepA, List.of(), 0);
             ExecutionStep esB = execStep(stepB, List.of(), 0);
 
-            DagPhaseExecutor dpe = new DagPhaseExecutor(retryExecutor);
-            ExecutionContext ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
+            var dpe = new DagPhaseExecutor(retryExecutor);
+            var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
 
             taskExecutorLookup.registerTask("ta",
                     new StubTaskExecutor("ta",
@@ -894,10 +894,10 @@ class LocalExecutionEngineTest {
             ExecutionStep esA = execStep(stepA, List.of(), 0);
             ExecutionStep esB = execStep(stepB, List.of(), 1);
 
-            DagPhaseExecutor dpe = new DagPhaseExecutor(retryExecutor);
-            ExecutionContext ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
+            var dpe = new DagPhaseExecutor(retryExecutor);
+            var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
 
-            AtomicBoolean cancelled = new AtomicBoolean(false);
+            var cancelled = new AtomicBoolean(false);
 
             taskExecutorLookup.registerTask("ta",
                     new StubTaskExecutor("ta",
@@ -909,7 +909,7 @@ class LocalExecutionEngineTest {
                         }
                     });
 
-            StubTaskExecutor execB = new StubTaskExecutor("tb",
+            var execB = new StubTaskExecutor("tb",
                     TaskResult.success(t("B"), "tb", Duration.ofMillis(5), Map.of()));
             taskExecutorLookup.registerTask("tb", execB);
 
@@ -930,13 +930,13 @@ class LocalExecutionEngineTest {
             StepDefinition assertStep = step("as-1", "check", Phase.ASSERTION);
             ExecutionStep es = execStep(assertStep, List.of(), 0);
 
-            DagPhaseExecutor dpe = new DagPhaseExecutor(retryExecutor);
-            ExecutionContext ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
+            var dpe = new DagPhaseExecutor(retryExecutor);
+            var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
 
-            Evidence evidence = new Evidence(95.0, 100.0,
+            var evidence = new Evidence(95.0, 100.0,
                     AssertionOperator.LT, "ms", Map.of("p99", 95.0));
 
-            AssertionResult assertionResult = new AssertionResult(
+            var assertionResult = new AssertionResult(
                     t("as-1"), AssertionStatus.PASSED, "p99 < 100ms",
                     evidence, Duration.ofMillis(5), Instant.now());
 

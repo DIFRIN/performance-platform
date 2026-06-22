@@ -362,10 +362,10 @@ class DefaultTaskCorrelationTrackerTest {
         @DisplayName("should handle concurrent claims and completions")
         void shouldHandleConcurrentClaimsAndCompletions() throws Exception {
             int numAgents = 50;
-            ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
-            CountDownLatch startLatch = new CountDownLatch(1);
-            CountDownLatch doneLatch = new CountDownLatch(numAgents);
-            AtomicBoolean allCompleteSeen = new AtomicBoolean(false);
+            var executor = Executors.newVirtualThreadPerTaskExecutor();
+            var startLatch = new CountDownLatch(1);
+            var doneLatch = new CountDownLatch(numAgents);
+            var allCompleteSeen = new AtomicBoolean(false);
 
             tracker.trackDispatched(messageId, taskId, executionId);
 
@@ -377,7 +377,7 @@ class DefaultTaskCorrelationTrackerTest {
                         startLatch.await();
                         tracker.onClaimed(messageId, agent);
                         if (index % 2 == 0) {
-                            TaskResult result = TaskResult.success(taskId, "perf-test",
+                            var result = TaskResult.success(taskId, "perf-test",
                                     Duration.ofSeconds(1), Map.of("idx", index));
                             tracker.onCompleted(messageId, agent, result);
                         } else {

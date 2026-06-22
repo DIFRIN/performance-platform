@@ -96,7 +96,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
         if (pathStr == null || pathStr.isBlank()) {
             return fail(step, startNanos, "Required parameter 'path' is missing or blank");
         }
-        Path path = Path.of(pathStr);
+        var path = Path.of(pathStr);
         String executionKey = context.executionId() != null
                 ? context.executionId().value() : FALLBACK_EXECUTION_KEY;
 
@@ -116,13 +116,13 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
     private TaskResult executeCreate(StepDefinition step, long startNanos,
                                       Path path, String executionKey) {
         try {
-            Path created = Files.createDirectories(path);
+            var created = Files.createDirectories(path);
             pathsByExecution.computeIfAbsent(executionKey, k -> new HashSet<>())
                     .add(created);
             log.info("action=fs_create executionKey={} path={} stepId={}",
                     executionKey, created, step.id().value());
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
                     Map.of(OUTPUT_PATH, created.toString(), OUTPUT_FILES_AFFECTED, 1));
         } catch (IOException e) {
@@ -140,7 +140,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
 
         try {
             if (!Files.exists(path)) {
-                Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+                var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
                 log.info("action=fs_delete_noop executionKey={} path={} stepId={}",
                         executionKey, path, step.id().value());
                 return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
@@ -158,7 +158,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
             log.info("action=fs_delete executionKey={} path={} filesAffected={} recursive={} stepId={}",
                     executionKey, path, count, recursive, step.id().value());
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
                     Map.of(OUTPUT_PATH, path.toString(), OUTPUT_FILES_AFFECTED, count));
         } catch (IOException e) {
@@ -176,7 +176,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
         if (sourceStr == null || sourceStr.isBlank()) {
             return fail(step, startNanos, "Required parameter 'source' is missing or blank");
         }
-        Path source = Path.of(sourceStr);
+        var source = Path.of(sourceStr);
 
         try {
             Path parent = destPath.getParent();
@@ -190,7 +190,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
             log.info("action=fs_upload executionKey={} source={} dest={} stepId={}",
                     executionKey, source, destPath, step.id().value());
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
                     Map.of(OUTPUT_PATH, destPath.toString(), OUTPUT_FILES_AFFECTED, 1));
         } catch (IOException e) {
@@ -206,7 +206,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
                                        Path path, String executionKey) {
         try {
             if (!Files.exists(path) || !Files.isDirectory(path)) {
-                Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+                var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
                 log.info("action=fs_cleanup_noop executionKey={} path={} stepId={}",
                         executionKey, path, step.id().value());
                 return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
@@ -218,7 +218,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
             log.info("action=fs_cleanup executionKey={} path={} filesAffected={} stepId={}",
                     executionKey, path, count, step.id().value());
 
-            Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+            var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
                     Map.of(OUTPUT_PATH, path.toString(), OUTPUT_FILES_AFFECTED, count));
         } catch (IOException e) {
@@ -324,13 +324,13 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
     // ── Result helpers ────────────────────────────────────────────────────
 
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
     }
 
     private TaskResult fail(StepDefinition step, long startNanos, String message,
                             Throwable cause) {
-        Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, cause);
     }
 
