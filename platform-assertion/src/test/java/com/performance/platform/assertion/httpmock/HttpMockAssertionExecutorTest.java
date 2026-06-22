@@ -10,10 +10,14 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 
+import com.performance.platform.infrastructure.executor.http.HttpTargetProperties;
+import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
 import java.util.Map;
@@ -37,6 +41,10 @@ class HttpMockAssertionExecutorTest {
             throw new IllegalArgumentException("No count configured");
         };
 
+        TestableHttpMockAssertionExecutor(HttpTargetRegistry registry) {
+            super(registry);
+        }
+
         void setCount(double count) {
             this.countSupplier = () -> count;
         }
@@ -51,6 +59,11 @@ class HttpMockAssertionExecutorTest {
         double fetchRequestCount(String baseUrl) {
             return countSupplier.get();
         }
+
+        @Override
+        double fetchRequestCountViaRestClient(RestClient restClient) {
+            return countSupplier.get();
+        }
     }
 
     private TestableHttpMockAssertionExecutor executor;
@@ -60,9 +73,21 @@ class HttpMockAssertionExecutorTest {
     private static final ExecutionId EXEC_ID = new ExecutionId("exec-001");
     private static final ScenarioId SCENARIO_ID = new ScenarioId("scenario-001");
 
+    private static HttpTargetRegistry defaultRegistry() {
+        HttpTargetProperties props = new HttpTargetProperties(
+                "http://localhost:8090",
+                Duration.ofSeconds(1),
+                Duration.ofSeconds(5),
+                Map.of(),
+                Map.of());
+        return new HttpTargetRegistry(
+                Map.of("wiremock", props),
+                RestClient.builder());
+    }
+
     @BeforeEach
     void setUp() {
-        executor = new TestableHttpMockAssertionExecutor();
+        executor = new TestableHttpMockAssertionExecutor(defaultRegistry());
     }
 
     // --- Context helpers ---
@@ -357,7 +382,7 @@ class HttpMockAssertionExecutorTest {
             AssertionResult ar = executor.evaluate(ctx, step);
 
             assertThat(ar.status()).isEqualTo(AssertionStatus.ERROR);
-            assertThat(ar.description()).contains("Missing required parameter", "refTaskId");
+            assertThat(ar.description()).contains("No HTTP source configured");
         }
 
         @Test
@@ -374,8 +399,131 @@ class HttpMockAssertionExecutorTest {
             AssertionResult ar = executor.evaluate(ctx, step);
 
             assertThat(ar.status()).isEqualTo(AssertionStatus.ERROR);
-            assertThat(ar.description()).contains("must be a non-empty string");
+            assertThat(ar.description()).contains("No HTTP source configured");
         }
+    }
+
+    // ==================== v2: target flow (HttpTargetRegistry) ====================
+
+    @Nested
+    @DisplayName("v2 target flow")
+    class TargetFlow {
+
+        @Test
+        @DisplayName("should pass using target param via HttpTargetRegistry")
+        void shouldPassUsingTargetParam() {
+            executor.setCount(150);
+            ExecutionContext ctx = emptyContext();
+            StepDefinition step = step(Map.of(
+                    "metric", "receivedCalls",
+                    "operator", "GT",
+                    "value", 100,
+                    "target", "wiremock"));
+
+            AssertionResult ar = executor.evaluate(ctx, step);
+
+            assertThat(ar.status()).isEqualTo(AssertionStatus.PASSED);
+            assertThat(ar.isPassed()).isTrue();
+            assertThat(ar.evidence().actualValue()).isEqualTo(150.0);
+            assertThat(ar.evidence().details()).containsEntry("target", "wiremock");
+        }
+
+        @Test
+        @DisplayName("should return ERROR when target not found in registry")
+        void shouldErrorOnUnknownTarget() {
+            ExecutionContext ctx = emptyContext();
+            StepDefinition step = step(Map.of(
+                    "metric", "receivedCalls",
+                    "operator", "GT",
+                    "value", 100,
+                    "target", "nonexistent"));
+
+            AssertionResult ar = executor.evaluate(ctx, step);
+
+            assertThat(ar.status()).isEqualTo(AssertionStatus.ERROR);
+            assertThat(ar.description()).contains("Unknown http-target");
+        }
+
+        @Test
+        @DisplayName("should include target and baseUrl in evidence details")
+        void shouldIncludeTargetInEvidence() {
+            executor.setCount(42);
+            ExecutionContext ctx = emptyContext();
+            StepDefinition step = step(Map.of(
+                    "metric", "receivedCalls",
+                    "operator", "EQ",
+                    "value", 42,
+                    "target", "wiremock"));
+
+            AssertionResult ar = executor.evaluate(ctx, step);
+
+            assertThat(ar.evidence().details())
+                    .containsEntry("target", "wiremock")
+                    .containsEntry("mockUrl", "http://localhost:8090");
+        }
+    }
+
+    // ==================== v2: wiremockUrl legacy flow ====================
+
+    @Nested
+    @DisplayName("wiremockUrl legacy flow")
+    class WiremockUrlFlow {
+
+        @Test
+        @DisplayName("should use wiremockUrl when no target provided")
+        void shouldUseWiremockUrlDirectly() {
+            executor.setCount(75);
+            ExecutionContext ctx = emptyContext();
+            StepDefinition step = step(Map.of(
+                    "metric", "receivedCalls",
+                    "operator", "GT",
+                    "value", 50,
+                    "wiremockUrl", "http://legacy-wiremock:8090"));
+
+            AssertionResult ar = executor.evaluate(ctx, step);
+
+            assertThat(ar.status()).isEqualTo(AssertionStatus.PASSED);
+            assertThat(ar.evidence().actualValue()).isEqualTo(75.0);
+            assertThat(ar.evidence().details())
+                    .containsEntry("mockUrl", "http://legacy-wiremock:8090");
+        }
+
+        @Test
+        @DisplayName("should prefer target over wiremockUrl when both present")
+        void shouldPreferTargetOverWiremockUrl() {
+            executor.setCount(100);
+            ExecutionContext ctx = emptyContext();
+            StepDefinition step = step(Map.of(
+                    "metric", "receivedCalls",
+                    "operator", "GT",
+                    "value", 50,
+                    "target", "wiremock",
+                    "wiremockUrl", "http://legacy-wiremock:8090"));
+
+            AssertionResult ar = executor.evaluate(ctx, step);
+
+            assertThat(ar.status()).isEqualTo(AssertionStatus.PASSED);
+            assertThat(ar.evidence().details())
+                    .containsEntry("target", "wiremock")
+                    .containsEntry("mockUrl", "http://localhost:8090");
+        }
+    }
+
+    // ==================== Error: no source ====================
+
+    @Test
+    @DisplayName("should return ERROR when no source configured")
+    void shouldErrorWhenNoSourceConfigured() {
+        ExecutionContext ctx = emptyContext();
+        StepDefinition step = step(Map.of(
+                "metric", "receivedCalls",
+                "operator", "GT",
+                "value", 100));
+
+        AssertionResult ar = executor.evaluate(ctx, step);
+
+        assertThat(ar.status()).isEqualTo(AssertionStatus.ERROR);
+        assertThat(ar.description()).contains("No HTTP source configured");
     }
 
     // ==================== Null safety ====================
