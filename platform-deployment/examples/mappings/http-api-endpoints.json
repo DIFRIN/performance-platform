@@ -1,0 +1,45 @@
+{
+  "mappings": [
+    {
+      "name": "GET /api/users",
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPattern": "/api/users.*"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "users": [
+            { "id": 1, "name": "Alice" },
+            { "id": 2, "name": "Bob" }
+          ],
+          "total": 2,
+          "page": 1
+        }
+      }
+    },
+    {
+      "name": "GET /api/users/:id",
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPattern": "/api/users/[0-9]+"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "id": 1,
+          "name": "Alice",
+          "email": "alice@example.com"
+        }
+      }
+    }
+  ]
+}
