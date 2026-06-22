@@ -2,7 +2,7 @@
 
 **PDR** : PDR-025
 **Module** : `platform-infrastructure`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P0 (bloquant — code example-only ne doit pas etre dans le module de production)
 **Bloquee par** : aucune
 **Estime** : M (1-3h)

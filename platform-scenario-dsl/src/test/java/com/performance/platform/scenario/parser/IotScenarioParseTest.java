@@ -2,6 +2,7 @@ package com.performance.platform.scenario.parser;
 
 import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.domain.scenario.ExecutionMode;
+import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,50 @@ class IotScenarioParseTest {
             System.err.println("PARSE ERRORS: " + e.getMessage() + " — errors: " + e.getErrors());
             throw e;
         }
+    }
+
+    @Test
+    @DisplayName("http-api-mock-agent-local.yaml is parseable — WireMock as Agent (LOCAL)")
+    void parseHttpApiMockAgentLocalScenario() throws Exception {
+        var file = Path.of(BASE, "http-api-mock-agent-local.yaml");
+        ScenarioDefinition scenario = parser.parseFile(file);
+
+        assertEquals("http-api-mock-agent-local", scenario.id().value());
+        assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
+        assertEquals(7, scenario.steps().size());
+
+        // Verify step 1: spawn-mock (PREPARATION)
+        assertEquals("spawn-mock", scenario.steps().get(0).id().value());
+        assertEquals("mock-server", scenario.steps().get(0).taskName());
+        assertEquals(Phase.PREPARATION, scenario.steps().get(0).phase());
+
+        // Verify step 2: load-test (INJECTION) — dependsOn spawn-mock
+        assertEquals("load-test", scenario.steps().get(1).id().value());
+        assertEquals("gatling", scenario.steps().get(1).taskName());
+        assertEquals(Phase.INJECTION, scenario.steps().get(1).phase());
+        assertTrue(scenario.steps().get(1).dependsOn().stream()
+                .anyMatch(d -> d.value().equals("spawn-mock")));
+
+        // Verify step 6: assert-mock-hit (ASSERTION)
+        assertEquals("assert-mock-hit", scenario.steps().get(5).id().value());
+        assertEquals("http-mock", scenario.steps().get(5).taskName());
+        assertEquals(Phase.ASSERTION, scenario.steps().get(5).phase());
+
+        // Verify step 7: stop-mock (PREPARATION cleanup) — dependsOn all assertions
+        assertEquals("stop-mock", scenario.steps().get(6).id().value());
+        assertEquals("mock-server", scenario.steps().get(6).taskName());
+        assertEquals(Phase.PREPARATION, scenario.steps().get(6).phase());
+        assertEquals(4, scenario.steps().get(6).dependsOn().size());
+
+        // Verify load model
+        assertTrue(scenario.loadModels().containsKey("demo-ramp"));
+
+        // Verify metadata
+        assertEquals("perf-team", scenario.metadata().get("owner"));
+
+        // Verify tags
+        assertTrue(scenario.tags().contains("mock-agent"));
+        assertTrue(scenario.tags().contains("http"));
     }
 
 }

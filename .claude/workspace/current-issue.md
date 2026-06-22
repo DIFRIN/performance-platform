@@ -1,11 +1,11 @@
-# ISSUE-104: Delete DevicePopulationTaskExecutor + DeviceCheckTaskExecutor from platform-infrastructure
+# ISSUE-105: Create http-api-mock-agent-local.yaml scenario (LOCAL mode)
 **Status**: APPROVED
 **PDR**: PDR-025
-**Module**: platform-infrastructure
-**Started**: 2026-06-22T20:53+02:00
-**IssueFile**: issues/ISSUE-104-delete-device-executors-from-infrastructure.md
+**Module**: platform-deployment
+**Started**: 2026-06-22T21:24+02:00
+**IssueFile**: issues/ISSUE-105-http-api-mock-agent-local-scenario.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-104-delete-device-executors-from-infrastructure.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-105-http-api-mock-agent-local-scenario.md`
 
 ## Reviewer Feedback
 (None yet)
