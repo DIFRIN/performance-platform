@@ -9,21 +9,22 @@
 ## Etat Courant
 
 **Date derniere session** : 2026-06-22
-**Agent actif** : [ ] System Designer | [x] Developer | [ ] Architect | [ ] Reviewer | [ ] Tester
+**Agent actif** : [ ] System Designer | [ ] Developer | [ ] Architect | [x] Reviewer | [ ] Tester
 **Issue active** : ISSUE-102
 **Statut issue** : [ ] IN PROGRESS | [ ] IN REVIEW | [x] DONE | [ ] APPROVED
-**PDR parent** : PDR-024
+**PDR parent** : PDR-024 (DONE)
 
 ---
 
 ## Reprise Exacte
 
 **Derniere action** :
-Reviewer — ISSUE-100 APPROVED: 0 bloquant, 1 recommandation PENDING ([PRECISION] agentTags silencieusement ignores). 4 parse tests OK, BUILD SUCCESS.
+Reviewer — ISSUE-102 APPROVED: README.md 162 lignes conforme spec, 0 bloquant, 0 recommandation. PDR-024 DONE.
 **Prochaine action** :
-Developer — Appliquer recommandation [PRECISION] ou deferer a ISSUE-103, puis re-review
+Developer — Prendre prochaine Issue: ISSUE-095 IN REVIEW ou prochain PDR WAITING.
 **Fichiers modifies** (cette session) :
-- .claude/progress.md
+- platform-deployment/examples/README.md cree
+- .claude/progress.md (ISSUE-102 DONE, PDR-024 DONE)
 - .claude/session-state.md
 **Blocages** : aucun
 
@@ -34,6 +35,9 @@ Developer — Appliquer recommandation [PRECISION] ou deferer a ISSUE-103, puis 
 | Date | Agent | Issue | Action | Resultat |
 |---|---|---|---|---|
 | 2026-06-22 | Developer | ISSUE-100 | Scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) + application-examples-local.yaml. 4 parse tests OK, 188 total OK, BUILD SUCCESS, 0 inline URL, agentTags OK. | IN REVIEW |
+| 2026-06-22 | Reviewer | ISSUE-102 | APPROVED: 0 bloquant, 0 recommandation. README conforme spec, PDR-024 DONE. | DONE |
+| 2026-06-22 | Developer | ISSUE-102 | README.md 162 lignes dans platform-deployment/examples — guide demarrage IoT. | IN REVIEW |
+| 2026-06-22 | Developer | ISSUE-091 | TransportConfiguration Spring Kafka autoconfiguration: KafkaTransportBeans (+transportContainerFactory +kafkaExecutionTransport bean), TransportConfiguration (bean retire), KafkaExecutionTransport (ConcurrentKafkaListenerContainerFactory), KafkaConsumerManager supprime. 225 tests OK, BUILD SUCCESS. | IN REVIEW |
 | 2026-06-22 | Developer | ISSUE-101 | Scenarios YAML device-api (LOCAL + DISTRIBUTED), application-examples-local.yaml (datasources.sut-db + device-api), seed-sut-devices.sql, 4 parse tests OK. | IN REVIEW |
 | 2026-06-22 | Developer | ISSUE-100 | Scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED), application-examples-local.yaml. 4 fichiers YAML + 2 tests. 186 tests OK, BUILD SUCCESS. | IN REVIEW |
 | 2026-06-20 | Developer | ISSUE-077 | platform-app: pom.xml (11 modules) + @SpringBootApplication + @Modulith + 4 tests, fat JAR 131 MB. | IN REVIEW |
