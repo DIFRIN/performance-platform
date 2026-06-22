@@ -42,7 +42,7 @@ PROGRESS="$WORKSPACE/progress.md"
 if [[ -n "$ISSUE_ARG" ]]; then
     ISSUE_ID="$ISSUE_ARG"
     # Trouver le titre depuis progress.md
-    ISSUE_LINE=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" | grep -P "^\| ${ISSUE_ID} \|")
+    ISSUE_LINE=$(sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS" | grep -P "^\| ${ISSUE_ID} \|")
     if [[ -z "$ISSUE_LINE" ]]; then
         echo "❌ ${ISSUE_ID} not found in progress.md"
         exit 1
@@ -75,7 +75,7 @@ else
 fi
 
 # ── Mettre à jour progress.md ──────────────────────────────────────────────────
-sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | BLOCKED |/| ${ISSUE_ID} | ${TITLE} | ${NEW_STATUS} |/}" "$PROGRESS"
+sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | BLOCKED |/| ${ISSUE_ID} | ${TITLE} | ${NEW_STATUS} |/}" "$PROGRESS"
 echo "| $(date -I) | ${ISSUE_ID} | BLOCKED → ${NEW_STATUS} | issue-unblock.sh |" >> "$PROGRESS"
 
 # ── Mettre à jour current-issue.md si présent ──────────────────────────────────
@@ -83,8 +83,8 @@ if [[ -f "$CURRENT" ]]; then
     CURRENT_ISSUE=$(grep -oP '^# \KISSUE-\d+' "$CURRENT" 2>/dev/null || echo "")
     if [[ "$CURRENT_ISSUE" == "$ISSUE_ID" ]]; then
         sed -i "s/\*\*Status\*\*: BLOCKED/**Status**: ${NEW_STATUS}/" "$CURRENT"
-        # Retirer le bloc "Blocked"
-        sed -i '/^## Blocked -/,/^\*\*Reason\*\*:/d' "$CURRENT"
+        # Retirer le bloc "Blocked" (em-dash U+2014 from issue-block.sh — match prefix only)
+        sed -i '/^## Blocked/,/^\*\*Reason\*\*:/d' "$CURRENT"
         echo "   current-issue.md updated"
     fi
 fi

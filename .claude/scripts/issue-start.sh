@@ -46,7 +46,7 @@ done
 get_deps() {
     local issue_id="$1"
     # Extrait la colonne Dependencies (5ème colonne) de la table Issues
-    sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+    sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS" \
         | grep -P "^\| ${issue_id} \|" \
         | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $6); print $6}' \
         | tr -d ' '
@@ -56,7 +56,7 @@ get_deps() {
 is_status_in_table() {
     local issue_id="$1"
     local expected_status="$2"
-    sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+    sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS" \
         | grep -qP "^\| ${issue_id} \| .* \| ${expected_status} \|"
 }
 
@@ -87,7 +87,7 @@ deps_are_done() {
 find_next_issue() {
     # Extraire la table Issues une seule fois
     local table
-    table=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS")
+    table=$(sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS")
 
     # Priorité 1 : CHANGES_REQUESTED (reprise après feedback Reviewer)
     local changed
@@ -117,6 +117,15 @@ extract_metadata() {
     TITLE=$(grep '^# ' "$issue_file" | head -1 | sed -E 's/^# [A-Z0-9-]+[[:space:]]*[-–—:][[:space:]]*//')
     PDR=$(grep -oP '\*\*PDR\*\*[[:space:]]*:[[:space:]]*\K[^\s`]+' "$issue_file" | head -1 | tr -d '`' || echo "UNKNOWN")
     MODULE=$(grep -oP 'platform-[a-z-]+' "$issue_file" | head -1 || echo "UNKNOWN")
+}
+
+# ── Helper: escape a string for sed s/// replacement (RHS) ────────────────────────
+escape_sed_rhs() {
+    local s="$1"
+    s="${s//\\/\\\\}"   # escape backslash first
+    s="${s//&/\\&}"     # escape ampersand (special in replacement)
+    s="${s//\//\\/}"    # escape forward slash (delimiter)
+    echo "$s"
 }
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -162,7 +171,8 @@ if [[ -f "$CURRENT" ]]; then
             sed -i 's/\*\*Status\*\*: CHANGES_REQUESTED/**Status**: IN_PROGRESS/' "$CURRENT"
 
             # ── Marquer IN_PROGRESS dans progress.md ───────────────────────
-            sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | CHANGES_REQUESTED |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/}" "$PROGRESS"
+            TITLE_ESC=$(escape_sed_rhs "$TITLE")
+            sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | CHANGES_REQUESTED |/| ${ISSUE_ID} | ${TITLE_ESC} | IN_PROGRESS |/}" "$PROGRESS"
             echo "| $(date -I) | ${ISSUE_ID} | CHANGES_REQUESTED → IN_PROGRESS (resume) | issue-start.sh |" >> "$PROGRESS"
 
             echo "♻️  ${ISSUE_ID} CHANGES_REQUESTED → IN_PROGRESS"
@@ -213,7 +223,7 @@ if [[ -n "$ISSUE_ARG" ]]; then
     fi
     # Vérifier le statut
     if ! is_status_in_table "$ISSUE_ID" "WAITING" && ! is_status_in_table "$ISSUE_ID" "CHANGES_REQUESTED"; then
-        ACTUAL_STATUS=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+        ACTUAL_STATUS=$(sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS" \
             | grep -P "^\| ${ISSUE_ID} \|" \
             | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4); print $4}')
         echo "❌ ${ISSUE_ID} has status '${ACTUAL_STATUS}' (expected WAITING or CHANGES_REQUESTED)"
@@ -244,6 +254,15 @@ else
             echo "Run \`progress-status.sh\` to verify."
         } > "$CURRENT"
         exit 0
+    fi
+
+    # Safety: if auto-detect returned CHANGES_REQUESTED but current-issue.md is
+    # missing, the Reviewer feedback was lost. Refuse to create a clean slate.
+    if is_status_in_table "$ISSUE_ID" "CHANGES_REQUESTED"; then
+        echo "❌ ${ISSUE_ID} is CHANGES_REQUESTED but current-issue.md is missing."
+        echo "   Reviewer feedback would be destroyed. Restore current-issue.md or"
+        echo "   manually resolve with: issue-review.sh APPROVED"
+        exit 1
     fi
 fi
 
@@ -276,7 +295,7 @@ if [[ "$DRY_RUN" == true ]]; then
             if is_status_in_table "$dep" "DONE"; then
                 echo "     ✅ ${dep} DONE"
             else
-                DEP_STAT=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+                DEP_STAT=$(sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS" \
                     | grep -P "^\| ${dep} \|" \
                     | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4); print $4}')
                 echo "     ❌ ${dep} ${DEP_STAT:-UNKNOWN}"
@@ -289,15 +308,23 @@ if [[ "$DRY_RUN" == true ]]; then
 fi
 
 # ── Marquer IN_PROGRESS dans progress.md ────────────────────────────────────
-OLD_STATUS=$(sed -n '/^## Issues$/,/^## PDRs$/p' "$PROGRESS" \
+OLD_STATUS=$(sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS" \
     | grep -P "^\| ${ISSUE_ID} \|" \
     | awk -F'|' '{gsub(/^[[:space:]]+|[[:space:]]+$/, "", $4); print $4}')
-sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/}" "$PROGRESS"
+
+# Guard: if OLD_STATUS is empty, the sed pattern would be malformed
+if [[ -z "$OLD_STATUS" ]]; then
+    echo "❌ Could not extract status for ${ISSUE_ID} from progress.md"
+    echo "   Check the Issues table row format."
+    exit 1
+fi
+
+TITLE_ESC=$(escape_sed_rhs "$TITLE")
+sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE_ESC} | IN_PROGRESS |/}" "$PROGRESS"
 echo "| $(date -I) | ${ISSUE_ID} | ${OLD_STATUS} → IN_PROGRESS | issue-start.sh |" >> "$PROGRESS"
 
-# ── Créer current-issue.md (S1: skip frontmatter, body only after ---) ──────
-# awk: ignore everything until the first ---, then print the rest
-BODY=$(awk 'found {print} /^---$/ {found=1}' "$ISSUE_FILE")
+# ── Créer current-issue.md (pointer — body stays in issues/ISSUE-XXX.md) ────
+ISSUE_FILE_REL="issues/$(basename "$ISSUE_FILE")"
 
 cat > "$CURRENT" << INNEREOF
 # ${ISSUE_ID}: ${TITLE}
@@ -305,8 +332,9 @@ cat > "$CURRENT" << INNEREOF
 **PDR**: ${PDR}
 **Module**: ${MODULE}
 **Started**: $(date -Iminutes)
+**IssueFile**: ${ISSUE_FILE_REL}
 
-${BODY}
+> 📄 Full specification: \`.claude/workspace/${ISSUE_FILE_REL}\`
 
 ## Reviewer Feedback
 (None yet)
