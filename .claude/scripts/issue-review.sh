@@ -32,12 +32,14 @@ TITLE=$(grep '^# ' "$CURRENT" | sed 's/^# [A-Z0-9-]*: //')
 
 # ── Update source file **Statut** ────────────────────────────────────────────
 SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
+if [[ -z "$SOURCE_FILE" || ! -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
+    echo "❌ current-issue.md missing or invalid **IssueFile** — old format unsupported"
+    exit 1
+fi
 
 if [[ "$VERDICT" == "APPROVED" ]]; then
     # ── IN_REVIEW → APPROVED ─────────────────────────────────────────────────
-    if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
-        sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : APPROVED/" "${WORKSPACE}/${SOURCE_FILE}"
-    fi
+    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : APPROVED/" "${WORKSPACE}/${SOURCE_FILE}"
     sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | IN_REVIEW |/| ${ISSUE_ID} | ${TITLE} | APPROVED |/}" "$PROGRESS"
     sed -i 's/\*\*Status\*\*: IN_REVIEW/**Status**: APPROVED/' "$CURRENT"
     echo "| $(date -I) | ${ISSUE_ID} | IN_REVIEW → APPROVED | Reviewer approved |" >> "$PROGRESS"
@@ -45,9 +47,7 @@ if [[ "$VERDICT" == "APPROVED" ]]; then
 
 elif [[ "$VERDICT" == "CHANGES_REQUESTED" ]]; then
     # ── IN_REVIEW → CHANGES_REQUESTED ────────────────────────────────────────
-    if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
-        sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : CHANGES_REQUESTED/" "${WORKSPACE}/${SOURCE_FILE}"
-    fi
+    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : CHANGES_REQUESTED/" "${WORKSPACE}/${SOURCE_FILE}"
     sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | IN_REVIEW |/| ${ISSUE_ID} | ${TITLE} | CHANGES_REQUESTED |/}" "$PROGRESS"
     sed -i 's/\*\*Status\*\*: IN_REVIEW/**Status**: CHANGES_REQUESTED/' "$CURRENT"
 

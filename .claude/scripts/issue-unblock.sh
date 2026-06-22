@@ -75,15 +75,18 @@ else
 fi
 
 # ── Update source file **Statut** ────────────────────────────────────────────
-SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
-if [[ -z "$SOURCE_FILE" ]]; then
-    # Fallback: find by glob
-    SOURCE_FILE_REL=$(ls "$WORKSPACE/issues/${ISSUE_ID}"*.md 2>/dev/null | head -1)
-    SOURCE_FILE="${SOURCE_FILE_REL#$WORKSPACE/}"
+# If using current-issue.md, read **IssueFile**; if using explicit arg, find by glob
+if [[ -f "$CURRENT" ]]; then
+    SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
+else
+    SOURCE_FILE=$(ls "$WORKSPACE/issues/${ISSUE_ID}"*.md 2>/dev/null | head -1)
+    SOURCE_FILE="${SOURCE_FILE#$WORKSPACE/}"
 fi
-if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
-    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : ${NEW_STATUS}/" "${WORKSPACE}/${SOURCE_FILE}"
+if [[ -z "$SOURCE_FILE" || ! -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
+    echo "❌ Could not find source file for ${ISSUE_ID}"
+    exit 1
 fi
+sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : ${NEW_STATUS}/" "${WORKSPACE}/${SOURCE_FILE}"
 
 # ── Mettre à jour progress.md ──────────────────────────────────────────────────
 sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | BLOCKED |/| ${ISSUE_ID} | ${TITLE} | ${NEW_STATUS} |/}" "$PROGRESS"

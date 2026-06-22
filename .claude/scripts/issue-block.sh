@@ -32,9 +32,11 @@ OLD_STATUS=$(grep -oP '\*\*Status\*\*: \K\w+' "$CURRENT")
 
 # ── Update source file **Statut** ────────────────────────────────────────────
 SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
-if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
-    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : BLOCKED/" "${WORKSPACE}/${SOURCE_FILE}"
+if [[ -z "$SOURCE_FILE" || ! -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
+    echo "❌ current-issue.md missing or invalid **IssueFile** — old format unsupported"
+    exit 1
 fi
+sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : BLOCKED/" "${WORKSPACE}/${SOURCE_FILE}"
 
 # ── Marquer BLOCKED (scoped ## Issues → ## PDRs) ─────────────────────────────
 sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | ${OLD_STATUS} |/| ${ISSUE_ID} | ${TITLE} | BLOCKED |/}" "$PROGRESS"

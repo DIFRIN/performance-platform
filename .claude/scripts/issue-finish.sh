@@ -32,9 +32,11 @@ fi
 
 # ── Update source file **Statut** ────────────────────────────────────────────
 SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
-if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
-    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : IN_REVIEW/" "${WORKSPACE}/${SOURCE_FILE}"
+if [[ -z "$SOURCE_FILE" || ! -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
+    echo "❌ current-issue.md missing or invalid **IssueFile** — old format unsupported"
+    exit 1
 fi
+sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : IN_REVIEW/" "${WORKSPACE}/${SOURCE_FILE}"
 
 # ── Marquer IN_REVIEW dans progress.md (scoped ## Issues → ## PDRs) ──────────
 sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | ${CURRENT_STATUS} |/| ${ISSUE_ID} | ${TITLE} | IN_REVIEW |/}" "$PROGRESS"

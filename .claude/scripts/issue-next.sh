@@ -31,9 +31,11 @@ fi
 
 # ── Update source file **Statut** → DONE ────────────────────────────────────
 SOURCE_FILE=$(grep -oP '\*\*IssueFile\*\*: \K.*' "$CURRENT" 2>/dev/null || echo "")
-if [[ -n "$SOURCE_FILE" && -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
-    sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : DONE/" "${WORKSPACE}/${SOURCE_FILE}"
+if [[ -z "$SOURCE_FILE" || ! -f "${WORKSPACE}/${SOURCE_FILE}" ]]; then
+    echo "❌ current-issue.md missing or invalid **IssueFile** — old format unsupported"
+    exit 1
 fi
+sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : DONE/" "${WORKSPACE}/${SOURCE_FILE}"
 
 # ── APPROVED → DONE in progress.md ──────────────────────────────────────────
 sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | APPROVED |/| ${ISSUE_ID} | ${TITLE} | DONE |/}" "$PROGRESS"
