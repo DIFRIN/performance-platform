@@ -123,8 +123,8 @@
 | ISSUE-109 | Delete legacy device-check-perf.yaml scenario | WAITING | PDR-025 | ISSUE-104 |
 | ISSUE-110 | Clean device entries from interfaces-registry | WAITING | PDR-025 | ISSUE-104,109 |
 | ISSUE-111 | AgentProperties @ConfigurationProperties record | DONE | PDR-026 | — |
-| ISSUE-112 | Create AgentRuntimeConfiguration @Configuration | APPROVED | PDR-026 | ISSUE-111 |
-| ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | WAITING | PDR-026 | ISSUE-112 |
+| ISSUE-112 | Create AgentRuntimeConfiguration @Configuration | DONE | PDR-026 | ISSUE-111 |
+| ISSUE-113 | Wire LocalAgent with ALL task names from TaskExecutorRegistry | IN_PROGRESS | PDR-026 | ISSUE-112 |
 | ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | WAITING | PDR-026 | ISSUE-112 |
 | ISSUE-115 | Add agent.supported-tasks to application-agent.yaml | WAITING | PDR-026 | ISSUE-111 |
 | ISSUE-116 | Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files | WAITING | PDR-026 | ISSUE-111 |
@@ -542,3 +542,6 @@
 | 2026-06-22 | ISSUE-112 | IN_REVIEW → CHANGES_REQUESTED | Issue status is IN_PROGRESS, not IN_REVIEW — run issue-finish.sh first to transition. The committed script changes (ff59663) are infrastructure improvements, not an Issue implementation under review. |
 | 2026-06-22 | ISSUE-112 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-112 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-112 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-112 | APPROVED → DONE | issue-next.sh |
+| 2026-06-22 | ISSUE-113 | WAITING → IN_PROGRESS | issue-start.sh |
