@@ -384,7 +384,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
      * (legacy path). Logs a WARN to encourage migration to named clusters.
      */
     private ConsumerFactory<String, String> createEphemeralConsumerFactory(String bootstrapServers, String groupId) {
-        Map<String, Object> config = new HashMap<>();
+        var config = new HashMap<String, Object>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);

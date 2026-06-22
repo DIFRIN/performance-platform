@@ -50,7 +50,7 @@ public final class PartialContextBuilder {
             return PartialExecutionContext.empty(fullContext.executionId(), fullContext.scenarioId());
         }
 
-        Map<String, Map<String, Object>> partialStore = new HashMap<>(requiredContextKeys.size());
+        var partialStore = new HashMap<String, Map<String, Object>>(requiredContextKeys.size());
 
         for (String key : requiredContextKeys) {
             Map<String, TaskResult> agentResults = fullContext.store().get(key);
@@ -58,7 +58,7 @@ public final class PartialContextBuilder {
                 continue;
             }
 
-            Map<String, Object> extractedOutputs = new HashMap<>(agentResults.size());
+            var extractedOutputs = new HashMap<String, Object>(agentResults.size());
             for (var entry : agentResults.entrySet()) {
                 TaskResult result = entry.getValue();
                 if (result.outputs() != null && !result.outputs().isEmpty()) {

@@ -47,14 +47,14 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder {
         Map<TaskId, Integer> dagLevels = DagLevelCalculator.compute(stepDefs);
 
         // 2. Creation des ExecutionStep
-        List<ExecutionStep> allSteps = new ArrayList<>(stepDefs.size());
+        var allSteps = new ArrayList<ExecutionStep>(stepDefs.size());
         for (StepDefinition stepDef : stepDefs) {
             int dagLevel = dagLevels.getOrDefault(stepDef.id(), 0);
             Set<String> requiredContextKeys = stepDef.requiredContexts() == null
                     ? Set.of()
                     : Set.copyOf(stepDef.requiredContexts());
 
-            ExecutionStep execStep = new ExecutionStep(
+            var execStep = new ExecutionStep(
                     stepDef,
                     stepDef.dependsOn(),
                     dagLevel,
@@ -64,9 +64,9 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder {
         }
 
         // 3. Separation par phase
-        List<ExecutionStep> preparationSteps = new ArrayList<>();
-        List<ExecutionStep> injectionSteps = new ArrayList<>();
-        List<ExecutionStep> assertionSteps = new ArrayList<>();
+        var preparationSteps = new ArrayList<ExecutionStep>();
+        var injectionSteps = new ArrayList<ExecutionStep>();
+        var assertionSteps = new ArrayList<ExecutionStep>();
 
         for (ExecutionStep step : allSteps) {
             switch (step.step().phase()) {

@@ -139,7 +139,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
         String description = String.format("%s: file %s %s",
                 exists ? "PASSED" : "FAILED", filePath, fileState);
 
-        Evidence evidence = new Evidence(
+        var evidence = new Evidence(
                 fileState, "exists", AssertionOperator.EQ,
                 null, Map.copyOf(params));
 
@@ -157,7 +157,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
         String description = String.format("%s: file %s %s",
                 exists ? "FAILED" : "PASSED", filePath, fileState);
 
-        Evidence evidence = new Evidence(
+        var evidence = new Evidence(
                 fileState, "does not exist", AssertionOperator.EQ,
                 null, Map.copyOf(params));
 
@@ -217,7 +217,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
                 expectedHex.substring(0, 8) + "...",
                 match ? "matches" : "mismatch");
 
-        Evidence evidence = new Evidence(
+        var evidence = new Evidence(
                 "sha256:" + actualHex,
                 checksumParam,
                 AssertionOperator.EQ,
@@ -267,7 +267,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
                 passed ? "PASSED" : "FAILED", actualSize,
                 operatorStr, (long) sizeBytes);
 
-        Evidence evidence = new Evidence(
+        var evidence = new Evidence(
                 (double) actualSize,
                 sizeBytes,
                 operator,

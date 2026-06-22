@@ -152,7 +152,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
             config.usingFilesUnderDirectory(mappingsPath);
         }
 
-        WireMockServer server = new WireMockServer(config);
+        var server = new WireMockServer(config);
 
         log.info("action=mock_server_start embedded=true port={} mappingsPath={} stepId={}",
                 port, mappingsPath, step.id().value());

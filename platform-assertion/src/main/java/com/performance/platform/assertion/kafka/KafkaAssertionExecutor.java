@@ -132,14 +132,14 @@ public class KafkaAssertionExecutor implements AssertionExecutor {
             boolean passed = operator.evaluate(actualValue, expectedValue);
 
             // 7. Construire l'evidence
-            Map<String, Object> details = new HashMap<>();
+            var details = new HashMap<String, Object>();
             details.put("metric", metricName);
             details.put("outputKey", outputKey);
             details.put("refTaskId", refTaskId);
             if (topic != null) details.put("topic", topic);
             if (groupId != null) details.put("groupId", groupId);
 
-            Evidence evidence = new Evidence(
+            var evidence = new Evidence(
                     actualValue,
                     expectedValue,
                     operator,

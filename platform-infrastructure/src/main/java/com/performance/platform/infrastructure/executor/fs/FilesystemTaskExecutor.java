@@ -251,7 +251,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
 
     /** Deletes a file, or recursively deletes a directory tree. */
     private static int deleteRecursively(Path path) throws IOException {
-        AtomicInteger count = new AtomicInteger();
+        var count = new AtomicInteger();
         Files.walkFileTree(path, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
@@ -274,7 +274,7 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
 
     /** Deletes all contents of a directory without removing the directory itself. */
     private static int deleteDirectoryContents(Path dir) throws IOException {
-        AtomicInteger count = new AtomicInteger();
+        var count = new AtomicInteger();
         try (var stream = Files.list(dir)) {
             stream.forEach(entry -> {
                 try {

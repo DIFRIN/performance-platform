@@ -30,7 +30,7 @@ public class RuntimeConfigEnvironmentPostProcessor implements EnvironmentPostPro
     @Override
     public void postProcessEnvironment(ConfigurableEnvironment environment,
                                         SpringApplication application) {
-        Map<String, Object> overrides = new HashMap<>();
+        var overrides = new HashMap<String, Object>();
 
         // RUNTIME_MODE env var → runtime.mode property
         String runtimeMode = System.getenv("RUNTIME_MODE");

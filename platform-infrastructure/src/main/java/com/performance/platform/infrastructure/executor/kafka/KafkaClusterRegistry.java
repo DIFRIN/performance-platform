@@ -49,7 +49,7 @@ public class KafkaClusterRegistry {
         if (cluster == null) {
             throw new IllegalArgumentException("Unknown Kafka cluster: " + clusterName);
         }
-        Map<String, Object> config = new HashMap<>();
+        var config = new HashMap<String, Object>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers());
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -64,7 +64,7 @@ public class KafkaClusterRegistry {
         if (cluster == null) {
             throw new IllegalArgumentException("Unknown Kafka cluster: " + clusterName);
         }
-        Map<String, Object> config = new HashMap<>();
+        var config = new HashMap<String, Object>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers());
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);

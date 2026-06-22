@@ -140,7 +140,7 @@ public class DevicePopulationTaskExecutor implements TaskExecutor, StatefulResou
         try {
             log.info("action=device_purge_start table={} stepId={}", table, step.id().value());
 
-            JdbcTemplate jdbc = new JdbcTemplate(ds);
+            var jdbc = new JdbcTemplate(ds);
             int rowsAffected = jdbc.update(sql);
 
             Duration elapsed = Duration.ofNanos(System.nanoTime() - startNanos);

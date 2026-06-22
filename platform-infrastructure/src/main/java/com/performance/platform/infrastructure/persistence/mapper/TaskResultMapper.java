@@ -56,7 +56,7 @@ public class TaskResultMapper {
         Objects.requireNonNull(agentId, "agentId required");
         Objects.requireNonNull(result, "result required");
 
-        TaskResultId id = new TaskResultId(
+        var id = new TaskResultId(
                 executionId.value(),
                 taskId.value(),
                 agentId.value());
@@ -117,10 +117,10 @@ public class TaskResultMapper {
      * (ISO-8601 string), and {@code errorMessage}.
      */
     Map<String, Object> buildOutputsWithMetadata(TaskResult result) {
-        Map<String, Object> outputs = new LinkedHashMap<>();
+        var outputs = new LinkedHashMap<String, Object>();
         outputs.putAll(result.outputs());
 
-        Map<String, Object> meta = new LinkedHashMap<>();
+        var meta = new LinkedHashMap<String, Object>();
         meta.put("taskName", result.taskName());
         meta.put("duration", result.duration().toString());
         meta.put("errorMessage", result.errorMessage());
@@ -160,7 +160,7 @@ public class TaskResultMapper {
      * Returns a copy of outputs without the metadata entry.
      */
     Map<String, Object> stripMetadata(Map<String, Object> outputs) {
-        Map<String, Object> clean = new LinkedHashMap<>(outputs);
+        var clean = new LinkedHashMap<String, Object>(outputs);
         clean.remove(META_KEY);
         return Map.copyOf(clean);
     }

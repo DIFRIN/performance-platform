@@ -238,7 +238,7 @@ public class GitReportPublisher implements ReportPublisher {
     private void runGit(Path workDir, String... command)
             throws PublicationException, InterruptedException {
         try {
-            ProcessBuilder pb = new ProcessBuilder(command)
+            var pb = new ProcessBuilder(command)
                     .directory(workDir.toFile())
                     .redirectErrorStream(true);
 

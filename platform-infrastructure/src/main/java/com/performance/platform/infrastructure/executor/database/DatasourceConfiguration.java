@@ -28,13 +28,13 @@ public class DatasourceConfiguration {
 
     @Bean
     public DatasourceProvider datasourceProvider(PlatformDatasourcesProperties props) {
-        DatasourceProvider provider = new DatasourceProvider();
+        var provider = new DatasourceProvider();
         if (props.datasources() == null || props.datasources().isEmpty()) {
             log.warn("action=no_datasource_configured prefix=platform.datasources");
             return provider;
         }
         props.datasources().forEach((name, ds) -> {
-            HikariDataSource hikari = new HikariDataSource();
+            var hikari = new HikariDataSource();
             hikari.setPoolName("hikari-" + name);
             hikari.setJdbcUrl(ds.url());
             hikari.setUsername(ds.username());

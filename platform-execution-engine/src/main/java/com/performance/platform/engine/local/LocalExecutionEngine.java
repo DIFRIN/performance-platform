@@ -136,7 +136,7 @@ public class LocalExecutionEngine implements ExecutionEngine {
                 executionId.value(), scenarioId.value(), scenario.name());
 
         ExecutionState state = createInitialState(executionId, scenarioId, plan.initialContext());
-        AtomicBoolean cancelled = new AtomicBoolean(false);
+        var cancelled = new AtomicBoolean(false);
         activeExecutions.put(executionId.value(), state);
         cancelFlags.put(executionId.value(), cancelled);
 
