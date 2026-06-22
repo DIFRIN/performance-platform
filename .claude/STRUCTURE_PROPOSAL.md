@@ -47,10 +47,7 @@ performance-platform/
 │   │   │   ├── 00-overview.md
 │   │   │   ├── 01-scenario-dsl.md
 │   │   │   └── ...
-│   │   └── skills/                         # patterns réutilisables
-│   │       ├── precision-patterns.md
-│   │       ├── hexagonal-architecture.md
-│   │       └── ...
+│   │   └── skills/                         # patterns réutilisables (gardé à la racine .claude/)
 │   │
 │   ├── workspace/                          # 🆕 TOUT l'état transitoire (fusion context/ + tracking/)
 │   │   ├── current-issue.md               # 🔑 SEUL fichier lu par les agents dev/reviewer
@@ -66,7 +63,7 @@ performance-platform/
 │   │       └── ISSUE-XXX.md
 │   │
 │   ├── scripts/                           # scripts (nouveaux + existants)
-│   │   ├── issue-start.sh                 # 🆕 TODO→IN_PROGRESS, crée current-issue.md
+│   │   ├── issue-start.sh                 # 🆕 WAITING→IN_PROGRESS, crée current-issue.md
 │   │   ├── issue-finish.sh                # 🆕 IN_PROGRESS→IN_REVIEW
 │   │   ├── issue-review.sh               # 🆕 enregistre verdict reviewer
 │   │   ├── issue-next.sh                  # 🆕 APPROVED→DONE → start next
@@ -164,7 +161,7 @@ public interface TaskExecutor {
 
 ### 3.0 Comportement clé : `issue-start.sh` auto-détecte
 
-**Si appelé SANS argument** → trouve automatiquement la prochaine Issue TODO.
+**Si appelé SANS argument** → trouve automatiquement la prochaine Issue WAITING.
 **Si appelé AVEC argument** → démarre l'Issue spécifiée.
 
 C'est le **Developer agent** qui appelle `issue-start.sh` (pas l'humain). Comme ça :
@@ -179,9 +176,9 @@ C'est le **Developer agent** qui appelle `issue-start.sh` (pas l'humain). Comme 
 ```bash
 #!/usr/bin/env bash
 # Usage: issue-start.sh [ISSUE-XXX]
-#   Sans argument : trouve la 1ère TODO → IN_PROGRESS, crée current-issue.md
+#   Sans argument : trouve la 1ère WAITING → IN_PROGRESS, crée current-issue.md
 #   Avec argument  : démarre l'Issue spécifiée
-# Action: TODO → IN_PROGRESS dans progress.md, crée current-issue.md avec contenu inline
+# Action: WAITING → IN_PROGRESS dans progress.md, crée current-issue.md avec contenu inline
 
 set -euo pipefail
 
@@ -193,15 +190,15 @@ PROGRESS="$WORKSPACE/progress.md"
 if [[ $# -ge 1 ]]; then
     ISSUE_ID="$1"
 else
-    # Auto-détection : première TODO dans progress.md
+    # Auto-détection : première WAITING dans progress.md
     ISSUE_ID=$(grep -oP '^\| \KISSUE-\d+' "$PROGRESS" \
                | while read id; do
-                   grep -cP "^\| ${id} .*\| TODO \|" "$PROGRESS" >/dev/null 2>&1 \
+                   grep -cP "^\| ${id} .*\| WAITING \|" "$PROGRESS" >/dev/null 2>&1 \
                      && echo "$id" \
                      && break
                  done)
     if [[ -z "$ISSUE_ID" ]]; then
-        echo "✅ No TODO issues remaining."
+        echo "✅ No WAITING issues remaining."
         echo "# No active issue — all work complete" > "$WORKSPACE/current-issue.md"
         exit 0
     fi
@@ -220,7 +217,7 @@ PDR=$(grep -oP 'PDR-\d+' "$ISSUE_FILE" | head -1)
 MODULE=$(grep -oP 'platform-[a-z-]+' "$ISSUE_FILE" | head -1)
 
 # ── Marquer IN_PROGRESS dans progress.md (sed ciblé table Issues) ────────────
-sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | TODO |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/}" "$PROGRESS"
+sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | WAITING |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/}" "$PROGRESS"
 
 # ── Créer current-issue.md ───────────────────────────────────────────────────
 cat > "$WORKSPACE/current-issue.md" << INNEREOF
@@ -367,13 +364,13 @@ exec "$(dirname "${BASH_SOURCE[0]}")/issue-start.sh"
 ```bash
 #!/usr/bin/env bash
 # Usage: progress-status.sh
-# Output 1 ligne: "DONE:42 | APPROVED:1 | REVIEW:2 | PROGRESS:1 | CHANGES:0 | TODO:58 | WAIT:0 | BLOCKED:0"
+# Output 1 ligne: "DONE:42 | APPROVED:1 | REVIEW:2 | PROGRESS:1 | CHANGES:0 | WAITING:58 | WAIT:0 | BLOCKED:0"
 # Utile pour les agents qui veulent savoir où on en est sans charger progress.md
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROGRESS="$ROOT/workspace/progress.md"
 
-for status in DONE APPROVED IN_REVIEW IN_PROGRESS CHANGES_REQUESTED TODO WAITING BLOCKED; do
+for status in DONE APPROVED IN_REVIEW IN_PROGRESS CHANGES_REQUESTED WAITING BLOCKED; do
     count=$(grep -cP "^\| ISSUE-\d+ \| .* \| ${status} \|" "$PROGRESS" 2>/dev/null || echo 0)
     printf "${status}:%s " "$count"
 done
@@ -391,7 +388,7 @@ echo
 
 ### Démarrage
 1. Vérifier si `.claude/workspace/current-issue.md` existe :
-   - **NON** → `bash .claude/scripts/issue-start.sh` (auto-détecte la 1ère TODO)
+   - **NON** → `bash .claude/scripts/issue-start.sh` (auto-détecte la 1ère WAITING)
    - **OUI** → lire le fichier
      - Status IN_PROGRESS → reprendre
      - Status CHANGES_REQUESTED → appliquer les feedbacks de la section "Reviewer Feedback"
@@ -439,7 +436,7 @@ echo
 ## Issues
 | ID | Title | Status | PDR | Dependencies |
 |----|-------|--------|-----|--------------|
-| ISSUE-001 | Domain Identifiers | DONE | PDR-001 | - |
+| ISSUE-001 | Domain Identifiers | WAITING | PDR-001 | - |
 | ISSUE-002 | Domain Enums | DONE | PDR-001 | ISSUE-001 |
 ...
 
@@ -452,7 +449,7 @@ echo
 ## History
 | Date | Issue | Transition | Note |
 |------|-------|------------|------|
-| 2026-06-22 | ISSUE-042 | TODO → IN_PROGRESS | issue-start.sh |
+| 2026-06-22 | ISSUE-042 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-22 | ISSUE-042 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-042 | IN_REVIEW → APPROVED | issue-review.sh |
 | 2026-06-22 | ISSUE-042 | APPROVED → DONE | issue-next.sh |
@@ -761,7 +758,53 @@ PROGRESS_FILE="$PROJECT_ROOT/.claude/progress.md"
 
 ---
 
-## 9. Impact
+## 9. Contrat progress.md — Format Explicite (LOAD-BEARING)
+
+> **Ceci est la dépendance implicite la plus critique du système.**
+> Tous les scripts `issue-*.sh` et `progress-status.sh` dépendent de ce format.
+> Si le format change sans mettre à jour les scripts, le système casse silencieusement.
+
+### Format de la table Issues
+
+```
+## Issues
+| ID | Title | Status | PDR | Dependencies |
+|----|-------|--------|-----|--------------|
+| ISSUE-001 | Mon Titre | WAITING | PDR-001 | - |
+| ISSUE-002 | Autre Titre | DONE | PDR-001 | ISSUE-001 |
+```
+
+### Statuts valides (enum implicite)
+
+```
+WAITING → IN_PROGRESS → IN_REVIEW → APPROVED → DONE
+                    ↓              ↓
+              CHANGES_REQUESTED   (rework cycle)
+```
+
+### Règles pour les scripts
+- `grep -oP '^\| \KISSUE-\d+'` — extrait les IDs depuis la 1ère colonne
+- `grep -cP "^\| ISSUE-\d+ \| .* \| ${STATUS} \|"` — compte par statut
+- `sed "/^## Issues$/,/^## PDRs$/{s/.../.../}"` — modifie UNIQUEMENT entre ces deux bornes
+- La section `## History` est **append-only** (`>>`)
+- Jamais de P0/P1/P2 dans la table Issues — les priorités sont dans les fichiers Issue
+- Les dépendances sont dans la colonne 5 (`| ISSUE-XXX, ISSUE-YYY`)
+
+### Format des headings Issue (pour extraction par `issue-start.sh`)
+
+```
+# ISSUE-XXX: Titre de l'Issue    ← FORMAT CANONIQUE (":" séparateur)
+# ISSUE-XXX — Titre alternatif   ← toléré (scripts acceptent "—" aussi)
+```
+
+Le script extrait avec :
+```bash
+TITLE=$(grep '^# ' "$ISSUE_FILE" | head -1 | sed -E 's/^# [A-Z0-9-]+[[:space:]]*[-–—:][[:space:]]*//')
+```
+
+---
+
+## 10. Impact
 
 | Métrique | Avant | Après |
 |----------|-------|-------|
@@ -795,7 +838,7 @@ PROGRESS_FILE="$PROJECT_ROOT/.claude/progress.md"
 1. Créer les 5 scripts dans `.claude/scripts/`
 2. `chmod +x` chaque script
 3. Tester `progress-status.sh` (lecture seule, safe)
-4. Tester `issue-start.sh ISSUE-XXX` sur une Issue TODO
+4. Tester `issue-start.sh ISSUE-XXX` sur une Issue WAITING
 5. Tester `issue-finish.sh` → `issue-review.sh APPROVED` → `issue-next.sh` en séquence
 6. Reformater `progress.md` au nouveau format sed-friendly
 
@@ -812,7 +855,7 @@ PROGRESS_FILE="$PROJECT_ROOT/.claude/progress.md"
 1. Créer `.claude/knowledge/`
 2. Déplacer `specifications/` → `knowledge/specs/`
 3. Déplacer `adr/` → `knowledge/adr/`
-4. Déplacer `skills/` → `knowledge/skills/`
+4. ~~Déplacer `skills/` → `knowledge/skills/`~~ **SKIPPED** — 2 fichiers seulement, le nesting supplémentaire ajoute de la longueur de chemin sans gain de clarté. Garder `skills/` à la racine `.claude/`.
 5. Déplacer `architecture.md`, `glossary.md`, `roadmap.md`, `constraints.md` → `knowledge/`
 6. Mettre à jour TOUS les liens internes dans les fichiers `.md`
 
@@ -821,6 +864,77 @@ PROGRESS_FILE="$PROJECT_ROOT/.claude/progress.md"
 2. `bash .claude/scripts/progress-status.sh` → vérifier l'état
 3. Lancer un `dev-loop.js` avec le nouveau flow
 4. Vérifier que tout le cycle Develop→Review→Fix→Next fonctionne
+
+---
+
+## 12. Corrections Post-Implémentation (Juin 2026)
+
+Écarts entre la proposition et l'implémentation réelle, corrigés après feedback.
+
+### 12.1 Format heading Issue — alignement scripts↔template
+
+**Problème** : Les scripts `issue-start.sh` attendaient `# ISSUE-XXX: Titre` (séparateur `:`)
+mais le template `ISSUE-000-template.md` et tous les fichiers Issue existants utilisaient
+`# ISSUE-XXX — Titre` (séparateur em-dash `—`).
+
+**Correction** :
+- Script : extraction modernisée avec `sed -E 's/^# [A-Z0-9-]+[[:space:]]*[-–—:][[:space:]]*//'` — supporte les deux formats
+- Template : format canonique `:` documenté, `—` toléré
+- Template : ajouté un commentaire expliquant les patterns d'extraction des scripts
+
+### 12.2 Sed scoping — protection contre les faux-positifs
+
+**Problème** : Les scripts utilisaient `sed -i "s/|ISSUE-XXX|.*|STATUS|/.../"` sans scope,
+risquant de matcher accidentellement des lignes de la section `## History`.
+
+**Correction** : Tous les scripts (`issue-start.sh`, `issue-finish.sh`, `issue-review.sh`,
+`issue-next.sh`, `issue-block.sh`) utilisent maintenant :
+```bash
+sed -i "/^## Issues$/,/^## PDRs$/{s/.../.../}" "$PROGRESS"
+```
+La section `## History` reste strictement append-only.
+
+### 12.3 progress-status.sh — scope à la table Issues
+
+**Problème** : Le script comptait toutes les occurrences dans le fichier entier,
+incluant potentiellement l'historique.
+
+**Correction** : Extraction préalable de la table Issues avec `sed -n '/^## Issues$/,/^## PDRs$/p'`,
+puis comptage dans cette extraction uniquement.
+
+### 12.4 Slash commands — scripts au lieu de tracking manuel
+
+**Problème** : `/done` décrivait des modifications manuelles de `progress.md`
+(3 fichiers à éditer) au lieu d'utiliser les scripts de transition.
+
+**Correction** : Les trois commandes (`/next`, `/done`, `/review`) référencent
+maintenant les scripts appropriés :
+- `/next` → `progress-status.sh` (zero-token status)
+- `/done` → `issue-finish.sh` (transition IN_PROGRESS → IN_REVIEW)
+- `/review` → `issue-review.sh APPROVED|CHANGES_REQUESTED` (verdict Reviewer)
+
+### 12.5 Éléments de la proposition NON implémentés
+
+| Élément | Raison |
+|---------|--------|
+| Renommer `skills/` → `knowledge/skills/` | 2 fichiers seulement — le nesting supplémentaire ajoute de la longueur de chemin sans gain |
+| Templates `task-breakdown.md` + `dependency-map.md` | Artéfacts de planification System Designer — archivés avec les Issues, pas utiles comme templates vides |
+| `dev-loop.md` comme fichier skill | `dev-loop.sh` est déjà auto-documenté — un fichier `.md` dupliqué ajoute de la dette de maintenance |
+| Fusionner `review-flow.md` dans le guide d'orchestration | Le détail précis des codes ARCH-XX/CRAFT-XX, règle des 2 cycles, format de review, comportement de commit — doit rester une référence séparée pour être trouvable |
+
+### 12.6 Fichiers modifiés dans cette correction
+
+- `.claude/scripts/issue-start.sh` — extraction heading + sed scoping + dépendance format documentée
+- `.claude/scripts/issue-finish.sh` — sed scoping
+- `.claude/scripts/issue-review.sh` — sed scoping
+- `.claude/scripts/issue-next.sh` — sed scoping
+- `.claude/scripts/issue-block.sh` — sed scoping
+- `.claude/scripts/progress-status.sh` — scope table Issues uniquement
+- `.claude/workspace/issues/ISSUE-000-template.md` — heading format canonique + documentation patterns scripts
+- `.claude/commands/next.md` — référence progress-status.sh
+- `.claude/commands/done.md` — référence issue-finish.sh
+- `.claude/commands/review.md` — référence issue-review.sh
+- `.claude/STRUCTURE_PROPOSAL.md` — ce fichier (section 9 Contrat, section 12 Corrections)
 
 ---
 
@@ -893,7 +1007,7 @@ PROGRESS_FILE="$PROJECT_ROOT/.claude/progress.md"
 │                                                              │
 │ 1. current-issue.md existe ?                                 │
 │    ├─ NON → bash .claude/scripts/issue-start.sh             │
-│    │        → grep TODO dans progress.md                     │
+│    │        → grep WAITING dans progress.md                     │
 │    │        → sed IN_PROGRESS                                │
 │    │        → crée current-issue.md (inline)                 │
 │    │        → lit current-issue.md                           │

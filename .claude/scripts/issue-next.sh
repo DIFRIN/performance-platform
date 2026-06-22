@@ -4,6 +4,10 @@
 #
 # Usage: bash .claude/scripts/issue-next.sh
 # Appelé par : Reviewer agent (après APPROVED + commit)
+#
+# Dépendance sur le format de progress.md :
+#   Table Issues en format plat : | ISSUE-XXX | Title | STATUS | PDR | Dependencies |
+#   sed opère entre ## Issues et ## PDRs uniquement.
 # =============================================================================
 set -euo pipefail
 
@@ -27,8 +31,8 @@ if [[ "$CURRENT_STATUS" != "APPROVED" ]]; then
     exit 1
 fi
 
-# ── APPROVED → DONE ──────────────────────────────────────────────────────────
-sed -i "s/| ${ISSUE_ID} | .* | APPROVED |/| ${ISSUE_ID} | ${TITLE} | DONE |/" "$PROGRESS"
+# ── APPROVED → DONE (scoped ## Issues → ## PDRs) ─────────────────────────────
+sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | APPROVED |/| ${ISSUE_ID} | ${TITLE} | DONE |/}" "$PROGRESS"
 echo "| $(date -I) | ${ISSUE_ID} | APPROVED → DONE | issue-next.sh |" >> "$PROGRESS"
 
 # ── Archiver ─────────────────────────────────────────────────────────────────

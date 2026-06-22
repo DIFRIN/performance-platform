@@ -7,6 +7,11 @@
 #   issue-start.sh ISSUE-042    Démarre l'Issue spécifiée
 #
 # Appelé par : Developer agent (jamais l'humain directement)
+#
+# Dépendance sur le format de progress.md :
+#   Table Issues en format plat : | ISSUE-XXX | Title | STATUS | PDR | Dependencies |
+#   Sections ## Issues et ## PDRs délimitent la table (sed opère entre les deux).
+#   Section ## History en append-only (>>).
 # =============================================================================
 set -euo pipefail
 
@@ -14,7 +19,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE="$ROOT/workspace"
 PROGRESS="$WORKSPACE/progress.md"
 
-# ── Résoudre l Issue ─────────────────────────────────────────────────────────
+# ── Résoudre l'Issue ─────────────────────────────────────────────────────────
 if [[ $# -ge 1 ]]; then
     ISSUE_ID="$1"
 else
@@ -46,14 +51,18 @@ if [[ ! -f "$ISSUE_FILE" ]]; then
 fi
 
 # ── Extraire métadonnées ─────────────────────────────────────────────────────
-TITLE=$(grep '^# ' "$ISSUE_FILE" | head -1 | sed 's/^# [A-Z0-9-]*: //')
-PDR=$(grep -oP 'PDR-\d+' "$ISSUE_FILE" | head -1 || echo "UNKNOWN")
+# Heading format: "# ISSUE-XXX: Title" or "# ISSUE-XXX — Title" (both supported)
+TITLE=$(grep '^# ' "$ISSUE_FILE" | head -1 | sed -E 's/^# [A-Z0-9-]+[[:space:]]*[-–—:][[:space:]]*//')
+# PDR: extract from **PDR** : PDR-XXX or **PDR** : `PDR-XXX`
+PDR=$(grep -oP '\*\*PDR\*\*[[:space:]]*:[[:space:]]*\K[^\s`]+' "$ISSUE_FILE" | head -1 | tr -d '`' || echo "UNKNOWN")
 MODULE=$(grep -oP 'platform-[a-z-]+' "$ISSUE_FILE" | head -1 || echo "UNKNOWN")
 
-# ── Marquer IN_PROGRESS dans progress.md ─────────────────────────────────────
-sed -i "s/| ${ISSUE_ID} | .* | WAITING |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/" "$PROGRESS"
+# ── Marquer IN_PROGRESS dans progress.md (scoped ## Issues → ## PDRs) ────────
+# Only the Issues table is modified; history rows are append-only.
+# Table format: | ISSUE-XXX | Title | STATUS | PDR | Dependencies |
+sed -i "/^## Issues$/,/^## PDRs$/{s/| ${ISSUE_ID} | .* | WAITING |/| ${ISSUE_ID} | ${TITLE} | IN_PROGRESS |/}" "$PROGRESS"
 
-# ── Ajouter entrée historique ────────────────────────────────────────────────
+# ── Ajouter entrée historique (append-only) ───────────────────────────────────
 echo "| $(date -I) | ${ISSUE_ID} | WAITING → IN_PROGRESS | issue-start.sh |" >> "$PROGRESS"
 
 # ── Créer current-issue.md ───────────────────────────────────────────────────
