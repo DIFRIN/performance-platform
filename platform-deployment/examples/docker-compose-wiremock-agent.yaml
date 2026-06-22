@@ -15,7 +15,7 @@
 #   - Configuration-driven model : chaque agent recoit AGENT_SUPPORTED_TASKS env var.
 #     Meme image Docker pour tous, config differente = role different.
 #   - Routing par task name uniquement (broadcast + TaskSpecializationFilter cote agent).
-#     Pas de AGENT_TAGS (les tags ne sont pas utilises pour le routing).
+#     Configuration-driven via agent.supported-tasks property (ADR-015).
 #
 # Mode/role/transport via env vars (ADR-006 priority).
 # Transport KAFKA only. No gRPC.

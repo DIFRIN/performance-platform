@@ -2,7 +2,7 @@
 
 **PDR** : PDR-026
 **Module** : `platform-app`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P0 (configuration YAML source de verite pour le mode DISTRIBUTED)
 **Bloquee par** : ISSUE-111 (AgentProperties doit exister pour que la propriete soit lue)
 **Estime** : S (< 1h)

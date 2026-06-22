@@ -122,7 +122,7 @@ services:
       SPRING_PROFILES_ACTIVE: agent
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       AGENT_ID: "agent-1"
-      AGENT_TAGS: "dev,standard"
+      AGENT_SUPPORTED_TASKS: "mock-server,http-client"
       PLATFORM_SECURITY_ENABLED: "false"
     ports:
       - "8081:8080"
@@ -147,7 +147,7 @@ services:
       SPRING_PROFILES_ACTIVE: agent
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       AGENT_ID: "agent-2"
-      AGENT_TAGS: "dev,high-memory"
+      AGENT_SUPPORTED_TASKS: "gatling,mock-server,http-client"
       PLATFORM_SECURITY_ENABLED: "false"
     ports:
       - "8082:8080"

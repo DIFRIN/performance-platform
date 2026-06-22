@@ -50,9 +50,11 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            # ---- Agent tags for observability (ADR-008) ----
-            - name: AGENT_TAGS
-              value: "k8s,standard"
+            # ---- Agent supported tasks (ADR-015: configuration-driven) ----
+            # Task names this agent can execute. Override per deployment.
+            # Format: comma-separated task names (e.g., "mock-server,http-client,gatling")
+            - name: AGENT_SUPPORTED_TASKS
+              value: "mock-server,http-client,gatling"
             # ---- Kafka bootstrap (from ConfigMap) ----
             - name: KAFKA_BOOTSTRAP_SERVERS
               valueFrom:
