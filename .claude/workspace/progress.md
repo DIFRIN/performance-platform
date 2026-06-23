@@ -133,8 +133,8 @@
 | ISSUE-119 | Etendre ExecutionRepository (findAll/deleteById) + JpaExecutionRepository | DONE | PDR-027 | — |
 | ISSUE-120 | Use cases ListExecutions/DeleteExecution + ExecutionProgress serveur | DONE | PDR-027 | ISSUE-119 |
 | ISSUE-121 | Endpoints REST executions (list / tasks / delete) + DTOs + progress | DONE | PDR-027 | ISSUE-120 |
-| ISSUE-122 | Endpoint REST GET /api/v1/agents (ORCHESTRATOR) | APPROVED | PDR-027 | ISSUE-121 |
-| ISSUE-123 | REST endpoint GET /api/v1/executions/{id}/report (stream pre-generated file) | WAITING | PDR-027 | ISSUE-121 |
+| ISSUE-122 | Endpoint REST GET /api/v1/agents (ORCHESTRATOR) | DONE | PDR-027 | ISSUE-121 |
+| ISSUE-123 | Endpoint REST GET /api/v1/executions/{id}/report (stream fichier deja genere) | APPROVED | PDR-027 | ISSUE-121 |
 | ISSUE-124 | POST /api/v1/scenarios/upload + structured validation-error DTO | WAITING | PDR-027 | ISSUE-121 |
 | ISSUE-125 | WebUiProperties + conditional Spring config + static/UI security | WAITING | PDR-028 | ISSUE-124 |
 | ISSUE-126 | Static shell index.html + CSS layout + nav + hash router | WAITING | PDR-028 | ISSUE-125 |
@@ -632,3 +632,7 @@
 | 2026-06-23 | ISSUE-122 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-23 | ISSUE-122 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-23 | ISSUE-122 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-23 | ISSUE-122 | APPROVED → DONE | issue-next.sh |
+| 2026-06-23 | ISSUE-123 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-23 | ISSUE-123 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-23 | ISSUE-123 | IN_REVIEW → APPROVED | Reviewer approved |

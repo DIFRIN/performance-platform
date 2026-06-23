@@ -38,7 +38,7 @@ fi
 sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : DONE/" "${WORKSPACE}/${SOURCE_FILE}"
 
 # ── APPROVED → DONE in progress.md ──────────────────────────────────────────
-sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | APPROVED |/| ${ISSUE_ID} | ${TITLE} | DONE |/}" "$PROGRESS"
+sed -i "/^## Issues/,/^## PDRs/{s#| ${ISSUE_ID} | .* | APPROVED |#| ${ISSUE_ID} | ${TITLE} | DONE |#}" "$PROGRESS"
 echo "| $(date -I) | ${ISSUE_ID} | APPROVED → DONE | issue-next.sh |" >> "$PROGRESS"
 
 # ── Nettoyer current-issue.md (pas d'archive — le fichier source fait foi) ──
