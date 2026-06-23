@@ -130,8 +130,8 @@
 | ISSUE-116 | Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files | DONE | PDR-026 | ISSUE-111 |
 | ISSUE-117 | End-to-end integration test: agent config → registration → task execution | DONE | PDR-026 | ISSUE-111,112,113,114,115,116 |
 | ISSUE-118 | End-to-end integration test: LOCAL mode executes all scenario tasks | DONE | PDR-026 | ISSUE-113 |
-| ISSUE-119 | Etendre ExecutionRepository (findAll/deleteById) + JpaExecutionRepository | APPROVED | PDR-027 | — |
-| ISSUE-120 | Use cases ListExecutions/DeleteExecution + ExecutionProgress server-side | WAITING | PDR-027 | ISSUE-119 |
+| ISSUE-119 | Etendre ExecutionRepository (findAll/deleteById) + JpaExecutionRepository | DONE | PDR-027 | — |
+| ISSUE-120 | Use cases ListExecutions/DeleteExecution + ExecutionProgress serveur | APPROVED | PDR-027 | ISSUE-119 |
 | ISSUE-121 | REST endpoints executions (list/tasks/delete) + DTOs + progress | WAITING | PDR-027 | ISSUE-120 |
 | ISSUE-122 | REST endpoint GET /api/v1/agents (ORCHESTRATOR) | WAITING | PDR-027 | ISSUE-121 |
 | ISSUE-123 | REST endpoint GET /api/v1/executions/{id}/report (stream pre-generated file) | WAITING | PDR-027 | ISSUE-121 |
@@ -621,3 +621,7 @@
 | 2026-06-23 | ISSUE-119 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-23 | ISSUE-119 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-23 | ISSUE-119 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-23 | ISSUE-119 | APPROVED → DONE | issue-next.sh |
+| 2026-06-23 | ISSUE-120 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-23 | ISSUE-120 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-23 | ISSUE-120 | IN_REVIEW → APPROVED | Reviewer approved |

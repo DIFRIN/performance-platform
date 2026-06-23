@@ -66,6 +66,7 @@
 | `AgentDescriptor` | ✅ STABLE | PDR-001 | ISSUE-007 |
 | `AgentCapabilities` | ✅ STABLE | PDR-001 | ISSUE-007 |
 | `AgentHeartbeat` | ✅ STABLE | PDR-001 | ISSUE-007 |
+| `ExecutionProgress` | ✅ STABLE | PDR-027 | ISSUE-120 |
 | `TaskDefinition` | ❌ REMOVED | ADR-008 | — (remplacé par `StepDefinition`) |
 | `TaskType` | ❌ REMOVED | — | — (remplacé par `String taskName`) |
 | `AgentSelector` | ❌ REMOVED | ADR-008 | — |
@@ -108,6 +109,12 @@
 | `AgentRegistryPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
 | `ReportPublisherPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
 | `ExecutionConfig` | ✅ STABLE | PDR-004 | ISSUE-014 |
+| `ListExecutionsUseCase` | ✅ STABLE | PDR-027 | ISSUE-120 |
+| `DeleteExecutionUseCase` | ✅ STABLE | PDR-027 | ISSUE-120 |
+| `ListExecutionsService` | ✅ STABLE | PDR-027 | ISSUE-120 |
+| `DeleteExecutionService` | ✅ STABLE | PDR-027 | ISSUE-120 |
+| `ExecutionProgressCalculator` | ✅ STABLE | PDR-027 | ISSUE-120 |
+| `ExecutionNotDeletableException` | ✅ STABLE | PDR-027 | ISSUE-120 |
 
 ## platform-scenario-dsl
 
