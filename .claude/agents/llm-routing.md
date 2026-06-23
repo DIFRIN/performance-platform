@@ -63,7 +63,7 @@ Les identifiants complets (`claude-opus-4-8`, `deepseek-v4-pro`) sont **invalide
 | LLM | Context window | Impact sur ce projet |
 |---|---|---|
 | claude-opus-4-5 | 200K tokens | Suffisant pour charger toutes les specs (System Designer) |
-| deepseek-v4-pro | 64K tokens | Suffisant pour Developer (session-state + 1 Issue + 1 PDR ≈ 3-5K tokens) |
+| deepseek-v4-pro | 64K tokens | Suffisant pour Developer (current-issue + 1 Issue + 1 PDR ≈ 3-5K tokens) |
 
 ---
 

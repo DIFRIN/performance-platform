@@ -181,11 +181,10 @@ Chaque agent charge UNIQUEMENT :
 
 **Developer** :
 ```
-.claude/workspace/session-state.md             (toujours — en premier)
-.claude/workspace/progress.md                  (toujours — trouver l'Issue active)
-.claude/workspace/issues/ISSUE-XXX.md          (toujours — l'Issue active)
-.claude/workspace/pdr/PDR-XXX.md               (si l'Issue le référence explicitement)
-agents/developer.md          (première session ou si incertitude sur les règles)
+.claude/workspace/current-issue.md                  (toujours — en premier)
+.claude/workspace/issues/ISSUE-XXX.md               (toujours — l'Issue active)
+.claude/workspace/pdr/PDR-XXX.md                    (si l'Issue le référence explicitement)
+agents/developer.md                                 (première session ou si incertitude sur les règles)
 ```
 
 **Reviewer** :
@@ -226,7 +225,7 @@ agents/architect.md          (toujours)
 | Fichier | Mis à jour par | Fréquence |
 |---|---|---|
 | `.claude/workspace/progress.md` | System Designer + Developer + Reviewer | Chaque changement de statut |
-| `.claude/workspace/progress.md` | Developer + Tester | Fin de chaque tâche |
+| `.claude/workspace/current-issue.md` | Scripts issue-*.sh | Chaque transition d'Issue |
 | `.claude/knowledge/roadmap.md` | Humain + Architect | Fin de chaque phase |
 | `.claude/knowledge/adr/` | Architect | Sur décision architecturale |
 

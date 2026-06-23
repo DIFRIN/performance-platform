@@ -9,7 +9,7 @@
 
 > **Charger juste ce qui est nécessaire pour l'action immédiate.**
 > Pas "au cas où". Pas "pour avoir le contexte général".
-> Le contexte général est dans `.claude/workspace/session-state.md` — pas besoin de relire les specs.
+> Le contexte général est dans `.claude/workspace/current-issue.md` — pas besoin de relire les specs.
 
 ---
 
@@ -27,7 +27,7 @@ Fichiers conditionnels :
   Une spec (section ciblée)  ~150-300 tokens — section spécifique uniquement
 
 Total typique : 500-800 tokens de contexte par session
-À NE PAS charger : session-state.md, progress.md, PDRs, roadmap, ADRs, guides
+À NE PAS charger : progress.md, PDRs, roadmap, ADRs, guides
 ```
 
 ### Reviewer (session standard)
@@ -41,7 +41,7 @@ Fichiers conditionnels :
   Une spec (section interfaces) ~100 tokens  — vérification des signatures
 
 Total typique : 400-700 tokens
-À NE PAS charger : session-state.md, progress.md, .claude/skills/, roadmap, PDRs
+À NE PAS charger : progress.md, .claude/skills/, roadmap, PDRs
 ```
 
 ### Tester (session standard)
@@ -103,12 +103,11 @@ Ils éliminent le besoin de re-lire les sources primaires dans 80% des sessions.
 ## Pattern de Session Optimale
 
 ```
-1. Lire .claude/workspace/session-state.md               → 30 tokens + décision sur "Files to Load"
+1. Lire .claude/workspace/current-issue.md         → 300 tokens + décision sur "Files to Load"
 2. Lire UNIQUEMENT les fichiers listés  → 400-700 tokens
 3. Confirmer compréhension en 3 lignes → 0 tokens de contexte supplémentaire
 4. Travailler
 5. En fin de session :
-   - Mettre à jour .claude/workspace/session-state.md     → maintient le cache pour la prochaine session
    - Mettre à jour interfaces-registry  → évite de relire les specs la prochaine fois
    - Mettre à jour decisions-log        → évite de re-décider
 ```
@@ -120,5 +119,5 @@ Ils éliminent le besoin de re-lire les sources primaires dans 80% des sessions.
 ❌ Lire tous les fichiers "pour avoir le contexte"
 ❌ Re-lire une spec entière pour retrouver une signature déjà dans interfaces-registry
 ❌ Charger .claude/guides/ et .claude/knowledge/adr/ à chaque session
-❌ Demander un résumé du projet à chaque session au lieu de lire .claude/workspace/session-state.md
+❌ Demander un résumé du projet à chaque session au lieu de lire .claude/workspace/current-issue.md
 ❌ Lire feature-summaries en entier au lieu de juste l'index par module

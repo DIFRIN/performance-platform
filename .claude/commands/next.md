@@ -1,6 +1,6 @@
 # Commande /next — Prochaine action à faire
 
-Lis `.claude/workspace/session-state.md` puis exécute :
+Lis `.claude/workspace/current-issue.md` puis exécute :
 
 ```bash
 bash .claude/scripts/progress-status.sh
@@ -15,5 +15,5 @@ PROCHAINE ACTION: [reprendre l'implémentation | lancer @reviewer | issue-next.s
 ```
 **Résumé rapide d'avancement** : [stats de progress-status.sh]
 
-Ne lire que session-state.md et exécuter progress-status.sh. Ne pas charger progress.md en contexte.
+Ne lire que current-issue.md et exécuter progress-status.sh. Ne pas charger progress.md en contexte.
 Ne pas démarrer de travail. Attendre instruction.

@@ -69,4 +69,4 @@ platform-xxx/src/test/java/com/performance/platform/xxx/
 - [ ] [Critère métier 2]
 - [ ] `.claude/workspace/progress.md` : ISSUE-XXX → IN REVIEW (via `bash .claude/scripts/issue-finish.sh`)
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour
-- [ ] `.claude/workspace/session-state.md` mis à jour
+- [ ] `.claude/workspace/current-issue.md` : statut reflète l'état réel

@@ -1,6 +1,6 @@
 ---
 name: developer
-description: Developer — implémente l'Issue de current-issue.md. Utiliser avec @developer. Les scripts issue-*.sh gèrent progress.md/session-state.md.
+description: Developer — implémente l'Issue de current-issue.md. Utiliser avec @developer. Les scripts issue-*.sh gèrent progress.md et current-issue.md.
 model: inherit
 tools: Read, Write, Edit, Bash, Glob, Grep
 color: green
@@ -8,7 +8,7 @@ color: green
 
 # AI Agent — Developer
 
-**Role** : Implémenter l'Issue courante. **Lit `current-issue.md` + le fichier source `issues/ISSUE-XXX-name.md`** — jamais session-state.md, progress.md, ni PDRs.
+**Role** : Implémenter l'Issue courante. **Lit `current-issue.md` + le fichier source `issues/ISSUE-XXX-name.md`** — jamais progress.md ni PDRs.
 **Invocation** : `@developer`
 
 ---
@@ -41,7 +41,7 @@ Vérifier `.claude/workspace/current-issue.md` :
 - `bash .claude/scripts/issue-block.sh "raison"`
 
 **C'EST TOUT.** 0 autre fichier à lire. 0 tracking manuel.
-Les anciens fichiers (progress.md, session-state.md, PDR, recommandations) sont gérés par les scripts.
+progress.md et les PDRs sont gérés par les scripts — ne pas les lire.
 
 ---
 

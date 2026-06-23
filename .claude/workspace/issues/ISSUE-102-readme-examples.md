@@ -211,4 +211,4 @@ docker compose -f platform-deployment/examples/docker-compose-sut.yaml down -v
 - [ ] Deux modes documentés (LOCAL et DISTRIBUTED)
 - [ ] Section "Adapter pour votre environnement" avec exemple de changement de topics
 - [ ] `.claude/progress.md` mis à jour : ISSUE-102 → DONE, PDR-024 → DONE
-- [ ] `.claude/session-state.md` mis à jour
+- [ ] `.claude/workspace/progress.md` : ISSUE-102 → DONE

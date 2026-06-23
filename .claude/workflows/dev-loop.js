@@ -58,7 +58,7 @@ If it doesn't exist or status is APPROVED/DONE, run: bash .claude/scripts/issue-
 If status is CHANGES_REQUESTED, apply fixes from the Reviewer Feedback section first.
 Implement all files listed. Run: mvn test -pl <module> -q (MUST pass).
 When done: bash .claude/scripts/issue-finish.sh
-DO NOT commit. DO NOT read progress.md or session-state.md.`
+DO NOT commit. DO NOT read progress.md.`
 
   const result = await agent(prompt, {
     label: 'developer',
@@ -78,7 +78,7 @@ If OK: bash .claude/scripts/issue-review.sh APPROVED
 If issues: bash .claude/scripts/issue-review.sh CHANGES_REQUESTED "detailed reason"
 If APPROVED: git add -A && git commit -m "feat: <ISSUE_ID> — <title>" -m "Co-Authored-By: Claude <noreply@anthropic.com>"
 Then: bash .claude/scripts/issue-next.sh
-DO NOT read progress.md or session-state.md.`
+DO NOT read progress.md.`
 
   const result = await agent(prompt, {
     label: 'reviewer',
