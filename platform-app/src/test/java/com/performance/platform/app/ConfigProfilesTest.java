@@ -28,6 +28,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("ConfigProfiles")
 class ConfigProfilesTest {
 
+    // ---- Configuration commune (application.yaml) ----
+
+    @Nested
+    @DisplayName("Configuration commune (application.yaml)")
+    class CommonConfigTest {
+
+        @Test
+        @DisplayName("should set web.ui.enabled=false by default")
+        void shouldSetWebUiEnabledFalse() throws IOException {
+            var sources = loadYaml("application.yaml");
+            assertThat(getProperty(sources, "web.ui.enabled")).isEqualTo("false");
+        }
+
+        @Test
+        @DisplayName("should set platform.security.enabled=false by default")
+        void shouldSetSecurityEnabledFalse() throws IOException {
+            var sources = loadYaml("application.yaml");
+            assertThat(getProperty(sources, "platform.security.enabled")).isEqualTo("false");
+        }
+    }
+
     // ---- Profil LOCAL ----
 
     @Nested
@@ -130,6 +151,13 @@ class ConfigProfilesTest {
         void shouldEnableSecurity() throws IOException {
             var sources = loadYaml("application-agent.yaml");
             assertThat(getProperty(sources, "platform.security.enabled")).isEqualTo("true");
+        }
+
+        @Test
+        @DisplayName("should disable web UI (ADR-019)")
+        void shouldDisableWebUi() throws IOException {
+            var sources = loadYaml("application-agent.yaml");
+            assertThat(getProperty(sources, "web.ui.enabled")).isEqualTo("false");
         }
     }
 

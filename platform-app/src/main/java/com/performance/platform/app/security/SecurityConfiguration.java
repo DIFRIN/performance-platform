@@ -20,8 +20,9 @@ import org.springframework.security.web.SecurityFilterChain;
  *       pas d'authentification, pas d'autorisation.</li>
  *   <li><b>true</b> (mode DISTRIBUTED) : API REST securisee via OAuth2/JWT.
  *       Les endpoints {@code /api/**} necessitent un token JWT valide.
- *       Les endpoints {@code /actuator/health/**} restent publics pour les
- *       probes Kubernetes (CD-02).</li>
+ *       Les endpoints {@code /actuator/health/**}, {@code /}, {@code /index.html}
+ *       et {@code /assets/**} restent publics (probes Kubernetes + UI statique
+ *       sans authentification).</li>
  * </ul>
  * <p>
  * L'authentification OAuth2/JWT est activee quand le resource server JWT
@@ -38,8 +39,8 @@ public class SecurityConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
 
-    static final String PROP_SECURITY_ENABLED = "platform.security.enabled";
-    static final String PROP_OAUTH2_ISSUER = "spring.security.oauth2.resourceserver.jwt.issuer-uri";
+    public static final String PROP_SECURITY_ENABLED = "platform.security.enabled";
+    public static final String PROP_OAUTH2_ISSUER = "spring.security.oauth2.resourceserver.jwt.issuer-uri";
 
     private final Environment environment;
 
@@ -78,9 +79,11 @@ public class SecurityConfiguration {
                 // Health probes Kubernetes (CD-02) — publiques
                 .requestMatchers("/actuator/health/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                // UI statique — publique (ADR-019 : pas de login screen v1)
+                .requestMatchers("/", "/index.html", "/assets/**").permitAll()
                 // API REST — authentification requise
                 .requestMatchers("/api/**").authenticated()
-                // Tout le reste — autorise (swagger, assets, etc.)
+                // Tout le reste — autorise (swagger, etc.)
                 .anyRequest().permitAll()
         );
 

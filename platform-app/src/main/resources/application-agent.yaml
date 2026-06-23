@@ -15,6 +15,14 @@ runtime:
   mode: DISTRIBUTED
   role: AGENT
 
+# ---- IHM Web (ADR-019) ----
+# L'agent n'expose jamais d'IHM. La garantie forte est
+# WebApplicationType.NONE dans main() — cette propriete
+# est un filet de securite supplementaire.
+web:
+  ui:
+    enabled: false
+
 # ---- Agent specialization (ADR-015: configuration-driven) ----
 # La liste supported-tasks définit quelles tasks cet agent exécute.
 # Vide par défaut: à surcharger par agent via AGENT_SUPPORTED_TASKS env var.

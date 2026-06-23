@@ -309,6 +309,8 @@
 | `LocalFlowE2ETest` + `e2e-local.yaml` | ✅ STABLE | PDR-018 | ISSUE-082 |
 | `AgentProperties` | 🔄 IN PROGRESS | PDR-026 | ISSUE-111 |
 | `AgentRuntimeConfiguration` | ⬜ PLANNED | PDR-026 | ISSUE-112 |
+| `WebUiProperties` | 🔄 IN PROGRESS | PDR-028 | ISSUE-125 |
+| `WebUiConfiguration` | 🔄 IN PROGRESS | PDR-028 | ISSUE-125 |
 
 ## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
 
