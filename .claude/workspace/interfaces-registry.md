@@ -104,7 +104,7 @@
 | `GetExecutionStatusUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
 | `CancelExecutionUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
 | `GenerateReportUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
-| `ExecutionRepository` | ✅ STABLE | PDR-004 | ISSUE-013 |
+| `ExecutionRepository` | ✅ STABLE | PDR-004 | ISSUE-013, ISSUE-119 (+findAll/deleteById) |
 | `AgentRegistryPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
 | `ReportPublisherPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
 | `ExecutionConfig` | ✅ STABLE | PDR-004 | ISSUE-014 |
@@ -214,9 +214,9 @@
 |---|---|---|---|
 | `ExecutionStateEntity` / `TaskResultEntity` / `TaskResultId` | ✅ STABLE | PDR-012 | ISSUE-050 |
 | `ExecutionStateMapper` / `TaskResultMapper` | ✅ STABLE | PDR-012 | ISSUE-051 |
-| `ExecutionStateJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
-| `TaskResultJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
-| `JpaExecutionRepository` | ✅ STABLE | PDR-012 | ISSUE-052 |
+| `ExecutionStateJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-119 (+findTopByStartedAtDesc) |
+| `TaskResultJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-119 (+deleteByExecutionId) |
+| `JpaExecutionRepository` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-119 (+findAll/deleteById) |
 | `PersistenceConfinementTest` (ArchUnit) | ✅ STABLE | PDR-012 | ISSUE-053 |
 
 ## platform-infrastructure — `.publisher` (PDR-016)

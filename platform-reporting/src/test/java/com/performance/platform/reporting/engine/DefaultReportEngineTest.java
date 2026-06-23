@@ -74,6 +74,14 @@ class DefaultReportEngineTest {
         public Map<AgentId, TaskResult> getTaskResults(ExecutionId id, TaskId taskId) {
             return Map.of();
         }
+
+        @Override
+        public List<ExecutionState> findAll(int limit) {
+            return List.of();
+        }
+
+        @Override
+        public void deleteById(ExecutionId id) { /* no-op */ }
     }
 
     static class StubEventPublisher implements ApplicationEventPublisher {

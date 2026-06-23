@@ -167,6 +167,9 @@ com.performance.platform.<module>/
 | AgentLifecycleEvent séparé de ExecutionEvent | `.claude/knowledge/adr/ADR-012-agent-lifecycle-event.md` | — |
 | Spring-first infra | `.claude/knowledge/adr/ADR-013-spring-first-infrastructure.md` | — |
 | Config datasources | `.claude/knowledge/adr/ADR-014-datasource-configuration.md` | — |
+| Modes d'accès (API/IHM/CLI) × mode runtime — AGENT n'expose rien | `.claude/knowledge/specs/00-overview.md` | section "Modes d'Accès" (matrice canonique) |
+| IHM serving + sécurité + AGENT = aucun serveur web (`WebApplicationType.NONE`) | `.claude/knowledge/adr/ADR-019-web-ui-serving-and-security.md` | décision 4 |
+| CLI headless `--scenario=` — réservé LOCAL/ORCHESTRATOR, jamais AGENT | `.claude/knowledge/adr/ADR-021-headless-cli-run-mode.md` | — |
 | Avancement PDRs/Issues | `.claude/workspace/progress.md` | tableau Issues (scripts uniquement) |
 | Issue active (pointer) | `.claude/workspace/current-issue.md` | status, IssueFile, feedbacks |
 | Détail d'un PDR | `.claude/workspace/pdr/PDR-XXX.md` | selon Issue active |
@@ -182,6 +185,7 @@ mvn test -pl platform-xxx -q                         # tests d'un module
 mvn verify -P integration-tests                       # tests d'intégration
 mvn compile -pl platform-xxx 2>&1 | grep -i warn     # vérifier warnings
 java -jar platform-app/target/*.jar --runtime.mode=LOCAL
+java -jar platform-app/target/*.jar --scenario=path/to/scenario.yaml   # CLI headless (run-and-exit, exit 0/1/2, ADR-021)
 MODE=ORCHESTRATOR java -jar platform-app/target/*.jar
 MODE=AGENT java -jar platform-app/target/*.jar
 bash .claude/scripts/dev-loop.sh                     # boucle autonome Developer→Reviewer→Tester

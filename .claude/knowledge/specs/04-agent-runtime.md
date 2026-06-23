@@ -15,6 +15,17 @@ Un Agent est une instance JVM qui :
 5. Maintient un heartbeat
 6. Réagit aux signaux de restart orchestrateur (cleanup stateful)
 
+> **Aucune surface d'accès en mode AGENT (ADR-019).** Un nœud AGENT (DISTRIBUTED, `MODE=AGENT`)
+> n'expose ni API REST, ni IHM, ni mode CLI : la JVM démarre avec `WebApplicationType.NONE`, donc
+> sans aucun serveur web (pas de Tomcat). L'agent est un pur worker piloté par le transport — il ne
+> fait que des connexions **sortantes** pour s'enregistrer et recevoir les `TaskExecutionRequest`.
+> Seuls LOCAL et ORCHESTRATOR exposent les modes d'accès. Voir la matrice canonique dans
+> `specs/00-overview.md` et ADR-019/ADR-021.
+>
+> Le récepteur de transport HTTP entrant (`agent.http.callbackUrl`, §8 ci-dessous, actif uniquement
+> si `transport.type=HTTP`) est un canal interne de réception des tâches du transport — il n'est PAS
+> une surface d'accès API/IHM/CLI et ne contredit pas la règle ci-dessus.
+
 ---
 
 ## 2. Lifecycle de l'Agent

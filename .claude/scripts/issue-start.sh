@@ -64,8 +64,8 @@ deps_are_done() {
     local deps
     deps=$(get_deps "$issue_id")
 
-    # Pas de dépendances → OK
-    if [[ -z "$deps" || "$deps" == "-" ]]; then
+    # Pas de dépendances → OK (accepte tiret simple, em-dash, ou vide)
+    if [[ -z "$deps" || "$deps" == "-" || "$deps" == "—" ]]; then
         return 0
     fi
 

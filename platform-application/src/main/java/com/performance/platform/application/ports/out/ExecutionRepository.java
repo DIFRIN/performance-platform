@@ -8,6 +8,7 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -61,4 +62,21 @@ public interface ExecutionRepository {
      * @return une map associant chaque agent a son resultat
      */
     Map<AgentId, TaskResult> getTaskResults(ExecutionId id, TaskId taskId);
+
+    /**
+     * Retourne les {@code limit} executions les plus recentes, triees par startedAt DESC.
+     * La borne est appliquee dans la requete (pas en memoire).
+     *
+     * @param limit nombre maximum d'executions a retourner (> 0)
+     * @return liste d'etats d'execution triee desc par startedAt, jamais null
+     */
+    List<ExecutionState> findAll(int limit);
+
+    /**
+     * Supprime une execution et tous ses resultats de tache.
+     * Operation transactionnelle. No-op silencieux si l'identifiant est inconnu.
+     *
+     * @param id l'identifiant de l'execution a supprimer
+     */
+    void deleteById(ExecutionId id);
 }

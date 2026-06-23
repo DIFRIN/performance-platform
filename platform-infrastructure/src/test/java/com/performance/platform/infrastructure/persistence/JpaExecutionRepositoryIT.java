@@ -46,6 +46,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -152,8 +154,10 @@ class JpaExecutionRepositoryIT {
         JpaExecutionRepository jpaExecutionRepository(ExecutionStateJpaRepository stateRepo,
                                                         TaskResultJpaRepository taskResultRepo,
                                                         ExecutionStateMapper stateMapper,
-                                                        TaskResultMapper taskResultMapper) {
-            return new JpaExecutionRepository(stateRepo, taskResultRepo, stateMapper, taskResultMapper);
+                                                        TaskResultMapper taskResultMapper,
+                                                        PlatformTransactionManager transactionManager) {
+            return new JpaExecutionRepository(stateRepo, taskResultRepo, stateMapper, taskResultMapper,
+                    transactionManager);
         }
     }
 
@@ -377,6 +381,138 @@ class JpaExecutionRepositoryIT {
             // Query for different task
             Map<AgentId, TaskResult> wrongTask = repository.getTaskResults(exec1, taskB);
             assertThat(wrongTask).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("findAll(limit)")
+    class FindAll {
+
+        @Test
+        @DisplayName("should return the N most recent executions sorted desc by startedAt")
+        void shouldReturnMostRecentSortedDesc() {
+            // Given: 3 executions with distinct startedAt timestamps
+            var scenarioId = ScenarioId.of("scenario-findall");
+
+            var id1 = ExecutionId.generate();
+            var state1 = new ExecutionState(
+                    id1, scenarioId, ExecutionStatus.RUNNING,
+                    new java.util.EnumMap<>(Phase.class),
+                    ExecutionContext.initial(id1, scenarioId),
+                    Instant.parse("2026-01-01T08:00:00Z"),
+                    Instant.parse("2026-01-01T08:01:00Z"));
+
+            var id2 = ExecutionId.generate();
+            var state2 = new ExecutionState(
+                    id2, scenarioId, ExecutionStatus.RUNNING,
+                    new java.util.EnumMap<>(Phase.class),
+                    ExecutionContext.initial(id2, scenarioId),
+                    Instant.parse("2026-01-01T10:00:00Z"),
+                    Instant.parse("2026-01-01T10:01:00Z"));
+
+            var id3 = ExecutionId.generate();
+            var state3 = new ExecutionState(
+                    id3, scenarioId, ExecutionStatus.RUNNING,
+                    new java.util.EnumMap<>(Phase.class),
+                    ExecutionContext.initial(id3, scenarioId),
+                    Instant.parse("2026-01-01T09:00:00Z"),
+                    Instant.parse("2026-01-01T09:01:00Z"));
+
+            repository.save(state1);
+            repository.save(state2);
+            repository.save(state3);
+
+            // When: findAll with limit=2
+            List<ExecutionState> results = repository.findAll(2);
+
+            // Then: 2 most recent, sorted desc
+            assertThat(results).hasSize(2);
+            assertThat(results.get(0).id()).isEqualTo(id2); // most recent: 10:00
+            assertThat(results.get(1).id()).isEqualTo(id3); // second most recent: 09:00
+        }
+
+        @Test
+        @DisplayName("should return all when count is less than limit")
+        void shouldReturnAllWhenCountLessThanLimit() {
+            var scenarioId = ScenarioId.of("scenario-findall-small");
+            var id = ExecutionId.generate();
+            var state = new ExecutionState(
+                    id, scenarioId, ExecutionStatus.RUNNING,
+                    new java.util.EnumMap<>(Phase.class),
+                    ExecutionContext.initial(id, scenarioId),
+                    Instant.parse("2026-01-01T12:00:00Z"),
+                    Instant.parse("2026-01-01T12:01:00Z"));
+            repository.save(state);
+
+            List<ExecutionState> results = repository.findAll(50);
+
+            assertThat(results).hasSize(1);
+            assertThat(results.get(0).id()).isEqualTo(id);
+        }
+
+        @Test
+        @DisplayName("should return empty list when no executions exist")
+        void shouldReturnEmptyListWhenNoExecutions() {
+            List<ExecutionState> results = repository.findAll(10);
+
+            assertThat(results).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("deleteById")
+    class DeleteById {
+
+        @Test
+        @DisplayName("should delete execution and its task results")
+        void shouldDeleteExecutionAndResults() {
+            var id = ExecutionId.generate();
+            var scenarioId = ScenarioId.of("scenario-delete");
+            ExecutionState state = createTestState(id, scenarioId);
+            repository.save(state);
+
+            var taskId = TaskId.of("task-to-delete");
+            var agent = AgentId.generate();
+            var result = TaskResult.success(taskId, "task-to-delete",
+                    Duration.ofMillis(100), Map.of("x", 1));
+            repository.saveTaskResult(id, taskId, agent, result);
+
+            // Pre-condition: execution and result exist
+            assertThat(repository.findById(id)).isPresent();
+            assertThat(repository.getTaskResults(id, taskId)).hasSize(1);
+
+            repository.deleteById(id);
+
+            // Post-condition: both are gone
+            assertThat(repository.findById(id)).isEmpty();
+            assertThat(repository.getTaskResults(id, taskId)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("deleteById should be no-op when id is unknown")
+        void shouldBeNoOpWhenIdUnknown() {
+            var unknownId = ExecutionId.generate();
+
+            // Must not throw
+            repository.deleteById(unknownId);
+
+            assertThat(repository.findById(unknownId)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("should not delete other executions")
+        void shouldNotDeleteOtherExecutions() {
+            var id1 = ExecutionId.generate();
+            var id2 = ExecutionId.generate();
+            var scenarioId = ScenarioId.of("scenario-delete-isolation");
+
+            repository.save(createTestState(id1, scenarioId));
+            repository.save(createTestState(id2, scenarioId));
+
+            repository.deleteById(id1);
+
+            assertThat(repository.findById(id1)).isEmpty();
+            assertThat(repository.findById(id2)).isPresent();
         }
     }
 }

@@ -64,6 +64,14 @@ class PortsCompileTest {
             public Map<AgentId, TaskResult> getTaskResults(ExecutionId id, TaskId taskId) {
                 return Map.of();
             }
+
+            @Override
+            public List<ExecutionState> findAll(int limit) {
+                return List.of();
+            }
+
+            @Override
+            public void deleteById(ExecutionId id) { /* no-op */ }
         };
 
         var state = new ExecutionState(
@@ -118,6 +126,14 @@ class PortsCompileTest {
             public Map<AgentId, TaskResult> getTaskResults(ExecutionId id, TaskId taskId) {
                 return lastAgentId != null ? Map.of(lastAgentId, lastResult) : Map.of();
             }
+
+            @Override
+            public List<ExecutionState> findAll(int limit) {
+                return List.of();
+            }
+
+            @Override
+            public void deleteById(ExecutionId id) { /* no-op */ }
         };
 
         var agentA = AgentId.generate();
