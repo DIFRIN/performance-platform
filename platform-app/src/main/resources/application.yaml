@@ -31,6 +31,14 @@ management:
     readinessstate.enabled: true
     livenessstate.enabled: true
 
+# ---- IHM Web ----
+# Desactivee par defaut. Surchargeable via WEB_UI_ENABLED=true
+# (relaxed binding Spring Boot natif). En mode AGENT, force a false
+# et le serveur web est desactive au niveau JVM (WebApplicationType.NONE — ADR-019).
+web:
+  ui:
+    enabled: false
+
 # ---- Securite ----
 # Par defaut desactivee (mode LOCAL). Activee dans les profils
 # orchestrator/agent avec le JWT resource server Spring Security.
