@@ -1,11 +1,9 @@
 package com.performance.platform.app.api;
 
 import com.performance.platform.application.exception.ExecutionException;
-import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
 import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
-import com.performance.platform.application.ports.in.GenerateReportUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
@@ -16,7 +14,6 @@ import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.PhaseStatus;
 import com.performance.platform.domain.id.ExecutionId;
-import com.performance.platform.domain.id.ReportId;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
@@ -52,7 +49,6 @@ class ScenarioControllerTest {
     private final ExecuteScenarioUseCase executeUseCase = mock(ExecuteScenarioUseCase.class);
     private final GetExecutionStatusUseCase statusUseCase = mock(GetExecutionStatusUseCase.class);
     private final CancelExecutionUseCase cancelUseCase = mock(CancelExecutionUseCase.class);
-    private final GenerateReportUseCase reportUseCase = mock(GenerateReportUseCase.class);
     private final ExecutionRepository executionRepository = mock(ExecutionRepository.class);
     private final ExecutionProgressCalculator progressCalculator = mock(ExecutionProgressCalculator.class);
 
@@ -76,7 +72,7 @@ class ScenarioControllerTest {
         when(progressCalculator.calculate(any(), any())).thenReturn(new ExecutionProgress(0, 0, 0, 0));
         var controller = new ScenarioController(
                 parsingUseCase, executeUseCase, statusUseCase,
-                cancelUseCase, reportUseCase, executionRepository, progressCalculator);
+                cancelUseCase, executionRepository, progressCalculator);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
@@ -215,35 +211,6 @@ class ScenarioControllerTest {
                     .andExpect(status().isAccepted());
 
             verify(cancelUseCase).cancel(ExecutionId.of("exec-001"));
-        }
-    }
-
-    @Nested
-    @DisplayName("GET /executions/{id}/report")
-    class GetReport {
-
-        @Test
-        @DisplayName("should return 200 with reportId when report is generated")
-        void shouldReturnReportId() throws Exception {
-            var executionId = ExecutionId.of("exec-001");
-            var reportId = ReportId.generate();
-            when(reportUseCase.generate(executionId)).thenReturn(reportId);
-
-            mockMvc.perform(get("/api/v1/executions/exec-001/report"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.reportId").value(reportId.value()));
-        }
-
-        @Test
-        @DisplayName("should return 500 when report generation fails")
-        void shouldReturn500OnReportFailure() throws Exception {
-            var executionId = ExecutionId.of("exec-001");
-            when(reportUseCase.generate(executionId))
-                    .thenThrow(new ReportGenerationException("Renderer not found", null));
-
-            mockMvc.perform(get("/api/v1/executions/exec-001/report"))
-                    .andExpect(status().isInternalServerError())
-                    .andExpect(jsonPath("$.error").value("REPORT_GENERATION_FAILED"));
         }
     }
 

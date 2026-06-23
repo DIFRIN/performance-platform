@@ -320,6 +320,8 @@
 | `views/execution-detail.js` (execution detail view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-128 |
 | `views/agents.js` (agents dashboard view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-129 |
 | `views/upload.js` (upload scenario view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-129 |
+| `views/report.js` (report poll view + iframe) | 🔄 IN PROGRESS | PDR-029 | ISSUE-130 |
+| `WebUiApiE2ETest.java` (E2E Testcontainers) | 🔄 IN PROGRESS | PDR-029 | ISSUE-130 |
 
 ## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
 
