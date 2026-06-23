@@ -1,11 +1,11 @@
-# ISSUE-130: Vue rapport (poll → iframe HTML + download PDF/JSON) + E2E Testcontainers
+# ISSUE-131: Mode CLI headless (run-and-exit sur `--scenario=`)
 **Status**: APPROVED
-**PDR**: PDR-029
+**PDR**: PDR-028
 **Module**: platform-app
-**Started**: 2026-06-23T22:42+02:00
-**IssueFile**: issues/ISSUE-130-view-report-e2e-test.md
+**Started**: 2026-06-23T23:33+02:00
+**IssueFile**: issues/ISSUE-131-headless-cli-mode.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-130-view-report-e2e-test.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-131-headless-cli-mode.md`
 
 ## Reviewer Feedback
 (None yet)

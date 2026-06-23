@@ -141,8 +141,8 @@
 | ISSUE-127 | Vue liste des executions (polling 3s, filtre statut, cancel/delete) | DONE | PDR-029 | ISSUE-126 |
 | ISSUE-128 | Vue detail d'execution (tasks ok/ko, barre progression, phases) | DONE | PDR-029 | ISSUE-127 |
 | ISSUE-129 | Vue dashboard agents (ORCHESTRATOR) + vue upload (validation inline) | DONE | PDR-029 | ISSUE-128 |
-| ISSUE-130 | Vue rapport (poll → iframe HTML + download PDF/JSON) + E2E Testcontainers | APPROVED | PDR-029 | ISSUE-129 |
-| ISSUE-131 | Headless CLI mode (run-and-exit on --scenario=, WebApplicationType.NONE) | WAITING | PDR-028 | ISSUE-125 |
+| ISSUE-130 | Vue rapport (poll → iframe HTML + download PDF/JSON) + E2E Testcontainers | DONE | PDR-029 | ISSUE-129 |
+| ISSUE-131 | Mode CLI headless (run-and-exit sur `--scenario=`) | APPROVED | PDR-028 | ISSUE-125 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -666,3 +666,7 @@
 | 2026-06-23 | ISSUE-130 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-23 | ISSUE-130 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-23 | ISSUE-130 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-23 | ISSUE-130 | APPROVED → DONE | issue-next.sh |
+| 2026-06-23 | ISSUE-131 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-23 | ISSUE-131 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-23 | ISSUE-131 | IN_REVIEW → APPROVED | Reviewer approved |
