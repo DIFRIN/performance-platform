@@ -8,7 +8,10 @@ import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
 import com.performance.platform.application.ports.in.GenerateReportUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
+import com.performance.platform.application.ports.out.ExecutionRepository;
+import com.performance.platform.application.usecase.ExecutionProgressCalculator;
 import com.performance.platform.domain.execution.ExecutionContext;
+import com.performance.platform.domain.execution.ExecutionProgress;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.PhaseStatus;
@@ -50,6 +53,8 @@ class ScenarioControllerTest {
     private final GetExecutionStatusUseCase statusUseCase = mock(GetExecutionStatusUseCase.class);
     private final CancelExecutionUseCase cancelUseCase = mock(CancelExecutionUseCase.class);
     private final GenerateReportUseCase reportUseCase = mock(GenerateReportUseCase.class);
+    private final ExecutionRepository executionRepository = mock(ExecutionRepository.class);
+    private final ExecutionProgressCalculator progressCalculator = mock(ExecutionProgressCalculator.class);
 
     private MockMvc mockMvc;
 
@@ -67,9 +72,11 @@ class ScenarioControllerTest {
 
     @BeforeEach
     void setUp() {
+        when(executionRepository.findAllTaskResults(any())).thenReturn(Map.of());
+        when(progressCalculator.calculate(any(), any())).thenReturn(new ExecutionProgress(0, 0, 0, 0));
         var controller = new ScenarioController(
                 parsingUseCase, executeUseCase, statusUseCase,
-                cancelUseCase, reportUseCase);
+                cancelUseCase, reportUseCase, executionRepository, progressCalculator);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
@@ -167,6 +174,7 @@ class ScenarioControllerTest {
 
             when(statusUseCase.getStatus(executionId)).thenReturn(ExecutionStatus.RUNNING);
             when(statusUseCase.getState(executionId)).thenReturn(Optional.of(state));
+            when(progressCalculator.calculate(any(), any())).thenReturn(new ExecutionProgress(3, 1, 0, 2));
 
             mockMvc.perform(get("/api/v1/executions/exec-001"))
                     .andExpect(status().isOk())
@@ -175,7 +183,11 @@ class ScenarioControllerTest {
                     .andExpect(jsonPath("$.status").value("RUNNING"))
                     .andExpect(jsonPath("$.phaseStatuses.PREPARATION").value("COMPLETED"))
                     .andExpect(jsonPath("$.phaseStatuses.INJECTION").value("RUNNING"))
-                    .andExpect(jsonPath("$.phaseStatuses.ASSERTION").value("PENDING"));
+                    .andExpect(jsonPath("$.phaseStatuses.ASSERTION").value("PENDING"))
+                    .andExpect(jsonPath("$.progress.total").value(3))
+                    .andExpect(jsonPath("$.progress.ok").value(1))
+                    .andExpect(jsonPath("$.progress.ko").value(0))
+                    .andExpect(jsonPath("$.progress.running").value(2));
         }
 
         @Test

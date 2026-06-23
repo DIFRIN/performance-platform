@@ -4,7 +4,7 @@ import java.util.Map;
 
 /**
  * Full status of an execution returned by the GET /executions/{id} endpoint.
- * Includes the global status, per-phase statuses, and timestamps.
+ * Includes the global status, per-phase statuses, timestamps, and progress (ISSUE-121).
  */
 public record ExecutionStatusResponse(
         String executionId,
@@ -12,7 +12,8 @@ public record ExecutionStatusResponse(
         String status,
         Map<String, String> phaseStatuses,
         String startedAt,
-        String updatedAt) {
+        String updatedAt,
+        ProgressResponse progress) {
 
     public ExecutionStatusResponse {
         phaseStatuses = phaseStatuses == null ? Map.of() : Map.copyOf(phaseStatuses);

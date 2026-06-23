@@ -111,6 +111,11 @@ class MultiPublisherDispatcherTest {
 
         @Override
         public void deleteById(ExecutionId id) { /* no-op */ }
+
+        @Override
+        public Map<TaskId, Map<AgentId, TaskResult>> findAllTaskResults(ExecutionId id) {
+            return Map.of();
+        }
     }
 
     // ---------- Configurable fake publisher ----------

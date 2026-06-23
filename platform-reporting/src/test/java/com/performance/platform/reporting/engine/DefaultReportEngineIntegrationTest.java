@@ -86,6 +86,9 @@ class DefaultReportEngineIntegrationTest {
 
         @Override
         public void deleteById(ExecutionId id) { /* no-op */ }
+
+        @Override
+        public java.util.Map<com.performance.platform.domain.id.TaskId, java.util.Map<com.performance.platform.domain.id.AgentId, com.performance.platform.domain.task.TaskResult>> findAllTaskResults(ExecutionId id) { return java.util.Map.of(); }
     }
 
     static class StubEventPublisher implements ApplicationEventPublisher {
