@@ -135,5 +135,6 @@ class DeleteExecutionServiceTest {
         @Override public Map<com.performance.platform.domain.id.AgentId, com.performance.platform.domain.task.TaskResult> getTaskResults(ExecutionId id, com.performance.platform.domain.id.TaskId taskId) { return Map.of(); }
         @Override public List<ExecutionState> findAll(int limit) { return List.of(); }
         @Override public void deleteById(ExecutionId id) {}
+        @Override public Map<com.performance.platform.domain.id.TaskId, Map<com.performance.platform.domain.id.AgentId, com.performance.platform.domain.task.TaskResult>> findAllTaskResults(ExecutionId id) { return Map.of(); }
     }
 }

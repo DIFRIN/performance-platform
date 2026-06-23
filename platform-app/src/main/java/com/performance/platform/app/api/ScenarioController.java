@@ -1,12 +1,16 @@
 package com.performance.platform.app.api;
 
 import com.performance.platform.app.api.dto.ExecutionStatusResponse;
+import com.performance.platform.app.api.dto.ProgressResponse;
 import com.performance.platform.app.api.dto.SubmitResponse;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
 import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
 import com.performance.platform.application.ports.in.GenerateReportUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
+import com.performance.platform.application.ports.out.ExecutionRepository;
+import com.performance.platform.application.usecase.ExecutionProgressCalculator;
+import com.performance.platform.domain.execution.ExecutionProgress;
 import com.performance.platform.domain.id.ExecutionId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
  * and report generation.
  * <p>
  * Delegates to application-layer use cases (ports in).
+ * Progress is computed via {@link ExecutionProgressCalculator} (ISSUE-121).
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -39,18 +44,24 @@ public class ScenarioController {
     private final GetExecutionStatusUseCase statusUseCase;
     private final CancelExecutionUseCase cancelUseCase;
     private final GenerateReportUseCase reportUseCase;
+    private final ExecutionRepository executionRepository;
+    private final ExecutionProgressCalculator progressCalculator;
 
     public ScenarioController(
             ScenarioParsingUseCase parsingUseCase,
             ExecuteScenarioUseCase executeUseCase,
             GetExecutionStatusUseCase statusUseCase,
             CancelExecutionUseCase cancelUseCase,
-            GenerateReportUseCase reportUseCase) {
+            GenerateReportUseCase reportUseCase,
+            ExecutionRepository executionRepository,
+            ExecutionProgressCalculator progressCalculator) {
         this.parsingUseCase = parsingUseCase;
         this.executeUseCase = executeUseCase;
         this.statusUseCase = statusUseCase;
         this.cancelUseCase = cancelUseCase;
         this.reportUseCase = reportUseCase;
+        this.executionRepository = executionRepository;
+        this.progressCalculator = progressCalculator;
     }
 
     /**
@@ -72,10 +83,11 @@ public class ScenarioController {
     }
 
     /**
-     * Retrieves the status and state of an execution.
+     * Retrieves the status and state of an execution, including progress (ISSUE-121).
+     * Progress is computed from all persisted task results via {@link ExecutionProgressCalculator}.
      *
      * @param id the execution identifier
-     * @return 200 OK with the execution status details
+     * @return 200 OK with the execution status details including progress
      */
     @GetMapping("/executions/{id}")
     public ResponseEntity<ExecutionStatusResponse> getStatus(@PathVariable("id") String id) {
@@ -84,18 +96,24 @@ public class ScenarioController {
         var status = statusUseCase.getStatus(executionId);
         var state = statusUseCase.getState(executionId);
 
-        var response = state.map(s -> new ExecutionStatusResponse(
-                s.id().value(),
-                s.scenarioId().value(),
-                s.status().name(),
-                s.phaseStatuses().entrySet().stream()
-                        .collect(Collectors.toMap(
-                                e -> e.getKey().name(),
-                                e -> e.getValue().name())),
-                s.startedAt().toString(),
-                s.updatedAt().toString()))
-                .orElseGet(() -> new ExecutionStatusResponse(
-                        id, null, status.name(), Map.of(), null, null));
+        var response = state.map(s -> {
+            var taskResults = executionRepository.findAllTaskResults(executionId);
+            ExecutionProgress progress = progressCalculator.calculate(s, taskResults);
+            var progressResponse = new ProgressResponse(
+                    progress.total(), progress.ok(), progress.ko(), progress.running());
+            return new ExecutionStatusResponse(
+                    s.id().value(),
+                    s.scenarioId().value(),
+                    s.status().name(),
+                    s.phaseStatuses().entrySet().stream()
+                            .collect(Collectors.toMap(
+                                    e -> e.getKey().name(),
+                                    e -> e.getValue().name())),
+                    s.startedAt().toString(),
+                    s.updatedAt().toString(),
+                    progressResponse);
+        }).orElseGet(() -> new ExecutionStatusResponse(
+                id, null, status.name(), Map.of(), null, null, null));
 
         return ResponseEntity.ok(response);
     }

@@ -676,6 +676,9 @@ class ExecutionEngineE2ETest {
 
         @Override
         public void deleteById(ExecutionId id) { /* no-op */ }
+
+        @Override
+        public Map<com.performance.platform.domain.id.TaskId, Map<com.performance.platform.domain.id.AgentId, com.performance.platform.domain.task.TaskResult>> findAllTaskResults(ExecutionId id) { return Map.of(); }
     }
 
     static class StubTaskExecutorLookup implements TaskExecutorLookup {

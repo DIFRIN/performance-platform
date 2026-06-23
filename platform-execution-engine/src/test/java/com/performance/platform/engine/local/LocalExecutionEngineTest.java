@@ -150,6 +150,9 @@ class LocalExecutionEngineTest {
 
         @Override
         public void deleteById(ExecutionId id) { /* no-op */ }
+
+        @Override
+        public Map<TaskId, Map<AgentId, com.performance.platform.domain.task.TaskResult>> findAllTaskResults(ExecutionId id) { return Map.of(); }
     }
 
     // -------------------------------------------------------------------------

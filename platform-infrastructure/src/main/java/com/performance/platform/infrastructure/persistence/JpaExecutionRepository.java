@@ -146,6 +146,21 @@ public class JpaExecutionRepository implements ExecutionRepository {
     }
 
     @Override
+    public Map<TaskId, Map<AgentId, TaskResult>> findAllTaskResults(ExecutionId id) {
+        log.info("action=find_all_task_results executionId={}", id.value());
+        List<TaskResultEntity> entities = taskResultRepo.findByExecutionId(id.value());
+        Map<TaskId, Map<AgentId, TaskResult>> results = new LinkedHashMap<>();
+        for (TaskResultEntity entity : entities) {
+            var taskId = TaskId.of(entity.taskId());
+            var agentId = AgentId.of(entity.agentId());
+            results.computeIfAbsent(taskId, k -> new LinkedHashMap<>())
+                    .put(agentId, taskResultMapper.toDomain(entity));
+        }
+        log.info("action=find_all_task_results_done executionId={} taskCount={}", id.value(), results.size());
+        return results;
+    }
+
+    @Override
     public List<ExecutionState> findAll(int limit) {
         log.info("action=find_all_executions limit={}", limit);
         List<ExecutionStateEntity> entities =

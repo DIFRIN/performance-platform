@@ -73,6 +73,15 @@ public interface ExecutionRepository {
     List<ExecutionState> findAll(int limit);
 
     /**
+     * Recupere tous les resultats de taches pour une execution, regroupes par taskId puis agentId.
+     * Supporte le pattern multi-claim (ADR-011).
+     *
+     * @param id l'identifiant de l'execution
+     * @return map taskId -> (agentId -> TaskResult), jamais null, vide si aucun resultat
+     */
+    Map<TaskId, Map<AgentId, TaskResult>> findAllTaskResults(ExecutionId id);
+
+    /**
      * Supprime une execution et tous ses resultats de tache.
      * Operation transactionnelle. No-op silencieux si l'identifiant est inconnu.
      *

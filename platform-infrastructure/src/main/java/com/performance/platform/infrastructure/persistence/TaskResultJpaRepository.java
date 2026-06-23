@@ -29,6 +29,16 @@ public interface TaskResultJpaRepository extends JpaRepository<TaskResultEntity,
             @Param("taskId") String taskId);
 
     /**
+     * Finds all task results for a given execution, across all tasks and agents.
+     * Used to compute execution progress and build task summaries.
+     *
+     * @param executionId execution identifier
+     * @return list of task result entities (possibly empty, never null)
+     */
+    @Query("SELECT t FROM TaskResultEntity t WHERE t.id.executionId = :executionId")
+    List<TaskResultEntity> findByExecutionId(@Param("executionId") String executionId);
+
+    /**
      * Deletes all task results for a given execution.
      * Used as the first step in the cascading deletion of an execution (ISSUE-119).
      * Self-transactional: the {@link Transactional} annotation ensures the JPQL

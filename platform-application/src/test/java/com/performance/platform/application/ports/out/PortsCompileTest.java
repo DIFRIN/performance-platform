@@ -72,6 +72,11 @@ class PortsCompileTest {
 
             @Override
             public void deleteById(ExecutionId id) { /* no-op */ }
+
+            @Override
+            public Map<TaskId, Map<AgentId, TaskResult>> findAllTaskResults(ExecutionId id) {
+                return Map.of();
+            }
         };
 
         var state = new ExecutionState(
@@ -134,6 +139,11 @@ class PortsCompileTest {
 
             @Override
             public void deleteById(ExecutionId id) { /* no-op */ }
+
+            @Override
+            public Map<TaskId, Map<AgentId, TaskResult>> findAllTaskResults(ExecutionId id) {
+                return Map.of();
+            }
         };
 
         var agentA = AgentId.generate();

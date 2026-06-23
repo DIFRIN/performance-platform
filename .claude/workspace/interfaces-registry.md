@@ -288,9 +288,14 @@
 |---|---|---|---|
 | `PerformancePlatformApplication` | ✅ STABLE | PDR-018 | ISSUE-077 |
 | `RuntimeModeResolver` / `RuntimeRole` / `RuntimeMode` | ✅ STABLE | PDR-018 | ISSUE-078 |
-| `ScenarioController` | ✅ STABLE | PDR-018 | ISSUE-079 |
-| `SubmitResponse` / `ExecutionStatusResponse` (DTOs) | ✅ STABLE | PDR-018 | ISSUE-079 |
-| `ApiExceptionHandler` | ✅ STABLE | PDR-018 | ISSUE-079 |
+| `ScenarioController` | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+progress) |
+| `SubmitResponse` / `ExecutionStatusResponse` (DTOs) | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+ProgressResponse) |
+| `ExecutionController` | ✅ STABLE | PDR-027 | ISSUE-121 |
+| `ExecutionSummaryResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
+| `ProgressResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
+| `TaskSummaryResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
+| `TaskListResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
+| `ApiExceptionHandler` | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+409 Conflict ADR-020) |
 | `PluginBootstrap` | ✅ STABLE | PDR-018 | ISSUE-080 |
 | `PluginProperties` | ✅ STABLE | PDR-018 | ISSUE-080 |
 | `SecurityConfiguration` + config profiles | ✅ STABLE | PDR-018 | ISSUE-081 |

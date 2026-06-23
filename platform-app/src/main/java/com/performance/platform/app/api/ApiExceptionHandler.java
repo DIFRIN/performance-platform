@@ -5,6 +5,7 @@ import com.performance.platform.application.exception.InvalidScenarioException;
 import com.performance.platform.application.exception.NoAvailableAgentException;
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.exception.ScenarioParsingException;
+import com.performance.platform.application.usecase.ExecutionNotDeletableException;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.scenario.usecase.ScenarioValidationException;
 import com.performance.platform.scenario.validation.ValidationError;
@@ -113,6 +114,20 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(500)
                 .body(Map.of(
                         "error", "REPORT_GENERATION_FAILED",
+                        "message", ex.getMessage()));
+    }
+
+    /**
+     * Handles deletion of active executions (STARTED or RUNNING) — ADR-020.
+     * Returns 409 Conflict to indicate the execution must be cancelled before deletion.
+     */
+    @ExceptionHandler(ExecutionNotDeletableException.class)
+    public ResponseEntity<Map<String, String>> handleNotDeletable(ExecutionNotDeletableException ex) {
+        String execId = ex.getExecutionId().value();
+        log.warn("action=delete_rejected executionId={} status={}", execId, ex.getCurrentStatus());
+        return ResponseEntity.status(409)
+                .body(Map.of(
+                        "error", "EXECUTION_NOT_DELETABLE",
                         "message", ex.getMessage()));
     }
 

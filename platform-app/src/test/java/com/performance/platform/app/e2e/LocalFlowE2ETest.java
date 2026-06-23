@@ -215,9 +215,10 @@ class LocalFlowE2ETest {
         };
 
         // 11. ScenarioController with MockMvc
+        var progressCalculator = new com.performance.platform.application.usecase.ExecutionProgressCalculator();
         var controller = new ScenarioController(
                 parsingUseCase, executeUseCase, statusUseCase,
-                cancelUseCase, reportUseCase);
+                cancelUseCase, reportUseCase, executionRepository, progressCalculator);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
@@ -461,6 +462,11 @@ class LocalFlowE2ETest {
                     em.remove(entity);
                 }
             });
+        }
+
+        @Override
+        public java.util.Map<com.performance.platform.domain.id.TaskId, java.util.Map<com.performance.platform.domain.id.AgentId, com.performance.platform.domain.task.TaskResult>> findAllTaskResults(ExecutionId id) {
+            return java.util.Map.of();
         }
 
         private void executeInTransaction(

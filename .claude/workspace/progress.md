@@ -131,8 +131,8 @@
 | ISSUE-117 | End-to-end integration test: agent config → registration → task execution | DONE | PDR-026 | ISSUE-111,112,113,114,115,116 |
 | ISSUE-118 | End-to-end integration test: LOCAL mode executes all scenario tasks | DONE | PDR-026 | ISSUE-113 |
 | ISSUE-119 | Etendre ExecutionRepository (findAll/deleteById) + JpaExecutionRepository | DONE | PDR-027 | — |
-| ISSUE-120 | Use cases ListExecutions/DeleteExecution + ExecutionProgress serveur | APPROVED | PDR-027 | ISSUE-119 |
-| ISSUE-121 | REST endpoints executions (list/tasks/delete) + DTOs + progress | WAITING | PDR-027 | ISSUE-120 |
+| ISSUE-120 | Use cases ListExecutions/DeleteExecution + ExecutionProgress serveur | DONE | PDR-027 | ISSUE-119 |
+| ISSUE-121 | Endpoints REST executions (list / tasks / delete) + DTOs + progress | DONE | PDR-027 | ISSUE-120 |
 | ISSUE-122 | REST endpoint GET /api/v1/agents (ORCHESTRATOR) | WAITING | PDR-027 | ISSUE-121 |
 | ISSUE-123 | REST endpoint GET /api/v1/executions/{id}/report (stream pre-generated file) | WAITING | PDR-027 | ISSUE-121 |
 | ISSUE-124 | POST /api/v1/scenarios/upload + structured validation-error DTO | WAITING | PDR-027 | ISSUE-121 |
@@ -625,3 +625,7 @@
 | 2026-06-23 | ISSUE-120 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-23 | ISSUE-120 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-23 | ISSUE-120 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-23 | ISSUE-120 | APPROVED → DONE | issue-next.sh |
+| 2026-06-23 | ISSUE-121 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-23 | ISSUE-121 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-23 | ISSUE-121 | APPROVED → DONE | issue-next.sh |
