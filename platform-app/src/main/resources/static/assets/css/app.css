@@ -258,6 +258,116 @@ body {
     background: var(--color-primary-hover);
 }
 
+/* ---------- Button variants ---------- */
+.btn--sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.btn--warning {
+    color: #b45309;
+    border-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.btn--warning:hover {
+    background: #fef3c7;
+}
+
+.btn--danger {
+    color: #b91c1c;
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.btn--danger:hover {
+    background: #fee2e2;
+}
+
+/* ---------- Executions: filter group ---------- */
+.exec-filter-group {
+    display: flex;
+    gap: 0.375rem;
+}
+
+/* ---------- Executions table ---------- */
+.executions-table {
+    /* Inherits .table base styles */
+}
+
+.executions-table__row {
+    cursor: pointer;
+}
+
+.executions-table__started {
+    color: var(--color-text-secondary);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.executions-table__actions-col {
+    width: 120px;
+    white-space: nowrap;
+}
+
+/* ---------- Executions: mini progress bar ---------- */
+.exec-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 160px;
+}
+
+.exec-progress__bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #e5e7eb;
+}
+
+.exec-progress__seg {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.exec-progress__seg--ok {
+    background: var(--color-ok);
+}
+
+.exec-progress__seg--ko {
+    background: var(--color-ko);
+}
+
+.exec-progress__seg--running {
+    background: var(--color-running);
+}
+
+.exec-progress__seg--pending {
+    background: #d1d5db;
+}
+
+.exec-progress__counts {
+    font-size: 0.6875rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+/* ---------- Executions: error states ---------- */
+.exec-error {
+    color: var(--color-ko);
+}
+
+.exec-error-banner {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius);
+    color: #b91c1c;
+    font-size: 0.8125rem;
+}
+
 /* ---------- Empty state ---------- */
 .empty-state {
     display: flex;

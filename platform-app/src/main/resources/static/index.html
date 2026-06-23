@@ -33,6 +33,7 @@
 <script type="module">
     import { registerRoute, startRouter } from "/assets/js/router.js";
     import { renderNav } from "/assets/js/nav.js";
+    import { mount as mountExecutions } from "/assets/js/views/executions.js";
 
     // ----------------------------------------------------------------
     // Orchestrator detection — placeholder (ISSUE-126).
@@ -62,8 +63,7 @@
         return { cleanup: null };
     }
 
-    registerRoute("executions", (el, params) =>
-        renderPlaceholder(el, params, "Executions"));
+    registerRoute("executions", (el, params) => mountExecutions(el));
     registerRoute("executions/{id}", (el, params) =>
         renderPlaceholder(el, params, "Execution Detail"));
     registerRoute("executions/{id}/report", (el, params) =>
