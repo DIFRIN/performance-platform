@@ -296,8 +296,9 @@
 | `TaskSummaryResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `TaskListResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `ApiExceptionHandler` | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+409 Conflict ADR-020) |
-| `AgentController` | 🔄 IN PROGRESS | PDR-027 | ISSUE-122 |
-| `AgentResponse` (DTO) | 🔄 IN PROGRESS | PDR-027 | ISSUE-122 |
+| `AgentController` | ✅ STABLE | PDR-027 | ISSUE-122 |
+| `AgentResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-122 |
+| `ReportController` | 🔄 IN PROGRESS | PDR-027 | ISSUE-123 |
 | `PluginBootstrap` | ✅ STABLE | PDR-018 | ISSUE-080 |
 | `PluginProperties` | ✅ STABLE | PDR-018 | ISSUE-080 |
 | `SecurityConfiguration` + config profiles | ✅ STABLE | PDR-018 | ISSUE-081 |

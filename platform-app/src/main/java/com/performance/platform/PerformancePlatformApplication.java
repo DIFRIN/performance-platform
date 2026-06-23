@@ -2,6 +2,7 @@ package com.performance.platform;
 
 import com.performance.platform.app.config.AgentProperties;
 import com.performance.platform.app.plugin.PluginProperties;
+import com.performance.platform.reporting.output.ReportProperties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ import org.springframework.modulith.Modulith;
  */
 @SpringBootApplication
 @Modulith
-@EnableConfigurationProperties({PluginProperties.class, AgentProperties.class})
+@EnableConfigurationProperties({PluginProperties.class, AgentProperties.class, ReportProperties.class})
 public class PerformancePlatformApplication {
 
     private static final Logger log = LoggerFactory.getLogger(PerformancePlatformApplication.class);
