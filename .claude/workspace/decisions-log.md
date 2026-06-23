@@ -115,3 +115,27 @@ IMPACT : PDR-021 beans transportKafkaTemplate/transportProducerFactory/transport
 CONTEXTE : PDR-023 cree iot-dispatcher/device-api en Spring Boot 3.4.x, hors pom racine, sans archi hexagonale. Tension apparente avec stack NON NEGOCIABLE (CLAUDE.md §4) et regles archi.
 RAISON : Le SUT n'est PAS le produit : c'est un systeme tiers simule pour la demo. Les regles plateforme (stack 4.x, hexagonale, domaine pur, registries, ArchUnit) NE s'appliquent PAS a platform-examples/. Hors build Maven racine, packages com.performance.examples.*, couplage uniquement par contrat reseau (topics/endpoints via registries ADR-015).
 IMPACT : Reviewer NE doit PAS signaler les "violations" archi dans platform-examples/. NE PAS ajouter au pom racine, NE PAS upgrader vers 4.x. Build SUT verifie separement (Done PDR-023).
+
+---
+
+## Decisions revue Web IHM (PDR-027/028/029 — Architect 2026-06-23)
+
+[2026-06-23] [architecture] DECISION : ADR-019 — Securite IHM = `platform.security.enabled` existant, PAS de `security.jwt.enabled`
+CONTEXTE : PDR-028/ISSUE-125 introduisaient une propriete `security.jwt.enabled` independante du mode pour activer JWT. Or `SecurityConfiguration` (ISSUE-081) pilote DEJA la securite via `platform.security.enabled` + detection issuer-uri OAuth2. `security.jwt.enabled` n'existe nulle part.
+RAISON : Eviter deux mecanismes concurrents et une property morte. Reutiliser l'existant ; ajouter `/`, `/index.html`, `/assets/**` aux matchers permitAll() quand la securite est active (assets publics, pas de login v1). `platform-app` reste l'adapter entrant racine (serving statique + controllers + use cases = pas une violation Modulith).
+IMPACT : ISSUE-125 corrigee (cle securite + matchers statiques). PDR-028 a aligner. SecurityConfiguration.java a etendre. Voir ADR-019.
+
+[2026-06-23] [architecture] DECISION : ADR-020 — Read-model executions : progress (state+taskResults), pas de port CQRS separe, delete interdit si actif
+CONTEXTE : ISSUE-120 prevoyait `ExecutionProgressCalculator` derivant la progression d'un `ExecutionState` SEUL. Or `ExecutionState` ne porte PAS les resultats par task (lus via `getTaskResults`). Question CQRS : port de query separe ? Et delete d'une execution active.
+RAISON : Calcul impossible sans `taskResults` → signature corrigee `calculate(state, Map<TaskId, Map<AgentId, TaskResult>>)`. Port unique conserve (pas de read-store distinct en v1). Delete sur STARTED/RUNNING interdit (protege checkpointing CNF-02, courses multi-claim ADR-011) → `ExecutionNotDeletableException` → HTTP 409. `ExecutionProgress` reste un VO domaine pur.
+IMPACT : ISSUE-119/120/121 corrigees. PDR-027 a aligner. Voir ADR-020.
+
+[2026-06-23] [architecture] CLARIFICATION : modes d'acces (API/IHM/CLI) reserves a l'orchestrateur — AGENT n'expose rien
+CONTEXTE : Clarification utilisateur d'une contrainte d'acces fondamentale. En mode DISTRIBUTED, seul l'ORCHESTRATOR expose les modes d'acces (API/IHM/CLI). Les AGENTS n'exposent rien. En LOCAL, tout est disponible (orchestrateur et agent dans la meme JVM). La matrice : LOCAL=tout, ORCHESTRATOR=tout, AGENT=rien (ni API, ni IHM, ni CLI, ni Tomcat ; uniquement connexions sortantes au transport).
+RAISON : Un agent est un pur worker pilote par le transport, pas un point d'entree. La garantie en mode AGENT est plus forte que "UI desactivee" : c'est `WebApplicationType.NONE` force au demarrage (aucun serveur web). Decide dans `main()` (meme mecanisme que le CLI headless). Formalisation d'une contrainte existante, pas de nouveau scope — aucun PDR/Issue cree.
+IMPACT : ADR-019 (decision 4 ajoutee + matrice mode runtime x mode d'acces). ADR-021 (decision 4 : CLI reserve LOCAL/ORCHESTRATOR, CliScenarioRunner jamais actif en AGENT). ISSUE-125 (regle + Done : AGENT = WebApplicationType.NONE, pas seulement web.ui.enabled=false). ISSUE-131 (garde : CliScenarioRunner jamais instancie en AGENT). PDR-028 (modes d'acces + Done alignes). specs/00-overview.md (matrice canonique). specs/04-agent-runtime.md (note "aucune surface d'acces en AGENT"). CLAUDE.md section 8 (3 lignes de routing). NB distinction preservee : le recepteur de transport HTTP entrant (agent.http.callbackUrl, spec 04 §8, si transport.type=HTTP) n'est PAS une surface d'acces API/IHM/CLI.
+
+[2026-06-23] [architecture] CONSTAT : numerotation ADR — collision preexistante + headless inexistant
+CONTEXTE : Deux fichiers ADR-015 coexistent (named-resource-registry-pattern ET configuration-driven-agent-specialization) ; le decisions-log reference ADR-015/016/017 avec des titres differents des fichiers ADR-016/017/018 sur disque. Le plus grand numero de FICHIER est 018. Les nouveaux ADRs prennent donc 019 et 020 (la demande d'un "ADR-016" est impossible : numero deja pris).
+RAISON : Eviter d'aggraver la collision. A nettoyer dans une passe de renumerotation dediee.
+IMPACT : ADR-019 et ADR-020 crees. Par ailleurs : le mode "headless run-and-exit sur --scenario=" presente par PDR-028 comme "existant (PDR-018)" N'EXISTE PAS dans `PerformancePlatformApplication`. Critere retire d'ISSUE-125 ; Issue dediee + ADR requis si ce mode est voulu.

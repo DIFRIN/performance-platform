@@ -1,5 +1,11 @@
-# No active issue — all work complete
-**Status**: DONE
-**Date**: 2026-06-22T23:50+02:00
+# ISSUE-119: Etendre ExecutionRepository (findAll/deleteById) + JpaExecutionRepository
+**Status**: APPROVED
+**PDR**: PDR-027
+**Module**: platform-infrastructure
+**Started**: 2026-06-23T12:29+02:00
+**IssueFile**: issues/ISSUE-119-execution-repository-findall-delete.md
 
-Run `progress-status.sh` to verify.
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-119-execution-repository-findall-delete.md`
+
+## Reviewer Feedback
+(None yet)

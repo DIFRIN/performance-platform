@@ -641,6 +641,8 @@ class RemoteExecutionEngineTest {
         @Override public void updatePhase(ExecutionId id, Phase phase, PhaseStatus status) {}
         @Override public void saveTaskResult(ExecutionId id, TaskId taskId, AgentId agentId, TaskResult result) {}
         @Override public Map<AgentId, TaskResult> getTaskResults(ExecutionId id, TaskId taskId) { return Map.of(); }
+        @Override public List<ExecutionState> findAll(int limit) { return List.of(); }
+        @Override public void deleteById(ExecutionId id) { /* no-op */ }
     }
 
     /** Stub pour AgentAvailabilityChecker. */

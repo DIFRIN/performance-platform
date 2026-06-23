@@ -24,7 +24,48 @@ step-by-step — no bulk dispatch.
 
 ---
 
-## Modes
+## Access Modes
+
+The same JAR exposes three ways to run a campaign. The access mode is independent of
+the runtime mode (`LOCAL` / `DISTRIBUTED`) below.
+
+| Access mode | Invocation | Server | Use case |
+|---|---|---|---|
+| CLI (headless) | `java -jar platform-app.jar --scenario=path/to/scenario.yaml` | None | CI, pipelines, scripts |
+| API | `java -jar platform-app.jar`, then `POST /api/v1/scenarios` | Long-running | Programmatic integration |
+| IHM (web UI) | `java -jar platform-app.jar` with `web.ui.enabled=true`, then open `http://localhost:8080` | Long-running | Human operators |
+
+### CLI (headless)
+
+Runs the scenario, prints a structured summary to stdout, and exits with a return code.
+No HTTP server, no web UI.
+
+```bash
+java -jar platform-app/target/performance-platform.jar --scenario=scenarios/customer-api-perf.yaml
+echo $?   # 0 = success, 1 = failure, 2 = invalid args/scenario
+```
+
+When `--scenario=` is present, the application starts with `WebApplicationType.NONE`
+(no Tomcat). When absent, it starts the long-running server (API + IHM). See ADR-021.
+
+### API
+
+```bash
+java -jar platform-app/target/performance-platform.jar
+curl -X POST http://localhost:8080/api/v1/scenarios \
+  -H "Content-Type: application/yaml" --data-binary @scenario.yaml
+```
+
+### IHM (web UI)
+
+```bash
+java -jar platform-app/target/performance-platform.jar --web.ui.enabled=true
+# open http://localhost:8080
+```
+
+---
+
+## Runtime Modes
 
 A single JAR. The runtime mode is controlled by environment variables.
 

@@ -130,6 +130,19 @@
 | ISSUE-116 | Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files | DONE | PDR-026 | ISSUE-111 |
 | ISSUE-117 | End-to-end integration test: agent config → registration → task execution | DONE | PDR-026 | ISSUE-111,112,113,114,115,116 |
 | ISSUE-118 | End-to-end integration test: LOCAL mode executes all scenario tasks | DONE | PDR-026 | ISSUE-113 |
+| ISSUE-119 | Etendre ExecutionRepository (findAll/deleteById) + JpaExecutionRepository | APPROVED | PDR-027 | — |
+| ISSUE-120 | Use cases ListExecutions/DeleteExecution + ExecutionProgress server-side | WAITING | PDR-027 | ISSUE-119 |
+| ISSUE-121 | REST endpoints executions (list/tasks/delete) + DTOs + progress | WAITING | PDR-027 | ISSUE-120 |
+| ISSUE-122 | REST endpoint GET /api/v1/agents (ORCHESTRATOR) | WAITING | PDR-027 | ISSUE-121 |
+| ISSUE-123 | REST endpoint GET /api/v1/executions/{id}/report (stream pre-generated file) | WAITING | PDR-027 | ISSUE-121 |
+| ISSUE-124 | POST /api/v1/scenarios/upload + structured validation-error DTO | WAITING | PDR-027 | ISSUE-121 |
+| ISSUE-125 | WebUiProperties + conditional Spring config + static/UI security | WAITING | PDR-028 | ISSUE-124 |
+| ISSUE-126 | Static shell index.html + CSS layout + nav + hash router | WAITING | PDR-028 | ISSUE-125 |
+| ISSUE-127 | Executions list view (polling 3s, status filter, cancel/delete) | WAITING | PDR-029 | ISSUE-126 |
+| ISSUE-128 | Execution detail view (tasks ok/ko, progress bar, phases) | WAITING | PDR-029 | ISSUE-127 |
+| ISSUE-129 | Agents dashboard view (ORCHESTRATOR) + upload view (inline validation) | WAITING | PDR-029 | ISSUE-128 |
+| ISSUE-130 | Report view (poll → iframe HTML + PDF/JSON download) + E2E Testcontainers | WAITING | PDR-029 | ISSUE-129 |
+| ISSUE-131 | Headless CLI mode (run-and-exit on --scenario=, WebApplicationType.NONE) | WAITING | PDR-028 | ISSUE-125 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -160,6 +173,9 @@
 | PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | DONE | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
 | PDR-025 | Mock Agent Demo Scenarios + Device Cleanup | platform-deployment | WAITING (blocked by PDR-026 priority) | ISSUE-103,104,105,106,107,108,109,110 | PDR-010,013,014,018,019,022,023,024,026 |
 | PDR-026 | Agent Configuration Wiring & E2E Verification | platform-app + platform-agent-runtime | WAITING | ISSUE-111,112,113,114,115,116,117,118 | PDR-009, PDR-018, ADR-015 |
+| PDR-027 | IHM Backend API Extensions | platform-application + platform-infrastructure + platform-app | WAITING | ISSUE-119..124 | PDR-004,012,015,018 |
+| PDR-028 | IHM Web Serving & Static Shell | platform-app | WAITING | ISSUE-125,126,131 | PDR-027 |
+| PDR-029 | IHM Frontend Views (vanilla JS) | platform-app | WAITING | ISSUE-127..130 | PDR-028 |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
 | — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
@@ -600,3 +616,8 @@
 | 2026-06-22 | ISSUE-117 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-117 | IN_REVIEW → APPROVED | Reviewer approved |
 | 2026-06-22 | ISSUE-117 | APPROVED → DONE | issue-next.sh |
+| 2026-06-23 | ADR-021 + ISSUE-131 | — → WAITING | System Designer — Mode CLI headless (run-and-exit sur `--scenario=`). ADR-021 cree : detection `--scenario=` dans main(), `WebApplicationType.NONE` si present (aucun Tomcat/IHM), `CliScenarioRunner` (ApplicationRunner) parse→execute→poll→print stdout→exit (0/1/2). ISSUE-131 ajoutee a PDR-028 (depend de ISSUE-125). Le mode "existant PDR-018" suppose par PDR-028 n'existait pas dans le code ; il est desormais formalise (PDR-028 + ADR-021). 3e mode d'acces aux cotes API et IHM. |
+| 2026-06-23 | PDR-027,028,029 + ISSUE-119..130 | — → WAITING | System Designer — Web IHM (HTML/CSS+vanilla JS dans platform-app, toggle web.ui.enabled, polling 3s, JWT property-driven). PDR-027 backend API extensions (findAll/deleteById, ListExecutions/DeleteExecution use cases, ExecutionProgress server-side, REST endpoints executions/tasks/agents/report-stream/upload + structured validation DTO). PDR-028 web serving + static shell (WebUiConfiguration, security, index.html/nav/hash router). PDR-029 frontend views (executions list, detail, agents, upload, report) + E2E Testcontainers. Report streamed already-generated, NEVER generated on demand. |
+| 2026-06-23 | ISSUE-119 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-23 | ISSUE-119 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-23 | ISSUE-119 | IN_REVIEW → APPROVED | Reviewer approved |

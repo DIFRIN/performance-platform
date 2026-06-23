@@ -618,6 +618,38 @@ class LocalModeAllTasksE2ETest {
             }
         }
 
+        @Override
+        public java.util.List<ExecutionState> findAll(int limit) {
+            EntityManager em = emf.createEntityManager();
+            try {
+                return em.createQuery(
+                                "SELECT e FROM ExecutionStateEntity e ORDER BY e.startedAt DESC",
+                                ExecutionStateEntity.class)
+                        .setMaxResults(limit)
+                        .getResultList()
+                        .stream()
+                        .map(stateMapper::toDomain)
+                        .collect(java.util.stream.Collectors.toList());
+            } finally {
+                em.close();
+            }
+        }
+
+        @Override
+        public void deleteById(ExecutionId id) {
+            executeInTransaction(em -> {
+                em.createQuery(
+                        "DELETE FROM TaskResultEntity t WHERE t.id.executionId = :execId")
+                        .setParameter("execId", id.value())
+                        .executeUpdate();
+                ExecutionStateEntity entity = em.find(
+                        ExecutionStateEntity.class, id.value());
+                if (entity != null) {
+                    em.remove(entity);
+                }
+            });
+        }
+
         private void executeInTransaction(
                 java.util.function.Consumer<EntityManager> action) {
             EntityManager em = emf.createEntityManager();

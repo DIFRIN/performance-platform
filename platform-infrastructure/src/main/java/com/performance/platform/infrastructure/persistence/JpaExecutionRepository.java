@@ -12,7 +12,10 @@ import com.performance.platform.infrastructure.persistence.mapper.ExecutionState
 import com.performance.platform.infrastructure.persistence.mapper.TaskResultMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -28,9 +31,12 @@ import java.util.stream.Collectors;
  *
  * <p>Transaction management is delegated to the underlying Spring Data
  * repositories ({@code SimpleJpaRepository.save()} is already
- * {@code @Transactional}). Database access is expected to run under
- * Virtual Threads (configured by the caller via
- * {@code Executors.newVirtualThreadPerTaskExecutor()}).</p>
+ * {@code @Transactional}). The {@link #deleteById(ExecutionId)} method uses
+ * a {@link TransactionTemplate} for programmatic transaction management so that
+ * the cascading delete (task results then execution state) is atomic regardless
+ * of whether this bean is accessed through a Spring AOP proxy or directly.
+ * Database access is expected to run under Virtual Threads (configured by the
+ * caller via {@code Executors.newVirtualThreadPerTaskExecutor()}).</p>
  *
  * <p>Save operations are idempotent: Spring Data's {@code save()} calls
  * {@code EntityManager.merge()} for entities with manually-assigned IDs,
@@ -45,6 +51,7 @@ public class JpaExecutionRepository implements ExecutionRepository {
     private final TaskResultJpaRepository taskResultRepo;
     private final ExecutionStateMapper stateMapper;
     private final TaskResultMapper taskResultMapper;
+    private final TransactionTemplate txTemplate;
 
     /**
      * Constructor injection.
@@ -53,15 +60,18 @@ public class JpaExecutionRepository implements ExecutionRepository {
      * @param taskResultRepo   Spring Data repository for task results
      * @param stateMapper      domain-to-entity mapper for execution states
      * @param taskResultMapper domain-to-entity mapper for task results
+     * @param txManager        platform transaction manager for programmatic transactions
      */
     public JpaExecutionRepository(ExecutionStateJpaRepository stateRepo,
                                    TaskResultJpaRepository taskResultRepo,
                                    ExecutionStateMapper stateMapper,
-                                   TaskResultMapper taskResultMapper) {
+                                   TaskResultMapper taskResultMapper,
+                                   PlatformTransactionManager txManager) {
         this.stateRepo = stateRepo;
         this.taskResultRepo = taskResultRepo;
         this.stateMapper = stateMapper;
         this.taskResultMapper = taskResultMapper;
+        this.txTemplate = new TransactionTemplate(txManager);
     }
 
     @Override
@@ -133,5 +143,31 @@ public class JpaExecutionRepository implements ExecutionRepository {
         log.info("action=task_results_retrieved executionId={} taskId={} count={}",
                 id.value(), taskId.value(), results.size());
         return results;
+    }
+
+    @Override
+    public List<ExecutionState> findAll(int limit) {
+        log.info("action=find_all_executions limit={}", limit);
+        List<ExecutionStateEntity> entities =
+                stateRepo.findTopByStartedAtDesc(PageRequest.of(0, limit));
+        List<ExecutionState> result = entities.stream()
+                .map(stateMapper::toDomain)
+                .collect(Collectors.toList());
+        log.info("action=find_all_executions_done count={} limit={}", result.size(), limit);
+        return result;
+    }
+
+    @Override
+    public void deleteById(ExecutionId id) {
+        log.info("action=delete_execution executionId={}", id.value());
+        txTemplate.executeWithoutResult(status -> {
+            if (!stateRepo.existsById(id.value())) {
+                log.info("action=delete_execution_noop executionId={} reason=not_found", id.value());
+                return;
+            }
+            taskResultRepo.deleteByExecutionId(id.value());
+            stateRepo.deleteById(id.value());
+        });
+        log.info("action=delete_execution_done executionId={}", id.value());
     }
 }
