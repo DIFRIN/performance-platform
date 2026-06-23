@@ -311,6 +311,10 @@
 | `AgentRuntimeConfiguration` | ⬜ PLANNED | PDR-026 | ISSUE-112 |
 | `WebUiProperties` | 🔄 IN PROGRESS | PDR-028 | ISSUE-125 |
 | `WebUiConfiguration` | 🔄 IN PROGRESS | PDR-028 | ISSUE-125 |
+| `index.html` (SPA shell) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
+| `app.css` (layout + status classes) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
+| `router.js` (hash router) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
+| `nav.js` (nav component) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
 
 ## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
 
