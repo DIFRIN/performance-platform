@@ -382,3 +382,264 @@ body {
     font-size: 0.9375rem;
     margin-top: 0.5rem;
 }
+
+/* ---------- Execution Detail — layout ---------- */
+.detail-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+}
+
+.detail-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.detail-header__left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.detail-header__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.detail-back-link {
+    font-size: 0.8125rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.detail-back-link:hover {
+    text-decoration: underline;
+}
+
+.detail-header__right {
+    flex-shrink: 0;
+}
+
+.detail-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--color-text-secondary);
+    font-size: 0.9375rem;
+}
+
+/* ---------- Execution Detail — info grid ---------- */
+.detail-info-grid {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 0.5rem 1rem;
+    align-items: center;
+}
+
+.detail-info-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.detail-info-value {
+    font-size: 0.875rem;
+}
+
+/* ---------- Execution Detail — phase badges ---------- */
+.detail-phase-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.phase-badge {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.5rem;
+}
+
+/* ---------- Execution Detail — progress bar ---------- */
+.detail-progress__label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.detail-progress__pct {
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--color-text);
+}
+
+.detail-progress__bar {
+    display: flex;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #e5e7eb;
+    margin-bottom: 0.375rem;
+}
+
+.detail-progress__seg {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.detail-progress__seg--ok {
+    background: var(--color-ok);
+}
+
+.detail-progress__seg--ko {
+    background: var(--color-ko);
+}
+
+.detail-progress__seg--running {
+    background: var(--color-running);
+}
+
+.detail-progress__seg--pending {
+    background: #d1d5db;
+}
+
+.detail-progress__counts {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+}
+
+/* ---------- Execution Detail — phase sections ---------- */
+.detail-phase {
+    margin-bottom: 1.25rem;
+}
+
+.detail-phase:last-child {
+    margin-bottom: 0;
+}
+
+.detail-phase__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.detail-phase__name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.detail-phase__stats {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.detail-phase__stat--ok {
+    color: var(--color-ok);
+}
+
+.detail-phase__stat--ko {
+    color: var(--color-ko);
+}
+
+.detail-phase__stat--running {
+    color: var(--color-running);
+}
+
+/* ---------- Execution Detail — tasks table ---------- */
+.detail-tasks-table {
+    font-size: 0.8125rem;
+}
+
+.detail-tasks-table__expand {
+    width: 36px;
+    text-align: center;
+}
+
+.detail-task-toggle {
+    padding: 0.125rem 0.375rem !important;
+    font-size: 0.75rem;
+    line-height: 1;
+    min-width: 24px;
+}
+
+.detail-task-toggle__icon {
+    font-family: var(--font-mono);
+    font-weight: 700;
+}
+
+.detail-task-row {
+    cursor: pointer;
+}
+
+.detail-task-name {
+    font-size: 0.8125rem;
+}
+
+.detail-task-message {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- Execution Detail — expanded task ---------- */
+.detail-task-expanded td {
+    padding: 0.25rem 0.75rem 0.75rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    background: #f8fafc;
+}
+
+.detail-task-expanded__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.detail-task-expanded__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.detail-task-expanded__label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detail-task-expanded__error {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 4px;
+    padding: 0.5rem;
+    color: #b91c1c;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 0;
+}

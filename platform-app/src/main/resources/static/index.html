@@ -34,6 +34,7 @@
     import { registerRoute, startRouter } from "/assets/js/router.js";
     import { renderNav } from "/assets/js/nav.js";
     import { mount as mountExecutions } from "/assets/js/views/executions.js";
+    import { mount as mountExecutionDetail } from "/assets/js/views/execution-detail.js";
 
     // ----------------------------------------------------------------
     // Orchestrator detection — placeholder (ISSUE-126).
@@ -65,7 +66,7 @@
 
     registerRoute("executions", (el, params) => mountExecutions(el));
     registerRoute("executions/{id}", (el, params) =>
-        renderPlaceholder(el, params, "Execution Detail"));
+        mountExecutionDetail(el, params.id));
     registerRoute("executions/{id}/report", (el, params) =>
         renderPlaceholder(el, params, "Execution Report"));
     registerRoute("upload", (el, params) =>

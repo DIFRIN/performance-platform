@@ -317,6 +317,7 @@
 | `nav.js` (nav component) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
 | `api.js` (fetch client /api/v1/**) | 🔄 IN PROGRESS | PDR-029 | ISSUE-127 |
 | `views/executions.js` (executions list view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-127 |
+| `views/execution-detail.js` (execution detail view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-128 |
 
 ## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
 

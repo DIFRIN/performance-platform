@@ -2,7 +2,7 @@
 
 **PDR** : PDR-029
 **Module** : `platform-app`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-126
 **Taille** : M
