@@ -40,8 +40,19 @@ async function request(url, options = {}) {
         throw new Error("API " + res.status + ": " + message);
     }
 
-    // 204 No Content / 202 Accepted — nothing to parse
-    if (res.status === 204 || res.status === 202) return null;
+    // 204 No Content — nothing to parse
+    if (res.status === 204) return null;
+
+    // 202 Accepted may or may not have a body
+    if (res.status === 202) {
+        try {
+            const text = await res.text();
+            return text ? JSON.parse(text) : null;
+        } catch {
+            return null;
+        }
+    }
+
     return res.json();
 }
 
@@ -149,17 +160,46 @@ export async function submitScenario(yaml) {
 }
 
 /**
- * Upload a scenario via multipart form (file or yaml text field).
- * POST /api/v1/scenarios/upload
+ * Upload a scenario for immediate execution.
+ * POST /api/v1/scenarios/upload (multipart)
  *
- * @param {FormData} formData — form with 'file' or 'yaml' field
+ * Accepts either a File object ({@code file}) or a YAML string ({@code yaml}).
+ * On 202 success, returns {@code {executionId, status}}.
+ * On 400 validation failure, throws an Error with {@code err.details} containing
+ * an array of {@code FieldError {field, message}} objects for field-level display.
+ *
+ * @param {{file?: File, yaml?: string}} params
  * @returns {Promise<{executionId: string, status: string}>}
+ * @throws {Error} with {@code .code} and {@code .details[]} on validation failure
  */
-export async function uploadScenario(formData) {
-    return request(BASE + "/scenarios/upload", {
+export async function uploadScenario({ file, yaml } = {}) {
+    const formData = new FormData();
+
+    if (file) {
+        formData.append("file", file);
+    } else if (yaml) {
+        const blob = new Blob([yaml], { type: "text/plain" });
+        formData.append("file", blob, "scenario.yaml");
+    } else {
+        throw new Error("Either 'file' or 'yaml' parameter is required");
+    }
+
+    const res = await fetch(BASE + "/scenarios/upload", {
         method: "POST",
         body: formData,
     });
+
+    const body = await res.json();
+
+    if (res.ok) {
+        return body; // 202 → {executionId, status}
+    }
+
+    // 400 → ValidationErrorResponse or generic error
+    const err = new Error(body.message || body.error || "Upload failed");
+    err.code = body.error;
+    err.details = body.details || [];
+    throw err;
 }
 
 // ---- Reports ----
