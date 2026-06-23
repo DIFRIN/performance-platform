@@ -290,12 +290,14 @@
 | `RuntimeModeResolver` / `RuntimeRole` / `RuntimeMode` | ✅ STABLE | PDR-018 | ISSUE-078 |
 | `ScenarioController` | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+progress) |
 | `SubmitResponse` / `ExecutionStatusResponse` (DTOs) | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+ProgressResponse) |
+| `ValidationErrorResponse` (DTO) | 🔄 IN PROGRESS | PDR-027 | ISSUE-124 |
+| `ScenarioUploadController` | 🔄 IN PROGRESS | PDR-027 | ISSUE-124 |
 | `ExecutionController` | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `ExecutionSummaryResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `ProgressResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `TaskSummaryResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `TaskListResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
-| `ApiExceptionHandler` | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+409 Conflict ADR-020) |
+| `ApiExceptionHandler` | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+409 Conflict ADR-020), ISSUE-124 (+ValidationErrorResponse DTO) |
 | `AgentController` | ✅ STABLE | PDR-027 | ISSUE-122 |
 | `AgentResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-122 |
 | `ReportController` | 🔄 IN PROGRESS | PDR-027 | ISSUE-123 |

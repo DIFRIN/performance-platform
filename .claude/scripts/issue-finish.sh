@@ -39,7 +39,7 @@ fi
 sed -i "s/\*\*Statut\*\*[[:space:]]*:.*/**Statut** : IN_REVIEW/" "${WORKSPACE}/${SOURCE_FILE}"
 
 # ── Marquer IN_REVIEW dans progress.md (scoped ## Issues → ## PDRs) ──────────
-sed -i "/^## Issues/,/^## PDRs/{s/| ${ISSUE_ID} | .* | ${CURRENT_STATUS} |/| ${ISSUE_ID} | ${TITLE} | IN_REVIEW |/}" "$PROGRESS"
+sed -i "/^## Issues/,/^## PDRs/{s#| ${ISSUE_ID} | .* | ${CURRENT_STATUS} |#| ${ISSUE_ID} | ${TITLE} | IN_REVIEW |#}" "$PROGRESS"
 
 # ── Mettre à jour current-issue.md ───────────────────────────────────────────
 sed -i "s/\*\*Status\*\*: ${CURRENT_STATUS}/**Status**: IN_REVIEW/" "$CURRENT"

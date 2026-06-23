@@ -1,5 +1,6 @@
 package com.performance.platform.app.api;
 
+import com.performance.platform.app.api.dto.ValidationErrorResponse;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.InvalidScenarioException;
 import com.performance.platform.application.exception.NoAvailableAgentException;
@@ -8,14 +9,12 @@ import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.application.usecase.ExecutionNotDeletableException;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.scenario.usecase.ScenarioValidationException;
-import com.performance.platform.scenario.validation.ValidationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,26 +31,17 @@ public class ApiExceptionHandler {
     /**
      * Handles scenario validation failures (blocking errors).
      * Returns 400 with field-level error details (CF-05).
+     * Uses structured DTO {@link ValidationErrorResponse} producing the same JSON shape
+     * as before: {@code {error, message, details:[{field, message, path}]}}.
      */
     @ExceptionHandler(ScenarioValidationException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(ScenarioValidationException ex) {
+    public ResponseEntity<ValidationErrorResponse> handleValidation(ScenarioValidationException ex) {
         log.warn("action=validation_failed errors={}", ex.getResult().errors().size());
-        List<Map<String, String>> errors = ex.getResult().errors().stream()
-                .map(e -> {
-                    Map<String, String> m = new LinkedHashMap<>();
-                    m.put("field", e.field());
-                    m.put("message", e.message());
-                    if (e.path() != null) {
-                        m.put("path", e.path());
-                    }
-                    return m;
-                })
+        List<ValidationErrorResponse.FieldError> errors = ex.getResult().errors().stream()
+                .map(e -> new ValidationErrorResponse.FieldError(e.field(), e.message(), e.path()))
                 .toList();
         return ResponseEntity.badRequest()
-                .body(Map.of(
-                        "error", "SCENARIO_VALIDATION_FAILED",
-                        "message", ex.getMessage(),
-                        "details", errors));
+                .body(new ValidationErrorResponse("SCENARIO_VALIDATION_FAILED", ex.getMessage(), errors));
     }
 
     /**
