@@ -1,11 +1,11 @@
-# ISSUE-128: Vue detail d'execution (tasks ok/ko, barre progression, phases)
+# ISSUE-129: Vue dashboard agents (ORCHESTRATOR) + vue upload (validation inline)
 **Status**: APPROVED
 **PDR**: PDR-029
 **Module**: platform-app
-**Started**: 2026-06-23T22:02+02:00
-**IssueFile**: issues/ISSUE-128-view-execution-detail.md
+**Started**: 2026-06-23T22:17+02:00
+**IssueFile**: issues/ISSUE-129-view-agents-upload.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-128-view-execution-detail.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-129-view-agents-upload.md`
 
 ## Reviewer Feedback
 (None yet)
