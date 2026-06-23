@@ -138,8 +138,8 @@
 | ISSUE-124 | Endpoint POST /api/v1/scenarios/upload + DTO d'erreur de validation structure | DONE | PDR-027 | ISSUE-121 |
 | ISSUE-125 | WebUiProperties + config Spring conditionnelle + securite static/UI | DONE | PDR-028 | ISSUE-124 |
 | ISSUE-126 | Shell index.html + CSS layout + nav + routeur a hash | DONE | PDR-028 | ISSUE-125 |
-| ISSUE-127 | Vue liste des executions (polling 3s, filtre statut, cancel/delete) | APPROVED | PDR-029 | ISSUE-126 |
-| ISSUE-128 | Execution detail view (tasks ok/ko, progress bar, phases) | WAITING | PDR-029 | ISSUE-127 |
+| ISSUE-127 | Vue liste des executions (polling 3s, filtre statut, cancel/delete) | DONE | PDR-029 | ISSUE-126 |
+| ISSUE-128 | Vue detail d'execution (tasks ok/ko, barre progression, phases) | APPROVED | PDR-029 | ISSUE-127 |
 | ISSUE-129 | Agents dashboard view (ORCHESTRATOR) + upload view (inline validation) | WAITING | PDR-029 | ISSUE-128 |
 | ISSUE-130 | Report view (poll → iframe HTML + PDF/JSON download) + E2E Testcontainers | WAITING | PDR-029 | ISSUE-129 |
 | ISSUE-131 | Headless CLI mode (run-and-exit on --scenario=, WebApplicationType.NONE) | WAITING | PDR-028 | ISSUE-125 |
@@ -654,3 +654,7 @@
 | 2026-06-23 | ISSUE-127 | IN_REVIEW → CHANGES_REQUESTED | BUG: api.js request() function cannot handle 202 Accepted with empty body. The POST /api/v1/executions/{id}/cancel endpoint returns ResponseEntity.accepted().build() (202 with no body). The request() function only special-cases status 204 for null return; for 202 it calls res.json() on an empty body, which throws SyntaxError. This causes the cancel action to appear to fail (alert) even though the server accepted it successfully. Fix: extend the empty-body check to cover 202 (or use res.text() and check for empty string before JSON.parse). |
 | 2026-06-23 | ISSUE-127 | CHANGES_REQUESTED → IN_REVIEW | issue-finish.sh |
 | 2026-06-23 | ISSUE-127 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-23 | ISSUE-127 | APPROVED → DONE | issue-next.sh |
+| 2026-06-23 | ISSUE-128 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-23 | ISSUE-128 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-23 | ISSUE-128 | IN_REVIEW → APPROVED | Reviewer approved |

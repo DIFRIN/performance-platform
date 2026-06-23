@@ -78,10 +78,19 @@ export async function getExecutionStatus(id) {
  * GET /api/v1/executions/{id}/tasks
  *
  * @param {string} id — execution identifier
- * @returns {Promise<{executionId: string, count: number, tasks: Array}>}
+ * @returns {Promise<{executionId: string, total: number, tasks: Array}>}
  */
 export async function listExecutionTasks(id) {
     return request(BASE + "/executions/" + encodeURIComponent(id) + "/tasks");
+}
+
+/**
+ * Alias for {@link listExecutionTasks} — canonical name per ISSUE-128.
+ * @param {string} id — execution identifier
+ * @returns {Promise<{executionId: string, total: number, tasks: Array}>}
+ */
+export async function getExecutionTasks(id) {
+    return listExecutionTasks(id);
 }
 
 /**
