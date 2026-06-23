@@ -312,9 +312,11 @@
 | `WebUiProperties` | 🔄 IN PROGRESS | PDR-028 | ISSUE-125 |
 | `WebUiConfiguration` | 🔄 IN PROGRESS | PDR-028 | ISSUE-125 |
 | `index.html` (SPA shell) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
-| `app.css` (layout + status classes) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
+| `app.css` (layout + status classes) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126, ISSUE-127 (+executions table styles) |
 | `router.js` (hash router) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
 | `nav.js` (nav component) | 🔄 IN PROGRESS | PDR-028 | ISSUE-126 |
+| `api.js` (fetch client /api/v1/**) | 🔄 IN PROGRESS | PDR-029 | ISSUE-127 |
+| `views/executions.js` (executions list view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-127 |
 
 ## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
 
