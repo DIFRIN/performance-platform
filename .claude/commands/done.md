@@ -16,12 +16,7 @@ Effectuer dans l'ordre :
 3. Mettre à jour `.claude/workspace/interfaces-registry.md` :
    - Toutes les interfaces créées dans cette Issue : 🔄 IN PROGRESS
 
-4. Mettre à jour `.claude/workspace/session-state.md` :
-   - Statut issue → IN REVIEW
-   - Dernière action → "Issue passée IN REVIEW, en attente Reviewer"
-   - Prochaine action → "Lancer @reviewer"
-
-5. Afficher le résumé :
+4. Afficher le résumé :
    ```
    ✅ ISSUE-XXX → IN REVIEW
    Module: platform-xxx

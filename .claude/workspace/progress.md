@@ -128,7 +128,7 @@
 | ISSUE-114 | Wire DistributedAgentRuntime with config-driven supportedTaskNames | DONE | PDR-026 | ISSUE-112 |
 | ISSUE-115 | Add agent.supported-tasks to application-agent.yaml | DONE | PDR-026 | ISSUE-111 |
 | ISSUE-116 | Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files | DONE | PDR-026 | ISSUE-111 |
-| ISSUE-117 | End-to-end integration test: agent config → registration → task execution | APPROVED | PDR-026 | ISSUE-111,112,113,114,115,116 |
+| ISSUE-117 | End-to-end integration test: agent config → registration → task execution | DONE | PDR-026 | ISSUE-111,112,113,114,115,116 |
 | ISSUE-118 | End-to-end integration test: LOCAL mode executes all scenario tasks | DONE | PDR-026 | ISSUE-113 |
 
 ## PDRs
@@ -599,3 +599,4 @@
 | 2026-06-22 | ISSUE-117 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-22 | ISSUE-117 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-22 | ISSUE-117 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-22 | ISSUE-117 | APPROVED → DONE | issue-next.sh |

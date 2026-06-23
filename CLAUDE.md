@@ -21,7 +21,7 @@ TOUJOURS lire dans cet ordre :
   1. .claude/workspace/current-issue.md    ← SEUL fichier. Contient TOUT : specs, signatures, critères, feedbacks
   2. .claude/agents/<role>.md              ← comportement de ton rôle (lit aussi current-issue.md)
 
-NE PAS lire session-state.md, progress.md, PDRs, ni recommendations-tracking.md.
+NE PAS lire progress.md, PDRs, ni recommendations-tracking.md.
 Ces fichiers sont gérés EXCLUSIVEMENT par les scripts :
   - issue-start.sh / issue-finish.sh / issue-review.sh / issue-next.sh
   - progress-status.sh
@@ -168,6 +168,7 @@ com.performance.platform.<module>/
 | Spring-first infra | `.claude/knowledge/adr/ADR-013-spring-first-infrastructure.md` | — |
 | Config datasources | `.claude/knowledge/adr/ADR-014-datasource-configuration.md` | — |
 | Avancement PDRs/Issues | `.claude/workspace/progress.md` | tableau Issues (scripts uniquement) |
+| Issue active (pointer) | `.claude/workspace/current-issue.md` | status, IssueFile, feedbacks |
 | Détail d'un PDR | `.claude/workspace/pdr/PDR-XXX.md` | selon Issue active |
 | Détail d'une Issue | `.claude/workspace/issues/ISSUE-XXX.md` | Issue active uniquement |
 

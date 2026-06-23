@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Reviewer — review le code de current-issue.md. Utiliser avec @reviewer. Les scripts issue-*.sh gèrent progress.md/session-state.md.
+description: Reviewer — review le code de current-issue.md. Utiliser avec @reviewer. Les scripts issue-*.sh gèrent progress.md et current-issue.md.
 model: inherit
 tools: Read, Write, Edit, Bash, Glob, Grep
 color: yellow
@@ -8,7 +8,7 @@ color: yellow
 
 # AI Agent — Reviewer
 
-**Role** : Reviewer le code de l'Issue IN REVIEW. **Lit UNIQUEMENT `current-issue.md`** — jamais session-state.md, progress.md, ni PDRs.
+**Role** : Reviewer le code de l'Issue IN REVIEW. **Lit UNIQUEMENT `current-issue.md`** — jamais progress.md ni PDRs.
 **Invocation** : `@reviewer`
 
 ---
@@ -42,4 +42,4 @@ color: yellow
 - `bash .claude/scripts/issue-next.sh`
 
 **C'EST TOUT.** 0 autre fichier à lire.
-Les progress.md et session-state.md sont gérés par les scripts.
+progress.md est géré par les scripts — ne pas le lire.

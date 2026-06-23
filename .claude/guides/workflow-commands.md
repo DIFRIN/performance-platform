@@ -40,7 +40,7 @@ rm -rf pp-ai/
 # Vérifier la structure
 ls -la
 # Attendu : CLAUDE.md  agents/  .claude/knowledge/adr/  .claude/workspace/  .claude/guides/  .claude/workspace/issues/  .claude/workspace/pdr/
-#           .claude/workspace/progress.md  .claude/prompts/  .claude/workspace/session-state.md  .claude/knowledge/specs/  .claude/knowledge/skills/
+#           .claude/workspace/progress.md  .claude/prompts/  .claude/workspace/current-issue.md  .claude/knowledge/specs/  .claude/knowledge/skills/
 
 git add .
 git commit -m "chore: init ai-project structure"
@@ -305,7 +305,7 @@ PROCESSUS :
 2. Écris les tests d'intégration Testcontainers
 3. Exécute et rapport
 4. Mets à jour .claude/workspace/progress.md
-5. Mets à jour .claude/workspace/session-state.md
+5. Mets à jour .claude/workspace/interfaces-registry.md
 ```
 
 ```bash
@@ -331,7 +331,7 @@ claude-dev
 **Puis :**
 
 ```
-Lis .claude/workspace/session-state.md et progress.md. Dis-moi quelle Issue est active et quelle est la prochaine action.
+Lis .claude/workspace/current-issue.md. Dis-moi quelle Issue est active et quelle est la prochaine action.
 ```
 
 **→ Selon la réponse, copier le prompt correspondant depuis `.claude/prompts/`.**
@@ -349,7 +349,7 @@ Lis .claude/workspace/session-state.md et progress.md. Dis-moi quelle Issue est 
 | Corrections post-review | `claude-dev` | `@developer Le Reviewer a demandé des corrections...` |
 | Re-review | `claude-dev` | `@reviewer re-review ISSUE-XXX` |
 | Tests d'intégration | `claude-dev` | `@tester` |
-| Reprise / état | `claude-dev` | `Lis .claude/workspace/session-state.md et progress.md, état actuel ?` |
+| Reprise / état | `claude-dev` | `Lis .claude/workspace/current-issue.md, état actuel ?` |
 
 ---
 

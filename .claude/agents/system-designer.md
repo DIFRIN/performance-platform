@@ -277,7 +277,6 @@ Le System Designer produit des **plans uniquement**. Il ne touche jamais au code
 | `.claude/workspace/progress.md` — mise à jour statuts et historique | Tout `*.yml` / `*.yaml` (config application) |
 | `.claude/workspace/interfaces-registry.md` — statuts PLANNED | Tout fichier sous `src/` |
 | `.claude/workspace/decisions-log.md` — micro-décisions | Tout fichier de build ou de config Spring |
-| `.claude/workspace/session-state.md` — mise à jour fin de session | Modification directe du code du Developer |
 | `agents/*.md` — specs des agents IA | — |
 | `.claude/scripts/*.sh` — scripts d'infrastructure IA | — |
 | `.claude/prompts/*.md` — prompts de démarrage | — |
@@ -292,7 +291,6 @@ Le System Designer produit des **plans uniquement**. Il ne touche jamais au code
 2. Crée ou met à jour les Issues concernées pour corriger le code
 3. Marque les entrées dans `.claude/workspace/interfaces-registry.md` (ex: `❌ REMOVED → PLANNED dans module-X`)
 4. Met à jour `.claude/workspace/progress.md` avec une note dans l'historique
-5. Met à jour `.claude/workspace/session-state.md`
 
 **Ce que le System Designer NE FAIT PAS** :
 - Supprimer ou modifier les `.java` lui-même

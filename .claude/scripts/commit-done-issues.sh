@@ -292,7 +292,7 @@ ${BODY}"
     fi
 
     # Also stage tracking files that are always part of an issue delivery
-    for tf in ".claude/workspace/progress.md" ".claude/workspace/session-state.md" ".claude/workspace/interfaces-registry.md" ".claude/workspace/decisions-log.md"; do
+    for tf in ".claude/workspace/progress.md" ".claude/workspace/interfaces-registry.md" ".claude/workspace/decisions-log.md"; do
       [[ -f "$GIT_ROOT/$tf" ]] && git -C "$GIT_ROOT" add "$tf" 2>/dev/null || true
     done
 

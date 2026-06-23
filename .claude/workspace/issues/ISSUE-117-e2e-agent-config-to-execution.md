@@ -2,7 +2,7 @@
 
 **PDR** : PDR-026
 **Module** : `platform-agent-runtime`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P0 (verification bout-en-bout du modele configuration-driven)
 **Bloquee par** : ISSUE-111, ISSUE-112, ISSUE-113, ISSUE-114, ISSUE-115, ISSUE-116 (TOUS doivent etre DONE)
 **Estime** : L (3-6h)
