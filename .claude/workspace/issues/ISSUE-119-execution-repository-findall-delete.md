@@ -2,7 +2,7 @@
 
 **PDR** : PDR-027
 **Module** : `platform-infrastructure`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : —
 **Taille** : M
