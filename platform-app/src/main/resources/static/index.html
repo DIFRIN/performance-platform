@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Engineering Platform</title>
+    <link rel="stylesheet" href="/assets/css/app.css">
+</head>
+<body>
+
+<div id="app">
+    <!-- Header -->
+    <header class="app-header">
+        <div>
+            <span class="app-header__title">Performance Platform</span>
+            <span class="app-header__subtitle" id="runtime-badge"></span>
+        </div>
+    </header>
+
+    <div class="app-body">
+        <!-- Navigation sidebar -->
+        <nav class="app-nav" id="nav">
+            <!-- nav.js renders here -->
+        </nav>
+
+        <!-- Main content area -->
+        <main class="app-content" id="content">
+            <!-- router.js renders views here -->
+        </main>
+    </div>
+</div>
+
+<script type="module">
+    import { registerRoute, startRouter } from "/assets/js/router.js";
+    import { renderNav } from "/assets/js/nav.js";
+
+    // ----------------------------------------------------------------
+    // Orchestrator detection — placeholder (ISSUE-126).
+    //
+    // The "agents" nav link is only visible when the runtime role is
+    // ORCHESTRATOR. In a future issue, this flag will be resolved from
+    // a server-side meta endpoint (e.g., GET /api/runtime/role).
+    //
+    // For now: the UI is only served when web.ui.enabled=true, which is
+    // set for LOCAL and ORCHESTRATOR modes. We default orchestrator=true
+    // (the control-plane case). LOCAL mode users will see the agents link
+    // but it will surface an empty view placeholder — harmless.
+    // ----------------------------------------------------------------
+    const runtimeContext = { orchestrator: true };
+
+    // ----------------------------------------------------------------
+    // Placeholder views (real rendering in PDR-029 / PDR-030).
+    // Each renderFn returns { cleanup } for teardown callbacks.
+    // ----------------------------------------------------------------
+    function renderPlaceholder(el, params, label) {
+        const details = params && Object.keys(params).length > 0
+            ? " (params: " + JSON.stringify(params) + ")"
+            : "";
+        el.innerHTML = '<div class="card"><div class="card__title">' + label
+            + '</div><p class="text-muted">Placeholder view — '
+            + label + details + '</p></div>';
+        return { cleanup: null };
+    }
+
+    registerRoute("executions", (el, params) =>
+        renderPlaceholder(el, params, "Executions"));
+    registerRoute("executions/{id}", (el, params) =>
+        renderPlaceholder(el, params, "Execution Detail"));
+    registerRoute("executions/{id}/report", (el, params) =>
+        renderPlaceholder(el, params, "Execution Report"));
+    registerRoute("upload", (el, params) =>
+        renderPlaceholder(el, params, "Upload Scenario"));
+    registerRoute("agents", (el, params) =>
+        renderPlaceholder(el, params, "Agents"));
+
+    // ----------------------------------------------------------------
+    // Initialize
+    // ----------------------------------------------------------------
+    const navEl = document.getElementById("nav");
+    const contentEl = document.getElementById("content");
+
+    renderNav(navEl, runtimeContext);
+    startRouter(contentEl);
+
+    // Update hash-based active link on hashchange
+    window.addEventListener("hashchange", () => {
+        renderNav(navEl, runtimeContext);
+    });
+</script>
+
+</body>
+</html>

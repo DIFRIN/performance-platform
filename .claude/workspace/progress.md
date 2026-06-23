@@ -136,8 +136,8 @@
 | ISSUE-122 | Endpoint REST GET /api/v1/agents (ORCHESTRATOR) | DONE | PDR-027 | ISSUE-121 |
 | ISSUE-123 | Endpoint REST GET /api/v1/executions/{id}/report (stream fichier deja genere) | DONE | PDR-027 | ISSUE-121 |
 | ISSUE-124 | Endpoint POST /api/v1/scenarios/upload + DTO d'erreur de validation structure | DONE | PDR-027 | ISSUE-121 |
-| ISSUE-125 | WebUiProperties + config Spring conditionnelle + securite static/UI | APPROVED | PDR-028 | ISSUE-124 |
-| ISSUE-126 | Static shell index.html + CSS layout + nav + hash router | WAITING | PDR-028 | ISSUE-125 |
+| ISSUE-125 | WebUiProperties + config Spring conditionnelle + securite static/UI | DONE | PDR-028 | ISSUE-124 |
+| ISSUE-126 | Shell index.html + CSS layout + nav + routeur a hash | APPROVED | PDR-028 | ISSUE-125 |
 | ISSUE-127 | Executions list view (polling 3s, status filter, cancel/delete) | WAITING | PDR-029 | ISSUE-126 |
 | ISSUE-128 | Execution detail view (tasks ok/ko, progress bar, phases) | WAITING | PDR-029 | ISSUE-127 |
 | ISSUE-129 | Agents dashboard view (ORCHESTRATOR) + upload view (inline validation) | WAITING | PDR-029 | ISSUE-128 |
@@ -644,3 +644,7 @@
 | 2026-06-23 | ISSUE-125 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-23 | ISSUE-125 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-23 | ISSUE-125 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-23 | ISSUE-125 | APPROVED → DONE | issue-next.sh |
+| 2026-06-23 | ISSUE-126 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-23 | ISSUE-126 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-23 | ISSUE-126 | IN_REVIEW → APPROVED | Reviewer approved |
