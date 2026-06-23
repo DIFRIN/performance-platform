@@ -5,7 +5,6 @@ import com.performance.platform.app.api.dto.ProgressResponse;
 import com.performance.platform.app.api.dto.SubmitResponse;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
 import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
-import com.performance.platform.application.ports.in.GenerateReportUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
@@ -26,8 +25,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * REST controller exposing scenario submission, execution status, cancellation,
- * and report generation.
+ * REST controller exposing scenario submission, execution status, and cancellation.
+ * <p>
+ * Report serving is handled by {@link ReportController} — the client never triggers
+ * report generation; reports are generated automatically at the end of the execution
+ * lifecycle.
  * <p>
  * Delegates to application-layer use cases (ports in).
  * Progress is computed via {@link ExecutionProgressCalculator} (ISSUE-121).
@@ -43,7 +45,6 @@ public class ScenarioController {
     private final ExecuteScenarioUseCase executeUseCase;
     private final GetExecutionStatusUseCase statusUseCase;
     private final CancelExecutionUseCase cancelUseCase;
-    private final GenerateReportUseCase reportUseCase;
     private final ExecutionRepository executionRepository;
     private final ExecutionProgressCalculator progressCalculator;
 
@@ -52,14 +53,12 @@ public class ScenarioController {
             ExecuteScenarioUseCase executeUseCase,
             GetExecutionStatusUseCase statusUseCase,
             CancelExecutionUseCase cancelUseCase,
-            GenerateReportUseCase reportUseCase,
             ExecutionRepository executionRepository,
             ExecutionProgressCalculator progressCalculator) {
         this.parsingUseCase = parsingUseCase;
         this.executeUseCase = executeUseCase;
         this.statusUseCase = statusUseCase;
         this.cancelUseCase = cancelUseCase;
-        this.reportUseCase = reportUseCase;
         this.executionRepository = executionRepository;
         this.progressCalculator = progressCalculator;
     }
@@ -131,16 +130,4 @@ public class ScenarioController {
         return ResponseEntity.accepted().build();
     }
 
-    /**
-     * Generates the report for a completed execution.
-     *
-     * @param id the execution identifier
-     * @return 200 OK with the report identifier
-     */
-    @GetMapping("/executions/{id}/report")
-    public ResponseEntity<Map<String, String>> getReport(@PathVariable("id") String id) {
-        log.info("action=generate_report executionId={}", id);
-        var reportId = reportUseCase.generate(ExecutionId.of(id));
-        return ResponseEntity.ok(Map.of("reportId", reportId.value()));
-    }
 }

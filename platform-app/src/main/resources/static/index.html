@@ -36,6 +36,7 @@
     import { mount as mountExecutions } from "/assets/js/views/executions.js";
     import { mount as mountExecutionDetail } from "/assets/js/views/execution-detail.js";
     import { mount as mountAgents } from "/assets/js/views/agents.js";
+    import { mount as mountReport } from "/assets/js/views/report.js";
     import { mount as mountUpload } from "/assets/js/views/upload.js";
 
     // ----------------------------------------------------------------
@@ -70,7 +71,7 @@
     registerRoute("executions/{id}", (el, params) =>
         mountExecutionDetail(el, params.id));
     registerRoute("executions/{id}/report", (el, params) =>
-        renderPlaceholder(el, params, "Execution Report"));
+        mountReport(el, params.id));
     registerRoute("upload", (el, params) => mountUpload(el));
     registerRoute("agents", (el, params) => mountAgents(el));
 

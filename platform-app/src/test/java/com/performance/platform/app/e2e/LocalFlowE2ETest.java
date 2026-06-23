@@ -218,7 +218,7 @@ class LocalFlowE2ETest {
         var progressCalculator = new com.performance.platform.application.usecase.ExecutionProgressCalculator();
         var controller = new ScenarioController(
                 parsingUseCase, executeUseCase, statusUseCase,
-                cancelUseCase, reportUseCase, executionRepository, progressCalculator);
+                cancelUseCase, executionRepository, progressCalculator);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
@@ -277,23 +277,20 @@ class LocalFlowE2ETest {
                 .andExpect(jsonPath("$.phaseStatuses.INJECTION").value("COMPLETED"))
                 .andExpect(jsonPath("$.phaseStatuses.ASSERTION").value("COMPLETED"));
 
-        // ---- Phase 4: Generate report via API ----
+        // ---- Phase 4: Verify report can be generated from persisted state ----
+        // Report generation endpoint has been moved to ReportController
+        // (GET /api/v1/executions/{id}/report?format=html|pdf|json).
+        // This verifies the generation logic directly via the report engine.
 
-        String reportResponse = mockMvc
-                .perform(get("/api/v1/executions/" + executionId + "/report"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reportId").exists())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        String reportId = extractJsonString(reportResponse, "reportId");
-        assertThat(reportId).isNotBlank();
+        var reportExecId = ExecutionId.of(executionId);
+        var reportExecState = executionRepository.findById(reportExecId);
+        assertThat(reportExecState).isPresent();
+        var generatedReport = reportEngine.generate(reportExecState.get());
+        assertThat(generatedReport.id()).isNotNull();
 
         // ---- Phase 5: Verify persisted ExecutionState ----
 
-        var execId = ExecutionId.of(executionId);
-        Optional<ExecutionState> persisted = executionRepository.findById(execId);
+        Optional<ExecutionState> persisted = executionRepository.findById(reportExecId);
         assertThat(persisted).isPresent();
         ExecutionState state = persisted.get();
         assertThat(state.status()).isEqualTo(ExecutionStatus.COMPLETED);
@@ -311,9 +308,6 @@ class LocalFlowE2ETest {
         assertThat(report.verdict()).isNotNull();
         assertThat(report.verdict()).isIn(Verdict.SUCCESS, Verdict.WARNING);
         assertThat(report.id()).isNotNull();
-        // API call and direct engine call generate different ReportIds
-        // (each generate() creates a new UUID via ReportId.generate())
-        assertThat(reportId).isNotBlank();
     }
 
     // ---- Helpers ----
