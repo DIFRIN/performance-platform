@@ -143,8 +143,8 @@
 | ISSUE-129 | Vue dashboard agents (ORCHESTRATOR) + vue upload (validation inline) | DONE | PDR-029 | ISSUE-128 |
 | ISSUE-130 | Vue rapport (poll → iframe HTML + download PDF/JSON) + E2E Testcontainers | DONE | PDR-029 | ISSUE-129 |
 | ISSUE-131 | Mode CLI headless (run-and-exit sur `--scenario=`) | DONE | PDR-028 | ISSUE-125 |
-| ISSUE-132 | Root pom : import du BOM spring-boot-dependencies + spring-modulith | APPROVED | PDR-030 | — |
-| ISSUE-133 | Résoudre conflit Spring 6/7 dans platform-execution-engine | WAITING | PDR-030 | ISSUE-132 |
+| ISSUE-132 | Root pom : import du BOM spring-boot-dependencies + spring-modulith | DONE | PDR-030 | — |
+| ISSUE-133 | Résoudre le conflit Spring 6/7 dans platform-execution-engine | APPROVED | PDR-030 | ISSUE-132 |
 | ISSUE-134 | Retirer versions Spring explicites des poms enfants restants | WAITING | PDR-030 | ISSUE-132 |
 | ISSUE-135 | Supprimer adapters publisher de platform-infrastructure | WAITING | PDR-031 | — |
 | ISSUE-136 | Supprimer ReportPublisherPort de platform-application | WAITING | PDR-031 | ISSUE-135 |
@@ -785,3 +785,7 @@
 | 2026-06-29 | ISSUE-132 | IN_REVIEW → CHANGES_REQUESTED | Tests KO à investiguer : platform-infrastructure (49 échecs — WireMock/Jetty 11 absent) et platform-transport (1 flaky — contention port SocketExecutionTransportTest). Vérifier si le BOM spring-boot-dependencies 4.0.0 a modifié la version résolue de WireMock (3.12.1 → version gérée par le BOM). Le Developer doit s'assurer que le build reste vert après l'ajout des BOMs. |
 | 2026-06-29 | ISSUE-132 | CHANGES_REQUESTED → IN_REVIEW | issue-finish.sh |
 | 2026-06-29 | ISSUE-132 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-29 | ISSUE-132 | APPROVED → DONE | issue-next.sh |
+| 2026-06-29 | ISSUE-133 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-29 | ISSUE-133 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-29 | ISSUE-133 | IN_REVIEW → APPROVED | Reviewer approved |
