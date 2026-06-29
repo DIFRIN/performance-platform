@@ -36,6 +36,13 @@
             <version>2.0.16</version>
         </dependency>
 
+        <!-- Logstash JSON encoder pour Logback -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>8.0</version>
+        </dependency>
+
         <!-- Spring Boot (pour @Component) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

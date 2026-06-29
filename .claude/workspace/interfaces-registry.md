@@ -107,7 +107,7 @@
 | `GenerateReportUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
 | `ExecutionRepository` | ✅ STABLE | PDR-004 | ISSUE-013, ISSUE-119 (+findAll/deleteById) |
 | `AgentRegistryPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
-| `ReportPublisherPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
+| `ReportPublisherPort` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-004 | ISSUE-013 → suppr. ISSUE-136 |
 | `ExecutionConfig` | ✅ STABLE | PDR-004 | ISSUE-014 |
 | `ListExecutionsUseCase` | ✅ STABLE | PDR-027 | ISSUE-120 |
 | `DeleteExecutionUseCase` | ✅ STABLE | PDR-027 | ISSUE-120 |
@@ -230,11 +230,11 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `MultiPublisherDispatcher` | ✅ STABLE | PDR-016 | ISSUE-070 |
-| `PublishersProperties` | ✅ STABLE | PDR-016 | ISSUE-070 |
-| `ConfluenceReportPublisher` | ✅ STABLE | PDR-016 | ISSUE-071 |
-| `S3ReportPublisher` | ✅ STABLE | PDR-016 | ISSUE-072 |
-| `GitReportPublisher` | ✅ STABLE | PDR-016 | ISSUE-073 |
+| `MultiPublisherDispatcher` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-070 → suppr. ISSUE-135 |
+| `PublishersProperties` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-070 → suppr. ISSUE-135 |
+| `ConfluenceReportPublisher` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-071 → suppr. ISSUE-135 |
+| `S3ReportPublisher` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-072 → suppr. ISSUE-135 |
+| `GitReportPublisher` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-073 → suppr. ISSUE-135 |
 
 ## platform-injection-gatling
 
@@ -263,11 +263,11 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `PublicationTarget` | ✅ STABLE | PDR-015 | ISSUE-065 |
-| `ReportEngine` / `ReportRenderer` / `ReportPublisher` ⚡ / `CampaignReport` | ✅ STABLE | PDR-015 | ISSUE-065 |
+| `PublicationTarget` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-015 | ISSUE-065 → suppr. ISSUE-137 |
+| `ReportEngine` / `ReportRenderer` / `CampaignReport` (CONSERVÉS) ; `ReportPublisher` ⚠️ TO REMOVE (ISSUE-137) | ✅ STABLE / ⚠️ partiel | PDR-015 | ISSUE-065 |
 | `EnvironmentInfo` / `ExecutionSummary` / `TaskReportEntry` | ✅ STABLE | PDR-015 | ISSUE-065 |
-| `InjectionReportEntry` / `AssertionReportEntry` / `PublisherConfig` | ✅ STABLE | PDR-015 | ISSUE-065 |
-| `RenderException` / `PublicationException` | ✅ STABLE | PDR-015 | ISSUE-065 |
+| `InjectionReportEntry` / `AssertionReportEntry` (CONSERVÉS) ; `PublisherConfig` ⚠️ TO REMOVE (ISSUE-137) | ✅ STABLE / ⚠️ partiel | PDR-015 | ISSUE-065 |
+| `RenderException` (CONSERVÉ) ; `PublicationException` ⚠️ TO REMOVE (ISSUE-137) | ✅ STABLE / ⚠️ partiel | PDR-015 | ISSUE-065 |
 | `DefaultReportEngine` / `VerdictCalculator` | ✅ STABLE | PDR-015 | ISSUE-066 |
 | `HtmlReportRenderer` / `JsonReportRenderer` | ✅ STABLE | PDR-015 | ISSUE-067 |
 | `PdfReportRenderer` | ✅ STABLE | PDR-015 | ISSUE-068 |
@@ -398,6 +398,19 @@
 
 ---
 
+## Root pom.xml — Build Configuration
+
+| Élément | Statut | PDR | Issue |
+|---|---|---|---|
+| `spring-boot-dependencies` BOM (import, `dependencyManagement`) | ✅ STABLE | PDR-030 | ISSUE-132 |
+| `spring-modulith-bom` BOM (import, `dependencyManagement`) | ✅ STABLE | PDR-030 | ISSUE-132 |
+| `spring-boot.version` property (4.0.0) | ✅ STABLE | PDR-030 | ISSUE-132 |
+| `spring-modulith.version` property (1.4.0) | ✅ STABLE | PDR-030 | ISSUE-132 |
+
+> ADR-024 : BOM Spring Boot + Spring Modulith importés dans le root `<dependencyManagement>`.
+> Les enfants gardent leurs versions explicites (compatibles) — nettoyage progressif ISSUE-133/134.
+
+---
 > ⚡ = Interface publique critique — toute modification requiert un ADR.
 > Les colonnes PDR et Issue sont remplies par le System Designer au moment de la création des PDRs.
 | ISSUE-088 | KafkaConsumerTaskExecutor | platform-infrastructure | @Preparation name=kafka-consumer v2.0.0, Consumer<String,String> via ConsumerFactory | IN PROGRESS |
