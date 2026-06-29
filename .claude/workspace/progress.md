@@ -142,7 +142,23 @@
 | ISSUE-128 | Vue detail d'execution (tasks ok/ko, barre progression, phases) | DONE | PDR-029 | ISSUE-127 |
 | ISSUE-129 | Vue dashboard agents (ORCHESTRATOR) + vue upload (validation inline) | DONE | PDR-029 | ISSUE-128 |
 | ISSUE-130 | Vue rapport (poll → iframe HTML + download PDF/JSON) + E2E Testcontainers | DONE | PDR-029 | ISSUE-129 |
-| ISSUE-131 | Mode CLI headless (run-and-exit sur `--scenario=`) | APPROVED | PDR-028 | ISSUE-125 |
+| ISSUE-131 | Mode CLI headless (run-and-exit sur `--scenario=`) | DONE | PDR-028 | ISSUE-125 |
+| ISSUE-132 | Root pom : import du BOM spring-boot-dependencies + spring-modulith | APPROVED | PDR-030 | — |
+| ISSUE-133 | Résoudre conflit Spring 6/7 dans platform-execution-engine | WAITING | PDR-030 | ISSUE-132 |
+| ISSUE-134 | Retirer versions Spring explicites des poms enfants restants | WAITING | PDR-030 | ISSUE-132 |
+| ISSUE-135 | Supprimer adapters publisher de platform-infrastructure | WAITING | PDR-031 | — |
+| ISSUE-136 | Supprimer ReportPublisherPort de platform-application | WAITING | PDR-031 | ISSUE-135 |
+| ISSUE-137 | Supprimer contrats publication de platform-reporting | WAITING | PDR-031 | ISSUE-135 |
+| ISSUE-138 | Nettoyer config publishers + doc diffusion CI/CD | WAITING | PDR-031 | ISSUE-135 |
+| ISSUE-139 | Garde Docker sur les ITs platform-infrastructure | WAITING | PDR-032 | — |
+| ISSUE-140 | Garde Docker sur les ITs platform-transport | WAITING | PDR-032 | — |
+| ISSUE-141 | Garde Docker DatabaseAssertionExecutorIT + @TempDir FileAssertionExecutorTest | WAITING | PDR-032 | — |
+| ISSUE-142 | ShellTaskExecutorTest cross-platform (@DisabledOnOs + @TempDir) | WAITING | PDR-032 | — |
+| ISSUE-143 | Engine implémente ports in + suppression port ExecutionEngine + ExecutionConfig possédé + beans orch. conditionnels | WAITING | PDR-033 | ISSUE-134 |
+| ISSUE-144 | Composition root mince platform-app (glue lookup + scenario parsing + status) + smoke tests 3 modes | WAITING | PDR-033 | ISSUE-143,145,146,147 |
+| ISSUE-145 | platform-infrastructure : datasource/JPA/repository conditionnels (sans throw) | WAITING | PDR-033 | ISSUE-134 |
+| ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-application) | WAITING | PDR-033 | — |
+| ISSUE-147 | AgentRegistry self-wiring conditionnel ORCHESTRATOR (platform-agent-runtime) | WAITING | PDR-033 | ISSUE-134 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -162,7 +178,7 @@
 | PDR-013 | Gatling Injection | platform-injection-gatling | DONE | ISSUE-054..058 | PDR-001,003 |
 | PDR-014 | Assertion Framework | platform-assertion | DONE | ISSUE-059..064 | PDR-001,003,013 |
 | PDR-015 | Reporting Engine | platform-reporting | DONE | ISSUE-065..069 | PDR-001,002,004,013,014 |
-| PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE | ISSUE-070..073 | PDR-001,004,015 |
+| PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE (SUPERSEDED by PDR-031 / ADR-022 — publishers retirés) | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | DONE | ISSUE-074,075,076 | PDR-001,002 |
 | PDR-018 | Application Assembly | platform-app | DONE | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
 | PDR-019 | Deployment | platform-deployment | DONE | ISSUE-083,084,085 | PDR-018 |
@@ -176,6 +192,10 @@
 | PDR-027 | IHM Backend API Extensions | platform-application + platform-infrastructure + platform-app | WAITING | ISSUE-119..124 | PDR-004,012,015,018 |
 | PDR-028 | IHM Web Serving & Static Shell | platform-app | WAITING | ISSUE-125,126,131 | PDR-027 |
 | PDR-029 | IHM Frontend Views (vanilla JS) | platform-app | WAITING | ISSUE-127..130 | PDR-028 |
+| PDR-030 | Spring Boot BOM Centralization | root + tous modules | WAITING | ISSUE-132,133,134 | — (ADR-024) |
+| PDR-031 | Local-Only Reporting (suppression publishers) | platform-infrastructure + platform-application + platform-reporting + platform-app | WAITING | ISSUE-135,136,137,138 | — (ADR-022) |
+| PDR-032 | Cross-Platform Test Execution | platform-infrastructure + platform-transport + platform-assertion | WAITING | ISSUE-139,140,141,142 | — (ADR-023) |
+| PDR-033 | Assemblage runtime : self-wiring par module + composition root mince | engine + application + agent-runtime + app + infrastructure | WAITING | ISSUE-143,144,145,146,147 | PDR-030 (ADR-026, ADR-025) |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
 | — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
@@ -670,3 +690,98 @@
 | 2026-06-23 | ISSUE-131 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-23 | ISSUE-131 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-23 | ISSUE-131 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-23 | ISSUE-131 | APPROVED → DONE | issue-next.sh |
+| 2026-06-29 | ADR-022/023/024/025 | — → ACCEPTED | System Designer — Décisions Architect formalisées pour 4 problèmes structurels. ADR-022 Report output local only (suppression publishers S3/Git/Confluence). ADR-023 Cross-platform tests ÉTENDU (Docker `disabledWithoutDocker` + shell `@DisabledOnOs(WINDOWS)` + `@TempDir` + encodage UTF-8). ADR-024 Spring Boot BOM single source (RENUMÉROTÉ depuis collision ADR-022 ; ancien fichier ADR-022-spring-boot-bom = tombstone → ADR-024). ADR-025 Conditional infrastructure beans (datasource/JPA/registries `@ConditionalOnProperty`/`@ConditionalOnBean`, plus de throw). |
+| 2026-06-29 | PDR-030..033 + ISSUE-132..145 | — → WAITING | System Designer — 4 PDRs + 14 Issues créés. PDR-030 BOM centralization (132,133,134 ; P0 fondation). PDR-031 local-only reporting (135,136,137,138 ; supprime publishers + ReportPublisherPort + contrats reporting + config). PDR-032 cross-platform tests (139,140,141,142 ; 7 ITs Docker-guard + ShellTaskExecutorTest @DisabledOnOs + @TempDir). PDR-033 conditional beans (143,144,145 ; dataSource/JPA conditionnels, E2E AGENT sans DB ; dépend PDR-030). PDR-016 (Report Publishers) marqué SUPERSEDED by PDR-031/ADR-022. |
+| 2026-06-29 | PDR-033 + ISSUE-143..145 | RÉÉCRIT | System Designer — Objectif corrigé après audit code réel : le vrai écart n'est PAS « rendre conditionnels des beans existants » mais « platform-app n'a aucun bean d'assemblage du cœur exécution » (use cases ExecuteScenario/GetStatus/Cancel/Parsing, TaskExecutorLookup bridge, ExecutionConfig, AgentRegistry n'existent QUE dans les tests E2E hand-wired). Les engines sont DÉJÀ @ConditionalOnProperty(runtime.mode). Nouveau découpage : ISSUE-143 (platform-app, assemblage LOCAL+use cases+lookup+parsing+smoke LOCAL), ISSUE-144 (platform-app, DISTRIBUTED ExecutionConfig+AgentRegistry+smoke ORCH/AGENT), ISSUE-145 (platform-infrastructure, datasource/JPA/repository conditionnels sans throw). ADR-025 réécrit (assemblage runtime + beans infra conditionnels). PDR-033 renommé. Smoke tests via SpringApplicationBuilder (pas Testcontainers, pas @SpringBootTest). |
+| 2026-06-29 | ADR-026 + PDR-033 + ISSUE-143..147 | RAFFINÉ (Architect) | Architect — Évaluation de l'assemblage validée par l'utilisateur (D1=reco, D2=framework-free, Go). ADR-026 créé : composition root mince + self-wiring conditionnel par module + suppression des ports redondants. D1 : engines implémentent ExecuteScenarioUseCase+CancelExecutionUseCase, port ExecutionEngine SUPPRIMÉ ; GetExecutionStatusUseCase = read-model framework-free. D2 : scenario-dsl reste framework-free (câblé par la racine). Possession par module : ExecutionConfig→engine, AgentRegistry→agent-runtime, beans orchestrateur-only (AvailabilityChecker/CorrelationTracker) conditionnels DISTRIBUTED (corrige bug LOCAL). Re-découpage 5 issues module-pures : 143 (engine), 144 (app root mince + smoke 3 modes), 145 (infra conditionnel), 146 (application read-model), 147 (agent-runtime AgentRegistry). ADR-026 raffine ADR-025. |
+| 2026-06-29 | ISSUE-132 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-29 | ISSUE-132 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-29 | ISSUE-132 | IN_REVIEW → CHANGES_REQUESTED | Reviewer — bloqué : ISSUE-132 ne peut être reviewé seul (racine BOM) |
+
+---
+
+## [Tester] Audit Global — 2026-06-29
+
+**Cas testés** : ~944 tests (tous modules sauf transport/infrastructure)
+**Infrastructure** : Testcontainers PostgreSQL 15 pour tests E2E ; WireMock 3.x pour tests HTTP
+**Résultat** : **2 modules en échec, reste OK**
+
+### Synthèse par module
+
+| Module | Tests | Status | Notes |
+|--------|-------|--------|-------|
+| platform-domain | ✓ | PASS | ArchUnit + value objects |
+| platform-plugin-api | ✓ | PASS | Annotations + interfaces |
+| platform-scenario-dsl | ✓ | PASS | Parser + validator + contract E2E |
+| platform-application | ✓ | PASS | Use cases + ExecutionProgressCalculator |
+| platform-assertion | ✓ | PASS | Executors + pipeline E2E |
+| platform-reporting | ✓ | PASS | Engine + renderers + contract E2E |
+| platform-injection-gatling | ✓ | PASS | Gatling runner + pipeline E2E |
+| platform-agent-runtime | ✓ | PASS | LocalAgent + DistributedAgent + E2E |
+| platform-execution-engine | ✓ | PASS | Local/Remote engines + E2E |
+| platform-observability | ✓ | PASS | Metrics + listeners |
+| **platform-app** | **192** | **✓ PASS** | Unit + E2E (PostgreSQL Testcontainers) |
+| **platform-transport** | **225** | **⚠️ 1 FLAKY** | `SocketExecutionTransportTest$SignalRoundTrip` — port contention |
+| **platform-infrastructure** | **359** | **❌ 49 FAIL** | WireMock Jetty 11 manquant (MockServer + Confluence) |
+
+### Défaillances Détaillées
+
+#### ❌ platform-infrastructure (49 échecs — dépendance WireMock)
+**Cause racine** : `com.github.tomakehurst.wiremock.common.FatalStartupException: Jetty 11 is not present and no suitable HttpServerFactory extension was found`
+
+| Classe de test | Échecs | Type |
+|---------------|--------|------|
+| `MockServerTaskExecutorTest$EmbeddedStart` | 4/4 FAIL | WireMock Jetty 11 |
+| `MockServerTaskExecutorTest$EmbeddedVerify` | 1/2 FAIL | WireMock Jetty 11 |
+| `MockServerTaskExecutorTest$EmbeddedReset` | 1/2 FAIL | WireMock Jetty 11 |
+| `MockServerTaskExecutorTest$MultipleExecutions` | 1/1 FAIL | WireMock Jetty 11 |
+| `ConfluenceReportPublisherTest` | 15/15 ERROR | WireMock Jetty 11 |
+| `HttpClientTaskExecutorTest` | 1/1 ERROR | WireMock / réseau |
+| + autres (non listés exhaustivement) | ~26 | WireMock Jetty 11 |
+
+**Action nécessaire** : Ajouter `wiremock-jetty11` (ou `wiremock-standalone`) au `pom.xml` de `platform-infrastructure`. WireMock 3.x avec Jetty 12/Spring Boot 4.x nécessite une déclaration explicite du serveur HTTP.
+
+#### ⚠️ platform-transport (1 test flaky)
+**`SocketExecutionTransportTest$SignalRoundTrip.shouldDeliverBroadcastSignalToAgentHandler`**
+- Passe en isolation (~3.4s)
+- Échoue avec les autres tests du module (~5.1s, timeout latch)
+- Cause probable : port déjà utilisé par un autre test de la même suite → le signal n'arrive jamais
+- Recommandation : `@Isolated` sur la classe `SignalRoundTrip`, ou ports dynamiques par test
+
+### Couverture E2E existante (récente : ISSUE-126 à 131)
+
+| Issue | Feature | Tests E2E | Status |
+|-------|---------|-----------|--------|
+| ISSUE-126 | UI shell (HTML/CSS/routeur) | `WebUiConfigurationTest` + E2E API | ✓ Couvert |
+| ISSUE-127 | Liste executions (poll, filtre, cancel/delete) | `WebUiApiE2ETest` + `ExecutionControllerTest` + `ListExecutionsServiceTest` + `DeleteExecutionServiceTest` | ✓ Couvert |
+| ISSUE-128 | Détail execution (tasks, progression) | `WebUiApiE2ETest` + `ExecutionControllerTest` | ✓ Couvert |
+| ISSUE-129 | Dashboard agents + upload | `WebUiApiE2ETest` + `AgentControllerTest` + `ScenarioUploadControllerTest` | ✓ Couvert |
+| ISSUE-130 | Vue rapport (HTML/PDF/JSON) | `WebUiApiE2ETest` + `ReportControllerTest` | ✓ Couvert |
+| ISSUE-131 | CLI headless (`--scenario=`) | `CliScenarioRunnerHeadlessTest` (unit, 192 tests) | ✓ Couvert (unit), **manque test intégration Spring** |
+
+### Cas non couverts (gaps identifiés)
+
+1. **CLI headless en intégration réelle** — Le `CliScenarioRunnerHeadlessTest` est purement unitaire (mocks). Pas de test vérifiant le flux complet avec des vrais composants (parser → engine → repository PostgreSQL).
+   - Statut : pas bloquant (les E2E API couvrent le flux d'exécution équivalent via REST)
+   - Priorité : basse
+
+2. **Cancel flow E2E** — `CancelExecutionUseCase` est un no-op dans tous les tests E2E existants. Aucun test ne vérifie l'annulation d'une exécution en cours.
+   - Statut : à couvrir quand le cancel sera implémenté (actuellement no-op)
+   - Priorité : basse (fonctionnalité non implémentée)
+
+3. **Tests de contrat `GetExecutionStatusUseCase`** — Port in utilisé dans 5 fichiers de test mais uniquement via des implémentations anonymes. Pas de test de contrat abstrait.
+   - Statut : non bloquant (couvert indirectement par les E2E)
+   - Priorité : basse
+
+4. **`findAllTaskResults` stub** — `LocalModeAllTasksE2ETest.RawJpaExecutionRepository.findAllTaskResults()` retourne `Map.of()` — jamais testé avec de vrais TaskResults multi-agents.
+   - Statut : gap dans le test E2E
+   - Priorité : moyenne
+
+### Temps d'exécution
+- Suite complète (tous modules) : ~3 min 30 s
+- Suite E2E uniquement (platform-app) : ~1 min 25 s (PostgreSQL Testcontainers)
+- Suite unitaire (sans Testcontainers) : ~45 s
+| 2026-06-29 | ISSUE-132 | IN_REVIEW → CHANGES_REQUESTED | Tests KO à investiguer : platform-infrastructure (49 échecs — WireMock/Jetty 11 absent) et platform-transport (1 flaky — contention port SocketExecutionTransportTest). Vérifier si le BOM spring-boot-dependencies 4.0.0 a modifié la version résolue de WireMock (3.12.1 → version gérée par le BOM). Le Developer doit s'assurer que le build reste vert après l'ajout des BOMs. |
+| 2026-06-29 | ISSUE-132 | CHANGES_REQUESTED → IN_REVIEW | issue-finish.sh |
+| 2026-06-29 | ISSUE-132 | IN_REVIEW → APPROVED | Reviewer approved |
