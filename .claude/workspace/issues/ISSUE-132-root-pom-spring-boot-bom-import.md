@@ -2,7 +2,7 @@
 
 **PDR** : PDR-030
 **Module** : root `pom.xml`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0 (bloquant — fondation de toute la centralisation)
 **Bloquée par** : —
 **Estime** : S (< 1h)
