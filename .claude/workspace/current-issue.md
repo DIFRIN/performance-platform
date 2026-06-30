@@ -1,11 +1,11 @@
-# ISSUE-145: platform-infrastructure : datasource/JPA/repository conditionnels (sans throw)
+# ISSUE-146: GetExecutionStatusService : read-model framework-free (platform-application)
 **Status**: APPROVED
 **PDR**: PDR-033
-**Module**: platform-infrastructure
-**Started**: 2026-06-30T15:21+02:00
-**IssueFile**: issues/ISSUE-145-app-conditional-wiring-audit-agent-e2e.md
+**Module**: platform-application
+**Started**: 2026-06-30T16:15+02:00
+**IssueFile**: issues/ISSUE-146-get-execution-status-readmodel.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-145-app-conditional-wiring-audit-agent-e2e.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-146-get-execution-status-readmodel.md`
 
 ## Reviewer Feedback
 (None yet)

@@ -2,7 +2,7 @@
 
 **PDR** : PDR-033
 **Module** : `platform-application`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1 (critique — fournit l'implémentation du port de statut, découplée de l'engine)
 **Bloquée par** : —
 **Estime** : S (< 1h)
