@@ -2,7 +2,7 @@
 
 **PDR** : PDR-031
 **Module** : `platform-infrastructure`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P1 (critique)
 **Bloquée par** : —
 **Estime** : M (1-3h)
