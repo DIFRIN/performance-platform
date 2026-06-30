@@ -50,7 +50,7 @@ public class TransportConfiguration {
      */
     @Bean
     @ConditionalOnProperty(name = "transport.type", havingValue = "IN_MEMORY", matchIfMissing = true)
-    public ExecutionTransport inMemoryExecutionTransport() {
+    public InMemoryExecutionTransport inMemoryExecutionTransport() {
         return new InMemoryExecutionTransport();
     }
 

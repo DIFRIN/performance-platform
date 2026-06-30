@@ -6,6 +6,8 @@ import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.application.usecase.DeleteExecutionService;
 import com.performance.platform.application.usecase.ExecutionProgressCalculator;
 import com.performance.platform.application.usecase.ListExecutionsService;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,17 +29,20 @@ public class ExecutionUseCaseConfiguration {
      * @return l'implémentation du use case
      */
     @Bean
+    @ConditionalOnProperty(prefix = "platform.datasources.default", name = "url")
     public ListExecutionsUseCase listExecutionsUseCase(ExecutionRepository repository) {
         return new ListExecutionsService(repository);
     }
 
     /**
      * Expose {@link DeleteExecutionService} comme implementation de {@link DeleteExecutionUseCase}.
+     * Conditionnel a la presence de {@link ExecutionRepository} (absent en mode AGENT sans datasource).
      *
      * @param repository le repository d'execution
      * @return l'implementation du use case
      */
     @Bean
+    @ConditionalOnProperty(prefix = "platform.datasources.default", name = "url")
     public DeleteExecutionUseCase deleteExecutionUseCase(ExecutionRepository repository) {
         return new DeleteExecutionService(repository);
     }
@@ -45,6 +50,7 @@ public class ExecutionUseCaseConfiguration {
     /**
      * Expose {@link ExecutionProgressCalculator} comme bean Spring.
      * Sans etat — peut etre partage entre plusieurs controllers.
+     * Toujours disponible car sans dependance externe.
      *
      * @return le calculateur de progression
      */

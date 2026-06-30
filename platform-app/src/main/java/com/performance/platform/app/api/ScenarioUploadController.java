@@ -7,6 +7,7 @@ import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +27,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1")
+@ConditionalOnProperty(prefix = "platform.datasources.default", name = "url")
 public class ScenarioUploadController {
 
     private static final Logger log = LoggerFactory.getLogger(ScenarioUploadController.class);

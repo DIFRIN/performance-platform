@@ -2,7 +2,7 @@
 
 **PDR** : PDR-033
 **Module** : `platform-app`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1 (critique — assemble les modules framework-free + valide le démarrage)
 **Bloquée par** : ISSUE-143, ISSUE-145, ISSUE-146, ISSUE-147
 **Estime** : L (3-6h)

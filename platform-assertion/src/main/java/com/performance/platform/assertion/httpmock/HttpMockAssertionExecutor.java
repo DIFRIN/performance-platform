@@ -13,6 +13,7 @@ import com.performance.platform.plugin.AssertionExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -97,6 +98,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     private final HttpTargetRegistry targetRegistry;
     private final HttpClient httpClient;
 
+    @Autowired
     public HttpMockAssertionExecutor(HttpTargetRegistry targetRegistry) {
         this.targetRegistry = Objects.requireNonNull(targetRegistry,
                 "targetRegistry must not be null");
