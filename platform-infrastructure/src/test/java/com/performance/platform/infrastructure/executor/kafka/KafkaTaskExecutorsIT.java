@@ -36,7 +36,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Kafka TaskExecutors IT")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @Tag("integration-tests")
 class KafkaTaskExecutorsIT {
 

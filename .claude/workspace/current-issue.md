@@ -1,11 +1,11 @@
-# ISSUE-138: Nettoyer la config publishers et documenter la diffusion CI/CD
+# ISSUE-139: Garde Docker sur les ITs de platform-infrastructure
 **Status**: APPROVED
-**PDR**: PDR-031
-**Module**: platform-app
-**Started**: 2026-06-30T11:30+02:00
-**IssueFile**: issues/ISSUE-138-clean-publishers-config-and-docs.md
+**PDR**: PDR-032
+**Module**: platform-infrastructure
+**Started**: 2026-06-30T12:49+02:00
+**IssueFile**: issues/ISSUE-139-docker-guard-infrastructure-its.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-138-clean-publishers-config-and-docs.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-139-docker-guard-infrastructure-its.md`
 
 ## Reviewer Feedback
 (None yet)

@@ -28,7 +28,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("DatabaseTaskExecutor IT")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @Tag("integration-tests")
 class DatabaseTaskExecutorIT {
 
