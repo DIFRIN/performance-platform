@@ -26,7 +26,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -69,8 +68,15 @@ class AgentRuntimeConfigurationTest {
     /**
      * Configuration de test qui fournit les beans de dependance
      * (mocks ou stubs) necessaires a AgentRuntimeConfiguration.
+     * <p>
+     * Pas d'annotation {@code @Configuration} pour eviter que le
+     * component scanning Spring ne la detecte (bean name conflict
+     * avec {@code TransportConfiguration#inMemoryExecutionTransport}).
+     * {@code ApplicationContextRunner.withUserConfiguration()} accepte
+     * les classes en mode lite (sans CGLIB proxy) — les methodes
+     * {@code @Bean} sont traitees correctement.
      */
-    @Configuration
+    // NOT @Configuration — explicitement enregistree via withUserConfiguration()
     static class TestDependencyConfig {
 
         @Bean

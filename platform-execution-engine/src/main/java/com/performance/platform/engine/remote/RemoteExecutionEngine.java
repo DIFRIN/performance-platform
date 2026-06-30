@@ -43,7 +43,7 @@ import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -96,7 +96,8 @@ import java.util.stream.Collectors;
  * <p>I/O bloquant (attente agents, polling completions) execute sous Virtual Threads.</p>
  */
 @Service
-@ConditionalOnProperty(name = "runtime.mode", havingValue = "DISTRIBUTED")
+@ConditionalOnExpression(
+    "'${runtime.mode:LOCAL}'.equals('DISTRIBUTED') && '${runtime.role:NONE}'.equals('ORCHESTRATOR')")
 public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(RemoteExecutionEngine.class);

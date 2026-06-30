@@ -23,6 +23,7 @@ import com.performance.platform.reporting.model.TaskReportEntry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -58,6 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Délégue le calcul du verdict à {@link VerdictCalculator}.
  */
 @Service
+@ConditionalOnProperty(prefix = "platform.datasources.default", name = "url")
 public class DefaultReportEngine implements ReportEngine {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultReportEngine.class);
