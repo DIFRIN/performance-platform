@@ -150,8 +150,8 @@
 | ISSUE-136 | Supprimer ReportPublisherPort de platform-application | DONE | PDR-031 | ISSUE-135 |
 | ISSUE-137 | Supprimer les contrats de publication de platform-reporting | DONE | PDR-031 | ISSUE-135 |
 | ISSUE-138 | Nettoyer la config publishers et documenter la diffusion CI/CD | DONE | PDR-031 | ISSUE-135 |
-| ISSUE-139 | Garde Docker sur les ITs de platform-infrastructure | APPROVED | PDR-032 | — |
-| ISSUE-140 | Garde Docker sur les ITs platform-transport | WAITING | PDR-032 | — |
+| ISSUE-139 | Garde Docker sur les ITs de platform-infrastructure | DONE | PDR-032 | — |
+| ISSUE-140 | Garde Docker sur les ITs de platform-transport | APPROVED | PDR-032 | — |
 | ISSUE-141 | Garde Docker DatabaseAssertionExecutorIT + @TempDir FileAssertionExecutorTest | WAITING | PDR-032 | — |
 | ISSUE-142 | ShellTaskExecutorTest cross-platform (@DisabledOnOs + @TempDir) | WAITING | PDR-032 | — |
 | ISSUE-143 | Engine implémente ports in + suppression port ExecutionEngine + ExecutionConfig possédé + beans orch. conditionnels | WAITING | PDR-033 | ISSUE-134 |
@@ -813,3 +813,7 @@
 | 2026-06-30 | ISSUE-139 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-30 | ISSUE-139 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-30 | ISSUE-139 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-30 | ISSUE-139 | APPROVED → DONE | issue-next.sh |
+| 2026-06-30 | ISSUE-140 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-30 | ISSUE-140 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-30 | ISSUE-140 | IN_REVIEW → APPROVED | Reviewer approved |

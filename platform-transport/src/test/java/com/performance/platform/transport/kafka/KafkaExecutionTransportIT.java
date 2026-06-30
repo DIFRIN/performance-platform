@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 @DisplayName("KafkaExecutionTransport — integration tests")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class KafkaExecutionTransportIT {
 
     @Container

@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 @DisplayName("RabbitMQExecutionTransport — integration tests")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class RabbitMQExecutionTransportIT {
 
     @Container
