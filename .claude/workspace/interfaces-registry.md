@@ -108,7 +108,7 @@
 | `GenerateReportUseCase` | ✅ STABLE | PDR-004 | ISSUE-012 |
 | `ExecutionRepository` | ✅ STABLE | PDR-004 | ISSUE-013, ISSUE-119 (+findAll/deleteById) |
 | `AgentRegistryPort` | ✅ STABLE | PDR-004 | ISSUE-013 |
-| `ReportPublisherPort` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-004 | ISSUE-013 → suppr. ISSUE-136 |
+| `ReportPublisherPort` | ❌ REMOVED (ADR-022) | PDR-004 | ISSUE-013 → suppr. ISSUE-136 |
 | `ExecutionConfig` | ✅ STABLE | PDR-004 | ISSUE-014 |
 | `ListExecutionsUseCase` | ✅ STABLE | PDR-027 | ISSUE-120 |
 | `DeleteExecutionUseCase` | ✅ STABLE | PDR-027 | ISSUE-120 |

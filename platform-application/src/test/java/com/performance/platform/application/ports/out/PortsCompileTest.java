@@ -10,7 +10,7 @@ import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.PhaseStatus;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
-import com.performance.platform.domain.id.ReportId;
+
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
@@ -29,9 +29,11 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test de compilation et de mockabilite des 3 ports sortants.
+ * Test de compilation et de mockabilite des 2 ports sortants.
  * Chaque test instancie une implementation inline (no-op) de l'interface
  * pour valider que les signatures compilent et sont correctement mockables.
+ *
+ * <p>ReportPublisherPort a ete supprime (ISSUE-136 / ADR-022).
  */
 class PortsCompileTest {
 
@@ -39,7 +41,6 @@ class PortsCompileTest {
     private static final ScenarioId SCENARIO_ID = ScenarioId.of(UUID.randomUUID().toString());
     private static final TaskId TASK_ID = TaskId.of(UUID.randomUUID().toString());
     private static final AgentId AGENT_ID = AgentId.generate();
-    private static final ReportId REPORT_ID = ReportId.generate();
 
     // --- ExecutionRepository ---
 
@@ -274,32 +275,4 @@ class PortsCompileTest {
         assertNotNull(result);
     }
 
-    // --- ReportPublisherPort ---
-
-    @Test
-    void reportPublisherPortCompiles() {
-        var publisher = new ReportPublisherPort() {
-            @Override
-            public void publish(ReportId reportId, ExecutionId executionId) { /* no-op */ }
-        };
-
-        publisher.publish(REPORT_ID, EXEC_ID);
-        assertDoesNotThrow(() -> publisher.publish(REPORT_ID, EXEC_ID));
-    }
-
-    @Test
-    void reportPublisherWithDifferentIds() {
-        var publisher = new ReportPublisherPort() {
-            @Override
-            public void publish(ReportId reportId, ExecutionId executionId) { /* no-op */ }
-        };
-
-        var r1 = ReportId.generate();
-        var r2 = ReportId.generate();
-        var e1 = ExecutionId.generate();
-        var e2 = ExecutionId.generate();
-
-        assertDoesNotThrow(() -> publisher.publish(r1, e1));
-        assertDoesNotThrow(() -> publisher.publish(r2, e2));
-    }
 }
