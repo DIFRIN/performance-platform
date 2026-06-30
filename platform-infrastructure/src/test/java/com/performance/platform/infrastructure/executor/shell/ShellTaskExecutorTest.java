@@ -12,6 +12,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,6 +54,7 @@ class ShellTaskExecutorTest {
 
     @Nested
     @DisplayName("Basic shell commands")
+    @DisabledOnOs(OS.WINDOWS)
     class BasicCommands {
 
         @Test
@@ -126,7 +130,11 @@ class ShellTaskExecutorTest {
 
     @Nested
     @DisplayName("Working directory")
+    @DisabledOnOs(OS.WINDOWS)
     class WorkingDirectory {
+
+        @TempDir
+        Path tempDir;
 
         @Test
         @DisplayName("should execute command from specified working directory")
@@ -134,14 +142,14 @@ class ShellTaskExecutorTest {
             var step = new StepDefinition(
                     TaskId.of("step-010"), "shell", Phase.PREPARATION,
                     Map.of("command", "bash", "args", List.of("-c", "pwd"),
-                            "workingDirectory", "/tmp"),
+                            "workingDirectory", tempDir.toString()),
                     List.of(), List.of(), Duration.ofSeconds(10), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
             assertThat(result.isSuccess()).isTrue();
             assertThat((String) result.outputs().get(ShellTaskExecutor.OUTPUT_STDOUT))
-                    .contains("/tmp");
+                    .contains(tempDir.toString());
         }
 
         @Test
@@ -164,6 +172,7 @@ class ShellTaskExecutorTest {
 
     @Nested
     @DisplayName("Environment variables")
+    @DisabledOnOs(OS.WINDOWS)
     class EnvironmentVariables {
 
         @Test
@@ -187,6 +196,7 @@ class ShellTaskExecutorTest {
 
     @Nested
     @DisplayName("Timeout")
+    @DisabledOnOs(OS.WINDOWS)
     class Timeout {
 
         @Test
@@ -317,6 +327,7 @@ class ShellTaskExecutorTest {
 
     @Nested
     @DisplayName("cleanup")
+    @DisabledOnOs(OS.WINDOWS)
     class Cleanup {
 
         @Test
@@ -389,6 +400,7 @@ class ShellTaskExecutorTest {
 
     @Nested
     @DisplayName("Outputs structure")
+    @DisabledOnOs(OS.WINDOWS)
     class OutputsStructure {
 
         @Test
