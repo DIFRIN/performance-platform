@@ -144,8 +144,8 @@
 | ISSUE-130 | Vue rapport (poll → iframe HTML + download PDF/JSON) + E2E Testcontainers | DONE | PDR-029 | ISSUE-129 |
 | ISSUE-131 | Mode CLI headless (run-and-exit sur `--scenario=`) | DONE | PDR-028 | ISSUE-125 |
 | ISSUE-132 | Root pom : import du BOM spring-boot-dependencies + spring-modulith | DONE | PDR-030 | — |
-| ISSUE-133 | Résoudre le conflit Spring 6/7 dans platform-execution-engine | APPROVED | PDR-030 | ISSUE-132 |
-| ISSUE-134 | Retirer versions Spring explicites des poms enfants restants | WAITING | PDR-030 | ISSUE-132 |
+| ISSUE-133 | Résoudre le conflit Spring 6/7 dans platform-execution-engine | DONE | PDR-030 | ISSUE-132 |
+| ISSUE-134 | Retirer les versions Spring explicites des poms enfants restants | APPROVED | PDR-030 | ISSUE-132 |
 | ISSUE-135 | Supprimer adapters publisher de platform-infrastructure | WAITING | PDR-031 | — |
 | ISSUE-136 | Supprimer ReportPublisherPort de platform-application | WAITING | PDR-031 | ISSUE-135 |
 | ISSUE-137 | Supprimer contrats publication de platform-reporting | WAITING | PDR-031 | ISSUE-135 |
@@ -789,3 +789,7 @@
 | 2026-06-29 | ISSUE-133 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-29 | ISSUE-133 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-29 | ISSUE-133 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-29 | ISSUE-133 | APPROVED → DONE | issue-next.sh |
+| 2026-06-29 | ISSUE-134 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-29 | ISSUE-134 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-30 | ISSUE-134 | IN_REVIEW → APPROVED | Reviewer approved |

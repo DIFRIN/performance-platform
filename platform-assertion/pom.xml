@@ -40,14 +40,12 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>7.0.0</version>
         </dependency>
 
         <!-- Spring Web (RestClient for target-based HTTP) -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
-            <version>7.0.0</version>
         </dependency>
 
         <!-- Infra (HttpTargetRegistry, HttpTargetProperties) -->
@@ -75,7 +73,6 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.27.3</version>
             <scope>test</scope>
         </dependency>
 
@@ -83,7 +80,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.5</version>
             <scope>test</scope>
         </dependency>
 
@@ -91,7 +87,6 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.20.6</version>
             <scope>test</scope>
         </dependency>
 
@@ -114,7 +109,6 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>6.2.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

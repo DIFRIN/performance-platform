@@ -2,7 +2,7 @@
 
 **PDR** : PDR-030
 **Module** : `platform-execution-engine`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0 (bloquant — conflit de versions latent dangereux)
 **Bloquée par** : ISSUE-132
 **Estime** : S (< 1h)
