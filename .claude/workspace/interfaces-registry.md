@@ -114,6 +114,7 @@
 | `DeleteExecutionUseCase` | ✅ STABLE | PDR-027 | ISSUE-120 |
 | `ListExecutionsService` | ✅ STABLE | PDR-027 | ISSUE-120 |
 | `DeleteExecutionService` | ✅ STABLE | PDR-027 | ISSUE-120 |
+| `GetExecutionStatusService` | 🔄 IN PROGRESS | PDR-033 | ISSUE-146 |
 | `ExecutionProgressCalculator` | ✅ STABLE | PDR-027 | ISSUE-120 |
 | `ExecutionNotDeletableException` | ✅ STABLE | PDR-027 | ISSUE-120 |
 
