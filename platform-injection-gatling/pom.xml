@@ -80,7 +80,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>7.0.0</version>
         </dependency>
 
         <!-- JUnit 5 pour les tests -->
@@ -94,7 +93,6 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.27.3</version>
             <scope>test</scope>
         </dependency>
 
