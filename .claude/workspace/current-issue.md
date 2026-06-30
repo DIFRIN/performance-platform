@@ -1,11 +1,11 @@
-# ISSUE-134: Retirer les versions Spring explicites des poms enfants restants
+# ISSUE-135: Supprimer les adapters publisher de platform-infrastructure
 **Status**: APPROVED
-**PDR**: PDR-030
-**Module**: platform-execution-engine
-**Started**: 2026-06-29T22:55+02:00
-**IssueFile**: issues/ISSUE-134-remove-spring-versions-child-poms.md
+**PDR**: PDR-031
+**Module**: platform-infrastructure
+**Started**: 2026-06-30T08:43+02:00
+**IssueFile**: issues/ISSUE-135-delete-publisher-adapters-infrastructure.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-134-remove-spring-versions-child-poms.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-135-delete-publisher-adapters-infrastructure.md`
 
 ## Reviewer Feedback
 (None yet)

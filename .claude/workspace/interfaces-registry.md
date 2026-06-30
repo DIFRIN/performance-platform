@@ -20,7 +20,8 @@
 | ❌ | REMOVED | Supprimé — ne plus utiliser |
 
 > Décisions de cadrage : `TaskType` supprimé (→ `String taskName`), gRPC non implémenté,
-> `platform-infrastructure` séparé en 4 packages (.executor/.plugin/.persistence/.publisher).
+> `platform-infrastructure` séparé en 3 packages (.executor/.plugin/.persistence). Le package
+> `.publisher` a été supprimé (ISSUE-135 / ADR-022).
 
 ---
 
@@ -226,15 +227,15 @@
 | `JpaExecutionRepository` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-119 (+findAll/deleteById) |
 | `PersistenceConfinementTest` (ArchUnit) | ✅ STABLE | PDR-012 | ISSUE-053 |
 
-## platform-infrastructure — `.publisher` (PDR-016)
+## platform-infrastructure — `.publisher` (PDR-016) — ❌ REMOVED (ISSUE-135 / ADR-022)
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `MultiPublisherDispatcher` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-070 → suppr. ISSUE-135 |
-| `PublishersProperties` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-070 → suppr. ISSUE-135 |
-| `ConfluenceReportPublisher` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-071 → suppr. ISSUE-135 |
-| `S3ReportPublisher` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-072 → suppr. ISSUE-135 |
-| `GitReportPublisher` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-016 | ISSUE-073 → suppr. ISSUE-135 |
+| `MultiPublisherDispatcher` | ❌ REMOVED (ADR-022) | PDR-016 | ISSUE-070 → suppr. ISSUE-135 |
+| `PublishersProperties` | ❌ REMOVED (ADR-022) | PDR-016 | ISSUE-070 → suppr. ISSUE-135 |
+| `ConfluenceReportPublisher` | ❌ REMOVED (ADR-022) | PDR-016 | ISSUE-071 → suppr. ISSUE-135 |
+| `S3ReportPublisher` | ❌ REMOVED (ADR-022) | PDR-016 | ISSUE-072 → suppr. ISSUE-135 |
+| `GitReportPublisher` | ❌ REMOVED (ADR-022) | PDR-016 | ISSUE-073 → suppr. ISSUE-135 |
 
 ## platform-injection-gatling
 

@@ -2,7 +2,7 @@
 
 **PDR** : PDR-030
 **Module** : poms enfants (build config cross-cutting — voir note périmètre)
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0 (bloquant — finalise la centralisation BOM)
 **Bloquée par** : ISSUE-132
 **Estime** : M (1-3h)
