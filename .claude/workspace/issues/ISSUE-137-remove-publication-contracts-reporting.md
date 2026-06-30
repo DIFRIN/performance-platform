@@ -2,7 +2,7 @@
 
 **PDR** : PDR-031
 **Module** : `platform-reporting`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P1 (critique)
 **Bloquée par** : ISSUE-135
 **Estime** : S (< 1h)

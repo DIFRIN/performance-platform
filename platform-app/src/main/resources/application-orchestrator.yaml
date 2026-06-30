@@ -91,15 +91,6 @@ platform:
         iot-commands: ${IOT_TOPIC_COMMANDS:iot-commands}
         device-events: ${DEVICE_TOPIC_EVENTS:device-events}
 
-  # Publishers
-  # Exemple: activer la publication Confluence
-  # publishers:
-  #   - target: CONFLUENCE
-  #     properties:
-  #       url: ${CONFLUENCE_URL}
-  #       space-key: ${CONFLUENCE_SPACE_KEY}
-  #       token: ${CONFLUENCE_TOKEN}
-
 # ---- Securite OAuth2/JWT ----
 # Configurer l'issuer URI via env var OAUTH2_ISSUER_URI.
 spring:

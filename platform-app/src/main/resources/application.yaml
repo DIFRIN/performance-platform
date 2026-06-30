@@ -65,10 +65,6 @@ reporting:
     - PDF
     - JSON
 
-# ---- Publishers ----
-# Aucun publisher par defaut. Configurer dans les profils
-# selon les besoins (Confluence, S3, Git...).
-
 # ---- Logging ----
 logging:
   level:

@@ -291,6 +291,18 @@ Les rapports sont générés dans le volume `./reports/` (monté sur l'orchestra
 - `./reports/{executionId}/report.json` — rapport JSON
 - `./reports/{executionId}/report.pdf` — rapport PDF
 
+### Diffusion des rapports (CI/CD)
+
+La plateforme génère les rapports localement dans `./reports/`. La diffusion vers des
+destinations externes (S3, Git, Confluence…) est **hors scope** de la plateforme et doit
+être réalisée par le pipeline CI/CD (ADR-022). Exemple :
+
+```bash
+# La plateforme génère les rapports ; le pipeline les diffuse.
+java -jar performance-platform.jar --scenario=scenario.yaml
+aws s3 cp ./reports/ s3://my-bucket/reports/ --recursive   # diffusion = responsabilité CI/CD
+```
+
 ---
 
 ## Arrêter

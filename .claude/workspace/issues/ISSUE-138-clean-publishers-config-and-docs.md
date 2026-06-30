@@ -2,7 +2,7 @@
 
 **PDR** : PDR-031
 **Module** : `platform-app` (+ doc déploiement)
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P2 (normal)
 **Bloquée par** : ISSUE-135
 **Estime** : S (< 1h)
