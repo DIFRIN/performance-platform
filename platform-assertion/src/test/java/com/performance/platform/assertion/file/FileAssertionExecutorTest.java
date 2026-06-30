@@ -457,7 +457,7 @@ class FileAssertionExecutorTest {
     @Test
     @DisplayName("should throw NPE on null context")
     void shouldThrowOnNullContext() {
-        StepDefinition step = step(Map.of("path", "/tmp", "check", "EXISTS"));
+        StepDefinition step = step(Map.of("path", "/example/path", "check", "EXISTS"));
         assertThatThrownBy(() -> executor.evaluate(null, step))
                 .isInstanceOf(NullPointerException.class);
     }

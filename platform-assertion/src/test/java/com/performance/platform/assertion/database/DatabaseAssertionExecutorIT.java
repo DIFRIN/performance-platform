@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("DatabaseAssertionExecutor IT")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @Tag("integration-tests")
 class DatabaseAssertionExecutorIT {
 
