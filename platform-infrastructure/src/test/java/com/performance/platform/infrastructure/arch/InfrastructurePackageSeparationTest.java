@@ -13,26 +13,29 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 /**
- * Test ArchUnit garantissant la separation stricte des 4 sous-packages de
+ * Test ArchUnit garantissant la separation stricte des 3 sous-packages de
  * {@code platform-infrastructure} : {@code executor}, {@code plugin},
- * {@code persistence}, {@code publisher}.
+ * {@code persistence}.
  *
  * <p>Regles verifiees :
  * <ul>
- *   <li>{@code persistence} ne depend pas de {@code executor}, {@code plugin}, {@code publisher}</li>
- *   <li>{@code publisher} ne depend pas de {@code executor}, {@code persistence}, {@code plugin}</li>
- *   <li>{@code executor} ne depend pas de {@code persistence}, {@code publisher}</li>
- *   <li>{@code plugin} peut dependre de {@code executor} mais pas de {@code persistence}/{@code publisher}</li>
- *   <li>Aucun cycle entre les 4 slices</li>
+ *   <li>{@code persistence} ne depend pas de {@code executor}, {@code plugin}</li>
+ *   <li>{@code executor} ne depend pas de {@code persistence}</li>
+ *   <li>{@code plugin} peut dependre de {@code executor} mais pas de {@code persistence}</li>
+ *   <li>Aucun cycle entre les 3 slices</li>
  *   <li>Annotations JPA confinees a {@code persistence}</li>
  * </ul>
  *
- * <p>Note : les packages {@code persistence} et {@code publisher} n'existent pas encore.
- * Les regles dont le {@code that()} cible ces packages utilisent {@code allowEmptyShould(true)}
+ * <p>Note : le package {@code persistence} n'existe pas encore.
+ * Les regles dont le {@code that()} cible ce package utilisent {@code allowEmptyShould(true)}
  * pour eviter un echec a vide. Les regles seront automatiquement effectives des que
- * ces packages contiendront des classes.
+ * ce package contiendra des classes.
+ *
+ * <p>Le package {@code publisher} a ete supprime (ISSUE-135 / ADR-022). Les regles
+ * associees utilisant {@code allowEmptyShould(true)} restent dans le code pour
+ * reference mais sont vacuellement vraies.
  */
-@DisplayName("Infrastructure Package Separation — 4 slices independantes")
+@DisplayName("Infrastructure Package Separation — 3 slices independantes")
 class InfrastructurePackageSeparationTest {
 
     private static final String INFRA = "com.performance.platform.infrastructure";

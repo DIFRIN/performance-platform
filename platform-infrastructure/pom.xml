@@ -12,7 +12,7 @@
 
     <artifactId>platform-infrastructure</artifactId>
     <name>Platform Infrastructure</name>
-    <description>Adapteurs techniques : executors, plugins, persistance, publishers — separe par packages (.executor, .plugin, .persistence, .publisher)</description>
+    <description>Adapteurs techniques : executors, plugins, persistance — separe par packages (.executor, .plugin, .persistence)</description>
 
     <dependencies>
         <!-- Domaine pur (ExecutionContext, StepDefinition, TaskResult) -->
@@ -33,13 +33,6 @@
         <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-plugin-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- Reporting engine (ReportEngine, ReportPublisher, CampaignReport) -->
-        <dependency>
-            <groupId>com.performance</groupId>
-            <artifactId>platform-reporting</artifactId>
             <version>${project.version}</version>
         </dependency>
 
