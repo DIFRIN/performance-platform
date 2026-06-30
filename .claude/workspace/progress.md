@@ -147,8 +147,8 @@
 | ISSUE-133 | Résoudre le conflit Spring 6/7 dans platform-execution-engine | DONE | PDR-030 | ISSUE-132 |
 | ISSUE-134 | Retirer les versions Spring explicites des poms enfants restants | DONE | PDR-030 | ISSUE-132 |
 | ISSUE-135 | Supprimer les adapters publisher de platform-infrastructure | DONE | PDR-031 | — |
-| ISSUE-136 | Supprimer ReportPublisherPort de platform-application | APPROVED | PDR-031 | ISSUE-135 |
-| ISSUE-137 | Supprimer contrats publication de platform-reporting | WAITING | PDR-031 | ISSUE-135 |
+| ISSUE-136 | Supprimer ReportPublisherPort de platform-application | DONE | PDR-031 | ISSUE-135 |
+| ISSUE-137 | Supprimer les contrats de publication de platform-reporting | APPROVED | PDR-031 | ISSUE-135 |
 | ISSUE-138 | Nettoyer config publishers + doc diffusion CI/CD | WAITING | PDR-031 | ISSUE-135 |
 | ISSUE-139 | Garde Docker sur les ITs platform-infrastructure | WAITING | PDR-032 | — |
 | ISSUE-140 | Garde Docker sur les ITs platform-transport | WAITING | PDR-032 | — |
@@ -801,3 +801,7 @@
 | 2026-06-30 | ISSUE-136 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-30 | ISSUE-136 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-30 | ISSUE-136 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-30 | ISSUE-136 | APPROVED → DONE | issue-next.sh |
+| 2026-06-30 | ISSUE-137 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-30 | ISSUE-137 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-30 | ISSUE-137 | IN_REVIEW → APPROVED | Reviewer approved |
