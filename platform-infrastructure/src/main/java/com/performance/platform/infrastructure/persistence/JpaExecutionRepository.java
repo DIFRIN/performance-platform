@@ -12,11 +12,13 @@ import com.performance.platform.infrastructure.persistence.mapper.ExecutionState
 import com.performance.platform.infrastructure.persistence.mapper.TaskResultMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.sql.DataSource;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,8 +43,15 @@ import java.util.stream.Collectors;
  * <p>Save operations are idempotent: Spring Data's {@code save()} calls
  * {@code EntityManager.merge()} for entities with manually-assigned IDs,
  * which inserts when the row does not exist and updates when it does.</p>
+ *
+ * <p>Conditional on {@link DataSource} bean presence: in AGENT mode or any
+ * deployment without a configured datasource, this repository is simply not
+ * created — the application starts cleanly without JPA infrastructure.</p>
+ *
+ * @see ADR-025
  */
 @Repository
+@ConditionalOnBean(DataSource.class)
 public class JpaExecutionRepository implements ExecutionRepository {
 
     private static final Logger log = LoggerFactory.getLogger(JpaExecutionRepository.class);

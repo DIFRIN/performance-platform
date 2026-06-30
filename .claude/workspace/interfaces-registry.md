@@ -202,7 +202,7 @@
 | `DatabaseTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-040 |
 | `DatasourceProvider` | ✅ STABLE | PDR-010 | ISSUE-040 |
 | `PlatformDatasourcesProperties` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014) |
-| `DatasourceConfiguration` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014) |
+| `DatasourceConfiguration` | ✅ STABLE | PDR-010 | ISSUE-040 (ADR-014), ISSUE-145 (conditional ADR-025) |
 | `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor` | ⚠️ BREAKING | PDR-020 | ISSUE-087,088 (refactoring Spring Kafka en cours) |
 | `MockServerTaskExecutor` | ✅ STABLE | PDR-022 | ISSUE-094 |
 | `ShellTaskExecutor` | ✅ STABLE | PDR-010 | ISSUE-043 |
@@ -226,7 +226,8 @@
 | `ExecutionStateMapper` / `TaskResultMapper` | ✅ STABLE | PDR-012 | ISSUE-051 |
 | `ExecutionStateJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-119 (+findTopByStartedAtDesc) |
 | `TaskResultJpaRepository` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-119 (+deleteByExecutionId) |
-| `JpaExecutionRepository` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-119 (+findAll/deleteById) |
+| `JpaExecutionRepository` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-119 (+findAll/deleteById), ISSUE-145 (conditional ADR-025) |
+| `JpaConfiguration` | ✅ STABLE | PDR-012 | ISSUE-052, ISSUE-145 (conditional ADR-025) |
 | `PersistenceConfinementTest` (ArchUnit) | ✅ STABLE | PDR-012 | ISSUE-053 |
 
 ## platform-infrastructure — `.publisher` (PDR-016) — ❌ REMOVED (ISSUE-135 / ADR-022)
@@ -333,7 +334,7 @@
 | `KafkaClusterProperties` | ✅ STABLE | PDR-020 | ISSUE-086 |
 | `PlatformKafkaProperties` | ✅ STABLE | PDR-020 | ISSUE-086 |
 | `KafkaClusterRegistry` | ✅ STABLE | PDR-020 | ISSUE-086 |
-| `KafkaClusterConfiguration` | ✅ STABLE | PDR-020 | ISSUE-086 |
+| `KafkaClusterConfiguration` | ✅ STABLE | PDR-020 | ISSUE-086, ISSUE-145 (conditional ADR-025) |
 
 ## platform-transport — nouvelles classes (PDR-021)
 
@@ -349,7 +350,7 @@
 | `HttpTargetProperties` | ✅ STABLE | PDR-022 | ISSUE-092 |
 | `PlatformHttpTargetsProperties` | ✅ STABLE | PDR-022 | ISSUE-092 |
 | `HttpTargetRegistry` | ✅ STABLE | PDR-022 | ISSUE-092 |
-| `HttpTargetConfiguration` | ✅ STABLE | PDR-022 | ISSUE-092 |
+| `HttpTargetConfiguration` | ✅ STABLE | PDR-022 | ISSUE-092, ISSUE-145 (conditional ADR-025) |
 | `HttpClientTaskExecutor` | ✅ STABLE | PDR-022 | ISSUE-093 |
 
 ## platform-examples (PDR-023 — services SUT standalone)

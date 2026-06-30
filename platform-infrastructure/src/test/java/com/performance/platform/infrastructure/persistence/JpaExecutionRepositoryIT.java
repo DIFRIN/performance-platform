@@ -11,10 +11,9 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
+import com.performance.platform.infrastructure.executor.database.DatasourceConfiguration;
 import com.performance.platform.infrastructure.persistence.mapper.ExecutionStateMapper;
 import com.performance.platform.infrastructure.persistence.mapper.TaskResultMapper;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.AfterAll;
@@ -28,6 +27,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.env.MapPropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -71,8 +72,16 @@ class JpaExecutionRepositoryIT {
                 .load();
         flyway.migrate();
 
-        // 2. Start Spring context with JPA configuration
+        // 2. Start Spring context with datasource activated via properties (ADR-025)
+        //    No duplicate @Bean DataSource — DatasourceConfiguration creates it conditionally.
         context = new AnnotationConfigApplicationContext();
+        var dsProps = Map.of(
+                "platform.datasources.default.url", postgres.getJdbcUrl(),
+                "platform.datasources.default.username", postgres.getUsername(),
+                "platform.datasources.default.password", postgres.getPassword()
+        );
+        context.getEnvironment().getPropertySources()
+                .addFirst(new MapPropertySource("testcontainers", (Map) dsProps));
         context.register(IntegrationConfig.class);
         context.refresh();
     }
@@ -100,22 +109,18 @@ class JpaExecutionRepositoryIT {
 
     /**
      * Spring configuration for the integration test.
-     * Creates a minimal context with DataSource (Testcontainers),
-     * JPA EntityManagerFactory, transaction management, and
-     * Spring Data JPA repositories.
+     * Datasource is activated via {@code platform.datasources.default.*} properties
+     * (set on the context environment before refresh), consumed by
+     * {@link DatasourceConfiguration} which conditionally creates the
+     * {@link DataSource} bean — no duplicate {@code @Bean DataSource} here.
+     * <p>
+     * JPA EntityManagerFactory and transaction management are defined locally
+     * to keep full control over Hibernate dialect and DDL validation settings.
      */
     @Configuration
+    @Import(DatasourceConfiguration.class)
     @EnableJpaRepositories(basePackages = "com.performance.platform.infrastructure.persistence")
     static class IntegrationConfig {
-
-        @Bean
-        DataSource dataSource() {
-            var config = new HikariConfig();
-            config.setJdbcUrl(postgres.getJdbcUrl());
-            config.setUsername(postgres.getUsername());
-            config.setPassword(postgres.getPassword());
-            return new HikariDataSource(config);
-        }
 
         @Bean
         LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
