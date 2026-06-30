@@ -10,7 +10,6 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.injection.InjectionResult;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.task.TaskStatus;
-import com.performance.platform.reporting.PublicationTarget;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -254,43 +253,4 @@ class CampaignReportTest {
         }
     }
 
-    @Nested
-    @DisplayName("PublisherConfig")
-    class PublisherConfigTests {
-
-        @Test
-        @DisplayName("should construct with target and properties")
-        void shouldConstruct() {
-            var config = new PublisherConfig(PublicationTarget.S3, Map.of("bucket", "reports"));
-            assertEquals(PublicationTarget.S3, config.target());
-            assertEquals("reports", config.properties().get("bucket"));
-        }
-
-        @Test
-        @DisplayName("should use defensive copy for properties")
-        void shouldUseDefensiveCopy() {
-            var mutMap = new java.util.HashMap<String, String>();
-            mutMap.put("k", "v");
-            var config = new PublisherConfig(PublicationTarget.CONFLUENCE, mutMap);
-            mutMap.put("k2", "v2");
-            assertEquals(1, config.properties().size());
-        }
-    }
-
-    @Nested
-    @DisplayName("PublicationTarget")
-    class PublicationTargetTests {
-
-        @Test
-        @DisplayName("should contain all expected values")
-        void shouldContainAllValues() {
-            assertEquals(6, PublicationTarget.values().length);
-            assertNotNull(PublicationTarget.valueOf("CONFLUENCE"));
-            assertNotNull(PublicationTarget.valueOf("S3"));
-            assertNotNull(PublicationTarget.valueOf("SHAREPOINT"));
-            assertNotNull(PublicationTarget.valueOf("GIT"));
-            assertNotNull(PublicationTarget.valueOf("NEXUS"));
-            assertNotNull(PublicationTarget.valueOf("CUSTOM"));
-        }
-    }
 }

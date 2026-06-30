@@ -264,11 +264,11 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `PublicationTarget` | ⚠️ TO REMOVE (PDR-031 / ADR-022) | PDR-015 | ISSUE-065 → suppr. ISSUE-137 |
-| `ReportEngine` / `ReportRenderer` / `CampaignReport` (CONSERVÉS) ; `ReportPublisher` ⚠️ TO REMOVE (ISSUE-137) | ✅ STABLE / ⚠️ partiel | PDR-015 | ISSUE-065 |
+| `PublicationTarget` | ❌ REMOVED (ADR-022) | PDR-015 | ISSUE-065 → suppr. ISSUE-137 |
+| `ReportEngine` / `ReportRenderer` / `CampaignReport` (CONSERVÉS) ; ~~`ReportPublisher`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 |
 | `EnvironmentInfo` / `ExecutionSummary` / `TaskReportEntry` | ✅ STABLE | PDR-015 | ISSUE-065 |
-| `InjectionReportEntry` / `AssertionReportEntry` (CONSERVÉS) ; `PublisherConfig` ⚠️ TO REMOVE (ISSUE-137) | ✅ STABLE / ⚠️ partiel | PDR-015 | ISSUE-065 |
-| `RenderException` (CONSERVÉ) ; `PublicationException` ⚠️ TO REMOVE (ISSUE-137) | ✅ STABLE / ⚠️ partiel | PDR-015 | ISSUE-065 |
+| `InjectionReportEntry` / `AssertionReportEntry` (CONSERVÉS) ; ~~`PublisherConfig`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 |
+| `RenderException` (CONSERVÉ) ; ~~`PublicationException`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 |
 | `DefaultReportEngine` / `VerdictCalculator` | ✅ STABLE | PDR-015 | ISSUE-066 |
 | `HtmlReportRenderer` / `JsonReportRenderer` | ✅ STABLE | PDR-015 | ISSUE-067 |
 | `PdfReportRenderer` | ✅ STABLE | PDR-015 | ISSUE-068 |

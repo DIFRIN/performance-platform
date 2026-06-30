@@ -1,11 +1,11 @@
-# ISSUE-136: Supprimer ReportPublisherPort de platform-application
+# ISSUE-137: Supprimer les contrats de publication de platform-reporting
 **Status**: APPROVED
 **PDR**: PDR-031
-**Module**: platform-application
-**Started**: 2026-06-30T09:44+02:00
-**IssueFile**: issues/ISSUE-136-remove-report-publisher-port-application.md
+**Module**: platform-reporting
+**Started**: 2026-06-30T10:27+02:00
+**IssueFile**: issues/ISSUE-137-remove-publication-contracts-reporting.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-136-remove-report-publisher-port-application.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-137-remove-publication-contracts-reporting.md`
 
 ## Reviewer Feedback
 (None yet)
