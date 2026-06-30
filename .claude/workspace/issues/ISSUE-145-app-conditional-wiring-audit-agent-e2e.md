@@ -2,7 +2,7 @@
 
 **PDR** : PDR-033
 **Module** : `platform-infrastructure`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1 (critique — AGENT ne démarre pas tant que l'infra DB est inconditionnelle)
 **Bloquée par** : ISSUE-134 (classpath Spring cohérent via BOM)
 **Estime** : M (1-3h)

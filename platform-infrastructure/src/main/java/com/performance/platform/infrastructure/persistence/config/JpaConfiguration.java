@@ -4,6 +4,7 @@ import jakarta.persistence.EntityManagerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -23,8 +24,17 @@ import javax.sql.DataSource;
  * Enables Spring Data JPA repositories under the {@code persistence} package,
  * creates an {@link EntityManagerFactory} scanning JPA entities, and sets up
  * the transaction manager.
+ * <p>
+ * Entire configuration (and all its beans) is skipped when no
+ * {@link DataSource} bean is present — e.g. AGENT mode without a configured
+ * datasource. {@code @ConditionalOnBean} is preferred here because it
+ * naturally mirrors the datasource activation: if {@code DatasourceConfiguration}
+ * creates a {@code DataSource}, JPA follows; otherwise nothing is wired.
+ *
+ * @see ADR-025
  */
 @Configuration
+@ConditionalOnBean(DataSource.class)
 @EnableJpaRepositories(basePackages = "com.performance.platform.infrastructure.persistence")
 @EnableTransactionManagement
 public class JpaConfiguration {

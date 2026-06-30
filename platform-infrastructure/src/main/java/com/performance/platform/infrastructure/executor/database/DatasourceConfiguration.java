@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,15 +49,19 @@ public class DatasourceConfiguration {
      * satisfying {@code @ConditionalOnBean(DataSource.class)} for JPA auto-configuration
      * (ADR-014). The bean is named {@code dataSource} so Spring Boot and Flyway
      * auto-configuration pick it up correctly.
+     * <p>
+     * Conditional on {@code platform.datasources.default.url}: when no default datasource
+     * is configured (AGENT mode, etc.), this bean is simply not created — no exception thrown.
+     *
+     * @see ADR-025
      */
     @Bean
     @Primary
+    @ConditionalOnProperty(prefix = "platform.datasources.default", name = "url")
     public DataSource dataSource(PlatformDatasourcesProperties props) {
         if (props.datasources() == null || !props.datasources().containsKey("default")) {
             log.warn("action=no_default_datasource — JPA auto-configuration will be skipped");
-            throw new IllegalStateException(
-                "No 'default' datasource configured under platform.datasources.default. " +
-                "A default datasource is required for JPA persistence.");
+            return null; // unreachable when ConditionalOnProperty matches, safe guard
         }
         var ds = props.datasources().get("default");
         var hikari = buildHikari("default", ds);

@@ -2,6 +2,7 @@ package com.performance.platform.infrastructure.executor.http;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,7 @@ public class HttpTargetConfiguration {
     private static final Logger log = LoggerFactory.getLogger(HttpTargetConfiguration.class);
 
     @Bean
+    @ConditionalOnProperty(prefix = "platform.http-targets", name = "enabled", havingValue = "true", matchIfMissing = true)
     public HttpTargetRegistry httpTargetRegistry(
             PlatformHttpTargetsProperties props,
             RestClient.Builder restClientBuilder) {
