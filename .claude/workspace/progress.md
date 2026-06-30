@@ -157,8 +157,8 @@
 | ISSUE-143 | Engine implémente les ports in + suppression du port ExecutionEngine + config possédée | DONE | PDR-033 | ISSUE-134 |
 | ISSUE-144 | Composition root mince platform-app (glue lookup + scenario parsing + status) + smoke tests 3 modes | WAITING | PDR-033 | ISSUE-143,145,146,147 |
 | ISSUE-145 | platform-infrastructure : datasource/JPA/repository conditionnels (sans throw) | DONE | PDR-033 | ISSUE-134 |
-| ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-application) | APPROVED | PDR-033 | — |
-| ISSUE-147 | AgentRegistry self-wiring conditionnel ORCHESTRATOR (platform-agent-runtime) | WAITING | PDR-033 | ISSUE-134 |
+| ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-application) | DONE | PDR-033 | — |
+| ISSUE-147 | AgentRegistry self-wiring conditionnel (platform-agent-runtime) | APPROVED | PDR-033 | ISSUE-134 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -837,3 +837,7 @@
 | 2026-06-30 | ISSUE-146 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-30 | ISSUE-146 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-30 | ISSUE-146 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-30 | ISSUE-146 | APPROVED → DONE | issue-next.sh |
+| 2026-06-30 | ISSUE-147 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-06-30 | ISSUE-147 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-06-30 | ISSUE-147 | IN_REVIEW → APPROVED | Reviewer approved |

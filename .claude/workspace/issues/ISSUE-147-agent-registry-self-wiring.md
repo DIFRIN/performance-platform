@@ -2,7 +2,7 @@
 
 **PDR** : PDR-033
 **Module** : `platform-agent-runtime`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1 (critique — l'orchestrateur a besoin d'AgentRegistryPort)
 **Bloquée par** : ISSUE-134 (classpath Spring cohérent via BOM)
 **Estime** : S (< 1h)

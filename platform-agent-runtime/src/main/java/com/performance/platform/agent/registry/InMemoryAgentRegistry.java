@@ -26,9 +26,8 @@ import java.util.concurrent.ConcurrentMap;
  * {@code supportedTaskNames} contient le nom — pas de sélection
  * (voir ADR-008).
  * <p>
- * Le câblage Spring ({@code @Component}, {@code @ConditionalOnProperty})
- * sera ajouté dans {@code TransportConfiguration} ou équivalent lors de
- * l'assemblage applicatif (ISSUE-077, PDR-018).
+ * Le câblage Spring est géré par {@link com.performance.platform.agent.registry.config.AgentRegistryConfiguration}
+ * dans ce même module (ISSUE-147).
  */
 public class InMemoryAgentRegistry implements AgentRegistry, TtlTrackable {
 
