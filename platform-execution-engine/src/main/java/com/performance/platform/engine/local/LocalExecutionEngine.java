@@ -18,7 +18,8 @@ import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.task.TaskStatus;
-import com.performance.platform.engine.ExecutionEngine;
+import com.performance.platform.application.ports.in.CancelExecutionUseCase;
+import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.retry.RetryExecutor;
 import org.slf4j.Logger;
@@ -36,8 +37,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Implementation locale (in-process) de {@link ExecutionEngine}.
- * Execute les 3 phases en sequence :
+ * Implementation locale (in-process) de {@link ExecuteScenarioUseCase}
+ * et {@link CancelExecutionUseCase}. Execute les 3 phases en sequence :
  * <ol>
  *   <li>PREPARATION — setup, donnees de test</li>
  *   <li>INJECTION — generation de charge</li>
@@ -58,7 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Service
 @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
-public class LocalExecutionEngine implements ExecutionEngine {
+public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(LocalExecutionEngine.class);
 
@@ -192,7 +193,6 @@ public class LocalExecutionEngine implements ExecutionEngine {
         cancelFlags.remove(executionId.value());
     }
 
-    @Override
     public ExecutionStatus getStatus(ExecutionId id) {
         ExecutionState state = activeExecutions.get(id.value());
         if (state != null) {

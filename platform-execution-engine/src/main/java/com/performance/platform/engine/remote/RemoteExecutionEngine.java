@@ -32,7 +32,8 @@ import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
-import com.performance.platform.engine.ExecutionEngine;
+import com.performance.platform.application.ports.in.CancelExecutionUseCase;
+import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
 import com.performance.platform.engine.availability.AgentAvailabilityChecker;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
@@ -58,8 +59,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * Implementation distribuee de {@link ExecutionEngine}.
- * Diffuse les taches aux agents via {@link ExecutionTransport} en broadcast
+ * Implementation distribuee de {@link ExecuteScenarioUseCase}
+ * et {@link CancelExecutionUseCase}. Diffuse les taches aux agents
+ * via {@link ExecutionTransport} en broadcast
  * (sans {@code targetAgentId}), suit les claims/results multi-agents, et
  * applique la {@link TaskCompletionPolicy}.
  *
@@ -95,7 +97,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @ConditionalOnProperty(name = "runtime.mode", havingValue = "DISTRIBUTED")
-public class RemoteExecutionEngine implements ExecutionEngine {
+public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(RemoteExecutionEngine.class);
 
@@ -140,7 +142,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         transport.subscribe(this::onTransportEvent);
     }
 
-    // ==================== ExecutionEngine API ====================
+    // ==================== UseCase API ====================
 
     @Override
     public ExecutionId execute(ScenarioDefinition scenario) throws ExecutionException {
@@ -187,7 +189,6 @@ public class RemoteExecutionEngine implements ExecutionEngine {
         return executionId;
     }
 
-    @Override
     public ExecutionStatus getStatus(ExecutionId id) {
         ActiveExecution exec = activeExecutions.get(id.value());
         if (exec != null) {

@@ -4,6 +4,7 @@ import com.performance.platform.application.exception.NoAvailableAgentException;
 import com.performance.platform.application.ports.out.AgentRegistryPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -17,8 +18,12 @@ import java.time.Duration;
  * <p>
  * Aucune selection d'agent n'est effectuee — seule la presence d'au moins
  * un agent competent est verifiee, conformement a ADR-008.
+ * <p>
+ * Actif uniquement en mode DISTRIBUTED (l'orchestrateur est le seul a
+ * avoir besoin du registre d'agents).
  */
 @Component
+@ConditionalOnProperty(name = "runtime.mode", havingValue = "DISTRIBUTED")
 public class DefaultAgentAvailabilityChecker implements AgentAvailabilityChecker {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultAgentAvailabilityChecker.class);
