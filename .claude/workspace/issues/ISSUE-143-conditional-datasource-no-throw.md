@@ -2,7 +2,7 @@
 
 **PDR** : PDR-033
 **Module** : `platform-execution-engine`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1 (critique — supprime la colle d'assemblage et corrige le bug LOCAL)
 **Bloquée par** : ISSUE-134 (classpath Spring cohérent via BOM)
 **Estime** : L (3-6h)

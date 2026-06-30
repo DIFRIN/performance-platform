@@ -8,6 +8,7 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.task.TaskResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -24,8 +25,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * Conforme a ADR-011 : tous les claims sont acceptes, la completion
  * depend de {@link TaskCompletionPolicy}.
+ * <p>
+ * Actif uniquement en mode DISTRIBUTED (le tracking de correlation
+ * multi-agent n'est pas necessaire en LOCAL).
  */
 @Component
+@ConditionalOnProperty(name = "runtime.mode", havingValue = "DISTRIBUTED")
 public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultTaskCorrelationTracker.class);

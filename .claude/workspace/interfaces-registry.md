@@ -139,12 +139,14 @@
 | `RetryExecutor` / `DefaultRetryExecutor` | ✅ STABLE | PDR-006 | ISSUE-020 |
 | `TaskCorrelationTracker` / `DefaultTaskCorrelationTracker` | ✅ STABLE | PDR-006 | ISSUE-021 |
 | `AgentAvailabilityChecker` / `DefaultAgentAvailabilityChecker` | ✅ STABLE | PDR-006 | ISSUE-022 |
-| `ExecutionEngine` | ✅ STABLE | PDR-006 | ISSUE-023 |
-| `LocalExecutionEngine` | ✅ STABLE | PDR-006 | ISSUE-023 |
+| `ExecutionEngine` | ❌ REMOVED (ADR-026) | PDR-006 | ISSUE-023 → ISSUE-143 |
+| `LocalExecutionEngine` | ✅ STABLE — implements `ExecuteScenarioUseCase`, `CancelExecutionUseCase` | PDR-033 | ISSUE-143 |
 | `DagPhaseExecutor` | ✅ STABLE | PDR-006 | ISSUE-023 |
 | `TaskExecutorLookup` | ✅ STABLE | PDR-006 | ISSUE-023 |
-| `RemoteExecutionEngine` | ✅ STABLE | PDR-006 | ISSUE-024 |
+| `RemoteExecutionEngine` | ✅ STABLE — implements `ExecuteScenarioUseCase`, `CancelExecutionUseCase` | PDR-033 | ISSUE-143 |
 | `PartialContextBuilder` | ✅ STABLE | PDR-006 | ISSUE-024 |
+| `ExecutionEngineConfiguration` | ✅ STABLE — bean `ExecutionConfig` conditionnel DISTRIBUTED | PDR-033 | ISSUE-143 |
+| `ExecutionEngineProperties` | ✅ STABLE — `@ConfigurationProperties(prefix="execution")` | PDR-033 | ISSUE-143 |
 
 ## platform-transport
 

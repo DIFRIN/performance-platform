@@ -9,7 +9,7 @@ import java.time.Duration;
  *
  * <p>Les contraintes R5 (taskAvailabilityTimeout >= 120s en K8s) et
  * R6 (workInProgressResetInterval <= taskExecutionTimeout / 3) sont
- * applicatives et verifiees par l'ExecutionEngine, pas ici.</p>
+ * applicatives et verifiees par l'engine d'execution, pas ici.</p>
  *
  * @param taskAvailabilityTimeout delai max d'attente de disponibilite d'un agent
  * @param taskExecutionTimeout delai max d'execution d'une tache
