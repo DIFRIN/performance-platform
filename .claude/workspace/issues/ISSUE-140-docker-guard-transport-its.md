@@ -2,7 +2,7 @@
 
 **PDR** : PDR-032
 **Module** : `platform-transport`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1 (critique)
 **Bloquée par** : —
 **Estime** : S (< 1h)
