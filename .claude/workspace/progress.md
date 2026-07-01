@@ -155,10 +155,23 @@
 | ISSUE-141 | Garde Docker sur DatabaseAssertionExecutorIT + @TempDir dans FileAssertionExecutorTest | DONE | PDR-032 | — |
 | ISSUE-142 | Rendre ShellTaskExecutorTest cross-platform | DONE | PDR-032 | — |
 | ISSUE-143 | Engine implémente les ports in + suppression du port ExecutionEngine + config possédée | DONE | PDR-033 | ISSUE-134 |
-| ISSUE-144 | Composition root mince (platform-app) : glue lookup + scenario parsing + status + smoke tests | APPROVED | PDR-033 | ISSUE-143,145,146,147 |
+| ISSUE-144 | Composition root mince (platform-app) : glue lookup + scenario parsing + status + smoke tests | DONE | PDR-033 | ISSUE-143,145,146,147 |
 | ISSUE-145 | platform-infrastructure : datasource/JPA/repository conditionnels (sans throw) | DONE | PDR-033 | ISSUE-134 |
 | ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-application) | DONE | PDR-033 | — |
 | ISSUE-147 | AgentRegistry self-wiring conditionnel (platform-agent-runtime) | DONE | PDR-033 | ISSUE-134 |
+| ISSUE-148 | AssertionSummary domain record | WAITING | PDR-034 | — |
+| ISSUE-149 | AssertionSample domain record | WAITING | PDR-034 | ISSUE-148 |
+| ISSUE-150 | AssertionExecutor extends TaskExecutor | WAITING | PDR-035 | ISSUE-148 |
+| ISSUE-151 | AssertionResultMapper utility | WAITING | PDR-036 | ISSUE-148, ISSUE-150 |
+| ISSUE-152 | Deprecate AssertionExecutorRegistry + unify bean collection | WAITING | PDR-036 | ISSUE-150 |
+| ISSUE-153 | Remove assertionResultToTaskResult from DagPhaseExecutor | WAITING | PDR-036 | ISSUE-151 |
+| ISSUE-154 | Unify DagPhaseExecutor assertion execution path | WAITING | PDR-037 | ISSUE-150, ISSUE-153 |
+| ISSUE-155 | Deprecate TaskExecutorLookup.findAssertionExecutor | WAITING | PDR-037 | ISSUE-154 |
+| ISSUE-156 | Add assertion task names to agent configuration | WAITING | PDR-037 | ISSUE-150, ISSUE-152 |
+
+| ISSUE-157 | ExecutionLifecycleSignal domain type | WAITING | PDR-038 | — |
+| ISSUE-158 | Engine lifecycle signal dispatch | WAITING | PDR-037 | ISSUE-157 |
+| ISSUE-159 | Agent lifecycle signal handling | WAITING | PDR-037 | ISSUE-157, ISSUE-158 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -196,6 +209,11 @@
 | PDR-031 | Local-Only Reporting (suppression publishers) | platform-infrastructure + platform-application + platform-reporting + platform-app | WAITING | ISSUE-135,136,137,138 | — (ADR-022) |
 | PDR-032 | Cross-Platform Test Execution | platform-infrastructure + platform-transport + platform-assertion | WAITING | ISSUE-139,140,141,142 | — (ADR-023) |
 | PDR-033 | Assemblage runtime : self-wiring par module + composition root mince | engine + application + agent-runtime + app + infrastructure | WAITING | ISSUE-143,144,145,146,147 | PDR-030 (ADR-026, ADR-025) |
+| PDR-034 | AssertionSummary Domain Records | platform-domain | WAITING | ISSUE-148,149 | PDR-001 |
+| PDR-035 | Unified Assertion Executor Contract | platform-plugin-api | WAITING | ISSUE-150 | PDR-003, PDR-034 |
+| PDR-036 | Assertion Executor Registration & Discovery | platform-assertion, platform-infrastructure | WAITING | ISSUE-151,152,153 | PDR-035, PDR-010 |
+| PDR-037 | Engine Unified Assertion Dispatch & Lifecycle Signals | platform-execution-engine, platform-agent-runtime | WAITING | ISSUE-154,155,156,158,159 | PDR-035, PDR-036, PDR-038 |
+| PDR-038 | Lifecycle Signals (ExecutionLifecycleSignal) | platform-domain | WAITING | ISSUE-157 | PDR-001, PDR-002 |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
 | — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
@@ -206,6 +224,8 @@
 ## History
 | Date | Issue | Transition | Note |
 |------|-------|------------|------|
+| 2026-06-30 | PDR-038 + ISSUE-157,158,159 | — → WAITING | System Designer — Lifecycle signals: ExecutionLifecycleSignal (general-purpose START/STOP), Engine dispatch, Agent handling with stop behaviors (immediate/completeCurrentCycle/gracePeriod). PDR-034,035,037 updated with stopBehavior/gracePeriodDuration notes. New DQs 5-8 resolved. PDR-037 MAJOR rewrite: linkedTo coordination, assertionIntervalSteps, lifecycle dispatchers. |
+| 2026-06-30 | PDR-034..037 + ISSUE-148..156 | — → WAITING | System Designer — Distributed assertions design: AssertionExecutor extends TaskExecutor, AssertionSummary format, engine unified dispatch. All 6 DQs resolved. |
 | 2026-06-12 | PDR-001..019 | — → TODO | System Designer |
 | 2026-06-12 | ISSUE-001..085 | — → TODO | System Designer |
 | 2026-06-12 | ISSUE-001 | TODO → IN PROGRESS | Developer |
@@ -845,3 +865,4 @@
 | 2026-06-30 | ISSUE-144 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-30 | ISSUE-144 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-30 | ISSUE-144 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-06-30 | ISSUE-144 | APPROVED → DONE | issue-next.sh |

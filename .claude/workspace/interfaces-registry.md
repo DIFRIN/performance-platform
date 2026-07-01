@@ -83,8 +83,10 @@
 | `AssertionPassed` / `AssertionFailed` | ✅ STABLE | PDR-002 | ISSUE-009 |
 | `AgentRegistered` / `AgentLost` / `AgentRecovered` | ✅ STABLE | PDR-002 | ISSUE-009 |
 | `ReportGenerated` / `ReportPublished` (String target) | ✅ STABLE | PDR-002 | ISSUE-009 |
-| `AgentSignal` (sealed) | ✅ STABLE | PDR-002 | ISSUE-009 |
+| `AgentSignal` (sealed) | ✅ STABLE (permits: ScenarioRestartSignal, ExecutionLifecycleSignal) | PDR-002, PDR-038 | ISSUE-009, ISSUE-157 |
 | `ScenarioRestartSignal` | ✅ STABLE | PDR-002 | ISSUE-009 |
+| `LifecycleAction` (enum: START, STOP) | ⬜ PLANNED | PDR-038 | ISSUE-157 |
+| `ExecutionLifecycleSignal` | ⬜ PLANNED | PDR-038 | ISSUE-157 |
 
 ## platform-plugin-api (module léger — 0 framework)
 
@@ -188,9 +190,10 @@
 | `TaskSpecializationFilter` / `TaskFilterResult` / `DefaultTaskSpecializationFilter` | ✅ STABLE | PDR-009 | ISSUE-033 |
 | `AgentRegistrationPort` / `TransportAgentRegistration` / `HeartbeatScheduler` / `RegistrationException` | ✅ STABLE | PDR-009 | ISSUE-034 |
 | `AgentRegistry` / `InMemoryAgentRegistry` / `AgentTtlMonitor` | ✅ STABLE | PDR-009 | ISSUE-035 |
-| `AgentRuntime` / `DistributedAgentRuntime` | ✅ STABLE | PDR-009 | ISSUE-036 |
+| `AgentRuntime` / `DistributedAgentRuntime` | ✅ STABLE (method `onLifecycleSignal` ⬜ PLANNED) | PDR-009, PDR-037 | ISSUE-036, ISSUE-159 |
 | `StatefulResourceCleaner` / `ScenarioRestartHandler` | ✅ STABLE | PDR-009 | ISSUE-037 |
-| `LocalAgent` | ✅ STABLE | PDR-009 | ISSUE-038 |
+| `LocalAgent` | ✅ STABLE (method `onLifecycleSignal` ⬜ PLANNED) | PDR-009, PDR-037 | ISSUE-038, ISSUE-159 |
+| `DefaultLifecycleSignalHandler` | ⬜ PLANNED | PDR-037 | ISSUE-159 |
 | `AgentAllocator` | ❌ REMOVED | ADR-008 | — |
 
 ## platform-infrastructure — `.executor` (PDR-010)
@@ -257,12 +260,37 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` / `UnsupportedAssertionNameException` | ✅ STABLE | PDR-014 | ISSUE-059 |
+| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` / `UnsupportedAssertionNameException` | ⬜ DEPRECATED (PDR-036) | PDR-014 | ISSUE-059 — ISSUE-152 will deprecate |
 | `GatlingMetricAssertionExecutor` / `MetricExtractor` | ✅ STABLE | PDR-014 | ISSUE-060 |
 | `DatabaseAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-061 |
 | `KafkaAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-062 |
 | `HttpMockAssertionExecutor` | ✅ STABLE | PDR-022 | ISSUE-095 (v2 HttpTargetRegistry + legacy compat) |
 | `FileAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-064 |
+| `WireMockAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-063 |
+| `AssertionResultMapper` | ⬜ PLANNED | PDR-036 | ISSUE-151 |
+| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` | ⬜ DEPRECATED | PDR-036 | ISSUE-152 — deprecated since 2.0, forRemoval=true |
+
+## platform-domain — new assertion records (PDR-034)
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `AssertionSummary` | ⬜ PLANNED | PDR-034 | ISSUE-148 |
+| `AssertionSample` | ⬜ PLANNED | PDR-034 | ISSUE-149 |
+
+## platform-plugin-api — evolved interfaces (PDR-035)
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `AssertionExecutor` (extends TaskExecutor) | ⬜ PLANNED | PDR-035 | ISSUE-150 — additive change, backward compatible |
+
+## platform-execution-engine — evolved interfaces (PDR-037)
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `TaskExecutorLookup.findAssertionExecutor` | ⬜ DEPRECATED | PDR-037 | ISSUE-155 — deprecated since 2.0, forRemoval=true |
+| `ExecutionLifecycleDispatcher` | ⬜ PLANNED | PDR-037 | ISSUE-158 — @FunctionalInterface dispatch(signal) |
+| `LocalLifecycleDispatcher` | ⬜ PLANNED | PDR-037 | ISSUE-158 — LOCAL mode, delegates to LocalAgent |
+| `RemoteLifecycleDispatcher` | ⬜ PLANNED | PDR-037 | ISSUE-158 — DISTRIBUTED mode, delegates to transport.broadcastSignal() |
 
 ## platform-reporting
 
