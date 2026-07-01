@@ -139,3 +139,8 @@ IMPACT : ADR-019 (decision 4 ajoutee + matrice mode runtime x mode d'acces). ADR
 CONTEXTE : Deux fichiers ADR-015 coexistent (named-resource-registry-pattern ET configuration-driven-agent-specialization) ; le decisions-log reference ADR-015/016/017 avec des titres differents des fichiers ADR-016/017/018 sur disque. Le plus grand numero de FICHIER est 018. Les nouveaux ADRs prennent donc 019 et 020 (la demande d'un "ADR-016" est impossible : numero deja pris).
 RAISON : Eviter d'aggraver la collision. A nettoyer dans une passe de renumerotation dediee.
 IMPACT : ADR-019 et ADR-020 crees. Par ailleurs : le mode "headless run-and-exit sur --scenario=" presente par PDR-028 comme "existant (PDR-018)" N'EXISTE PAS dans `PerformancePlatformApplication`. Critere retire d'ISSUE-125 ; Issue dediee + ADR requis si ce mode est voulu.
+
+[2026-06-30] [architecture] VALIDATION ARCHITECTURALE : Design assertions distribuees — APPROUVE avec 7 findings
+CONTEXTE : Validation par l'Architect du design complet (PDR-034,035,036,037,038 + ISSUE-148 a 159 + analysis document). ADR-027 cree.
+RAISON : L'architecture est globalement solide. La decision d'uniformiser AssertionExecutor avec TaskExecutor (Option A) est la bonne : 0 breaking change pour les plugins, 0 code agent. ExecutionLifecycleSignal generaliste (pas assertion-specific) est le bon niveau d'abstraction. 7 findings identifies (voir ADR-027 et feedback System Designer ci-dessous) — aucun bloquant, tous resolubles avant ou pendant l'implementation.
+IMPACT : ADR-027 (Distributed Assertion Lifecycle) cree. PDRs et Issues valides. Implementation peut commencer apres traitement des 7 findings.
