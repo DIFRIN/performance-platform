@@ -12,6 +12,8 @@ import com.performance.platform.domain.agent.AgentState;
 
 import java.time.Instant;
 import com.performance.platform.domain.event.AgentSignal;
+import com.performance.platform.domain.event.ExecutionLifecycleSignal;
+import com.performance.platform.domain.event.LifecycleAction;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.plugin.TaskExecutor;
@@ -346,6 +348,38 @@ public class LocalAgent implements AgentRuntime {
 
         if (signal instanceof ScenarioRestartSignal restartSignal) {
             onScenarioRestart(restartSignal);
+        } else if (signal instanceof ExecutionLifecycleSignal lifecycleSignal) {
+            onLifecycleSignal(lifecycleSignal);
+        }
+    }
+
+    /**
+     * Recu un signal de cycle de vie START/STOP depuis l'orchestrateur.
+     * <p>
+     * START : demarre une boucle de monitoring pour les assertions
+     * d'intervalle ({@code linkedTo}).
+     * STOP : arrete la boucle de monitoring, evalue et publie le resultat.
+     * <p>
+     * Appele directement par {@code LocalLifecycleDispatcher} en mode LOCAL,
+     * ou via le transport en mode DISTRIBUTED.
+     *
+     * @param signal le signal de cycle de vie (START ou STOP)
+     */
+    public void onLifecycleSignal(ExecutionLifecycleSignal signal) {
+        log.info("action=lifecycle_signal agentId={} signalAction={} taskId={} executionId={}",
+                staticDescriptor.id().value(),
+                signal.action(),
+                signal.taskId().value(),
+                signal.executionId().value());
+
+        if (signal.action() == LifecycleAction.START) {
+            // TODO: Demarrer la boucle de monitoring (issue future)
+            log.debug("action=lifecycle_start agentId={} taskId={} — monitoring loop placeholder",
+                    staticDescriptor.id().value(), signal.taskId().value());
+        } else if (signal.action() == LifecycleAction.STOP) {
+            // TODO: Arreter la boucle de monitoring et evaluer (issue future)
+            log.debug("action=lifecycle_stop agentId={} taskId={} — stop monitoring placeholder",
+                    staticDescriptor.id().value(), signal.taskId().value());
         }
     }
 

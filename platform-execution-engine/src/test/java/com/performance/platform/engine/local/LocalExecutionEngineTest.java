@@ -30,6 +30,8 @@ import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
+import com.performance.platform.domain.event.ExecutionLifecycleSignal;
+import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.retry.DefaultRetryExecutor;
 import com.performance.platform.engine.retry.RetryExecutor;
@@ -83,6 +85,9 @@ class LocalExecutionEngineTest {
     // Stub: TaskExecutorLookup
     private final StubTaskExecutorLookup taskExecutorLookup = new StubTaskExecutorLookup();
 
+    // No-op lifecycle dispatcher for tests
+    private final ExecutionLifecycleDispatcher lifecycleDispatcher = signal -> { /* no-op */ };
+
     private LocalExecutionEngine engine;
 
     @BeforeEach
@@ -97,7 +102,7 @@ class LocalExecutionEngineTest {
 
         engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
-                eventPublisher, taskExecutorLookup);
+                eventPublisher, lifecycleDispatcher, taskExecutorLookup);
     }
 
     @AfterEach
@@ -311,7 +316,7 @@ class LocalExecutionEngineTest {
     private ExecutionPlan buildPlan(ScenarioDefinition s, List<ExecutionStep> prep,
                                      List<ExecutionStep> injection, List<ExecutionStep> assertion) {
         var eid = ExecutionId.generate();
-        return new ExecutionPlan(eid, s.id(), prep, injection, assertion,
+        return new ExecutionPlan(eid, s.id(), prep, injection, assertion, List.of(),
                 ExecutionContext.initial(eid, s.id()));
     }
 
@@ -675,7 +680,7 @@ class LocalExecutionEngineTest {
             var knownId = ExecutionId.of("cancel-test-001");
             var plan = new ExecutionPlan(knownId, s.id(),
                     List.of(execStep(prepStep, List.of(), 0)),
-                    List.of(), List.of(),
+                    List.of(), List.of(), List.of(),
                     ExecutionContext.initial(knownId, s.id()));
             planMap.put(s.id().value(), plan);
 
@@ -974,7 +979,7 @@ class LocalExecutionEngineTest {
 
     private DagPhaseExecutor createDagPhaseExecutor() {
         var dispatcher = new LocalStepDispatcher(taskExecutorLookup, retryExecutor);
-        return new DagPhaseExecutor(dispatcher);
+        return new DagPhaseExecutor(dispatcher, lifecycleDispatcher);
     }
 
     @SuppressWarnings("unchecked")

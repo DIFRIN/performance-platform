@@ -171,7 +171,7 @@ class ExecutionPlanTest {
             var assertSteps = List.of(makeStep("assert-1"));
             var ctx = emptyContext();
 
-            var plan = new ExecutionPlan(id, scenarioId(), prep, inj, assertSteps, ctx);
+            var plan = new ExecutionPlan(id, scenarioId(), prep, inj, assertSteps, List.of(), ctx);
 
             assertEquals(id, plan.id());
             assertEquals(scenarioId(), plan.scenarioId());
@@ -184,7 +184,7 @@ class ExecutionPlanTest {
         @Test
         @DisplayName("listes null deviennent vides")
         void nullListsDefaultToEmpty() {
-            var plan = new ExecutionPlan(execId(), scenarioId(), null, null, null, emptyContext());
+            var plan = new ExecutionPlan(execId(), scenarioId(), null, null, null, List.of(), emptyContext());
 
             assertEquals(List.of(), plan.preparationSteps());
             assertEquals(List.of(), plan.injectionSteps());
@@ -198,6 +198,7 @@ class ExecutionPlanTest {
                 List.of(makeStep("a"), makeStep("b")),
                 List.of(makeStep("c")),
                 List.of(makeStep("d"), makeStep("e"), makeStep("f")),
+                List.of(),
                 emptyContext()
             );
 
@@ -208,7 +209,7 @@ class ExecutionPlanTest {
         @DisplayName("totalSteps = 0 quand toutes les listes sont vides")
         void totalStepsZeroWhenEmpty() {
             var plan = new ExecutionPlan(execId(), scenarioId(),
-                List.of(), List.of(), List.of(), emptyContext());
+                List.of(), List.of(), List.of(), List.of(), emptyContext());
 
             assertEquals(0, plan.totalSteps());
         }
@@ -217,7 +218,7 @@ class ExecutionPlanTest {
         @DisplayName("modifier une liste source apres construction ne modifie pas le record")
         void defensiveCopyOnConstruction() {
             var mutablePrep = new ArrayList<>(List.of(makeStep("prep-1")));
-            var plan = new ExecutionPlan(execId(), scenarioId(), mutablePrep, List.of(), List.of(), emptyContext());
+            var plan = new ExecutionPlan(execId(), scenarioId(), mutablePrep, List.of(), List.of(), List.of(), emptyContext());
 
             mutablePrep.add(makeStep("prep-2"));
 
@@ -228,7 +229,7 @@ class ExecutionPlanTest {
         @DisplayName("preparationSteps() retourne une liste non-modifiable")
         void preparationStepsUnmodifiable() {
             var plan = new ExecutionPlan(execId(), scenarioId(),
-                List.of(makeStep("a")), List.of(), List.of(), emptyContext());
+                List.of(makeStep("a")), List.of(), List.of(), List.of(), emptyContext());
 
             assertThrows(UnsupportedOperationException.class,
                 () -> plan.preparationSteps().add(makeStep("x")));
@@ -238,7 +239,7 @@ class ExecutionPlanTest {
         @DisplayName("id null leve NullPointerException")
         void nullIdThrows() {
             assertThrows(NullPointerException.class, () ->
-                new ExecutionPlan(null, scenarioId(), List.of(), List.of(), List.of(), emptyContext())
+                new ExecutionPlan(null, scenarioId(), List.of(), List.of(), List.of(), List.of(), emptyContext())
             );
         }
 
@@ -246,7 +247,7 @@ class ExecutionPlanTest {
         @DisplayName("scenarioId null leve NullPointerException")
         void nullScenarioIdThrows() {
             assertThrows(NullPointerException.class, () ->
-                new ExecutionPlan(execId(), null, List.of(), List.of(), List.of(), emptyContext())
+                new ExecutionPlan(execId(), null, List.of(), List.of(), List.of(), List.of(), emptyContext())
             );
         }
 
@@ -254,7 +255,7 @@ class ExecutionPlanTest {
         @DisplayName("initialContext null leve NullPointerException")
         void nullInitialContextThrows() {
             assertThrows(NullPointerException.class, () ->
-                new ExecutionPlan(execId(), scenarioId(), List.of(), List.of(), List.of(), null)
+                new ExecutionPlan(execId(), scenarioId(), List.of(), List.of(), List.of(), List.of(), null)
             );
         }
 
@@ -264,8 +265,8 @@ class ExecutionPlanTest {
             var id = execId();
             var ctx = emptyContext();
             var steps = List.of(makeStep("a"));
-            var p1 = new ExecutionPlan(id, scenarioId(), steps, List.of(), List.of(), ctx);
-            var p2 = new ExecutionPlan(id, scenarioId(), steps, List.of(), List.of(), ctx);
+            var p1 = new ExecutionPlan(id, scenarioId(), steps, List.of(), List.of(), List.of(), ctx);
+            var p2 = new ExecutionPlan(id, scenarioId(), steps, List.of(), List.of(), List.of(), ctx);
             assertEquals(p1, p2);
             assertEquals(p1.hashCode(), p2.hashCode());
         }

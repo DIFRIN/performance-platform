@@ -1,5 +1,6 @@
 package com.performance.platform.engine.plan;
 
+import com.performance.platform.application.exception.InvalidScenarioException;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionStep;
@@ -66,13 +67,38 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder {
         // 3. Separation par phase
         var preparationSteps = new ArrayList<ExecutionStep>();
         var injectionSteps = new ArrayList<ExecutionStep>();
-        var assertionSteps = new ArrayList<ExecutionStep>();
+        var allAssertionSteps = new ArrayList<ExecutionStep>();
 
         for (ExecutionStep step : allSteps) {
             switch (step.step().phase()) {
                 case PREPARATION -> preparationSteps.add(step);
                 case INJECTION -> injectionSteps.add(step);
-                case ASSERTION -> assertionSteps.add(step);
+                case ASSERTION -> allAssertionSteps.add(step);
+            }
+        }
+
+        // 3b. Construire l'ensemble des IDs d'injection pour validation linkedTo
+        Set<String> injectionIds = new java.util.HashSet<>();
+        for (var inj : injectionSteps) {
+            injectionIds.add(inj.step().id().value());
+        }
+
+        // 3c. Separer les assertions point-in-time vs interval (linkedTo)
+        var assertionSteps = new ArrayList<ExecutionStep>();
+        var assertionIntervalSteps = new ArrayList<ExecutionStep>();
+
+        for (ExecutionStep step : allAssertionSteps) {
+            Object linkedToValue = step.step().parameters().get("linkedTo");
+            if (linkedToValue != null && !linkedToValue.toString().isEmpty()) {
+                String linkedToId = linkedToValue.toString();
+                if (!injectionIds.contains(linkedToId)) {
+                    throw new InvalidScenarioException(
+                            "linkedTo references unknown injection step: " + linkedToId
+                                    + " (assertion: " + step.step().id().value() + ")");
+                }
+                assertionIntervalSteps.add(step);
+            } else {
+                assertionSteps.add(step);
             }
         }
 
@@ -89,6 +115,7 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder {
                 preparationSteps,
                 injectionSteps,
                 assertionSteps,
+                assertionIntervalSteps,
                 ExecutionContext.initial(executionId, scenario.id())
         );
     }

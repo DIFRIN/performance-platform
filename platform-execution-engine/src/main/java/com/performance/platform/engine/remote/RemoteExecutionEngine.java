@@ -4,6 +4,7 @@ import com.performance.platform.application.config.ExecutionConfig;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.NoAvailableAgentException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
+import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.PhaseCompleted;
 import com.performance.platform.domain.event.PhaseStarted;
 import com.performance.platform.domain.event.ScenarioCancelled;
@@ -25,9 +26,11 @@ import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.ScenarioId;
+import com.performance.platform.domain.id.SignalId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
+import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
@@ -121,6 +124,7 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
     private final ExecutionRepository executionRepository;
     private final ExecutionConfig config;
     private final ApplicationEventPublisher eventPublisher;
+    private final ExecutionLifecycleDispatcher lifecycleDispatcher;
 
     /** Suivi en memoire des executions actives. Cle : executionId.value(). */
     private final Map<String, ActiveExecution> activeExecutions = new ConcurrentHashMap<>();
@@ -132,7 +136,8 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
             ExecutionTransport transport,
             ExecutionRepository executionRepository,
             ExecutionConfig config,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            ExecutionLifecycleDispatcher lifecycleDispatcher) {
         this.planBuilder = planBuilder;
         this.availabilityChecker = availabilityChecker;
         this.tracker = tracker;
@@ -140,6 +145,7 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
         this.executionRepository = executionRepository;
         this.config = config;
         this.eventPublisher = eventPublisher;
+        this.lifecycleDispatcher = lifecycleDispatcher;
         transport.subscribe(this::onTransportEvent);
     }
 
@@ -166,8 +172,18 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
             ctx = executePhase(Phase.PREPARATION, plan.preparationSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.preparationSteps())) hasFailure = true;
 
+            // Liaison linkedTo : START avant INJECTION pour les assertions d'intervalle
+            for (ExecutionStep assertionStep : plan.assertionIntervalSteps()) {
+                dispatchLifecycleSignal(executionId, assertionStep, true);
+            }
+
             ctx = executePhase(Phase.INJECTION, plan.injectionSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.injectionSteps())) hasFailure = true;
+
+            // Liaison linkedTo : STOP apres INJECTION
+            for (ExecutionStep assertionStep : plan.assertionIntervalSteps()) {
+                dispatchLifecycleSignal(executionId, assertionStep, false);
+            }
 
             ctx = executePhase(Phase.ASSERTION, plan.assertionSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.assertionSteps())) hasFailure = true;
@@ -645,7 +661,42 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
     private boolean checkSkippedInAnyPhase(ExecutionContext context, ExecutionPlan plan) {
         return checkSkippedInSteps(context, plan.preparationSteps())
                 || checkSkippedInSteps(context, plan.injectionSteps())
-                || checkSkippedInSteps(context, plan.assertionSteps());
+                || checkSkippedInSteps(context, plan.assertionSteps())
+                || checkSkippedInSteps(context, plan.assertionIntervalSteps());
+    }
+
+    /**
+     * Envoie un signal START ou STOP pour une etape d'assertion d'intervalle.
+     * Les parametres de l'etape (intervalSeconds, stopBehavior, etc.) sont
+     * inclus dans le signal.
+     */
+    private void dispatchLifecycleSignal(ExecutionId executionId,
+                                         ExecutionStep assertionStep,
+                                         boolean isStart) {
+        var stepDef = assertionStep.step();
+        var params = new java.util.HashMap<>(stepDef.parameters());
+        params.put(ExecutionLifecycleSignal.PARAM_TASK_NAME, stepDef.taskName());
+        params.put(ExecutionLifecycleSignal.PARAM_PHASE, stepDef.phase().name());
+
+        if (isStart) {
+            lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.start(
+                    SignalId.generate(),
+                    executionId,
+                    stepDef.id(),
+                    java.util.Map.copyOf(params)
+            ));
+            log.info("action=lifecycle_start_dispatched taskId={} executionId={}",
+                    stepDef.id().value(), executionId.value());
+        } else {
+            lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.stop(
+                    SignalId.generate(),
+                    executionId,
+                    stepDef.id(),
+                    java.util.Map.copyOf(params)
+            ));
+            log.info("action=lifecycle_stop_dispatched taskId={} executionId={}",
+                    stepDef.id().value(), executionId.value());
+        }
     }
 
     private boolean checkSkippedInSteps(ExecutionContext context, List<ExecutionStep> steps) {
