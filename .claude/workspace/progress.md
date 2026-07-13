@@ -171,9 +171,9 @@
 
 | ISSUE-157 | ExecutionLifecycleSignal Domain Type | DONE | PDR-038 | — |
 | ISSUE-158 | Engine Lifecycle Signal Dispatch | DONE | PDR-037 | ISSUE-157 |
-| ISSUE-159 | Agent Lifecycle Signal Handling | APPROVED | PDR-037 | ISSUE-157, ISSUE-158 |
-| ISSUE-160 | Shared DAG Executor Extraction (StepDispatcher + LocalStepDispatcher) | WAITING | PDR-039 | — |
-| ISSUE-161 | RemoteExecutionEngine uses Shared DagPhaseExecutor | WAITING | PDR-039 | ISSUE-160 |
+| ISSUE-159 | Agent Lifecycle Signal Handling | DONE | PDR-037 | ISSUE-157, ISSUE-158 |
+| ISSUE-160 | Shared DAG Executor Extraction (StepDispatcher + LocalStepDispatcher) | DONE | PDR-039 | — |
+| ISSUE-161 | RemoteExecutionEngine uses Shared DagPhaseExecutor | APPROVED | PDR-039 | ISSUE-160 |
 | ISSUE-162 | Remove Duplicated DAG Logic from RemoteExecutionEngine | WAITING | PDR-039 | ISSUE-161 |
 | ISSUE-163 | Sealed Event Interfaces (ExecutionEvent, TaskEvent, AssertionEvent) | WAITING | PDR-040 | — |
 | ISSUE-164 | Event package-info.java + ArchUnit Test | WAITING | PDR-040 | ISSUE-163 |
@@ -895,3 +895,9 @@
 | 2026-07-13 | ISSUE-159 | IN_REVIEW → CHANGES_REQUESTED | interfaces-registry.md not updated: AgentRuntime/DistributedAgentRuntime onLifecycleSignal still marked as PLANNED, LocalAgent onLifecycleSignal still PLANNED, DefaultLifecycleSignalHandler still PLANNED, AssertionSample still PLANNED, ExecutionLifecycleSignal still IN_PROGRESS (should be STABLE since ISSUE-157 is DONE). Issue criteria explicitly require this update. Also minor: test method shouldCallExecutorExecuteOnComplete has dead mock setup (executor is never called in Phase A simplification) and misleading method name vs display name. |
 | 2026-07-13 | ISSUE-159 | CHANGES_REQUESTED → IN_REVIEW | issue-finish.sh |
 | 2026-07-13 | ISSUE-159 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-13 | ISSUE-159 | APPROVED → DONE | issue-next.sh |
+| 2026-07-13 | ISSUE-160 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-13 | ISSUE-160 | IN_PROGRESS → DONE (fix: recycled by bug) | manual fix |
+| 2026-07-13 | ISSUE-161 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-13 | ISSUE-161 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-13 | ISSUE-161 | IN_REVIEW → APPROVED | Reviewer approved |

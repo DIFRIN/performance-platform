@@ -16,9 +16,12 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -125,7 +128,7 @@ public class DagPhaseExecutor {
 
             // Execute runnable steps
             if (!classification.runnable().isEmpty()) {
-                var levelResult = executeLevel(classification.runnable(), currentContext, phase, level);
+                var levelResult = executeLevel(classification.runnable(), currentContext, phase, level, cancelled);
                 currentContext = levelResult.updatedContext();
                 allOutcomes.addAll(levelResult.outcomes());
                 if (levelResult.anyFailed()) anyFailed = true;
@@ -166,12 +169,16 @@ public class DagPhaseExecutor {
 
     /**
      * Exécute toutes les étapes d'un niveau DAG en parallèle via Virtual Threads.
+     * Supporte l'annulation coopérative : quand {@code cancelled} devient true,
+     * les futures en attente sont annulés (interruption des threads),
+     * et les étapes non terminées sont marquées FAILED.
      */
     private LevelResult executeLevel(
             List<ExecutionStep> steps,
             ExecutionContext context,
             Phase phase,
-            int level) {
+            int level,
+            AtomicBoolean cancelled) {
 
         log.info("action=execute_dag_level phase={} level={} steps={} executionId={}",
                 phase, level, steps.size(), context.executionId());
@@ -215,23 +222,54 @@ public class DagPhaseExecutor {
                 }));
             }
 
+            // Poll with timeout to support cooperative cancellation
+            var pollIntervalMs = 500L;
+            futuresLoop:
             for (Future<StepOutcome> future : futures) {
-                try {
-                    StepOutcome outcome = future.get();
+                StepOutcome outcome = null;
+                boolean completed = false;
+
+                while (!completed) {
+                    if (cancelled.get()) {
+                        // Annulation : interrompre les threads en cours
+                        for (Future<StepOutcome> f : futures) {
+                            f.cancel(true);
+                        }
+                        log.info("action=level_cancelled phase={} level={} executionId={}",
+                                phase, level, currentContext.executionId());
+                        anyFailed = true;
+                        break futuresLoop;
+                    }
+
+                    try {
+                        outcome = future.get(pollIntervalMs, TimeUnit.MILLISECONDS);
+                        completed = true;
+                    } catch (TimeoutException e) {
+                        // Re-check cancellation flag et re-poll
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return new LevelResult(currentContext, anyFailed, outcomes);
+                    } catch (ExecutionException e) {
+                        Throwable cause = e.getCause();
+                        log.error("action=step_unexpected_error phase={} level={} executionId={}",
+                                phase, level, currentContext.executionId(), cause);
+                        completed = true;
+                        anyFailed = true;
+                    } catch (CancellationException e) {
+                        log.info("action=step_cancelled phase={} level={} executionId={}",
+                                phase, level, currentContext.executionId());
+                        completed = true;
+                        anyFailed = true;
+                    }
+                }
+
+                if (outcome != null) {
                     currentContext = currentContext.with(
                             outcome.taskId().value(), DEFAULT_AGENT, outcome.result());
                     outcomes.add(outcome);
                     if (outcome.result().status() == TaskStatus.FAILED) {
                         anyFailed = true;
                     }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Phase execution interrupted", e);
-                } catch (ExecutionException e) {
-                    Throwable cause = e.getCause();
-                    log.error("action=step_unexpected_error phase={} level={} executionId={}",
-                            phase, level, currentContext.executionId(), cause);
-                    anyFailed = true;
                 }
             }
         }

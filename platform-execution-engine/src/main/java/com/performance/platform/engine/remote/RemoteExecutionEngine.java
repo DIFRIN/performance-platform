@@ -12,16 +12,14 @@ import com.performance.platform.domain.event.ScenarioFinished;
 import com.performance.platform.domain.event.ScenarioStarted;
 import com.performance.platform.domain.event.TaskClaimedByAgent;
 import com.performance.platform.domain.event.TaskCompleted;
+import com.performance.platform.domain.event.TaskFailed;
 import com.performance.platform.domain.event.TaskDispatched;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.ExecutionStep;
-import com.performance.platform.domain.execution.PartialExecutionContext;
 import com.performance.platform.domain.execution.PhaseStatus;
-import com.performance.platform.domain.execution.RetryPolicy;
-import com.performance.platform.domain.execution.TaskCompletionPolicy;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.MessageId;
@@ -32,7 +30,6 @@ import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
-import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
@@ -40,10 +37,10 @@ import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
 import com.performance.platform.engine.availability.AgentAvailabilityChecker;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
+import com.performance.platform.engine.shared.DagPhaseExecutor;
 import com.performance.platform.transport.ExecutionTransport;
 
 import com.performance.platform.transport.message.ExecutionEvent;
-import com.performance.platform.transport.message.TaskExecutionRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -52,14 +49,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 /**
  * Implementation distribuee de {@link ExecuteScenarioUseCase}
@@ -125,6 +120,7 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
     private final ExecutionConfig config;
     private final ApplicationEventPublisher eventPublisher;
     private final ExecutionLifecycleDispatcher lifecycleDispatcher;
+    private final DagPhaseExecutor dagPhaseExecutor;
 
     /** Suivi en memoire des executions actives. Cle : executionId.value(). */
     private final Map<String, ActiveExecution> activeExecutions = new ConcurrentHashMap<>();
@@ -146,6 +142,8 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
         this.config = config;
         this.eventPublisher = eventPublisher;
         this.lifecycleDispatcher = lifecycleDispatcher;
+        var remoteDispatcher = new RemoteStepDispatcher(transport, availabilityChecker, tracker, config, eventPublisher);
+        this.dagPhaseExecutor = new DagPhaseExecutor(remoteDispatcher, lifecycleDispatcher);
         transport.subscribe(this::onTransportEvent);
     }
 
@@ -248,6 +246,10 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
 
     // ==================== Phase Execution ====================
 
+    /**
+     * Execute une phase complete via {@link DagPhaseExecutor} et met a jour
+     * le repository avec checkpoint et transition de statut.
+     */
     private ExecutionContext executePhase(
             Phase phase,
             List<ExecutionStep> steps,
@@ -265,37 +267,15 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
         executionRepository.updatePhase(executionId, phase, PhaseStatus.RUNNING);
         log.info("action=phase_started phase={} executionId={}", phase, executionId.value());
 
-        Map<Integer, List<ExecutionStep>> groupedByLevel = groupStepsByLevel(steps);
-        ExecutionContext currentContext = context;
-        boolean anyFailed = false;
+        // Executer les etapes de la phase via DagPhaseExecutor partage
+        // (TaskDispatched publie par RemoteStepDispatcher, TaskCompleted/TaskFailed
+        //  publies par onTransportEvent() au fil de l'eau)
+        DagPhaseExecutor.PhaseResult result = dagPhaseExecutor.executePhase(
+                steps, context, phase, cancelled);
 
-        for (Integer level : groupedByLevel.keySet().stream().sorted().toList()) {
-            if (cancelled.get()) {
-                log.info("action=phase_cancelled phase={} level={} executionId={}", phase, level, executionId.value());
-                break;
-            }
-
-            var classification = classifySteps(groupedByLevel.get(level), currentContext);
-
-            // Mark skippable steps
-            for (ExecutionStep step : classification.skippable()) {
-                StepDefinition stepDef = step.step();
-                var skippedResult = TaskResult.skipped(stepDef.id(), stepDef.taskName(), "dependency failed");
-                currentContext = currentContext.with(stepDef.id().value(), "agent-remote", skippedResult);
-                anyFailed = true;
-            }
-
-            // Dispatch runnable steps
-            if (!classification.runnable().isEmpty()) {
-                var levelResult = dispatchAndWaitLevel(
-                        classification.runnable(), currentContext, phase, executionId, cancelled);
-                currentContext = levelResult.updatedContext();
-                if (levelResult.anyFailed()) anyFailed = true;
-            }
-        }
-
-        // Determine phase status
-        PhaseStatus phaseStatus = anyFailed ? PhaseStatus.FAILED : PhaseStatus.COMPLETED;
+        // Determiner le statut final de la phase
+        boolean anyFailedInPhase = checkFailedInPhase(result.updatedContext(), steps);
+        PhaseStatus phaseStatus = anyFailedInPhase ? PhaseStatus.FAILED : PhaseStatus.COMPLETED;
 
         // Publier PhaseCompleted
         eventPublisher.publishEvent(new PhaseCompleted(executionId, phase, phaseStatus, Instant.now()));
@@ -303,144 +283,15 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
         log.info("action=phase_completed phase={} status={} executionId={}",
                 phase, phaseStatus, executionId.value());
 
-        // Checkpoint
+        // Checkpoint : sauvegarder l'etat courant
         ActiveExecution exec = activeExecutions.get(executionId.value());
         if (exec != null) {
-            ExecutionState updated = updatePhaseInState(exec.state, phase, phaseStatus, currentContext);
+            ExecutionState updated = updatePhaseInState(exec.state, phase, phaseStatus, result.updatedContext());
             exec.state = updated;
             executionRepository.save(updated);
         }
 
-        return currentContext;
-    }
-
-    // ==================== Dispatch & Wait ====================
-
-    /**
-     * Dispatch all runnable steps at a DAG level and wait for completions
-     * according to the configured completion policy.
-     */
-    private LevelResult dispatchAndWaitLevel(
-            List<ExecutionStep> steps,
-            ExecutionContext context,
-            Phase phase,
-            ExecutionId executionId,
-            AtomicBoolean cancelled) {
-
-        log.info("action=dispatch_dag_level phase={} steps={} executionId={}",
-                phase, steps.size(), executionId.value());
-
-        var dispatched = new ArrayList<PendingDispatch>();
-
-        for (ExecutionStep execStep : steps) {
-            if (cancelled.get()) break;
-
-            StepDefinition stepDef = execStep.step();
-
-            // 1. Await agent
-            availabilityChecker.awaitAgentFor(stepDef.taskName(), config.taskAvailabilityTimeout());
-            log.info("action=agent_available taskName={} executionId={}", stepDef.taskName(), executionId.value());
-
-            // 2. Build partial context
-            var partialCtx = PartialContextBuilder.build(context, execStep.requiredContextKeys());
-
-            // 3. Create request (broadcast, pas de targetAgentId)
-            var messageId = MessageId.generate();
-            RetryPolicy retry = stepDef.retryPolicy() != null ? stepDef.retryPolicy() : RetryPolicy.defaults();
-            var request = new TaskExecutionRequest(
-                    messageId, executionId, stepDef, partialCtx, Instant.now(), retry);
-
-            // 4. Dispatch
-            transport.dispatchTask(request);
-
-            // 5. Track
-            tracker.trackDispatched(messageId, stepDef.id(), executionId);
-            var pending = new PendingDispatch(messageId, stepDef.id());
-            ActiveExecution exec = activeExecutions.get(executionId.value());
-            if (exec != null) {
-                exec.pendingDispatches.put(messageId, pending);
-            }
-            dispatched.add(pending);
-
-            // 6. Publish event
-            eventPublisher.publishEvent(new TaskDispatched(
-                    executionId, stepDef.id(), stepDef.taskName(), messageId, Instant.now()));
-            log.info("action=task_dispatched taskId={} taskName={} messageId={} executionId={}",
-                    stepDef.id().value(), stepDef.taskName(), messageId.value(), executionId.value());
-        }
-
-        // Wait for all dispatched steps to complete
-        ExecutionContext currentContext = context;
-        boolean anyFailed = false;
-        long deadlineMs = System.currentTimeMillis() + config.taskExecutionTimeout().toMillis();
-
-        for (PendingDispatch pending : dispatched) {
-            if (cancelled.get()) {
-                // Annulation: marquer comme failed et sortir
-                var cancelResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
-                        Duration.ZERO, "Execution cancelled", null);
-                currentContext = currentContext.with(pending.taskId.value(), "agent-remote", cancelResult);
-                anyFailed = true;
-                continue;
-            }
-            boolean completed = awaitCompletion(pending, deadlineMs, cancelled);
-            if (!completed) {
-                // Timeout — mark as failed
-                var timeoutResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
-                        config.taskExecutionTimeout(), "Task execution timed out", null);
-                currentContext = currentContext.with(pending.taskId.value(), "agent-remote", timeoutResult);
-                anyFailed = true;
-                log.warn("action=task_timeout taskId={} messageId={} executionId={}",
-                        pending.taskId.value(), pending.messageId.value(), executionId.value());
-            } else {
-                // Collect results from all agents that completed
-                for (var entry : pending.results.entrySet()) {
-                    currentContext = currentContext.with(
-                            pending.taskId.value(), entry.getKey().value(), entry.getValue());
-                }
-                // Check if any agent failed
-                boolean hasFailures = pending.results.values().stream()
-                        .anyMatch(r -> r.status() == TaskStatus.FAILED);
-                if (hasFailures) anyFailed = true;
-            }
-        }
-
-        return new LevelResult(currentContext, anyFailed);
-    }
-
-    /**
-     * Poll the tracker until completion policy is satisfied, deadline reached,
-     * or execution is cancelled.
-     */
-    private boolean awaitCompletion(PendingDispatch pending, long deadlineMs, AtomicBoolean cancelled) {
-        TaskCompletionPolicy policy = config.completionPolicy();
-
-        while (System.currentTimeMillis() < deadlineMs) {
-            if (cancelled.get()) {
-                log.info("action=await_completion_cancelled messageId={}", pending.messageId.value());
-                return false;
-            }
-            if (tracker.isComplete(pending.messageId, policy)) {
-                log.debug("action=completion_satisfied messageId={} taskId={} policy={}",
-                        pending.messageId.value(), pending.taskId.value(), policy);
-                return true;
-            }
-
-            long remainingMs = Math.min(POLL_COMPLETION_MS, deadlineMs - System.currentTimeMillis());
-            if (remainingMs <= 0) break;
-
-            try {
-                Thread.sleep(remainingMs);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("action=await_completion_interrupted messageId={}", pending.messageId.value());
-                return false;
-            }
-        }
-
-        log.warn("action=completion_timeout messageId={} taskId={} policy={}",
-                pending.messageId.value(), pending.taskId.value(), policy);
-        return false;
+        return result.updatedContext();
     }
 
     // ==================== Event Handler ====================
@@ -449,6 +300,9 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
      * Handler appele par le transport pour chaque {@link ExecutionEvent} recu.
      * Filtre par executionId et correlationId pour ne traiter que les events
      * pertinents pour cette instance d'engine.
+     * <p>
+     * Utilise le {@link TaskCorrelationTracker} pour resoudre le taskId
+     * associe a chaque correlationId, sans dependre de {@code PendingDispatch}.
      */
     private void onTransportEvent(ExecutionEvent event) {
         if (event == null || event.executionId() == null) return;
@@ -459,69 +313,63 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
         MessageId correlationId = event.correlationId();
         if (correlationId == null) return;
 
-        PendingDispatch pending = exec.pendingDispatches.get(correlationId);
-        if (pending == null) return;
+        TaskId taskId = tracker.taskIdFor(correlationId);
+        if (taskId == null) return;
 
         String eventType = event.eventType();
         if (eventType == null) return;
 
         switch (eventType) {
-            case ExecutionEvent.TASK_CLAIMED -> handleTaskClaimed(event, pending);
-            case ExecutionEvent.TASK_COMPLETED -> handleTaskCompleted(event, pending);
-            case ExecutionEvent.TASK_FAILED -> handleTaskFailed(event, pending);
-            case ExecutionEvent.TASK_WORK_IN_PROGRESS -> handleTaskWorkInProgress(event, pending);
+            case ExecutionEvent.TASK_CLAIMED -> handleTaskClaimed(event, taskId);
+            case ExecutionEvent.TASK_COMPLETED -> handleTaskCompleted(event, taskId);
+            case ExecutionEvent.TASK_FAILED -> handleTaskFailed(event, taskId);
+            case ExecutionEvent.TASK_WORK_IN_PROGRESS -> handleTaskWorkInProgress(event, taskId);
             default -> {
                 // Ignorer les autres types d'events (heartbeat, registration, etc.)
             }
         }
     }
 
-    private void handleTaskClaimed(ExecutionEvent event, PendingDispatch pending) {
+    private void handleTaskClaimed(ExecutionEvent event, TaskId taskId) {
         if (event.agentId() == null) return;
-        tracker.onClaimed(pending.messageId, event.agentId());
+        tracker.onClaimed(event.correlationId(), event.agentId());
         log.info("action=task_claimed messageId={} agentId={} executionId={}",
-                pending.messageId.value(), event.agentId().value(), event.executionId().value());
+                event.correlationId().value(), event.agentId().value(), event.executionId().value());
         eventPublisher.publishEvent(new TaskClaimedByAgent(
-                event.executionId(), pending.taskId, event.agentId(),
-                pending.messageId, event.occurredAt()));
+                event.executionId(), taskId, event.agentId(),
+                event.correlationId(), event.occurredAt()));
     }
 
-    private void handleTaskCompleted(ExecutionEvent event, PendingDispatch pending) {
+    private void handleTaskCompleted(ExecutionEvent event, TaskId taskId) {
         if (event.agentId() == null) return;
 
-        TaskResult result = reconstructTaskResult(event, pending.taskId);
-        pending.results.put(event.agentId(), result);
-        tracker.onCompleted(pending.messageId, event.agentId(), result);
-        executionRepository.saveTaskResult(event.executionId(), pending.taskId, event.agentId(), result);
+        TaskResult result = reconstructTaskResult(event, taskId);
+        tracker.onCompleted(event.correlationId(), event.agentId(), result);
+        executionRepository.saveTaskResult(event.executionId(), taskId, event.agentId(), result);
 
         log.info("action=task_completed messageId={} agentId={} taskId={} status={} executionId={}",
-                pending.messageId.value(), event.agentId().value(),
-                pending.taskId.value(), result.status(), event.executionId().value());
+                event.correlationId().value(), event.agentId().value(),
+                taskId.value(), result.status(), event.executionId().value());
 
         eventPublisher.publishEvent(new TaskCompleted(
-                event.executionId(), pending.taskId, event.agentId(),
+                event.executionId(), taskId, event.agentId(),
                 result, result.duration(), event.occurredAt()));
     }
 
-    private void handleTaskFailed(ExecutionEvent event, PendingDispatch pending) {
+    private void handleTaskFailed(ExecutionEvent event, TaskId taskId) {
         if (event.agentId() == null) return;
 
         String error = (String) event.payload().getOrDefault(PAYLOAD_ERROR, "unknown error");
-        tracker.onFailed(pending.messageId, event.agentId(), error);
-
-        // Creer un TaskResult failed et le stocker
-        var failedResult = TaskResult.failed(pending.taskId, pending.taskId.value(),
-                Duration.ZERO, error, null);
-        pending.results.put(event.agentId(), failedResult);
+        tracker.onFailed(event.correlationId(), event.agentId(), error);
 
         log.warn("action=task_failed messageId={} agentId={} taskId={} error={} executionId={}",
-                pending.messageId.value(), event.agentId().value(),
-                pending.taskId.value(), error, event.executionId().value());
+                event.correlationId().value(), event.agentId().value(),
+                taskId.value(), error, event.executionId().value());
     }
 
-    private void handleTaskWorkInProgress(ExecutionEvent event, PendingDispatch pending) {
-        log.debug("action=task_progress messageId={} agentId={} executionId={}",
-                pending.messageId.value(),
+    private void handleTaskWorkInProgress(ExecutionEvent event, TaskId taskId) {
+        log.debug("action=task_progress messageId={} agentId={} taskId={} executionId={}",
+                event.correlationId().value(), taskId.value(),
                 event.agentId() != null ? event.agentId().value() : "unknown",
                 event.executionId().value());
     }
@@ -612,38 +460,6 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
     private AtomicBoolean cancelFlags(ExecutionId executionId) {
         ActiveExecution exec = activeExecutions.get(executionId.value());
         return exec != null ? exec.cancelFlag : new AtomicBoolean(false);
-    }
-
-    private Map<Integer, List<ExecutionStep>> groupStepsByLevel(List<ExecutionStep> steps) {
-        return steps.stream().collect(Collectors.groupingBy(ExecutionStep::dagLevel));
-    }
-
-    private record LevelClassification(List<ExecutionStep> runnable, List<ExecutionStep> skippable) {}
-
-    private LevelClassification classifySteps(List<ExecutionStep> steps, ExecutionContext context) {
-        var runnable = new ArrayList<ExecutionStep>();
-        var skippable = new ArrayList<ExecutionStep>();
-        for (ExecutionStep step : steps) {
-            if (allDependenciesSatisfied(step, context)) {
-                runnable.add(step);
-            } else {
-                skippable.add(step);
-            }
-        }
-        return new LevelClassification(runnable, skippable);
-    }
-
-    private boolean allDependenciesSatisfied(ExecutionStep step, ExecutionContext context) {
-        List<TaskId> deps = step.dependencies();
-        if (deps == null || deps.isEmpty()) return true;
-        for (TaskId dep : deps) {
-            var agentResults = context.store().get(dep.value());
-            if (agentResults == null) return false;
-            boolean anySuccess = agentResults.values().stream()
-                    .anyMatch(TaskResult::isSuccess);
-            if (!anySuccess) return false;
-        }
-        return true;
     }
 
     private boolean checkFailedInPhase(ExecutionContext context, List<ExecutionStep> steps) {
@@ -739,32 +555,19 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
 
     // ==================== Inner Types ====================
 
-    /** Result of executing one DAG level. */
-    private record LevelResult(ExecutionContext updatedContext, boolean anyFailed) {}
-
-    /**
-     * Etat d'une tache dispatch en attente de resultats.
-     */
-    private static class PendingDispatch {
-        final MessageId messageId;
-        final TaskId taskId;
-        final Map<AgentId, TaskResult> results = new ConcurrentHashMap<>();
-
-        PendingDispatch(MessageId messageId, TaskId taskId) {
-            this.messageId = messageId;
-            this.taskId = taskId;
-        }
-    }
-
     /**
      * Etat complet d'une execution en cours, partage entre le thread
      * d'execution principal (Virtual Thread) et le handler d'events du
      * transport (potentiellement appele depuis un autre thread).
+     *
+     * <p>Le suivi des dispatches est desormais gere par le
+     * {@link TaskCorrelationTracker} (via {@code trackDispatched}).
+     * Le handler d'events resout le {@code taskId} via
+     * {@code tracker.taskIdFor(correlationId)}.</p>
      */
     private static class ActiveExecution {
         volatile ExecutionState state;
         final AtomicBoolean cancelFlag = new AtomicBoolean(false);
-        final Map<MessageId, PendingDispatch> pendingDispatches = new ConcurrentHashMap<>();
 
         ActiveExecution(ExecutionState state) {
             this.state = state;

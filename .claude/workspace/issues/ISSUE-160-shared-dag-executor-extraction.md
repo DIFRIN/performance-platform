@@ -2,7 +2,7 @@
 
 **PDR** : PDR-039
 **Module** : `platform-execution-engine`
-**Statut** : DONE
+**Statut** : IN_PROGRESS
 **Priorite** : P1 (refactor structurel, pre-requis pour ISSUE-161)
 **Bloquee par** : —
 **Estime** : M (2-3h)
