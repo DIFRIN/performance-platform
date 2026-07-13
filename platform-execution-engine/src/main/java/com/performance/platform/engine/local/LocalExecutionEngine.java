@@ -7,21 +7,27 @@ import com.performance.platform.domain.event.PhaseStarted;
 import com.performance.platform.domain.event.ScenarioCancelled;
 import com.performance.platform.domain.event.ScenarioFinished;
 import com.performance.platform.domain.event.ScenarioStarted;
+import com.performance.platform.domain.event.TaskCompleted;
+import com.performance.platform.domain.event.TaskFailed;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.PhaseStatus;
+import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
+import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
+import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
 import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.retry.RetryExecutor;
+import com.performance.platform.engine.shared.DagPhaseExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -31,6 +37,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -62,11 +69,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(LocalExecutionEngine.class);
+    static final String LOCAL_AGENT = DagPhaseExecutor.DEFAULT_AGENT;
 
     private final ExecutionPlanBuilder planBuilder;
     private final ExecutionRepository executionRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final TaskExecutorLookup taskExecutorLookup;
     private final DagPhaseExecutor dagPhaseExecutor;
 
     /**
@@ -85,8 +92,8 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
         this.planBuilder = planBuilder;
         this.executionRepository = executionRepository;
         this.eventPublisher = eventPublisher;
-        this.taskExecutorLookup = taskExecutorLookup;
-        this.dagPhaseExecutor = new DagPhaseExecutor(retryExecutor);
+        var dispatcher = new LocalStepDispatcher(taskExecutorLookup, retryExecutor);
+        this.dagPhaseExecutor = new DagPhaseExecutor(dispatcher);
     }
 
     @Override
@@ -231,9 +238,12 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
         executionRepository.updatePhase(executionId, phase, PhaseStatus.RUNNING);
         log.info("action=phase_started phase={} executionId={}", phase, executionId.value());
 
-        // Executer les etapes de la phase
+        // Executer les etapes de la phase (shared DagPhaseExecutor, plus de lookup/eventPublisher)
         DagPhaseExecutor.PhaseResult result = dagPhaseExecutor.executePhase(
-                steps, context, phase, taskExecutorLookup, eventPublisher, cancelled);
+                steps, context, phase, cancelled);
+
+        // Publier les events de tache (TaskCompleted/TaskFailed)
+        publishTaskEvents(executionId, result.outcomes(), phase);
 
         // Determiner le statut final de la phase
         boolean anyFailedInPhase = checkFailedInPhase(result.updatedContext(), steps);
@@ -257,6 +267,32 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
     }
 
     /**
+     * Publie les events TaskCompleted ou TaskFailed pour chaque outcome de la phase.
+     * Les résultats SKIPPED sont publiés comme TaskCompleted (cohérent avec le
+     * comportement d'origine de DagPhaseExecutor.publishTaskSkipped()).
+     */
+    private void publishTaskEvents(ExecutionId executionId,
+                                    List<DagPhaseExecutor.StepOutcome> outcomes,
+                                    Phase phase) {
+        var agentId = AgentId.of(LOCAL_AGENT);
+        var now = Instant.now();
+
+        for (var outcome : outcomes) {
+            if (outcome.result().isSuccess() || outcome.result().status() == TaskStatus.SKIPPED) {
+                eventPublisher.publishEvent(new TaskCompleted(
+                        executionId, outcome.taskId(), agentId,
+                        outcome.result(), outcome.result().duration(), now));
+            } else {
+                eventPublisher.publishEvent(new TaskFailed(
+                        executionId, outcome.taskId(), agentId,
+                        outcome.result().errorMessage() != null
+                                ? outcome.result().errorMessage() : "failed",
+                        1, now));
+            }
+        }
+    }
+
+    /**
      * Verifie si une phase contient au moins un resultat FAILED.
      * Utilise {@code context.store()} pour acceder directement aux TaskResult,
      * car {@code context.get()} retourne les valeurs des outputs, pas les TaskResult.
@@ -266,7 +302,7 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
         for (var step : steps) {
             var agentResults = context.store().get(step.step().id().value());
             if (agentResults != null) {
-                var result = agentResults.get(DagPhaseExecutor.LOCAL_AGENT);
+                var result = agentResults.get(LOCAL_AGENT);
                 if (result != null && result.status() == TaskStatus.FAILED) {
                     return true;
                 }
@@ -289,7 +325,7 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
         for (var step : steps) {
             var agentResults = context.store().get(step.step().id().value());
             if (agentResults != null) {
-                var result = agentResults.get(DagPhaseExecutor.LOCAL_AGENT);
+                var result = agentResults.get(LOCAL_AGENT);
                 if (result != null && result.status() == TaskStatus.SKIPPED) return true;
             }
         }

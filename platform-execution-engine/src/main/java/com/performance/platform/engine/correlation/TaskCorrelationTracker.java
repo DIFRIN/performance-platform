@@ -7,6 +7,7 @@ import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.task.TaskResult;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -78,4 +79,13 @@ public interface TaskCorrelationTracker {
      * @return true si la condition est satisfaite
      */
     boolean isComplete(MessageId messageId, TaskCompletionPolicy policy);
+
+    /**
+     * Retourne tous les resultats enregistres pour ce messageId.
+     * La cle est l'identifiant de l'agent, la valeur son TaskResult.
+     *
+     * @param messageId identifiant du message
+     * @return map immuable des resultats par agent (vide si aucun)
+     */
+    Map<AgentId, TaskResult> getResults(MessageId messageId);
 }

@@ -33,6 +33,8 @@ import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.retry.DefaultRetryExecutor;
 import com.performance.platform.engine.retry.RetryExecutor;
+import com.performance.platform.engine.shared.DagPhaseExecutor;
+import com.performance.platform.engine.shared.StepDispatcher;
 import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 import org.junit.jupiter.api.AfterEach;
@@ -860,11 +862,11 @@ class LocalExecutionEngineTest {
         @Test
         @DisplayName("Empty steps list returns unchanged context")
         void emptySteps_returnsUnchangedContext() {
-            var dpe = new DagPhaseExecutor(retryExecutor);
+            var dpe = createDagPhaseExecutor();
             var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
 
             var result = dpe.executePhase(List.of(), ctx, Phase.PREPARATION,
-                    taskExecutorLookup, eventPublisher, new AtomicBoolean(false));
+                    new AtomicBoolean(false));
 
             assertSame(ctx, result.updatedContext());
             assertFalse(result.anyFailed());
@@ -878,7 +880,7 @@ class LocalExecutionEngineTest {
             ExecutionStep esA = execStep(stepA, List.of(), 0);
             ExecutionStep esB = execStep(stepB, List.of(), 0);
 
-            var dpe = new DagPhaseExecutor(retryExecutor);
+            var dpe = createDagPhaseExecutor();
             var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
 
             taskExecutorLookup.registerTask("ta",
@@ -889,7 +891,7 @@ class LocalExecutionEngineTest {
                             TaskResult.success(t("B"), "tb", Duration.ofMillis(5), Map.of())));
 
             var result = dpe.executePhase(List.of(esA, esB), ctx, Phase.PREPARATION,
-                    taskExecutorLookup, eventPublisher, new AtomicBoolean(false));
+                    new AtomicBoolean(false));
 
             assertFalse(result.anyFailed());
             assertNotNull(result.updatedContext().store().get("A"));
@@ -905,7 +907,7 @@ class LocalExecutionEngineTest {
             ExecutionStep esA = execStep(stepA, List.of(), 0);
             ExecutionStep esB = execStep(stepB, List.of(), 1);
 
-            var dpe = new DagPhaseExecutor(retryExecutor);
+            var dpe = createDagPhaseExecutor();
             var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
 
             var cancelled = new AtomicBoolean(false);
@@ -925,7 +927,7 @@ class LocalExecutionEngineTest {
             taskExecutorLookup.registerTask("tb", execB);
 
             var result = dpe.executePhase(List.of(esA, esB), ctx, Phase.PREPARATION,
-                    taskExecutorLookup, eventPublisher, cancelled);
+                    cancelled);
 
             // B should not have been called
             assertEquals(0, execB.getCallCount());
@@ -941,7 +943,7 @@ class LocalExecutionEngineTest {
             StepDefinition assertStep = step("as-1", "check", Phase.ASSERTION);
             ExecutionStep es = execStep(assertStep, List.of(), 0);
 
-            var dpe = new DagPhaseExecutor(retryExecutor);
+            var dpe = createDagPhaseExecutor();
             var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
 
             var evidence = new Evidence(95.0, 100.0,
@@ -955,7 +957,7 @@ class LocalExecutionEngineTest {
                     new StubAssertionExecutor("check", assertionResult));
 
             var result = dpe.executePhase(List.of(es), ctx, Phase.ASSERTION,
-                    taskExecutorLookup, eventPublisher, new AtomicBoolean(false));
+                    new AtomicBoolean(false));
 
             var stored = result.updatedContext().store().get("as-1");
             assertNotNull(stored);
@@ -969,6 +971,11 @@ class LocalExecutionEngineTest {
     // -------------------------------------------------------------------------
     // Helper methods
     // -------------------------------------------------------------------------
+
+    private DagPhaseExecutor createDagPhaseExecutor() {
+        var dispatcher = new LocalStepDispatcher(taskExecutorLookup, retryExecutor);
+        return new DagPhaseExecutor(dispatcher);
+    }
 
     @SuppressWarnings("unchecked")
     private <T> T findEvent(Class<T> eventType) {
