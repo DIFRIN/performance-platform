@@ -4,6 +4,7 @@ import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.filter.TaskFilterResult;
 import com.performance.platform.agent.filter.TaskSpecializationFilter;
 import com.performance.platform.agent.restart.ScenarioRestartHandler;
+import com.performance.platform.agent.runtime.lifecycle.DefaultLifecycleSignalHandler;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.agent.runtime.AgentRuntime;
 import com.performance.platform.agent.runtime.TaskExecutionPipeline;
@@ -13,7 +14,6 @@ import com.performance.platform.domain.agent.AgentState;
 import java.time.Instant;
 import com.performance.platform.domain.event.AgentSignal;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
-import com.performance.platform.domain.event.LifecycleAction;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.plugin.TaskExecutor;
@@ -86,6 +86,7 @@ public class LocalAgent implements AgentRuntime {
 
     private final TaskExecutionPipeline taskPipeline;
     private final ScenarioRestartHandler restartHandler;
+    private final DefaultLifecycleSignalHandler lifecycleSignalHandler;
 
     // === État concurrent ===
 
@@ -163,6 +164,8 @@ public class LocalAgent implements AgentRuntime {
 
         this.restartHandler = new ScenarioRestartHandler(
                 Objects.requireNonNull(cleaners, "cleaners must not be null"));
+
+        this.lifecycleSignalHandler = new DefaultLifecycleSignalHandler(filter, executorMap);
     }
 
     // === AgentRuntime ===
@@ -365,22 +368,9 @@ public class LocalAgent implements AgentRuntime {
      *
      * @param signal le signal de cycle de vie (START ou STOP)
      */
+    @Override
     public void onLifecycleSignal(ExecutionLifecycleSignal signal) {
-        log.info("action=lifecycle_signal agentId={} signalAction={} taskId={} executionId={}",
-                staticDescriptor.id().value(),
-                signal.action(),
-                signal.taskId().value(),
-                signal.executionId().value());
-
-        if (signal.action() == LifecycleAction.START) {
-            // TODO: Demarrer la boucle de monitoring (issue future)
-            log.debug("action=lifecycle_start agentId={} taskId={} — monitoring loop placeholder",
-                    staticDescriptor.id().value(), signal.taskId().value());
-        } else if (signal.action() == LifecycleAction.STOP) {
-            // TODO: Arreter la boucle de monitoring et evaluer (issue future)
-            log.debug("action=lifecycle_stop agentId={} taskId={} — stop monitoring placeholder",
-                    staticDescriptor.id().value(), signal.taskId().value());
-        }
+        lifecycleSignalHandler.handle(signal);
     }
 
     // === Drain des tâches actives ===

@@ -45,4 +45,9 @@ public class DefaultTaskSpecializationFilter implements TaskSpecializationFilter
         }
         return new TaskFilterResult.NotResponsible(messageId, agentId);
     }
+
+    @Override
+    public boolean canExecute(String taskName) {
+        return supportedTaskNames.contains(taskName);
+    }
 }
