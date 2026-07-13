@@ -12,6 +12,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -90,6 +92,15 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
             case FIRST_COMPLETE -> !state.completedAgents.isEmpty();
             case ALL_COMPLETE -> isAllComplete(state);
         };
+    }
+
+    @Override
+    public Map<AgentId, TaskResult> getResults(MessageId messageId) {
+        CorrelationState state = states.get(messageId);
+        if (state == null) {
+            return Collections.emptyMap();
+        }
+        return new HashMap<>(state.results);
     }
 
     /**

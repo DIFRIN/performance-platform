@@ -2,7 +2,7 @@
 
 **PDR** : PDR-034
 **Module** : `platform-domain`
-**Statut** : WAITING
+**Statut** : IN_PROGRESS
 **Priorite** : P0 (bloquant -- AssertionSummary est une dependance de PDR-035)
 **Bloquee par** : rien
 **Estime** : S (< 1h)

@@ -159,7 +159,7 @@
 | ISSUE-145 | platform-infrastructure : datasource/JPA/repository conditionnels (sans throw) | DONE | PDR-033 | ISSUE-134 |
 | ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-application) | DONE | PDR-033 | — |
 | ISSUE-147 | AgentRegistry self-wiring conditionnel (platform-agent-runtime) | DONE | PDR-033 | ISSUE-134 |
-| ISSUE-148 | AssertionSummary domain record | WAITING | PDR-034 | — |
+| ISSUE-148 | - AssertionSummary Domain Record | IN_PROGRESS | PDR-034 | — |
 | ISSUE-149 | AssertionSample domain record | WAITING | PDR-034 | ISSUE-148 |
 | ISSUE-150 | AssertionExecutor extends TaskExecutor | WAITING | PDR-035 | ISSUE-148 |
 | ISSUE-151 | AssertionResultMapper utility | WAITING | PDR-036 | ISSUE-148, ISSUE-150 |
@@ -172,6 +172,14 @@
 | ISSUE-157 | ExecutionLifecycleSignal domain type | WAITING | PDR-038 | — |
 | ISSUE-158 | Engine lifecycle signal dispatch | WAITING | PDR-037 | ISSUE-157 |
 | ISSUE-159 | Agent lifecycle signal handling | WAITING | PDR-037 | ISSUE-157, ISSUE-158 |
+| ISSUE-160 | Shared DAG Executor Extraction (StepDispatcher + LocalStepDispatcher) | WAITING | PDR-039 | — |
+| ISSUE-161 | RemoteExecutionEngine uses Shared DagPhaseExecutor | WAITING | PDR-039 | ISSUE-160 |
+| ISSUE-162 | Remove Duplicated DAG Logic from RemoteExecutionEngine | WAITING | PDR-039 | ISSUE-161 |
+| ISSUE-163 | Sealed Event Interfaces (ExecutionEvent, TaskEvent, AssertionEvent) | WAITING | PDR-040 | — |
+| ISSUE-164 | Event package-info.java + ArchUnit Test | WAITING | PDR-040 | ISSUE-163 |
+| ISSUE-165 | Task Executor Doctrine ADR-022 + Package Documentation | WAITING | PDR-041 | — |
+| ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | WAITING | PDR-042 | — |
+| ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | WAITING | PDR-042 | ISSUE-166 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -214,6 +222,10 @@
 | PDR-036 | Assertion Executor Registration & Discovery | platform-assertion, platform-infrastructure | WAITING | ISSUE-151,152,153 | PDR-035, PDR-010 |
 | PDR-037 | Engine Unified Assertion Dispatch & Lifecycle Signals | platform-execution-engine, platform-agent-runtime | WAITING | ISSUE-154,155,156,158,159 | PDR-035, PDR-036, PDR-038 |
 | PDR-038 | Lifecycle Signals (ExecutionLifecycleSignal) | platform-domain | WAITING | ISSUE-157 | PDR-001, PDR-002 |
+| PDR-039 | Shared DAG Executor Extraction | platform-execution-engine | WAITING | ISSUE-160,161,162 | PDR-006 |
+| PDR-040 | Event Package Formalization | platform-domain | WAITING | ISSUE-163,164 | PDR-002 |
+| PDR-041 | Task Executor Audit & Doctrine | platform-infrastructure | WAITING | ISSUE-165 | PDR-010 |
+| PDR-042 | DatabaseTaskExecutor Refinement | platform-infrastructure | WAITING | ISSUE-166,167 | PDR-010 |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
 | — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
@@ -866,3 +878,6 @@
 | 2026-06-30 | ISSUE-144 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-30 | ISSUE-144 | IN_REVIEW → APPROVED | Reviewer approved |
 | 2026-06-30 | ISSUE-144 | APPROVED → DONE | issue-next.sh |
+| 2026-07-13 | ISSUE-148 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-13 | ISSUE-160 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-13 | ISSUE-160 | IN_REVIEW → APPROVED | Reviewer approved |
