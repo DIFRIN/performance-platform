@@ -14,6 +14,7 @@ import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 
+import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import com.performance.platform.engine.local.LocalExecutionEngine;
 import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
@@ -56,6 +57,7 @@ class ExecutionEngineE2ETest {
     private LocalExecutionEngine engine;
     private ExecutionPlanBuilder planBuilder;
     private StubExecutionRepository executionRepository;
+    private final ExecutionLifecycleDispatcher lifecycleDispatcher = signal -> { /* no-op */ };
 
     @BeforeEach
     void setUp() {
@@ -72,7 +74,7 @@ class ExecutionEngineE2ETest {
 
         engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
-                eventPublisher, taskExecutorLookup);
+                eventPublisher, lifecycleDispatcher, taskExecutorLookup);
     }
 
     // ========================================================================
@@ -602,7 +604,7 @@ class ExecutionEngineE2ETest {
             }
         }
 
-        return new ExecutionPlan(eid, scenario.id(), prep, injection, assertion,
+        return new ExecutionPlan(eid, scenario.id(), prep, injection, assertion, List.of(),
                 ExecutionContext.initial(eid, scenario.id()));
     }
 

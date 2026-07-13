@@ -1,12 +1,15 @@
 package com.performance.platform.engine.shared;
 
+import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
+import com.performance.platform.domain.id.SignalId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
+import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +47,11 @@ public class DagPhaseExecutor {
     public static final String DEFAULT_AGENT = "agent-local";
 
     private final StepDispatcher dispatcher;
+    private final ExecutionLifecycleDispatcher lifecycleDispatcher;
 
-    public DagPhaseExecutor(StepDispatcher dispatcher) {
+    public DagPhaseExecutor(StepDispatcher dispatcher, ExecutionLifecycleDispatcher lifecycleDispatcher) {
         this.dispatcher = dispatcher;
+        this.lifecycleDispatcher = lifecycleDispatcher;
     }
 
     /**
@@ -181,8 +186,32 @@ public class DagPhaseExecutor {
             for (ExecutionStep step : steps) {
                 ExecutionContext ctxAtStart = currentContext;
                 futures.add(vtExecutor.submit(() -> {
-                    TaskResult result = dispatcher.dispatch(step, ctxAtStart, phase);
-                    return new StepOutcome(step.step().id(), step.step().taskName(), result, result.status());
+                    // Envoyer START avant execution
+                    lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.start(
+                            SignalId.generate(),
+                            ctxAtStart.executionId(),
+                            step.step().id(),
+                            Map.of(
+                                    ExecutionLifecycleSignal.PARAM_TASK_NAME, step.step().taskName(),
+                                    ExecutionLifecycleSignal.PARAM_PHASE, phase.name()
+                            )
+                    ));
+
+                    try {
+                        TaskResult result = dispatcher.dispatch(step, ctxAtStart, phase);
+                        return new StepOutcome(step.step().id(), step.step().taskName(), result, result.status());
+                    } finally {
+                        // Toujours envoyer STOP, meme en cas d'exception
+                        lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.stop(
+                                SignalId.generate(),
+                                ctxAtStart.executionId(),
+                                step.step().id(),
+                                Map.of(
+                                        ExecutionLifecycleSignal.PARAM_TASK_NAME, step.step().taskName(),
+                                        ExecutionLifecycleSignal.PARAM_PHASE, phase.name()
+                                )
+                        ));
+                    }
                 }));
             }
 

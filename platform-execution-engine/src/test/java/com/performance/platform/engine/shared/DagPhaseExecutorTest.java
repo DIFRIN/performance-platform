@@ -1,5 +1,7 @@
 package com.performance.platform.engine.shared;
 
+import com.performance.platform.domain.event.ExecutionLifecycleSignal;
+import com.performance.platform.domain.event.LifecycleAction;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.id.ExecutionId;
@@ -10,6 +12,7 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
+import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,7 +50,12 @@ class DagPhaseExecutorTest {
     }
 
     private DagPhaseExecutor createExecutor(StepDispatcher dispatcher) {
-        return new DagPhaseExecutor(dispatcher);
+        return new DagPhaseExecutor(dispatcher, new NoOpLifecycleDispatcher());
+    }
+
+    static class NoOpLifecycleDispatcher implements ExecutionLifecycleDispatcher {
+        @Override
+        public void dispatch(ExecutionLifecycleSignal signal) { /* no-op for tests */ }
     }
 
     @Nested
@@ -273,9 +281,121 @@ class DagPhaseExecutorTest {
         }
     }
 
+    @Nested
+    @DisplayName("Lifecycle signals")
+    class LifecycleSignals {
+
+        @Test
+        @DisplayName("START and STOP signals are dispatched for each step")
+        void startAndStopDispatchedForEachStep() {
+            StepDefinition stepA = step("A", "ta", Phase.PREPARATION);
+            ExecutionStep esA = execStep(stepA, List.of(), 0);
+
+            var dispatcher = new StubStepDispatcher();
+            var lifecycleDispatcher = new CapturingLifecycleDispatcher();
+            var dpe = new DagPhaseExecutor(dispatcher, lifecycleDispatcher);
+            var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
+
+            dpe.executePhase(List.of(esA), ctx, Phase.PREPARATION,
+                    new AtomicBoolean(false));
+
+            assertEquals(2, lifecycleDispatcher.getSignalCount(),
+                    "Expected 1 START + 1 STOP = 2 signals");
+            assertEquals(2, lifecycleDispatcher.getSignals().size());
+            assertEquals(LifecycleAction.START, lifecycleDispatcher.getSignals().get(0).action());
+            assertEquals(LifecycleAction.STOP, lifecycleDispatcher.getSignals().get(1).action());
+            assertEquals("ta", lifecycleDispatcher.getSignals().get(0).parameters().get(ExecutionLifecycleSignal.PARAM_TASK_NAME));
+        }
+
+        @Test
+        @DisplayName("STOP is dispatched even when execution fails")
+        void stopDispatchedOnFailure() {
+            StepDefinition stepA = step("A", "ta", Phase.PREPARATION);
+            ExecutionStep esA = execStep(stepA, List.of(), 0);
+
+            var dispatcher = new StubStepDispatcher() {
+                @Override
+                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
+                    super.dispatch(execStep, context, phase);
+                    return TaskResult.failed(execStep.step().id(), execStep.step().taskName(),
+                            Duration.ofMillis(5), "failure", null);
+                }
+            };
+            var lifecycleDispatcher = new CapturingLifecycleDispatcher();
+            var dpe = new DagPhaseExecutor(dispatcher, lifecycleDispatcher);
+            var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
+
+            dpe.executePhase(List.of(esA), ctx, Phase.PREPARATION,
+                    new AtomicBoolean(false));
+
+            assertEquals(2, lifecycleDispatcher.getSignalCount(),
+                    "Expected 1 START + 1 STOP even on failure");
+            assertEquals(LifecycleAction.START, lifecycleDispatcher.getSignals().get(0).action());
+            assertEquals(LifecycleAction.STOP, lifecycleDispatcher.getSignals().get(1).action());
+        }
+
+        @Test
+        @DisplayName("signals include correct executionId and taskId")
+        void signalsIncludeCorrectIds() {
+            var execId = ExecutionId.generate();
+            StepDefinition stepA = step("A", "ta", Phase.PREPARATION);
+            ExecutionStep esA = execStep(stepA, List.of(), 0);
+
+            var dispatcher = new StubStepDispatcher();
+            var lifecycleDispatcher = new CapturingLifecycleDispatcher();
+            var dpe = new DagPhaseExecutor(dispatcher, lifecycleDispatcher);
+            var ctx = ExecutionContext.initial(execId, sId("s1"));
+
+            dpe.executePhase(List.of(esA), ctx, Phase.PREPARATION,
+                    new AtomicBoolean(false));
+
+            for (var signal : lifecycleDispatcher.getSignals()) {
+                assertEquals(execId, signal.executionId());
+                assertEquals(esA.step().id(), signal.taskId());
+            }
+        }
+
+        @Test
+        @DisplayName("phase parameter is included in signal")
+        void phaseParameterIncludedInSignal() {
+            StepDefinition stepA = step("A", "ta", Phase.INJECTION);
+            ExecutionStep esA = execStep(stepA, List.of(), 0);
+
+            var dispatcher = new StubStepDispatcher();
+            var lifecycleDispatcher = new CapturingLifecycleDispatcher();
+            var dpe = new DagPhaseExecutor(dispatcher, lifecycleDispatcher);
+            var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("s1"));
+
+            dpe.executePhase(List.of(esA), ctx, Phase.INJECTION,
+                    new AtomicBoolean(false));
+
+            for (var signal : lifecycleDispatcher.getSignals()) {
+                assertEquals("INJECTION",
+                        signal.parameters().get(ExecutionLifecycleSignal.PARAM_PHASE));
+            }
+        }
+    }
+
     // -------------------------------------------------------------------------
-    // Stub StepDispatcher
+    // Stub/Capturing helpers
     // -------------------------------------------------------------------------
+
+    static class CapturingLifecycleDispatcher implements ExecutionLifecycleDispatcher {
+        private final List<ExecutionLifecycleSignal> signals = new CopyOnWriteArrayList<>();
+
+        @Override
+        public void dispatch(ExecutionLifecycleSignal signal) {
+            signals.add(signal);
+        }
+
+        List<ExecutionLifecycleSignal> getSignals() {
+            return List.copyOf(signals);
+        }
+
+        int getSignalCount() {
+            return signals.size();
+        }
+    }
 
     static class StubStepDispatcher implements StepDispatcher {
         private final List<String> calledTaskIds = new CopyOnWriteArrayList<>();

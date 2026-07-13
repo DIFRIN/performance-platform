@@ -2,6 +2,7 @@ package com.performance.platform.engine.local;
 
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
+import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.PhaseCompleted;
 import com.performance.platform.domain.event.PhaseStarted;
 import com.performance.platform.domain.event.ScenarioCancelled;
@@ -13,10 +14,12 @@ import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
+import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.execution.PhaseStatus;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
+import com.performance.platform.domain.id.SignalId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
@@ -25,6 +28,7 @@ import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
 import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
+import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.retry.RetryExecutor;
 import com.performance.platform.engine.shared.DagPhaseExecutor;
@@ -74,6 +78,7 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
     private final ExecutionPlanBuilder planBuilder;
     private final ExecutionRepository executionRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ExecutionLifecycleDispatcher lifecycleDispatcher;
     private final DagPhaseExecutor dagPhaseExecutor;
 
     /**
@@ -88,12 +93,14 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
             RetryExecutor retryExecutor,
             ExecutionRepository executionRepository,
             ApplicationEventPublisher eventPublisher,
+            ExecutionLifecycleDispatcher lifecycleDispatcher,
             TaskExecutorLookup taskExecutorLookup) {
         this.planBuilder = planBuilder;
         this.executionRepository = executionRepository;
         this.eventPublisher = eventPublisher;
+        this.lifecycleDispatcher = lifecycleDispatcher;
         var dispatcher = new LocalStepDispatcher(taskExecutorLookup, retryExecutor);
-        this.dagPhaseExecutor = new DagPhaseExecutor(dispatcher);
+        this.dagPhaseExecutor = new DagPhaseExecutor(dispatcher, lifecycleDispatcher);
     }
 
     @Override
@@ -117,8 +124,18 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
             ctx = executePhase(Phase.PREPARATION, plan.preparationSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.preparationSteps())) hasFailure = true;
 
+            // Liaison linkedTo : START avant INJECTION pour les assertions d'intervalle
+            for (ExecutionStep assertionStep : plan.assertionIntervalSteps()) {
+                dispatchLifecycleSignal(executionId, assertionStep, true);
+            }
+
             ctx = executePhase(Phase.INJECTION, plan.injectionSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.injectionSteps())) hasFailure = true;
+
+            // Liaison linkedTo : STOP apres INJECTION
+            for (ExecutionStep assertionStep : plan.assertionIntervalSteps()) {
+                dispatchLifecycleSignal(executionId, assertionStep, false);
+            }
 
             ctx = executePhase(Phase.ASSERTION, plan.assertionSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.assertionSteps())) hasFailure = true;
@@ -317,7 +334,8 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
     private boolean checkSkippedInAnyPhase(ExecutionContext context, ExecutionPlan plan) {
         return checkSkippedInSteps(context, plan.preparationSteps())
                 || checkSkippedInSteps(context, plan.injectionSteps())
-                || checkSkippedInSteps(context, plan.assertionSteps());
+                || checkSkippedInSteps(context, plan.assertionSteps())
+                || checkSkippedInSteps(context, plan.assertionIntervalSteps());
     }
 
     private boolean checkSkippedInSteps(ExecutionContext context,
@@ -330,6 +348,40 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
             }
         }
         return false;
+    }
+
+    /**
+     * Envoie un signal START ou STOP pour une etape d'assertion d'intervalle.
+     * Les parametres de l'etape (intervalSeconds, stopBehavior, etc.) sont
+     * inclus dans le signal.
+     */
+    private void dispatchLifecycleSignal(ExecutionId executionId,
+                                         ExecutionStep assertionStep,
+                                         boolean isStart) {
+        var stepDef = assertionStep.step();
+        var params = new java.util.HashMap<>(stepDef.parameters());
+        params.put(ExecutionLifecycleSignal.PARAM_TASK_NAME, stepDef.taskName());
+        params.put(ExecutionLifecycleSignal.PARAM_PHASE, stepDef.phase().name());
+
+        if (isStart) {
+            lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.start(
+                    SignalId.generate(),
+                    executionId,
+                    stepDef.id(),
+                    java.util.Map.copyOf(params)
+            ));
+            log.info("action=lifecycle_start_dispatched taskId={} executionId={}",
+                    stepDef.id().value(), executionId.value());
+        } else {
+            lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.stop(
+                    SignalId.generate(),
+                    executionId,
+                    stepDef.id(),
+                    java.util.Map.copyOf(params)
+            ));
+            log.info("action=lifecycle_stop_dispatched taskId={} executionId={}",
+                    stepDef.id().value(), executionId.value());
+        }
     }
 
     private ExecutionState createInitialState(ExecutionId id, ScenarioId scenarioId, ExecutionContext context) {

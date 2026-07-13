@@ -18,6 +18,7 @@ public record ExecutionPlan(
     List<ExecutionStep> preparationSteps,
     List<ExecutionStep> injectionSteps,
     List<ExecutionStep> assertionSteps,
+    List<ExecutionStep> assertionIntervalSteps,
     ExecutionContext initialContext
 ) {
     public ExecutionPlan {
@@ -27,12 +28,13 @@ public record ExecutionPlan(
         preparationSteps = preparationSteps == null ? List.of() : List.copyOf(preparationSteps);
         injectionSteps = injectionSteps == null ? List.of() : List.copyOf(injectionSteps);
         assertionSteps = assertionSteps == null ? List.of() : List.copyOf(assertionSteps);
+        assertionIntervalSteps = assertionIntervalSteps == null ? List.of() : List.copyOf(assertionIntervalSteps);
     }
 
     /**
      * Retourne le nombre total d'etapes dans le plan, toutes phases confondues.
      */
     public int totalSteps() {
-        return preparationSteps.size() + injectionSteps.size() + assertionSteps.size();
+        return preparationSteps.size() + injectionSteps.size() + assertionSteps.size() + assertionIntervalSteps.size();
     }
 }

@@ -18,6 +18,7 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import com.performance.platform.engine.availability.AgentAvailabilityChecker;
 import com.performance.platform.engine.correlation.DefaultTaskCorrelationTracker;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
@@ -56,6 +57,7 @@ class RemoteExecutionEngineTest {
     ExecutionConfig config;
     ConcurrentLinkedQueue<Object> publishedEvents;
     ApplicationEventPublisher eventPublisher;
+    ExecutionLifecycleDispatcher lifecycleDispatcher = signal -> { /* no-op for tests */ };
 
     @BeforeEach
     void setUp() {
@@ -98,7 +100,7 @@ class RemoteExecutionEngineTest {
     private ExecutionPlan buildPlan(ScenarioDefinition s, List<ExecutionStep> prep,
                                      List<ExecutionStep> injection, List<ExecutionStep> assertion) {
         var eid = ExecutionId.generate();
-        return new ExecutionPlan(eid, s.id(), prep, injection, assertion,
+        return new ExecutionPlan(eid, s.id(), prep, injection, assertion, List.of(),
                 ExecutionContext.initial(eid, s.id()));
     }
 
@@ -145,7 +147,7 @@ class RemoteExecutionEngineTest {
 
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, config, eventPublisher);
+                    executionRepository, config, eventPublisher, lifecycleDispatcher);
 
             Thread engineThread = startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
@@ -171,7 +173,7 @@ class RemoteExecutionEngineTest {
 
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, config, eventPublisher);
+                    executionRepository, config, eventPublisher, lifecycleDispatcher);
 
             Thread engineThread = startInThread(() -> engine.execute(sc));
             waitFor(() -> transport.dispatchedRequests.size() >= 2, 2000);
@@ -197,7 +199,7 @@ class RemoteExecutionEngineTest {
 
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, config, eventPublisher);
+                    executionRepository, config, eventPublisher, lifecycleDispatcher);
 
             Thread engineThread = startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
@@ -229,7 +231,7 @@ class RemoteExecutionEngineTest {
 
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, config, eventPublisher);
+                    executionRepository, config, eventPublisher, lifecycleDispatcher);
 
             startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
@@ -256,7 +258,7 @@ class RemoteExecutionEngineTest {
                     config.workInProgressResetInterval(), TaskCompletionPolicy.ALL_COMPLETE);
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, allComplete, eventPublisher);
+                    executionRepository, allComplete, eventPublisher, lifecycleDispatcher);
 
             startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
@@ -288,7 +290,7 @@ class RemoteExecutionEngineTest {
 
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, config, eventPublisher);
+                    executionRepository, config, eventPublisher, lifecycleDispatcher);
 
             Thread engineThread = startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
@@ -317,7 +319,7 @@ class RemoteExecutionEngineTest {
                     config.workInProgressResetInterval(), TaskCompletionPolicy.ALL_COMPLETE);
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, allCompleteCfg, eventPublisher);
+                    executionRepository, allCompleteCfg, eventPublisher, lifecycleDispatcher);
 
             Thread engineThread = startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
@@ -350,7 +352,7 @@ class RemoteExecutionEngineTest {
                     config.workInProgressResetInterval(), TaskCompletionPolicy.ALL_COMPLETE);
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, allCompleteCfg, eventPublisher);
+                    executionRepository, allCompleteCfg, eventPublisher, lifecycleDispatcher);
 
             Thread engineThread = startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
@@ -388,7 +390,7 @@ class RemoteExecutionEngineTest {
                     Duration.ofSeconds(3), TaskCompletionPolicy.FIRST_COMPLETE);
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, shortCfg, eventPublisher);
+                    executionRepository, shortCfg, eventPublisher, lifecycleDispatcher);
 
             engine.execute(sc);
 
@@ -411,7 +413,7 @@ class RemoteExecutionEngineTest {
                     Duration.ofSeconds(10), TaskCompletionPolicy.FIRST_COMPLETE);
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, tinyCfg, eventPublisher);
+                    executionRepository, tinyCfg, eventPublisher, lifecycleDispatcher);
 
             ExecutionId executionId = engine.execute(sc);
 
@@ -435,7 +437,7 @@ class RemoteExecutionEngineTest {
                     Duration.ofSeconds(3), TaskCompletionPolicy.FIRST_COMPLETE);
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, shortCfg, eventPublisher);
+                    executionRepository, shortCfg, eventPublisher, lifecycleDispatcher);
 
             engine.execute(sc);
 
@@ -466,7 +468,7 @@ class RemoteExecutionEngineTest {
                     Duration.ofSeconds(10), TaskCompletionPolicy.ALL_COMPLETE);
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, longCfg, eventPublisher);
+                    executionRepository, longCfg, eventPublisher, lifecycleDispatcher);
 
             Thread engineThread = startInThread(() -> engine.execute(sc));
             waitFor(() -> !transport.dispatchedRequests.isEmpty(), 2000);
@@ -496,7 +498,7 @@ class RemoteExecutionEngineTest {
 
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, config, eventPublisher);
+                    executionRepository, config, eventPublisher, lifecycleDispatcher);
 
             // Execute in thread and fire completion to avoid blocking
             Thread engineThread = startInThread(() -> engine.execute(sc));
@@ -532,7 +534,7 @@ class RemoteExecutionEngineTest {
                     Duration.ofSeconds(3), TaskCompletionPolicy.FIRST_COMPLETE);
             var engine = new RemoteExecutionEngine(
                     planBuilder, availabilityChecker, tracker, transport,
-                    executionRepository, fastCfg, eventPublisher);
+                    executionRepository, fastCfg, eventPublisher, lifecycleDispatcher);
 
             engine.execute(sc);
 

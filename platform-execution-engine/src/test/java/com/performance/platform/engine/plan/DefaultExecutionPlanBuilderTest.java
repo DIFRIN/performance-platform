@@ -374,4 +374,134 @@ class DefaultExecutionPlanBuilderTest {
                     ));
         }
     }
+
+    @Nested
+    @DisplayName("Assertion interval steps (linkedTo)")
+    class AssertionIntervalSteps {
+
+        private static StepDefinition injectionStep(String id) {
+            return step(id, Phase.INJECTION);
+        }
+
+        private static StepDefinition assertionWithLinkedTo(String id, String linkedTo) {
+            return new StepDefinition(
+                    TaskId.of(id), id, Phase.ASSERTION,
+                    Map.of("linkedTo", linkedTo),
+                    List.of(), List.of(), null, null
+            );
+        }
+
+        private static StepDefinition assertionWithIntervalParams(String id, String linkedTo,
+                                                                    int intervalSeconds, String stopBehavior) {
+            return new StepDefinition(
+                    TaskId.of(id), id, Phase.ASSERTION,
+                    Map.of("linkedTo", linkedTo,
+                            "intervalSeconds", intervalSeconds,
+                            "stopBehavior", stopBehavior),
+                    List.of(), List.of(), null, null
+            );
+        }
+
+        @Test
+        @DisplayName("assertions with linkedTo go to assertionIntervalSteps")
+        void linkedToAssertionsInIntervalSteps() {
+            StepDefinition inj = injectionStep("inject-1");
+            StepDefinition asrt = assertionWithLinkedTo("assert-interval", "inject-1");
+            ScenarioDefinition scenario = scenario(inj, asrt);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertEquals(1, plan.injectionSteps().size());
+            assertEquals(0, plan.assertionSteps().size());
+            assertEquals(1, plan.assertionIntervalSteps().size());
+            assertEquals("assert-interval", plan.assertionIntervalSteps().getFirst().step().taskName());
+        }
+
+        @Test
+        @DisplayName("assertions without linkedTo stay in assertionSteps")
+        void nonLinkedToAssertionsInAssertionSteps() {
+            StepDefinition inj = injectionStep("inject-1");
+            StepDefinition asrt = step("assert-point", Phase.ASSERTION);
+            ScenarioDefinition scenario = scenario(inj, asrt);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertEquals(1, plan.injectionSteps().size());
+            assertEquals(1, plan.assertionSteps().size());
+            assertEquals(0, plan.assertionIntervalSteps().size());
+            assertEquals("assert-point", plan.assertionSteps().getFirst().step().taskName());
+        }
+
+        @Test
+        @DisplayName("mixed: some linkedTo, some not")
+        void mixedLinkedToAndNonLinkedTo() {
+            StepDefinition inj = injectionStep("inject-1");
+            StepDefinition interval = assertionWithLinkedTo("interval", "inject-1");
+            StepDefinition point = step("point", Phase.ASSERTION);
+            ScenarioDefinition scenario = scenario(inj, interval, point);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertEquals(1, plan.injectionSteps().size());
+            assertEquals(1, plan.assertionSteps().size());
+            assertEquals(1, plan.assertionIntervalSteps().size());
+            assertEquals("point", plan.assertionSteps().getFirst().step().taskName());
+            assertEquals("interval", plan.assertionIntervalSteps().getFirst().step().taskName());
+        }
+
+        @Test
+        @DisplayName("interval assertion parameters are preserved")
+        void intervalAssertionParametersPreserved() {
+            StepDefinition inj = injectionStep("inject-1");
+            StepDefinition interval = assertionWithIntervalParams(
+                    "monitor", "inject-1", 5, "completeCurrentCycle");
+            ScenarioDefinition scenario = scenario(inj, interval);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            var step = plan.assertionIntervalSteps().getFirst();
+            assertEquals(5, step.step().parameters().get("intervalSeconds"));
+            assertEquals("completeCurrentCycle", step.step().parameters().get("stopBehavior"));
+        }
+
+        @Test
+        @DisplayName("linkedTo referencing non-existent injection throws InvalidScenarioException")
+        void linkedToUnknownInjection() {
+            StepDefinition asrt = assertionWithLinkedTo("assert-1", "nonexistent");
+            ScenarioDefinition scenario = scenario(asrt);
+
+            assertThrows(InvalidScenarioException.class, () -> builder.build(scenario));
+        }
+
+        @Test
+        @DisplayName("linkedTo with empty string value treated as no linkedTo")
+        void linkedToEmptyStringTreatedAsNoLinkedTo() {
+            StepDefinition inj = injectionStep("inject-1");
+            StepDefinition asrt = new StepDefinition(
+                    TaskId.of("asrt-1"), "asrt-1", Phase.ASSERTION,
+                    Map.of("linkedTo", ""),
+                    List.of(), List.of(), null, null
+            );
+            ScenarioDefinition scenario = scenario(inj, asrt);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertEquals(1, plan.assertionSteps().size());
+            assertEquals(0, plan.assertionIntervalSteps().size());
+        }
+
+        @Test
+        @DisplayName("totalSteps includes assertionIntervalSteps")
+        void totalStepsIncludesIntervalSteps() {
+            StepDefinition prep = step("prep", Phase.PREPARATION);
+            StepDefinition inj = injectionStep("inject-1");
+            StepDefinition interval = assertionWithLinkedTo("interval", "inject-1");
+            StepDefinition point = step("point", Phase.ASSERTION);
+            ScenarioDefinition scenario = scenario(prep, inj, interval, point);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertEquals(4, plan.totalSteps());
+        }
+    }
 }
