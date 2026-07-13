@@ -1,11 +1,11 @@
-# ISSUE-160: Shared DAG Executor Extraction (StepDispatcher + LocalStepDispatcher)
+# ISSUE-157: ExecutionLifecycleSignal Domain Type
 **Status**: APPROVED
-**PDR**: PDR-039
-**Module**: platform-execution-engine
-**Started**: 2026-07-13T12:00+02:00
-**IssueFile**: issues/ISSUE-160-shared-dag-executor-extraction.md
+**PDR**: PDR-038
+**Module**: platform-domain
+**Started**: 2026-07-13T12:25+02:00
+**IssueFile**: issues/ISSUE-157-execution-lifecycle-signal-domain-type.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-160-shared-dag-executor-extraction.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-157-execution-lifecycle-signal-domain-type.md`
 
 ## Reviewer Feedback
 (None yet)
