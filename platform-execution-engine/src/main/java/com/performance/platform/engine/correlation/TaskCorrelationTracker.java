@@ -88,4 +88,14 @@ public interface TaskCorrelationTracker {
      * @return map immuable des resultats par agent (vide si aucun)
      */
     Map<AgentId, TaskResult> getResults(MessageId messageId);
+
+    /**
+     * Retourne le {@link TaskId} associe a ce messageId lors du
+     * {@link #trackDispatched}, ou {@code null} si le messageId
+     * est inconnu.
+     *
+     * @param messageId identifiant du message
+     * @return le taskId, ou {@code null}
+     */
+    TaskId taskIdFor(MessageId messageId);
 }

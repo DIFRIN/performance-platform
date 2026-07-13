@@ -1,6 +1,8 @@
 package com.performance.platform.engine.remote;
 
 import com.performance.platform.application.config.ExecutionConfig;
+import com.performance.platform.application.exception.NoAvailableAgentException;
+import com.performance.platform.domain.event.TaskDispatched;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.execution.RetryPolicy;
@@ -16,6 +18,7 @@ import com.performance.platform.engine.shared.StepDispatcher;
 import com.performance.platform.transport.ExecutionTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -33,50 +36,66 @@ public class RemoteStepDispatcher implements StepDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(RemoteStepDispatcher.class);
 
+    /** Intervalle de polling pour les completions (ms). */
+    private static final long POLL_COMPLETION_MS = 500;
+
     private final ExecutionTransport transport;
     private final AgentAvailabilityChecker availabilityChecker;
     private final TaskCorrelationTracker tracker;
     private final ExecutionConfig config;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RemoteStepDispatcher(
             ExecutionTransport transport,
             AgentAvailabilityChecker availabilityChecker,
             TaskCorrelationTracker tracker,
-            ExecutionConfig config) {
+            ExecutionConfig config,
+            ApplicationEventPublisher eventPublisher) {
         this.transport = transport;
         this.availabilityChecker = availabilityChecker;
         this.tracker = tracker;
         this.config = config;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
     public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
         StepDefinition stepDef = execStep.step();
 
-        // 1. Await agent availability
-        availabilityChecker.awaitAgentFor(stepDef.taskName(), config.taskAvailabilityTimeout());
-        log.info("action=agent_available taskName={}", stepDef.taskName());
+        try {
+            // 1. Await agent availability
+            availabilityChecker.awaitAgentFor(stepDef.taskName(), config.taskAvailabilityTimeout());
+            log.info("action=agent_available taskName={}", stepDef.taskName());
 
-        // 2. Build partial context
-        var partialCtx = PartialContextBuilder.build(context, execStep.requiredContextKeys());
+            // 2. Build partial context
+            var partialCtx = PartialContextBuilder.build(context, execStep.requiredContextKeys());
 
-        // 3. Create request (broadcast — no targetAgentId)
-        var messageId = MessageId.generate();
-        RetryPolicy retry = stepDef.retryPolicy() != null ? stepDef.retryPolicy() : RetryPolicy.defaults();
-        var request = new com.performance.platform.transport.message.TaskExecutionRequest(
-                messageId, context.executionId(), stepDef, partialCtx, Instant.now(), retry);
+            // 3. Create request (broadcast — no targetAgentId)
+            var messageId = MessageId.generate();
+            RetryPolicy retry = stepDef.retryPolicy() != null ? stepDef.retryPolicy() : RetryPolicy.defaults();
+            var request = new com.performance.platform.transport.message.TaskExecutionRequest(
+                    messageId, context.executionId(), stepDef, partialCtx, Instant.now(), retry);
 
-        // 4. Dispatch via transport
-        transport.dispatchTask(request);
+            // 4. Track for correlation (before dispatch to avoid race)
+            tracker.trackDispatched(messageId, stepDef.id(), context.executionId());
 
-        // 5. Track for correlation
-        tracker.trackDispatched(messageId, stepDef.id(), context.executionId());
+            // 5. Dispatch via transport
+            transport.dispatchTask(request);
 
-        log.info("action=task_dispatched taskId={} taskName={} messageId={}",
-                stepDef.id().value(), stepDef.taskName(), messageId.value());
+            // 6. Publish TaskDispatched domain event
+            eventPublisher.publishEvent(new TaskDispatched(
+                    context.executionId(), stepDef.id(), stepDef.taskName(),
+                    messageId, Instant.now()));
 
-        // 6. Await completion (blocking within Virtual Thread)
-        return awaitCompletion(messageId, stepDef.id(), config);
+            log.info("action=task_dispatched taskId={} taskName={} messageId={}",
+                    stepDef.id().value(), stepDef.taskName(), messageId.value());
+
+            // 7. Await completion (blocking within Virtual Thread)
+            return awaitCompletion(messageId, stepDef.id(), config);
+        } catch (NoAvailableAgentException e) {
+            log.warn("action=no_agent_available taskName={} error={}", stepDef.taskName(), e.getMessage());
+            return TaskResult.failed(stepDef.id(), stepDef.taskName(), Duration.ZERO, e.getMessage(), e);
+        }
     }
 
     /**
@@ -106,7 +125,7 @@ public class RemoteStepDispatcher implements StepDispatcher {
             }
 
             try {
-                Thread.sleep(RemoteExecutionEngine.POLL_COMPLETION_MS);
+                Thread.sleep(POLL_COMPLETION_MS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return TaskResult.failed(taskId, taskId.value(),

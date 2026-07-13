@@ -41,7 +41,8 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
 
     @Override
     public void trackDispatched(MessageId messageId, TaskId taskId, ExecutionId executionId) {
-        states.computeIfAbsent(messageId, k -> new CorrelationState());
+        CorrelationState state = states.computeIfAbsent(messageId, k -> new CorrelationState());
+        state.taskId = taskId;
         log.info("action=track_dispatched messageId={} taskId={} executionId={}",
                 messageId.value(), taskId.value(), executionId.value());
     }
@@ -103,6 +104,12 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
         return new HashMap<>(state.results);
     }
 
+    @Override
+    public TaskId taskIdFor(MessageId messageId) {
+        CorrelationState state = states.get(messageId);
+        return state != null ? state.taskId : null;
+    }
+
     /**
      * Verifie la completion ALL_COMPLETE : tous les agents ayant claim
      * ont soit complete, soit echoue. Necessite au moins un claim.
@@ -120,6 +127,7 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
      * Chaque champ est un ensemble thread-safe pour supporter les acces concurrents.
      */
     private static class CorrelationState {
+        volatile TaskId taskId;
         final Set<AgentId> claimedAgents = ConcurrentHashMap.newKeySet();
         final Set<AgentId> completedAgents = ConcurrentHashMap.newKeySet();
         final Set<AgentId> failedAgents = ConcurrentHashMap.newKeySet();

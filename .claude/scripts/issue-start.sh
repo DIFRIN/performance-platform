@@ -100,9 +100,15 @@ find_next_issue() {
     fi
 
     # Priorité 2 : première WAITING dont toutes les dépendances sont DONE
+    # et dont le fichier source n'est pas déjà DONE (garde-fou anti-recyclage)
     local waiting_ids
     waiting_ids=$(echo "$table" | grep 'WAITING' | grep -oP '^\| \KISSUE-\d+')
     for id in $waiting_ids; do
+        local src_file="${WORKSPACE}/issues/${id}"*.md
+        # Skip si le fichier source est déjà DONE (évite recyclage d'une Issue déjà complétée)
+        if ls $src_file &>/dev/null && grep -qP '\*\*Statut\*\*[[:space:]]*:[[:space:]]*DONE' $src_file 2>/dev/null; then
+            continue
+        fi
         if deps_are_done "$id"; then
             echo "$id"
             return 0
