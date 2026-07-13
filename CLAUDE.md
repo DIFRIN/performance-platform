@@ -5,6 +5,15 @@
 
 ---
 
+## 0. Règle Globale — Concision
+
+- **Sois concis.** Pas de paraphrases, pas de résumés redondants, pas de formules de politesse creuses.
+- **Pas de spéculation.** Si tu ne sais pas, dis-le en une phrase, ne brode pas.
+- **Vérifie avant d'affirmer.** Ne déduis pas l'état du système depuis un résumé de notification — lis le fichier ou vérifie avec `git log`/`git status` avant de commenter.
+- **TON minimal.** Une réponse réussie tient en ≤ 5 lignes quand la situation est claire.
+
+---
+
 ## 1. Contexte Projet
 
 **Nom** : Performance Engineering Platform

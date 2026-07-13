@@ -85,8 +85,8 @@
 | `ReportGenerated` / `ReportPublished` (String target) | ✅ STABLE | PDR-002 | ISSUE-009 |
 | `AgentSignal` (sealed) | ✅ STABLE (permits: ScenarioRestartSignal, ExecutionLifecycleSignal) | PDR-002, PDR-038 | ISSUE-009, ISSUE-157 |
 | `ScenarioRestartSignal` | ✅ STABLE | PDR-002 | ISSUE-009 |
-| `LifecycleAction` (enum: START, STOP) | ⬜ PLANNED | PDR-038 | ISSUE-157 |
-| `ExecutionLifecycleSignal` | ⬜ PLANNED | PDR-038 | ISSUE-157 |
+| `LifecycleAction` (enum: START, STOP) | 🔄 IN PROGRESS | PDR-038 | ISSUE-157 |
+| `ExecutionLifecycleSignal` | 🔄 IN PROGRESS | PDR-038 | ISSUE-157 |
 
 ## platform-plugin-api (module léger — 0 framework)
 

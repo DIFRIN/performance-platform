@@ -169,7 +169,7 @@
 | ISSUE-155 | Deprecate TaskExecutorLookup.findAssertionExecutor | WAITING | PDR-037 | ISSUE-154 |
 | ISSUE-156 | Add assertion task names to agent configuration | WAITING | PDR-037 | ISSUE-150, ISSUE-152 |
 
-| ISSUE-157 | ExecutionLifecycleSignal domain type | WAITING | PDR-038 | — |
+| ISSUE-157 | ExecutionLifecycleSignal Domain Type | APPROVED | PDR-038 | — |
 | ISSUE-158 | Engine lifecycle signal dispatch | WAITING | PDR-037 | ISSUE-157 |
 | ISSUE-159 | Agent lifecycle signal handling | WAITING | PDR-037 | ISSUE-157, ISSUE-158 |
 | ISSUE-160 | Shared DAG Executor Extraction (StepDispatcher + LocalStepDispatcher) | WAITING | PDR-039 | — |
@@ -881,3 +881,7 @@
 | 2026-07-13 | ISSUE-148 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-07-13 | ISSUE-160 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-13 | ISSUE-160 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-13 | ISSUE-160 | APPROVED → DONE | issue-next.sh |
+| 2026-07-13 | ISSUE-157 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-13 | ISSUE-157 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-13 | ISSUE-157 | IN_REVIEW → APPROVED | Reviewer approved |
