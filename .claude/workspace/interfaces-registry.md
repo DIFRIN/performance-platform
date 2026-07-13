@@ -85,8 +85,8 @@
 | `ReportGenerated` / `ReportPublished` (String target) | ✅ STABLE | PDR-002 | ISSUE-009 |
 | `AgentSignal` (sealed) | ✅ STABLE (permits: ScenarioRestartSignal, ExecutionLifecycleSignal) | PDR-002, PDR-038 | ISSUE-009, ISSUE-157 |
 | `ScenarioRestartSignal` | ✅ STABLE | PDR-002 | ISSUE-009 |
-| `LifecycleAction` (enum: START, STOP) | 🔄 IN PROGRESS | PDR-038 | ISSUE-157 |
-| `ExecutionLifecycleSignal` | 🔄 IN PROGRESS | PDR-038 | ISSUE-157 |
+| `LifecycleAction` (enum: START, STOP) | ✅ STABLE | PDR-038 | ISSUE-157 |
+| `ExecutionLifecycleSignal` | ✅ STABLE | PDR-038 | ISSUE-157 |
 
 ## platform-plugin-api (module léger — 0 framework)
 
@@ -190,10 +190,10 @@
 | `TaskSpecializationFilter` / `TaskFilterResult` / `DefaultTaskSpecializationFilter` | ✅ STABLE | PDR-009 | ISSUE-033 |
 | `AgentRegistrationPort` / `TransportAgentRegistration` / `HeartbeatScheduler` / `RegistrationException` | ✅ STABLE | PDR-009 | ISSUE-034 |
 | `AgentRegistry` / `InMemoryAgentRegistry` / `AgentTtlMonitor` | ✅ STABLE | PDR-009 | ISSUE-035 |
-| `AgentRuntime` / `DistributedAgentRuntime` | ✅ STABLE (method `onLifecycleSignal` ⬜ PLANNED) | PDR-009, PDR-037 | ISSUE-036, ISSUE-159 |
+| `AgentRuntime` / `DistributedAgentRuntime` | ✅ STABLE (method `onLifecycleSignal` ✅ STABLE) | PDR-009, PDR-037 | ISSUE-036, ISSUE-159 |
 | `StatefulResourceCleaner` / `ScenarioRestartHandler` | ✅ STABLE | PDR-009 | ISSUE-037 |
-| `LocalAgent` | ✅ STABLE (method `onLifecycleSignal` ⬜ PLANNED) | PDR-009, PDR-037 | ISSUE-038, ISSUE-159 |
-| `DefaultLifecycleSignalHandler` | ⬜ PLANNED | PDR-037 | ISSUE-159 |
+| `LocalAgent` | ✅ STABLE (method `onLifecycleSignal` ✅ STABLE) | PDR-009, PDR-037 | ISSUE-038, ISSUE-159 |
+| `DefaultLifecycleSignalHandler` | ✅ STABLE | PDR-037 | ISSUE-159 |
 | `AgentAllocator` | ❌ REMOVED | ADR-008 | — |
 
 ## platform-infrastructure — `.executor` (PDR-010)
@@ -275,7 +275,7 @@
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
 | `AssertionSummary` | ⬜ PLANNED | PDR-034 | ISSUE-148 |
-| `AssertionSample` | ⬜ PLANNED | PDR-034 | ISSUE-149 |
+| `AssertionSample` | ✅ STABLE | PDR-034 | ISSUE-149 |
 
 ## platform-plugin-api — evolved interfaces (PDR-035)
 

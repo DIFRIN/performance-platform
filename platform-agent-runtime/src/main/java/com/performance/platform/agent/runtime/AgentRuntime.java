@@ -2,6 +2,7 @@ package com.performance.platform.agent.runtime;
 
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
+import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
 
 /**
@@ -60,4 +61,19 @@ public interface AgentRuntime {
      * @param signal le signal de restart
      */
     void onScenarioRestart(ScenarioRestartSignal signal);
+
+    /**
+     * Recoit un signal de cycle de vie pour une task.
+     * <p>
+     * START : Preparer l'execution. Pour les assertions avec linkedTo :
+     *         demarrer la boucle de sampling.
+     * STOP  : Terminer l'execution. Pour les assertions avec linkedTo :
+     *         arreter le sampling selon stopBehavior, produire AssertionSummary final,
+     *         publier TaskCompleted.
+     * <p>
+     * Les signaux pour des tasks non supportees sont ignores silencieusement (log DEBUG).
+     *
+     * @param signal le signal de cycle de vie (START ou STOP)
+     */
+    void onLifecycleSignal(ExecutionLifecycleSignal signal);
 }

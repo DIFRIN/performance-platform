@@ -6,10 +6,12 @@ import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.HeartbeatScheduler;
 import com.performance.platform.agent.registration.RegistrationException;
 import com.performance.platform.agent.restart.ScenarioRestartHandler;
+import com.performance.platform.agent.runtime.lifecycle.DefaultLifecycleSignalHandler;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.event.AgentSignal;
+import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
 import com.performance.platform.domain.id.*;
 import com.performance.platform.plugin.TaskExecutor;
@@ -79,6 +81,7 @@ public class DistributedAgentRuntime implements AgentRuntime {
 
     private final TaskExecutionPipeline taskPipeline;
     private final ScenarioRestartHandler restartHandler;
+    private final DefaultLifecycleSignalHandler lifecycleSignalHandler;
 
     // === État concurrent ===
 
@@ -171,6 +174,8 @@ public class DistributedAgentRuntime implements AgentRuntime {
 
         this.restartHandler = new ScenarioRestartHandler(
                 Objects.requireNonNull(cleaners, "cleaners must not be null"));
+
+        this.lifecycleSignalHandler = new DefaultLifecycleSignalHandler(filter, executorMap);
     }
 
     // === AgentRuntime ===
@@ -308,6 +313,11 @@ public class DistributedAgentRuntime implements AgentRuntime {
                 staticDescriptor.id().value(), activeTaskCount.get());
     }
 
+    @Override
+    public void onLifecycleSignal(ExecutionLifecycleSignal signal) {
+        lifecycleSignalHandler.handle(signal);
+    }
+
     // === Réception de tâche (broadcast) ===
 
     /**
@@ -364,6 +374,8 @@ public class DistributedAgentRuntime implements AgentRuntime {
 
         if (signal instanceof ScenarioRestartSignal restartSignal) {
             onScenarioRestart(restartSignal);
+        } else if (signal instanceof ExecutionLifecycleSignal lifecycleSignal) {
+            onLifecycleSignal(lifecycleSignal);
         }
     }
 

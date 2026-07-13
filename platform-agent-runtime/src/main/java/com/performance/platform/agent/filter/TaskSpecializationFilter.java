@@ -24,4 +24,15 @@ public interface TaskSpecializationFilter {
      *         {@link TaskFilterResult.NotResponsible} sinon
      */
     TaskFilterResult filter(TaskExecutionRequest request);
+
+    /**
+     * Vérifie si cet agent peut exécuter le nom de tâche donné.
+     * Utilisé pour le filtrage des signaux de cycle de vie.
+     *
+     * @param taskName le nom de la tâche
+     * @return true si l'agent supporte cette tâche
+     */
+    default boolean canExecute(String taskName) {
+        return false;
+    }
 }
