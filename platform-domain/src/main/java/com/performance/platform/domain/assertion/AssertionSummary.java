@@ -4,6 +4,8 @@ import com.performance.platform.domain.id.TaskId;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +33,7 @@ public record AssertionSummary(
         Objects.requireNonNull(description, "description required");
         Objects.requireNonNull(evaluationDuration, "evaluationDuration required");
         Objects.requireNonNull(evaluatedAt, "evaluatedAt required");
-        collectedData = collectedData == null ? Map.of() : Map.copyOf(collectedData);
+        collectedData = collectedData == null ? Map.of() : Collections.unmodifiableMap(new HashMap<>(collectedData));
         history = history == null ? List.of() : List.copyOf(history);
     }
 

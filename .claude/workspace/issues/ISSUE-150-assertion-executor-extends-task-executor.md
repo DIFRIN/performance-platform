@@ -2,7 +2,7 @@
 
 **PDR** : PDR-035
 **Module** : `platform-plugin-api`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P0 (bloquant -- PDR-036 et PDR-037 dependent de cette evolution)
 **Bloquee par** : ISSUE-148 (AssertionSummary -- reference par la default method execute())
 **Estime** : M (1-2h)
