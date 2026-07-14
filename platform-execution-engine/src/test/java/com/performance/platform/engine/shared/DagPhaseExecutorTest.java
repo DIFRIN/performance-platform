@@ -93,8 +93,8 @@ class DagPhaseExecutorTest {
 
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
-                    super.dispatch(execStep, context, phase);
+                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                    super.dispatch(execStep, context);
                     return TaskResult.success(execStep.step().id(), execStep.step().taskName(),
                             Duration.ofMillis(5), Map.of());
                 }
@@ -131,8 +131,8 @@ class DagPhaseExecutorTest {
             var cancelled = new AtomicBoolean(false);
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
-                    super.dispatch(execStep, context, phase);
+                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                    super.dispatch(execStep, context);
                     cancelled.set(true); // Cancel after first step
                     return TaskResult.success(execStep.step().id(), execStep.step().taskName(),
                             Duration.ofMillis(5), Map.of());
@@ -167,8 +167,8 @@ class DagPhaseExecutorTest {
 
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
-                    super.dispatch(execStep, context, phase);
+                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                    super.dispatch(execStep, context);
                     if (execStep.step().id().value().equals("A")) {
                         return TaskResult.failed(execStep.step().id(), execStep.step().taskName(),
                                 Duration.ofMillis(5), "failure", null);
@@ -206,8 +206,8 @@ class DagPhaseExecutorTest {
 
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
-                    super.dispatch(execStep, context, phase);
+                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                    super.dispatch(execStep, context);
                     return TaskResult.success(execStep.step().id(), execStep.step().taskName(),
                             Duration.ofMillis(5), Map.of());
                 }
@@ -315,8 +315,8 @@ class DagPhaseExecutorTest {
 
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
-                    super.dispatch(execStep, context, phase);
+                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                    super.dispatch(execStep, context);
                     return TaskResult.failed(execStep.step().id(), execStep.step().taskName(),
                             Duration.ofMillis(5), "failure", null);
                 }
@@ -401,7 +401,7 @@ class DagPhaseExecutorTest {
         private final List<String> calledTaskIds = new CopyOnWriteArrayList<>();
 
         @Override
-        public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
+        public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
             calledTaskIds.add(execStep.step().id().value());
             return TaskResult.success(
                     execStep.step().id(),

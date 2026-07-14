@@ -83,6 +83,7 @@ class LocalStepDispatcherTest {
 
         void registerAssertion(String assertionName, AssertionExecutor executor) {
             assertionExecutors.put(assertionName, executor);
+            taskExecutors.put(assertionName, executor); // AssertionExecutor extends TaskExecutor
         }
 
         void reset() {
@@ -179,7 +180,7 @@ class LocalStepDispatcherTest {
             lookup.registerTask("my-task", new StubTaskExecutor("my-task",
                     TaskResult.success(t("s1"), "my-task", Duration.ofMillis(10), Map.of("k", "v"))));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.PREPARATION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.SUCCESS, result.status());
             assertEquals(t("s1"), result.taskId());
@@ -196,7 +197,7 @@ class LocalStepDispatcherTest {
             lookup.registerTask("my-task", new StubTaskExecutor("my-task",
                     TaskResult.failed(t("s1"), "my-task", Duration.ofMillis(10), "DB error", null)));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.PREPARATION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.FAILED, result.status());
             assertEquals("DB error", result.errorMessage());
@@ -211,7 +212,7 @@ class LocalStepDispatcherTest {
             lookup.registerTask("my-task", new StubTaskExecutor("my-task",
                     new RuntimeException("BOOM")));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.PREPARATION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.FAILED, result.status());
             assertTrue(result.errorMessage().contains("BOOM"));
@@ -232,7 +233,7 @@ class LocalStepDispatcherTest {
             var stepDef = step("s1", "unknown-task", Phase.PREPARATION);
             var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("sc1"));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.PREPARATION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.FAILED, result.status());
             assertTrue(result.errorMessage().contains("No TaskExecutor found"));
@@ -240,15 +241,15 @@ class LocalStepDispatcherTest {
         }
 
         @Test
-        @DisplayName("Should return FAILED when no AssertionExecutor found")
+        @DisplayName("Should return FAILED when no TaskExecutor found for assertion")
         void unknownAssertionExecutor_returnsFailed() {
             var stepDef = step("s1", "unknown-assertion", Phase.ASSERTION);
             var ctx = ExecutionContext.initial(ExecutionId.generate(), sId("sc1"));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.ASSERTION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.FAILED, result.status());
-            assertTrue(result.errorMessage().contains("No AssertionExecutor found"));
+            assertTrue(result.errorMessage().contains("No TaskExecutor found"));
             assertTrue(result.errorMessage().contains("unknown-assertion"));
         }
     }
@@ -277,7 +278,7 @@ class LocalStepDispatcherTest {
 
             lookup.registerAssertion("check-p99", new StubAssertionExecutor("check-p99", assertionResult));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.ASSERTION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.SUCCESS, result.status());
             AssertionSummary summary = AssertionResultMapper.extractSummary(result);
@@ -297,7 +298,7 @@ class LocalStepDispatcherTest {
 
             lookup.registerAssertion("check", new StubAssertionExecutor("check", assertionResult));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.ASSERTION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.FAILED, result.status());
             assertTrue(result.errorMessage().contains("p99 > 100ms"));
@@ -315,7 +316,7 @@ class LocalStepDispatcherTest {
 
             lookup.registerAssertion("check", new StubAssertionExecutor("check", assertionResult));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.ASSERTION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.SKIPPED, result.status());
             assertNull(result.errorMessage());
@@ -333,7 +334,7 @@ class LocalStepDispatcherTest {
 
             lookup.registerAssertion("check", new StubAssertionExecutor("check", assertionResult));
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.ASSERTION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.FAILED, result.status());
             assertTrue(result.errorMessage().contains("Evaluation error"));
@@ -371,7 +372,7 @@ class LocalStepDispatcherTest {
 
             lookup.registerTask("flaky", executor);
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.PREPARATION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.SUCCESS, result.status());
             assertEquals(2, executor.callCount.get());
@@ -389,7 +390,7 @@ class LocalStepDispatcherTest {
                     new RuntimeException("persistent error"));
             lookup.registerTask("broken", executor);
 
-            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.PREPARATION);
+            TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx);
 
             assertEquals(TaskStatus.FAILED, result.status());
             assertTrue(result.errorMessage().contains("persistent error"));

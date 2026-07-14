@@ -180,6 +180,7 @@ class LocalExecutionEngineTest {
 
         void registerAssertion(String assertionName, AssertionExecutor executor) {
             assertionExecutors.put(assertionName, executor);
+            taskExecutors.put(assertionName, executor); // AssertionExecutor extends TaskExecutor
         }
 
         List<String> getTaskLookups() { return List.copyOf(taskLookups); }

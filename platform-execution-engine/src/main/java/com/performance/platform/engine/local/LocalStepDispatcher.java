@@ -1,15 +1,12 @@
 package com.performance.platform.engine.local;
 
-import com.performance.platform.assertion.AssertionResultMapper;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.execution.RetryPolicy;
-import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.engine.retry.RetryExecutor;
 import com.performance.platform.engine.shared.StepDispatcher;
-import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +20,11 @@ import java.time.Instant;
  *
  * <p>En LOCAL, le dispatch est un simple appel de méthode Java —
  * pas de sérialisation, pas de réseau, pas de heartbeat.</p>
+ *
+ * <p>Depuis ISSUE-154 : chemin d'exécution unifié pour toutes les phases
+ * (PREPARATION, INJECTION, ASSERTION). La résolution utilise
+ * {@link TaskExecutorLookup#findTaskExecutor(String)} pour tous les cas,
+ * car {@code AssertionExecutor} étend {@code TaskExecutor}.</p>
  */
 public class LocalStepDispatcher implements StepDispatcher {
 
@@ -37,7 +39,7 @@ public class LocalStepDispatcher implements StepDispatcher {
     }
 
     @Override
-    public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
+    public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
         StepDefinition stepDef = execStep.step();
         RetryPolicy policy = stepDef.retryPolicy() != null
                 ? stepDef.retryPolicy()
@@ -46,12 +48,7 @@ public class LocalStepDispatcher implements StepDispatcher {
         var start = Instant.now();
 
         try {
-            TaskResult result;
-            if (phase == Phase.ASSERTION) {
-                result = executeAssertion(stepDef, context, policy);
-            } else {
-                result = executePreparationOrInjection(stepDef, context, policy);
-            }
+            TaskResult result = executeStep(stepDef, context, policy);
             var duration = Duration.between(start, Instant.now());
             log.info("action=step_completed taskId={} taskName={} status={} durationMs={}",
                     stepDef.id().value(), stepDef.taskName(), result.status(), duration.toMillis());
@@ -66,7 +63,13 @@ public class LocalStepDispatcher implements StepDispatcher {
         }
     }
 
-    private TaskResult executePreparationOrInjection(
+    /**
+     * Exécute un step avec retry, chemin unifié pour toutes les phases.
+     * La résolution de l'executor se fait via {@code findTaskExecutor()}
+     * qui trouve aussi les {@code AssertionExecutor} (car ils étendent
+     * {@code TaskExecutor}).
+     */
+    private TaskResult executeStep(
             StepDefinition stepDef,
             ExecutionContext context,
             RetryPolicy policy) {
@@ -78,22 +81,5 @@ public class LocalStepDispatcher implements StepDispatcher {
         }
 
         return retryExecutor.executeWithRetry(policy, () -> executor.execute(context, stepDef));
-    }
-
-    private TaskResult executeAssertion(
-            StepDefinition stepDef,
-            ExecutionContext context,
-            RetryPolicy policy) {
-
-        AssertionExecutor executor = lookup.findAssertionExecutor(stepDef.taskName());
-        if (executor == null) {
-            return TaskResult.failed(stepDef.id(), stepDef.taskName(),
-                    Duration.ZERO, "No AssertionExecutor found for assertionName: " + stepDef.taskName(), null);
-        }
-
-        return retryExecutor.executeWithRetry(policy, () -> {
-            var assertionResult = executor.evaluate(context, stepDef);
-            return AssertionResultMapper.toTaskResult(assertionResult, stepDef);
-        });
     }
 }

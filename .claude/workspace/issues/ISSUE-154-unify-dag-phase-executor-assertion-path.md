@@ -2,7 +2,7 @@
 
 **PDR** : PDR-037
 **Module** : `platform-execution-engine`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P1 (critique -- simplification du code, reduction duplication)
 **Bloquee par** : ISSUE-150 (AssertionExecutor extends TaskExecutor), ISSUE-153 (AssertionResultMapper remplace assertionResultToTaskResult)
 **Estime** : M (1-3h)

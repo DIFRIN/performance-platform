@@ -205,7 +205,7 @@ public class DagPhaseExecutor {
                     ));
 
                     try {
-                        TaskResult result = dispatcher.dispatch(step, ctxAtStart, phase);
+                        TaskResult result = dispatcher.dispatch(step, ctxAtStart);
                         return new StepOutcome(step.step().id(), step.step().taskName(), result, result.status());
                     } finally {
                         // Toujours envoyer STOP, meme en cas d'exception
