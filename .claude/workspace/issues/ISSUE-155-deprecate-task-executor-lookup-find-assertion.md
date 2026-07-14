@@ -2,7 +2,7 @@
 
 **PDR** : PDR-037
 **Module** : `platform-execution-engine`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P2 (normal -- deprecation sans suppression)
 **Bloquee par** : ISSUE-154 (DagPhaseExecutor unifie)
 **Estime** : S (< 1h)

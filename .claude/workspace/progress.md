@@ -165,8 +165,8 @@
 | ISSUE-151 | - AssertionResultMapper Utility | DONE | PDR-036 | ISSUE-148, ISSUE-150 |
 | ISSUE-152 | - Deprecate AssertionExecutorRegistry + Unify Spring Bean Collection | IN_PROGRESS | PDR-036 | ISSUE-150 |
 | ISSUE-153 | - Remove assertionResultToTaskResult from DagPhaseExecutor | DONE | PDR-036 | ISSUE-151 |
-| ISSUE-154 | - Unify DagPhaseExecutor Assertion Execution Path | APPROVED | PDR-037 | ISSUE-150, ISSUE-153 |
-| ISSUE-155 | Deprecate TaskExecutorLookup.findAssertionExecutor | WAITING | PDR-037 | ISSUE-154 |
+| ISSUE-154 | - Unify DagPhaseExecutor Assertion Execution Path | DONE | PDR-037 | ISSUE-150, ISSUE-153 |
+| ISSUE-155 | - Deprecate TaskExecutorLookup.findAssertionExecutor | APPROVED | PDR-037 | ISSUE-154 |
 | ISSUE-156 | Add assertion task names to agent configuration | WAITING | PDR-037 | ISSUE-150, ISSUE-152 |
 
 | ISSUE-157 | ExecutionLifecycleSignal Domain Type | DONE | PDR-038 | — |
@@ -954,3 +954,7 @@
 | 2026-07-14 | ISSUE-154 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-07-14 | ISSUE-154 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-14 | ISSUE-154 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-14 | ISSUE-154 | APPROVED → DONE | issue-next.sh |
+| 2026-07-14 | ISSUE-155 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-14 | ISSUE-155 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-14 | ISSUE-155 | IN_REVIEW → APPROVED | Reviewer approved |
