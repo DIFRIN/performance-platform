@@ -2,7 +2,7 @@
 
 **PDR** : PDR-034
 **Module** : `platform-domain`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P1 (critique -- AssertionSummary depend de AssertionSample, mais AssertionSummary peut etre teste sans)
 **Bloquee par** : ISSUE-148 (AssertionSummary reference AssertionSample)
 **Estime** : S (< 1h)

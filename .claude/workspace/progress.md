@@ -159,8 +159,8 @@
 | ISSUE-145 | platform-infrastructure : datasource/JPA/repository conditionnels (sans throw) | DONE | PDR-033 | ISSUE-134 |
 | ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-application) | DONE | PDR-033 | — |
 | ISSUE-147 | AgentRegistry self-wiring conditionnel (platform-agent-runtime) | DONE | PDR-033 | ISSUE-134 |
-| ISSUE-148 | - AssertionSummary Domain Record | APPROVED | PDR-034 | — |
-| ISSUE-149 | AssertionSample domain record | WAITING | PDR-034 | ISSUE-148 |
+| ISSUE-148 | - AssertionSummary Domain Record | DONE | PDR-034 | — |
+| ISSUE-149 | - AssertionSample Domain Record | APPROVED | PDR-034 | ISSUE-148 |
 | ISSUE-150 | AssertionExecutor extends TaskExecutor | WAITING | PDR-035 | ISSUE-148 |
 | ISSUE-151 | AssertionResultMapper utility | WAITING | PDR-036 | ISSUE-148, ISSUE-150 |
 | ISSUE-152 | Deprecate AssertionExecutorRegistry + unify bean collection | WAITING | PDR-036 | ISSUE-150 |
@@ -931,3 +931,7 @@
 | 2026-07-14 | ISSUE-167 | APPROVED → DONE | issue-next.sh |
 | 2026-07-14 | ISSUE-148 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-14 | ISSUE-148 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-14 | ISSUE-148 | APPROVED → DONE | issue-next.sh |
+| 2026-07-14 | ISSUE-149 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-14 | ISSUE-149 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-14 | ISSUE-149 | IN_REVIEW → APPROVED | Reviewer approved |
