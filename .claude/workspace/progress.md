@@ -175,8 +175,8 @@
 | ISSUE-160 | Shared DAG Executor Extraction (StepDispatcher + LocalStepDispatcher) | DONE | PDR-039 | — |
 | ISSUE-161 | RemoteExecutionEngine uses Shared DagPhaseExecutor | DONE | PDR-039 | ISSUE-160 |
 | ISSUE-162 | Remove Duplicated DAG Logic from RemoteExecutionEngine | DONE | PDR-039 | ISSUE-161 |
-| ISSUE-163 | Sealed Event Interfaces (ExecutionEvent, TaskEvent, AssertionEvent) | APPROVED | PDR-040 | — |
-| ISSUE-164 | Event package-info.java + ArchUnit Test | WAITING | PDR-040 | ISSUE-163 |
+| ISSUE-163 | Sealed Event Interfaces (ExecutionEvent, TaskEvent, AssertionEvent) | DONE | PDR-040 | — |
+| ISSUE-164 | Event package-info.java + ArchUnit Test | APPROVED | PDR-040 | ISSUE-163 |
 | ISSUE-165 | Task Executor Doctrine ADR-022 + Package Documentation | WAITING | PDR-041 | — |
 | ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | WAITING | PDR-042 | — |
 | ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | WAITING | PDR-042 | ISSUE-166 |
@@ -909,3 +909,7 @@
 | 2026-07-14 | ISSUE-163 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-07-14 | ISSUE-163 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-14 | ISSUE-163 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-14 | ISSUE-163 | APPROVED → DONE | issue-next.sh |
+| 2026-07-14 | ISSUE-164 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-14 | ISSUE-164 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-14 | ISSUE-164 | IN_REVIEW → APPROVED | Reviewer approved |

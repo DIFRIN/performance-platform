@@ -2,7 +2,7 @@
 
 **PDR** : PDR-040
 **Module** : `platform-domain`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P2 (documentation + test de non-régression)
 **Bloquee par** : ISSUE-163 (interfaces scellées créées)
 **Estime** : S (< 1h)
