@@ -1,11 +1,11 @@
-# ISSUE-150: - AssertionExecutor extends TaskExecutor
+# ISSUE-151: - AssertionResultMapper Utility
 **Status**: APPROVED
-**PDR**: PDR-035
-**Module**: platform-plugin-api
-**Started**: 2026-07-14T20:53+02:00
-**IssueFile**: issues/ISSUE-150-assertion-executor-extends-task-executor.md
+**PDR**: PDR-036
+**Module**: platform-assertion
+**Started**: 2026-07-14T21:10+02:00
+**IssueFile**: issues/ISSUE-151-assertion-result-mapper.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-150-assertion-executor-extends-task-executor.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-151-assertion-result-mapper.md`
 
 ## Reviewer Feedback
 (None yet)
