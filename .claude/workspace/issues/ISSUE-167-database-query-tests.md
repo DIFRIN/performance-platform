@@ -2,7 +2,7 @@
 
 **PDR** : PDR-042
 **Module** : `platform-infrastructure`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P1 (tests pour ISSUE-166)
 **Bloquee par** : ISSUE-166 (executeQuery implémentée)
 **Estime** : M (1-2h)

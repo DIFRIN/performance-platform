@@ -178,8 +178,8 @@
 | ISSUE-163 | Sealed Event Interfaces (ExecutionEvent, TaskEvent, AssertionEvent) | DONE | PDR-040 | — |
 | ISSUE-164 | Event package-info.java + ArchUnit Test | DONE | PDR-040 | ISSUE-163 |
 | ISSUE-165 | Task Executor Doctrine ADR-022 + Package Documentation | DONE | PDR-041 | — |
-| ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | APPROVED | PDR-042 | — |
-| ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | WAITING | PDR-042 | ISSUE-166 |
+| ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | DONE | PDR-042 | — |
+| ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | APPROVED | PDR-042 | ISSUE-166 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -924,3 +924,7 @@
 | 2026-07-14 | ISSUE-166 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-07-14 | ISSUE-166 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-14 | ISSUE-166 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-14 | ISSUE-166 | APPROVED → DONE | issue-next.sh |
+| 2026-07-14 | ISSUE-167 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-14 | ISSUE-167 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-14 | ISSUE-167 | IN_REVIEW → APPROVED | Reviewer approved |
