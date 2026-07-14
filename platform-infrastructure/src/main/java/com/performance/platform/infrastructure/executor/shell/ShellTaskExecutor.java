@@ -31,6 +31,12 @@ import java.util.concurrent.TimeUnit;
  * Runs an external process with configurable command, arguments, working directory,
  * environment variables, and timeout. Captures stdout and stderr independently.
  * <p>
+ * <strong>Role de fallback universel :</strong> le ShellTaskExecutor peut executer
+ * toute commande shell, ce qui en fait le filet de securite de la plateforme.
+ * Quand aucun executor dedie n'existe pour une operation (prototypage rapide,
+ * outil tiers sans SDK Java, commande one-off), le ShellTaskExecutor prend le relais.
+ * Voir ADR-022 pour la doctrine complet (dedie vs shell) et les criteres de decision.
+ * <p>
  * <strong>CC-02 justification:</strong> This class exceeds 300 lines because it
  * encapsulates the full lifecycle of an OS process — parameter extraction,
  * ProcessBuilder construction, concurrent stream reading (stdout/stderr on

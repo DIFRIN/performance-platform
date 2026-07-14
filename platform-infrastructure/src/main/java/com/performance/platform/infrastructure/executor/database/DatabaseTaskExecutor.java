@@ -32,6 +32,13 @@ import java.util.concurrent.TimeUnit;
  * Référence une datasource par son nom logique via {@link DatasourceProvider}.
  * Toute opération I/O bloquante s'exécute sous Virtual Threads.
  * <p>
+ * <strong>Garde-fous :</strong> validation anti-injection SQL sur les noms de table
+ * ({@code [a-zA-Z_][a-zA-Z0-9_.]*}), timeout configurable par step ({@code timeoutMs},
+ * defaut 30s), nettoyage des connexions via {@link StatefulResourceCleaner} en cas
+ * de restart de scenario. Les scripts POPULATE utilisent {@code ResourceDatabasePopulator}
+ * qui gere correctement separateurs, commentaires et blocs procedurels — pas d'execution
+ * brute de SQL sans parsing.
+ * <p>
  * Paramètres de step :
  * <ul>
  *   <li>{@code operation} — obligatoire : PURGE, POPULATE</li>

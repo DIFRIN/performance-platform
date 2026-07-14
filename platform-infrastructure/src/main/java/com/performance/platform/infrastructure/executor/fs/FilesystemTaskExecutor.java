@@ -34,6 +34,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Implements {@link StatefulResourceCleaner} to delete created paths
  * on scenario restart.
  * <p>
+ * <strong>Garde-fous (sandboxing) :</strong> tracking de tous les chemins crees
+ * par execution ({@code pathsByExecution}) avec nettoyage automatique au restart,
+ * suppression recursive securisee avec comptage des fichiers affectes, validation
+ * des parametres obligatoires ({@code path}, {@code source}) avant toute operation.
+ * Le CLEANUP cible uniquement le contenu d'un repertoire sans supprimer le
+ * repertoire lui-meme — operation reversible.
+ * <p>
  * Parameters:
  * <ul>
  *   <li>{@code operation} — CREATE, DELETE, UPLOAD, or CLEANUP</li>
