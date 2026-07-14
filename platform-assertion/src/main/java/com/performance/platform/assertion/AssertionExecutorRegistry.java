@@ -14,7 +14,15 @@ import java.util.Set;
  * <p>
  * Jamais de if/switch sur un type. La cle de registre est le nom declare
  * par l'executor via {@code getSupportedAssertionName()}.
+ *
+ * @deprecated Depuis v2.0, {@link AssertionExecutor} etend {@link TaskExecutor}.
+ *             Les implementations d'assertion sont automatiquement collectees
+ *             par {@code DefaultTaskExecutorRegistry} (base sur
+ *             {@code TaskExecutor} beans). Utiliser
+ *             {@code com.performance.platform.infrastructure.executor.TaskExecutorRegistry}
+ *             a la place.
  */
+@Deprecated(since = "2.0", forRemoval = true)
 public interface AssertionExecutorRegistry {
 
     /**

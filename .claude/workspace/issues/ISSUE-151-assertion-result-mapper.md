@@ -2,7 +2,7 @@
 
 **PDR** : PDR-036
 **Module** : `platform-assertion`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P1 (critique -- utilitaire partage utilise par PDR-037)
 **Bloquee par** : ISSUE-148 (AssertionSummary), ISSUE-150 (AssertionExecutor extends TaskExecutor)
 **Estime** : M (1-2h)
