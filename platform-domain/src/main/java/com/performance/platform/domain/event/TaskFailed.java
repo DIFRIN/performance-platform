@@ -11,7 +11,7 @@ import java.util.Objects;
  * Emis lorsqu'une tâche échoue après toutes ses tentatives de retry.
  * Record immuable, 0 annotation framework.
  */
-public record TaskFailed(ExecutionId executionId, TaskId taskId, AgentId agentId, String error, int attempt, Instant timestamp) {
+public record TaskFailed(ExecutionId executionId, TaskId taskId, AgentId agentId, String error, int attempt, Instant timestamp) implements TaskEvent {
 
     public TaskFailed {
         Objects.requireNonNull(executionId, "executionId required");

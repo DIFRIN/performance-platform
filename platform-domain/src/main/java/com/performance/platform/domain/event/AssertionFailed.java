@@ -10,7 +10,7 @@ import java.util.Objects;
  * Emis lorsqu'une assertion échoue.
  * Record immuable, 0 annotation framework.
  */
-public record AssertionFailed(ExecutionId executionId, TaskId assertionId, String reason, Instant timestamp) {
+public record AssertionFailed(ExecutionId executionId, TaskId assertionId, String reason, Instant timestamp) implements AssertionEvent {
 
     public AssertionFailed {
         Objects.requireNonNull(executionId, "executionId required");

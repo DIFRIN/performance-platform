@@ -12,7 +12,7 @@ import java.util.Objects;
  * Emis lorsque l'exécution d'un scénario se termine, quel que soit le verdict.
  * Record immuable, 0 annotation framework.
  */
-public record ScenarioFinished(ExecutionId executionId, ScenarioId scenarioId, Verdict verdict, Duration duration, Instant timestamp) {
+public record ScenarioFinished(ExecutionId executionId, ScenarioId scenarioId, Verdict verdict, Duration duration, Instant timestamp) implements ExecutionEvent {
 
     public ScenarioFinished {
         Objects.requireNonNull(executionId, "executionId required");

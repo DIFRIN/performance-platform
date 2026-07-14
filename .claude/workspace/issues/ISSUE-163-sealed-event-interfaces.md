@@ -2,7 +2,7 @@
 
 **PDR** : PDR-040
 **Module** : `platform-domain`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P2 (documentation/structure, pas de changement de comportement)
 **Bloquee par** : —
 **Estime** : M (1-2h)

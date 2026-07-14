@@ -12,7 +12,7 @@ import java.util.Objects;
  * Emis lorsqu'un agent réclame une tâche via le mécanisme de multi-claim.
  * Record immuable, 0 annotation framework.
  */
-public record TaskClaimedByAgent(ExecutionId executionId, TaskId taskId, AgentId agentId, MessageId messageId, Instant timestamp) {
+public record TaskClaimedByAgent(ExecutionId executionId, TaskId taskId, AgentId agentId, MessageId messageId, Instant timestamp) implements TaskEvent {
 
     public TaskClaimedByAgent {
         Objects.requireNonNull(executionId, "executionId required");
