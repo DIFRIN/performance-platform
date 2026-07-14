@@ -10,7 +10,7 @@ import java.util.Objects;
  * Emis lorsqu'une tâche échoue mais qu'une nouvelle tentative est programmée.
  * Record immuable, 0 annotation framework.
  */
-public record TaskRetried(ExecutionId executionId, TaskId taskId, int attempt, Instant nextAttemptAt, Instant timestamp) {
+public record TaskRetried(ExecutionId executionId, TaskId taskId, int attempt, Instant nextAttemptAt, Instant timestamp) implements TaskEvent {
 
     public TaskRetried {
         Objects.requireNonNull(executionId, "executionId required");

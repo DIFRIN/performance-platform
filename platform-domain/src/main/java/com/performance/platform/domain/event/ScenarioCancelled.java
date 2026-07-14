@@ -10,7 +10,7 @@ import java.util.Objects;
  * Emis lorsqu'un scénario est annulé avant sa fin normale.
  * Record immuable, 0 annotation framework.
  */
-public record ScenarioCancelled(ExecutionId executionId, ScenarioId scenarioId, String reason, Instant timestamp) {
+public record ScenarioCancelled(ExecutionId executionId, ScenarioId scenarioId, String reason, Instant timestamp) implements ExecutionEvent {
 
     public ScenarioCancelled {
         Objects.requireNonNull(executionId, "executionId required");

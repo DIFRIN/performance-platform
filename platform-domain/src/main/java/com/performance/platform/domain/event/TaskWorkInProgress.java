@@ -12,7 +12,7 @@ import java.util.Objects;
  * {@code progressPercent} doit être entre 0 et 100.
  * Record immuable, 0 annotation framework.
  */
-public record TaskWorkInProgress(ExecutionId executionId, TaskId taskId, AgentId agentId, int progressPercent, String statusMessage, Instant timestamp) {
+public record TaskWorkInProgress(ExecutionId executionId, TaskId taskId, AgentId agentId, int progressPercent, String statusMessage, Instant timestamp) implements TaskEvent {
 
     public TaskWorkInProgress {
         Objects.requireNonNull(executionId, "executionId required");

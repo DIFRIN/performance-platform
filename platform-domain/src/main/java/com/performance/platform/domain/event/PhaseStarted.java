@@ -10,7 +10,7 @@ import java.util.Objects;
  * Emis lorsqu'une phase (PREPARATION, INJECTION, ASSERTION) démarre.
  * Record immuable, 0 annotation framework.
  */
-public record PhaseStarted(ExecutionId executionId, Phase phase, Instant timestamp) {
+public record PhaseStarted(ExecutionId executionId, Phase phase, Instant timestamp) implements ExecutionEvent {
 
     public PhaseStarted {
         Objects.requireNonNull(executionId, "executionId required");

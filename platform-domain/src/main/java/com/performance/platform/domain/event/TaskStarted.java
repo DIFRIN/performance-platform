@@ -11,7 +11,7 @@ import java.util.Objects;
  * Emis lorsqu'un agent commence effectivement l'exécution d'une tâche.
  * Record immuable, 0 annotation framework.
  */
-public record TaskStarted(ExecutionId executionId, TaskId taskId, AgentId agentId, Instant timestamp) {
+public record TaskStarted(ExecutionId executionId, TaskId taskId, AgentId agentId, Instant timestamp) implements TaskEvent {
 
     public TaskStarted {
         Objects.requireNonNull(executionId, "executionId required");

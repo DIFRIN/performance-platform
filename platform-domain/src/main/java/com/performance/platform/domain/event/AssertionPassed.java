@@ -10,7 +10,7 @@ import java.util.Objects;
  * Emis lorsqu'une assertion passe avec succès.
  * Record immuable, 0 annotation framework.
  */
-public record AssertionPassed(ExecutionId executionId, TaskId assertionId, Instant timestamp) {
+public record AssertionPassed(ExecutionId executionId, TaskId assertionId, Instant timestamp) implements AssertionEvent {
 
     public AssertionPassed {
         Objects.requireNonNull(executionId, "executionId required");

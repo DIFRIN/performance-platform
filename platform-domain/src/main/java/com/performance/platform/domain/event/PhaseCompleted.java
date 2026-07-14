@@ -11,7 +11,7 @@ import java.util.Objects;
  * Emis lorsqu'une phase se termine, avec son statut final.
  * Record immuable, 0 annotation framework.
  */
-public record PhaseCompleted(ExecutionId executionId, Phase phase, PhaseStatus status, Instant timestamp) {
+public record PhaseCompleted(ExecutionId executionId, Phase phase, PhaseStatus status, Instant timestamp) implements ExecutionEvent {
 
     public PhaseCompleted {
         Objects.requireNonNull(executionId, "executionId required");

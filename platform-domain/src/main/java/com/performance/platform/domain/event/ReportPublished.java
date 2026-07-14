@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * @param target identifiant opaque de la cible de publication (ex: "CONFLUENCE", "S3")
  */
-public record ReportPublished(ExecutionId executionId, ReportId reportId, String target, Instant timestamp) {
+public record ReportPublished(ExecutionId executionId, ReportId reportId, String target, Instant timestamp) implements ExecutionEvent {
 
     public ReportPublished {
         Objects.requireNonNull(executionId, "executionId required");

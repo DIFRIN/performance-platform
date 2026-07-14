@@ -2,7 +2,7 @@
 
 **PDR** : PDR-039
 **Module** : `platform-execution-engine`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P2 (cleanup après ISSUE-161)
 **Bloquee par** : ISSUE-161 (RemoteExecutionEngine utilise déjà DagPhaseExecutor)
 **Estime** : S (< 1h)

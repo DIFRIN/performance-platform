@@ -12,7 +12,7 @@ import java.util.Objects;
  * Utilise {@code String taskName} (jamais d'enum TaskType).
  * Record immuable, 0 annotation framework.
  */
-public record TaskDispatched(ExecutionId executionId, TaskId taskId, String taskName, MessageId messageId, Instant timestamp) {
+public record TaskDispatched(ExecutionId executionId, TaskId taskId, String taskName, MessageId messageId, Instant timestamp) implements TaskEvent {
 
     public TaskDispatched {
         Objects.requireNonNull(executionId, "executionId required");

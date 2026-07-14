@@ -13,7 +13,7 @@ import java.util.Objects;
  * Emis lorsqu'une tâche se termine avec succès.
  * Record immuable, 0 annotation framework.
  */
-public record TaskCompleted(ExecutionId executionId, TaskId taskId, AgentId agentId, TaskResult result, Duration duration, Instant timestamp) {
+public record TaskCompleted(ExecutionId executionId, TaskId taskId, AgentId agentId, TaskResult result, Duration duration, Instant timestamp) implements TaskEvent {
 
     public TaskCompleted {
         Objects.requireNonNull(executionId, "executionId required");

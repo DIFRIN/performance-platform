@@ -10,7 +10,7 @@ import java.util.Objects;
  * Emis lorsque l'exécution d'un scénario démarre.
  * Record immuable, 0 annotation framework.
  */
-public record ScenarioStarted(ExecutionId executionId, ScenarioId scenarioId, Instant timestamp) {
+public record ScenarioStarted(ExecutionId executionId, ScenarioId scenarioId, Instant timestamp) implements ExecutionEvent {
 
     public ScenarioStarted {
         Objects.requireNonNull(executionId, "executionId required");

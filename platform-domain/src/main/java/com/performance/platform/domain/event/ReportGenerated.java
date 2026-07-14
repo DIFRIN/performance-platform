@@ -10,7 +10,7 @@ import java.util.Objects;
  * Emis lorsqu'un rapport est genere.
  * Record immuable, 0 annotation framework.
  */
-public record ReportGenerated(ExecutionId executionId, ReportId reportId, Instant timestamp) {
+public record ReportGenerated(ExecutionId executionId, ReportId reportId, Instant timestamp) implements ExecutionEvent {
 
     public ReportGenerated {
         Objects.requireNonNull(executionId, "executionId required");
