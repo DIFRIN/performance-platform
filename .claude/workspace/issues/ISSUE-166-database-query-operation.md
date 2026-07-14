@@ -2,7 +2,7 @@
 
 **PDR** : PDR-042
 **Module** : `platform-infrastructure`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P1 (nouvelle fonctionnalité)
 **Bloquee par** : —
 **Estime** : M (1-2h)

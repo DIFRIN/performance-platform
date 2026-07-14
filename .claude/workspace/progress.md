@@ -177,8 +177,8 @@
 | ISSUE-162 | Remove Duplicated DAG Logic from RemoteExecutionEngine | DONE | PDR-039 | ISSUE-161 |
 | ISSUE-163 | Sealed Event Interfaces (ExecutionEvent, TaskEvent, AssertionEvent) | DONE | PDR-040 | — |
 | ISSUE-164 | Event package-info.java + ArchUnit Test | DONE | PDR-040 | ISSUE-163 |
-| ISSUE-165 | Task Executor Doctrine ADR-022 + Package Documentation | APPROVED | PDR-041 | — |
-| ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | WAITING | PDR-042 | — |
+| ISSUE-165 | Task Executor Doctrine ADR-022 + Package Documentation | DONE | PDR-041 | — |
+| ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | APPROVED | PDR-042 | — |
 | ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | WAITING | PDR-042 | ISSUE-166 |
 
 ## PDRs
@@ -920,3 +920,7 @@
 | 2026-07-14 | ISSUE-165 | CHANGES_REQUESTED → IN_PROGRESS (resume) | issue-start.sh |
 | 2026-07-14 | ISSUE-165 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-14 | ISSUE-165 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-14 | ISSUE-165 | APPROVED → DONE | issue-next.sh |
+| 2026-07-14 | ISSUE-166 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-14 | ISSUE-166 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-14 | ISSUE-166 | IN_REVIEW → APPROVED | Reviewer approved |
