@@ -25,6 +25,15 @@ public interface TaskExecutorLookup {
      *
      * @param assertionName le nom de l'assertion (ASSERTION)
      * @return l'executeur d'assertion, ou null si non trouve
+     * @deprecated Depuis PDR-035, utiliser {@link #findTaskExecutor(String)}
+     *             qui resout aussi les assertions (AssertionExecutor extends TaskExecutor).
      */
-    AssertionExecutor findAssertionExecutor(String assertionName);
+    @Deprecated(since = "2.0", forRemoval = true)
+    default AssertionExecutor findAssertionExecutor(String assertionName) {
+        TaskExecutor executor = findTaskExecutor(assertionName);
+        if (executor instanceof AssertionExecutor ae) {
+            return ae;
+        }
+        return null;
+    }
 }
