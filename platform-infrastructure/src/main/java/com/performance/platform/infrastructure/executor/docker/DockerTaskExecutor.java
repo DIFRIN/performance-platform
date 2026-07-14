@@ -22,6 +22,13 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * TaskExecutor for Docker container lifecycle: START, STOP, and PULL.
  * <p>
+ * <strong>Garde-fous :</strong> healthcheck polling avec timeout configurable
+ * ({@link #waitForRunning}), arret safe des conteneurs ({@link #stopSafely}),
+ * tracking des conteneurs par execution ({@code containersByExecution}) pour
+ * nettoyage automatique via {@link StatefulResourceCleaner} en cas de restart.
+ * Chaque action a sa propre extraction de parametres ({@link StartParams}) et
+ * validation dediee — pas de commande Docker brute sans controle.
+ * <p>
  * <strong>CC-02 justification:</strong> This class exceeds 300 lines because it
  * handles 3 distinct actions (START, STOP, PULL) each with its own parameter
  * extraction, error handling, output mapping, and logging — plus
