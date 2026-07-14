@@ -20,6 +20,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * TaskExecutor pour opérations base de données : PURGE, POPULATE, MIGRATION, BACKUP, RESTORE.
+ * TaskExecutor pour opérations base de données : PURGE, POPULATE, QUERY.
  * <p>
  * Référence une datasource par son nom logique via {@link DatasourceProvider}.
  * Toute opération I/O bloquante s'exécute sous Virtual Threads.
@@ -41,17 +42,20 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * Paramètres de step :
  * <ul>
- *   <li>{@code operation} — obligatoire : PURGE, POPULATE</li>
+ *   <li>{@code operation} — obligatoire : PURGE, POPULATE, QUERY</li>
  *   <li>{@code datasource} — obligatoire : nom logique de la datasource</li>
  *   <li>{@code table} — obligatoire pour PURGE : nom de la table à vider</li>
  *   <li>{@code scriptPath} — obligatoire pour POPULATE : chemin du script SQL</li>
+ *   <li>{@code query} — obligatoire pour QUERY : requête SQL inline</li>
+ *   <li>{@code queryType} — optionnel pour QUERY : SELECT (retourne rows) ou UPDATE (défaut, retourne rowsAffected)</li>
  * </ul>
  * <p>
  * Outputs : {@code {rowsAffected: N, duration: "X.Xs"}}.
+ * Pour QUERY SELECT : {@code {rows: [...], rowCount: N, duration: "X.Xs"}}.
  * <p>
  * Implémente {@link StatefulResourceCleaner} pour libérer les connexions lors d'un restart.
  */
-@Preparation(name = "database", version = "1.0.0", description = "DB operations: purge, populate, migrate, backup, restore")
+@Preparation(name = "database", version = "1.0.0", description = "DB operations: purge, populate, query")
 @Component
 public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceCleaner {
 
@@ -94,6 +98,7 @@ public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceClean
                     return switch (operation) {
                         case "PURGE" -> executePurge(step, startNanos, ds);
                         case "POPULATE" -> executePopulate(step, startNanos, ds);
+                        case "QUERY" -> executeQuery(step, startNanos, ds);
                         default -> fail(step, startNanos, "Unknown database operation: " + operation, null);
                     };
                 } catch (Exception e) {
@@ -207,6 +212,60 @@ public class DatabaseTaskExecutor implements TaskExecutor, StatefulResourceClean
         } catch (Exception e) {
             log.error("action=populate_failed scriptPath={} stepId={}", scriptPath, step.id().value(), e);
             return fail(step, startNanos, "POPULATE failed on script '" + scriptPath + "': " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Exécute QUERY : exécute une requête SQL inline.
+     * <p>
+     * {@code queryType=SELECT} : retourne les résultats dans {@code outputs.rows}
+     *   et le compte dans {@code outputs.rowCount}.
+     * <p>
+     * {@code queryType=UPDATE} (défaut) : retourne le nombre de lignes affectées
+     *   dans {@code outputs.rowsAffected}.
+     */
+    private TaskResult executeQuery(StepDefinition step, long startNanos, DataSource ds) {
+        String query = (String) step.parameters().get("query");
+        if (query == null || query.isBlank()) {
+            return fail(step, startNanos,
+                    "Required parameter 'query' is missing or blank for QUERY operation", null);
+        }
+
+        String queryType = Objects.toString(
+                step.parameters().get("queryType"), "UPDATE").toUpperCase().trim();
+
+        try {
+            log.info("action=query_start queryType={} datasource={} stepId={}",
+                    queryType, step.parameters().get("datasource"), step.id().value());
+
+            var jdbc = new JdbcTemplate(ds);
+
+            if ("SELECT".equals(queryType)) {
+                List<Map<String, Object>> rows = jdbc.queryForList(query);
+                var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+                Map<String, Object> outputs = Map.of(
+                        "rows", rows,
+                        "rowCount", rows.size(),
+                        "duration", formatDuration(elapsed)
+                );
+                log.info("action=query_done queryType=SELECT rowCount={} duration={} stepId={}",
+                        rows.size(), formatDuration(elapsed), step.id().value());
+                return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, outputs);
+            } else {
+                int rowsAffected = jdbc.update(query);
+                var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+                Map<String, Object> outputs = Map.of(
+                        "rowsAffected", rowsAffected,
+                        "duration", formatDuration(elapsed)
+                );
+                log.info("action=query_done queryType=UPDATE rowsAffected={} duration={} stepId={}",
+                        rowsAffected, formatDuration(elapsed), step.id().value());
+                return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, outputs);
+            }
+        } catch (Exception e) {
+            log.error("action=query_failed queryType={} stepId={}",
+                    queryType, step.id().value(), e);
+            return fail(step, startNanos, "QUERY failed: " + e.getMessage(), e);
         }
     }
 

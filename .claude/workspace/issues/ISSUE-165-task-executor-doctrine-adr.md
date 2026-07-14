@@ -2,7 +2,7 @@
 
 **PDR** : PDR-041
 **Module** : `platform-infrastructure`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P3 (documentation pure, aucun changement de code)
 **Bloquee par** : —
 **Estime** : S (< 1h)
