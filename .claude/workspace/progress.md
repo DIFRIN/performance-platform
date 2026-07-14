@@ -173,8 +173,8 @@
 | ISSUE-158 | Engine Lifecycle Signal Dispatch | DONE | PDR-037 | ISSUE-157 |
 | ISSUE-159 | Agent Lifecycle Signal Handling | DONE | PDR-037 | ISSUE-157, ISSUE-158 |
 | ISSUE-160 | Shared DAG Executor Extraction (StepDispatcher + LocalStepDispatcher) | DONE | PDR-039 | — |
-| ISSUE-161 | RemoteExecutionEngine uses Shared DagPhaseExecutor | APPROVED | PDR-039 | ISSUE-160 |
-| ISSUE-162 | Remove Duplicated DAG Logic from RemoteExecutionEngine | WAITING | PDR-039 | ISSUE-161 |
+| ISSUE-161 | RemoteExecutionEngine uses Shared DagPhaseExecutor | DONE | PDR-039 | ISSUE-160 |
+| ISSUE-162 | Remove Duplicated DAG Logic from RemoteExecutionEngine | APPROVED | PDR-039 | ISSUE-161 |
 | ISSUE-163 | Sealed Event Interfaces (ExecutionEvent, TaskEvent, AssertionEvent) | WAITING | PDR-040 | — |
 | ISSUE-164 | Event package-info.java + ArchUnit Test | WAITING | PDR-040 | ISSUE-163 |
 | ISSUE-165 | Task Executor Doctrine ADR-022 + Package Documentation | WAITING | PDR-041 | — |
@@ -901,3 +901,7 @@
 | 2026-07-13 | ISSUE-161 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-07-13 | ISSUE-161 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-13 | ISSUE-161 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-13 | ISSUE-161 | APPROVED → DONE | issue-next.sh |
+| 2026-07-13 | ISSUE-162 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-13 | ISSUE-162 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-14 | ISSUE-162 | IN_REVIEW → APPROVED | Reviewer approved |

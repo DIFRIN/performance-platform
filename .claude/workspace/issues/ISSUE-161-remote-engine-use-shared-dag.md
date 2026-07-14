@@ -2,7 +2,7 @@
 
 **PDR** : PDR-039
 **Module** : `platform-execution-engine`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorite** : P1 (débloque la suppression de duplication)
 **Bloquee par** : ISSUE-160 (DagPhaseExecutor + StepDispatcher dans shared/)
 **Estime** : M (2-3h)
