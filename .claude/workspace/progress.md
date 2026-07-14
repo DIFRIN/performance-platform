@@ -159,7 +159,7 @@
 | ISSUE-145 | platform-infrastructure : datasource/JPA/repository conditionnels (sans throw) | DONE | PDR-033 | ISSUE-134 |
 | ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-application) | DONE | PDR-033 | — |
 | ISSUE-147 | AgentRegistry self-wiring conditionnel (platform-agent-runtime) | DONE | PDR-033 | ISSUE-134 |
-| ISSUE-148 | - AssertionSummary Domain Record | IN_PROGRESS | PDR-034 | — |
+| ISSUE-148 | - AssertionSummary Domain Record | APPROVED | PDR-034 | — |
 | ISSUE-149 | AssertionSample domain record | WAITING | PDR-034 | ISSUE-148 |
 | ISSUE-150 | AssertionExecutor extends TaskExecutor | WAITING | PDR-035 | ISSUE-148 |
 | ISSUE-151 | AssertionResultMapper utility | WAITING | PDR-036 | ISSUE-148, ISSUE-150 |
@@ -179,7 +179,7 @@
 | ISSUE-164 | Event package-info.java + ArchUnit Test | DONE | PDR-040 | ISSUE-163 |
 | ISSUE-165 | Task Executor Doctrine ADR-022 + Package Documentation | DONE | PDR-041 | — |
 | ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | DONE | PDR-042 | — |
-| ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | APPROVED | PDR-042 | ISSUE-166 |
+| ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | DONE | PDR-042 | ISSUE-166 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -928,3 +928,6 @@
 | 2026-07-14 | ISSUE-167 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-07-14 | ISSUE-167 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-14 | ISSUE-167 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-14 | ISSUE-167 | APPROVED → DONE | issue-next.sh |
+| 2026-07-14 | ISSUE-148 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-07-14 | ISSUE-148 | IN_REVIEW → APPROVED | Reviewer approved |

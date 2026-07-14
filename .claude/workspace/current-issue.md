@@ -1,11 +1,11 @@
-# ISSUE-167: DatabaseTaskExecutor QUERY Operation Tests
+# ISSUE-148: - AssertionSummary Domain Record
 **Status**: APPROVED
-**PDR**: PDR-042
-**Module**: platform-infrastructure
-**Started**: 2026-07-14T16:11+02:00
-**IssueFile**: issues/ISSUE-167-database-query-tests.md
+**PDR**: PDR-034
+**Module**: platform-domain
+**Started**: 2026-07-13T20:31+02:00
+**IssueFile**: issues/ISSUE-148-assertion-summary-record.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-167-database-query-tests.md`
+> Full specification: `.claude/workspace/issues/ISSUE-148-assertion-summary-record.md`
 
 ## Reviewer Feedback
 (None yet)
