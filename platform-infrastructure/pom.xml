@@ -193,6 +193,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- H2 in-memory database for unit tests (DatabaseTaskExecutor) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.3.232</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- ArchUnit — verification separation packages infrastructure -->
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
