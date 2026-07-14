@@ -1,7 +1,9 @@
 package com.performance.platform.engine.local;
 
+import com.performance.platform.assertion.AssertionResultMapper;
 import com.performance.platform.domain.assertion.AssertionResult;
 import com.performance.platform.domain.assertion.AssertionStatus;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.assertion.Evidence;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
@@ -278,7 +280,9 @@ class LocalStepDispatcherTest {
             TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.ASSERTION);
 
             assertEquals(TaskStatus.SUCCESS, result.status());
-            assertTrue(result.outputs().containsKey("p99"));
+            AssertionSummary summary = AssertionResultMapper.extractSummary(result);
+            assertNotNull(summary);
+            assertTrue(summary.collectedData().containsKey("p99"));
         }
 
         @Test
@@ -314,7 +318,7 @@ class LocalStepDispatcherTest {
             TaskResult result = dispatcher.dispatch(execStep(stepDef), ctx, Phase.ASSERTION);
 
             assertEquals(TaskStatus.SKIPPED, result.status());
-            assertEquals("No data", result.errorMessage());
+            assertNull(result.errorMessage());
         }
 
         @Test
@@ -394,15 +398,15 @@ class LocalStepDispatcherTest {
     }
 
     // -------------------------------------------------------------------------
-    // Nested: assertionResultToTaskResult
+    // Nested: AssertionResultMapper.toTaskResult conversion
     // -------------------------------------------------------------------------
 
     @Nested
-    @DisplayName("assertionResultToTaskResult")
+    @DisplayName("AssertionResultMapper.toTaskResult")
     class AssertionResultConversion {
 
         @Test
-        @DisplayName("PASSED → TaskResult SUCCESS with evidence outputs")
+        @DisplayName("PASSED → TaskResult SUCCESS with AssertionSummary in outputs")
         void passed_toSuccess() {
             var evidence = new Evidence(95.0, 100.0,
                     com.performance.platform.domain.assertion.AssertionOperator.LT,
@@ -411,13 +415,15 @@ class LocalStepDispatcherTest {
                     t("as-1"), AssertionStatus.PASSED, "OK", evidence,
                     Duration.ofMillis(10), Instant.now());
 
-            TaskResult result = LocalStepDispatcher.assertionResultToTaskResult(
+            TaskResult result = AssertionResultMapper.toTaskResult(
                     assertionResult, step("as-1", "check", Phase.ASSERTION));
 
             assertEquals(TaskStatus.SUCCESS, result.status());
-            assertEquals(95.0, result.outputs().get("p99"));
-            assertEquals(50.0, result.outputs().get("p95"));
             assertEquals(Duration.ofMillis(10), result.duration());
+            AssertionSummary summary = AssertionResultMapper.extractSummary(result);
+            assertNotNull(summary);
+            assertEquals(95.0, summary.collectedData().get("p99"));
+            assertEquals(50.0, summary.collectedData().get("p95"));
         }
 
         @Test
@@ -427,7 +433,7 @@ class LocalStepDispatcherTest {
                     t("as-1"), AssertionStatus.FAILED, "p99 > 100ms",
                     null, Duration.ofMillis(5), Instant.now());
 
-            TaskResult result = LocalStepDispatcher.assertionResultToTaskResult(
+            TaskResult result = AssertionResultMapper.toTaskResult(
                     assertionResult, step("as-1", "check", Phase.ASSERTION));
 
             assertEquals(TaskStatus.FAILED, result.status());
@@ -435,17 +441,17 @@ class LocalStepDispatcherTest {
         }
 
         @Test
-        @DisplayName("SKIPPED → TaskResult SKIPPED")
+        @DisplayName("SKIPPED → TaskResult SKIPPED with null errorMessage")
         void skipped_toSkipped() {
             var assertionResult = new AssertionResult(
                     t("as-1"), AssertionStatus.SKIPPED, "No data available",
                     null, Duration.ofMillis(1), Instant.now());
 
-            TaskResult result = LocalStepDispatcher.assertionResultToTaskResult(
+            TaskResult result = AssertionResultMapper.toTaskResult(
                     assertionResult, step("as-1", "check", Phase.ASSERTION));
 
             assertEquals(TaskStatus.SKIPPED, result.status());
-            assertEquals("No data available", result.errorMessage());
+            assertNull(result.errorMessage());
         }
 
         @Test
@@ -455,7 +461,7 @@ class LocalStepDispatcherTest {
                     t("as-1"), AssertionStatus.ERROR, "NPE during evaluation",
                     null, Duration.ofMillis(2), Instant.now());
 
-            TaskResult result = LocalStepDispatcher.assertionResultToTaskResult(
+            TaskResult result = AssertionResultMapper.toTaskResult(
                     assertionResult, step("as-1", "check", Phase.ASSERTION));
 
             assertEquals(TaskStatus.FAILED, result.status());
@@ -463,17 +469,19 @@ class LocalStepDispatcherTest {
         }
 
         @Test
-        @DisplayName("Null evidence → empty outputs map")
+        @DisplayName("Null evidence → empty collectedData in summary")
         void nullEvidence_emptyOutputs() {
             var assertionResult = new AssertionResult(
                     t("as-1"), AssertionStatus.PASSED, "OK", null,
                     Duration.ofMillis(5), Instant.now());
 
-            TaskResult result = LocalStepDispatcher.assertionResultToTaskResult(
+            TaskResult result = AssertionResultMapper.toTaskResult(
                     assertionResult, step("as-1", "check", Phase.ASSERTION));
 
             assertEquals(TaskStatus.SUCCESS, result.status());
-            assertTrue(result.outputs().isEmpty());
+            AssertionSummary summary = AssertionResultMapper.extractSummary(result);
+            assertNotNull(summary);
+            assertTrue(summary.collectedData().isEmpty());
         }
     }
 }

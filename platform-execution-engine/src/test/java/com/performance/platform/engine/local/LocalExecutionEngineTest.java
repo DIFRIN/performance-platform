@@ -2,9 +2,11 @@ package com.performance.platform.engine.local;
 
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
+import com.performance.platform.assertion.AssertionResultMapper;
 import com.performance.platform.domain.assertion.AssertionOperator;
 import com.performance.platform.domain.assertion.AssertionResult;
 import com.performance.platform.domain.assertion.AssertionStatus;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.assertion.Evidence;
 import com.performance.platform.domain.event.PhaseCompleted;
 import com.performance.platform.domain.event.PhaseStarted;
@@ -969,7 +971,9 @@ class LocalExecutionEngineTest {
             var taskResult = stored.get("agent-local");
             assertNotNull(taskResult);
             assertEquals(TaskStatus.SUCCESS, taskResult.status());
-            assertTrue(taskResult.outputs().containsKey("p99"));
+            AssertionSummary summary = AssertionResultMapper.extractSummary(taskResult);
+            assertNotNull(summary);
+            assertTrue(summary.collectedData().containsKey("p99"));
         }
     }
 

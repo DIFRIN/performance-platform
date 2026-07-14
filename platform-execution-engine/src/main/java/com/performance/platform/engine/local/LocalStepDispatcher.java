@@ -1,13 +1,12 @@
 package com.performance.platform.engine.local;
 
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.assertion.AssertionResultMapper;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.execution.RetryPolicy;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.engine.retry.RetryExecutor;
 import com.performance.platform.engine.shared.StepDispatcher;
 import com.performance.platform.plugin.AssertionExecutor;
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 
 /**
  * Implémentation locale du {@link StepDispatcher}.
@@ -95,35 +93,7 @@ public class LocalStepDispatcher implements StepDispatcher {
 
         return retryExecutor.executeWithRetry(policy, () -> {
             var assertionResult = executor.evaluate(context, stepDef);
-            return assertionResultToTaskResult(assertionResult, stepDef);
+            return AssertionResultMapper.toTaskResult(assertionResult, stepDef);
         });
-    }
-
-    /**
-     * Convertit un {@link AssertionResult} en {@link TaskResult}
-     * pour un stockage uniforme dans l'ExecutionContext.
-     */
-    static TaskResult assertionResultToTaskResult(AssertionResult assertionResult, StepDefinition stepDef) {
-        Duration duration = assertionResult.evaluationDuration();
-        Map<String, Object> evidenceOutputs = assertionResult.evidence() != null
-                ? assertionResult.evidence().details()
-                : null;
-        if (evidenceOutputs == null) evidenceOutputs = Map.of();
-
-        return switch (assertionResult.status()) {
-            case PASSED -> new TaskResult(stepDef.id(), stepDef.taskName(),
-                    TaskStatus.SUCCESS, duration, evidenceOutputs,
-                    null, null, assertionResult.evaluatedAt());
-            case FAILED -> new TaskResult(stepDef.id(), stepDef.taskName(),
-                    TaskStatus.FAILED, duration, evidenceOutputs,
-                    assertionResult.description(),
-                    null, assertionResult.evaluatedAt());
-            case SKIPPED -> TaskResult.skipped(stepDef.id(), stepDef.taskName(),
-                    assertionResult.description());
-            case ERROR -> new TaskResult(stepDef.id(), stepDef.taskName(),
-                    TaskStatus.FAILED, duration, Map.of(),
-                    assertionResult.description(),
-                    null, assertionResult.evaluatedAt());
-        };
     }
 }

@@ -1,11 +1,11 @@
-# ISSUE-152: - Deprecate AssertionExecutorRegistry + Unify Spring Bean Collection
-**Status**: IN_PROGRESS
+# ISSUE-153: - Remove assertionResultToTaskResult from DagPhaseExecutor
+**Status**: APPROVED
 **PDR**: PDR-036
-**Module**: platform-assertion
-**Started**: 2026-07-14T21:18+02:00
-**IssueFile**: issues/ISSUE-152-deprecate-assertion-executor-registry.md
+**Module**: platform-execution-engine
+**Started**: 2026-07-14T21:58+02:00
+**IssueFile**: issues/ISSUE-153-remove-assertion-result-to-task-result-dag-phase.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-152-deprecate-assertion-executor-registry.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-153-remove-assertion-result-to-task-result-dag-phase.md`
 
 ## Reviewer Feedback
 (None yet)
