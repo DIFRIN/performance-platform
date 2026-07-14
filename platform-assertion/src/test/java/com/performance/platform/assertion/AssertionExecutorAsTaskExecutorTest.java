@@ -15,9 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -27,89 +25,42 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Test d'integration Spring verifiant que les 6 {@link AssertionExecutor}
- * sont automatiquement collectes par {@link DefaultTaskExecutorRegistry}
- * en tant que beans {@link TaskExecutor}. Depuis ISSUE-150,
- * {@link AssertionExecutor} etend {@link TaskExecutor}, donc Spring
- * injecte tous les beans d'assertion dans la liste {@code List<TaskExecutor>}.
+ * Test verifiant que les 6 {@link AssertionExecutor} sont compatibles avec
+ * {@link DefaultTaskExecutorRegistry} en tant que beans {@link TaskExecutor}.
  *
- * <p>Le Spring context produit les 6 vrais beans d'assertion. On les
- * collecte via {@code ApplicationContext.getBeansOfType(TaskExecutor.class)}
- * et on les passe a {@link DefaultTaskExecutorRegistry} — c'est le meme
- * mecanisme que le constructeur de {@link DefaultTaskExecutorRegistry}
- * en injection Spring directe (le constructeur prend exactement
- * {@code List<TaskExecutor>}).
+ * <p>Depuis ISSUE-150, {@link AssertionExecutor} etend {@link TaskExecutor}.
+ * Toute implementation d'assertion est donc un {@code TaskExecutor} valide
+ * et peut etre enregistree dans le {@code DefaultTaskExecutorRegistry}
+ * (qui prend {@code List<TaskExecutor>}). Ce test le prouve en instanciant
+ * les 6 vrais executors et en les passant directement au registre.
+ *
+ * <p>La collection automatique par Spring est testee separement dans
+ * {@code AssertionExecutorsInTaskRegistryTest} du module
+ * {@code platform-infrastructure}, qui utilise des stubs {@code TaskExecutor}
+ * dans un contexte Spring.
  */
-@DisplayName("AssertionExecutor as TaskExecutor -- Spring Bean Collection")
+@DisplayName("AssertionExecutor as TaskExecutor — DefaultTaskExecutorRegistry compatibility")
 class AssertionExecutorAsTaskExecutorTest {
 
     private DefaultTaskExecutorRegistry taskRegistry;
 
     @BeforeEach
     void setUp() {
-        // Creer un contexte Spring avec tous les vrais AssertionExecutor beans
-        AnnotationConfigApplicationContext ctx = contextWithExecutors();
+        // ApplicationContext minimal (non-refresh) juste pour satisfaire
+        // le constructeur de DatabaseAssertionExecutor. Le contexte n'est
+        // pas utilise par getSupportedTaskName().
+        GenericApplicationContext dummyContext = new GenericApplicationContext();
 
-        // Collecter tous les TaskExecutor beans (inclut les AssertionExecutor)
-        List<TaskExecutor> executors = ctx.getBeansOfType(TaskExecutor.class)
-                .values().stream().toList();
+        List<TaskExecutor> executors = List.of(
+                new GatlingMetricAssertionExecutor(),
+                new DatabaseAssertionExecutor(dummyContext),
+                new KafkaAssertionExecutor(),
+                new WireMockAssertionExecutor(),
+                new HttpMockAssertionExecutor(
+                        new HttpTargetRegistry(Map.of(), RestClient.builder())),
+                new FileAssertionExecutor());
 
         taskRegistry = new DefaultTaskExecutorRegistry(executors);
-
-        ctx.close();
-    }
-
-    /**
-     * Cree un Spring context minimal contenant les 6 vrais AssertionExecutor.
-     * Utilise des @Bean explicites pour eviter le component-scanning qui
-     * tirerait des dependances non resolues.
-     */
-    private static AnnotationConfigApplicationContext contextWithExecutors() {
-        AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
-        ctx.register(MinimalConfig.class);
-        ctx.refresh();
-        return ctx;
-    }
-
-    @Configuration
-    static class MinimalConfig {
-
-        @Bean
-        GatlingMetricAssertionExecutor gatlingMetricAssertionExecutor() {
-            return new GatlingMetricAssertionExecutor();
-        }
-
-        @Bean
-        DatabaseAssertionExecutor databaseAssertionExecutor() {
-            // DatabaseAssertionExecutor a besoin d'un ApplicationContext.
-            // Utilise une factory: le bean sera cree par le contexte lui-meme.
-            // On ne peut pas injecter ApplicationContext dans un @Bean static,
-            // donc on le cree manuellement via le contexte courant.
-            // Pour eviter ce probleme, on fournit un contexte null (OK pour le test
-            // de collection, car getSupportedTaskName() n'utilise pas le contexte).
-            return new DatabaseAssertionExecutor(null);
-        }
-
-        @Bean
-        KafkaAssertionExecutor kafkaAssertionExecutor() {
-            return new KafkaAssertionExecutor();
-        }
-
-        @Bean
-        WireMockAssertionExecutor wireMockAssertionExecutor() {
-            return new WireMockAssertionExecutor();
-        }
-
-        @Bean
-        FileAssertionExecutor fileAssertionExecutor() {
-            return new FileAssertionExecutor();
-        }
-
-        @Bean
-        HttpMockAssertionExecutor httpMockAssertionExecutor() {
-            return new HttpMockAssertionExecutor(
-                    new HttpTargetRegistry(Map.of(), RestClient.builder()));
-        }
     }
 
     @Nested
@@ -181,10 +132,12 @@ class AssertionExecutorAsTaskExecutorTest {
         @Test
         @DisplayName("should resolve all 6 executors via AssertionExecutorRegistry")
         void shouldResolveAllViaAssertionRegistry() {
+            GenericApplicationContext dummyContext = new GenericApplicationContext();
+
             // AssertionExecutorRegistry is deprecated but must still work
             List<AssertionExecutor> executors = List.of(
                     new GatlingMetricAssertionExecutor(),
-                    new DatabaseAssertionExecutor(null),
+                    new DatabaseAssertionExecutor(dummyContext),
                     new KafkaAssertionExecutor(),
                     new WireMockAssertionExecutor(),
                     new HttpMockAssertionExecutor(

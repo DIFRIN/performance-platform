@@ -2,7 +2,7 @@
 
 **PDR** : PDR-036
 **Module** : `platform-execution-engine`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P2 (normal -- nettoie le code legacy apres migration)
 **Bloquee par** : ISSUE-151 (AssertionResultMapper)
 **Estime** : S (< 1h)

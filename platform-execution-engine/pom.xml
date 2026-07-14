@@ -43,6 +43,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Assertion (AssertionResultMapper) — ISSUE-153 -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-assertion</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Transport (ExecutionTransport, TaskExecutionRequest, ExecutionEvent) — PDR-007 -->
         <dependency>
             <groupId>com.performance</groupId>
