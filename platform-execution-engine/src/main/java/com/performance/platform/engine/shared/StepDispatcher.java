@@ -2,7 +2,6 @@ package com.performance.platform.engine.shared;
 
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
-import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 
 /**
@@ -17,6 +16,10 @@ import com.performance.platform.domain.task.TaskResult;
  *
  * <p>Le {@link DagPhaseExecutor} utilise cette abstraction pour le
  * parcours DAG sans connaître la stratégie de dispatch sous-jacente.</p>
+ *
+ * <p>Depuis ISSUE-154 : le paramètre {@code Phase} a été supprimé car
+ * {@code AssertionExecutor} étend {@code TaskExecutor}, ce qui permet
+ * un chemin de résolution unifié pour toutes les phases.</p>
  */
 @FunctionalInterface
 public interface StepDispatcher {
@@ -28,8 +31,7 @@ public interface StepDispatcher {
      *
      * @param execStep le step à exécuter (contient step + dagLevel + deps)
      * @param context  le contexte d'exécution courant
-     * @param phase    la phase en cours (PREPARATION / INJECTION / ASSERTION)
      * @return le résultat de l'exécution du step
      */
-    TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase);
+    TaskResult dispatch(ExecutionStep execStep, ExecutionContext context);
 }

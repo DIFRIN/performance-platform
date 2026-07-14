@@ -9,7 +9,6 @@ import com.performance.platform.domain.execution.RetryPolicy;
 import com.performance.platform.domain.execution.TaskCompletionPolicy;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.engine.availability.AgentAvailabilityChecker;
@@ -59,7 +58,7 @@ public class RemoteStepDispatcher implements StepDispatcher {
     }
 
     @Override
-    public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context, Phase phase) {
+    public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
         StepDefinition stepDef = execStep.step();
 
         try {
