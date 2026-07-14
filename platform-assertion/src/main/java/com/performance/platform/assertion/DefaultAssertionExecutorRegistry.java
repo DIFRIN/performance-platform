@@ -19,7 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * Thread-safe : utilise {@link ConcurrentHashMap} pour le stockage.
  * La resolution se fait par {@link AssertionExecutor#getSupportedAssertionName()}
  * sans jamais utiliser de if/switch sur un type.
+ *
+ * @deprecated Depuis v2.0, les {@link AssertionExecutor} sont des {@link TaskExecutor}
+ *             et sont automatiquement collectes par {@code DefaultTaskExecutorRegistry}.
+ *             Utiliser {@code DefaultTaskExecutorRegistry} a la place.
  */
+@Deprecated(since = "2.0", forRemoval = true)
 @Component
 public class DefaultAssertionExecutorRegistry implements AssertionExecutorRegistry {
 

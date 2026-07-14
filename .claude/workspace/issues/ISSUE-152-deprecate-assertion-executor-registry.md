@@ -2,7 +2,7 @@
 
 **PDR** : PDR-036
 **Module** : `platform-assertion`, `platform-infrastructure`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P2 (normal -- les registres co-existent, pas de regression fonctionnelle)
 **Bloquee par** : ISSUE-150 (AssertionExecutor extends TaskExecutor)
 **Estime** : M (1-2h)

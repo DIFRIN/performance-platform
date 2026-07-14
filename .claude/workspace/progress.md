@@ -162,8 +162,8 @@
 | ISSUE-148 | - AssertionSummary Domain Record | DONE | PDR-034 | — |
 | ISSUE-149 | - AssertionSample Domain Record | DONE | PDR-034 | ISSUE-148 |
 | ISSUE-150 | - AssertionExecutor extends TaskExecutor | DONE | PDR-035 | ISSUE-148 |
-| ISSUE-151 | - AssertionResultMapper Utility | APPROVED | PDR-036 | ISSUE-148, ISSUE-150 |
-| ISSUE-152 | Deprecate AssertionExecutorRegistry + unify bean collection | WAITING | PDR-036 | ISSUE-150 |
+| ISSUE-151 | - AssertionResultMapper Utility | DONE | PDR-036 | ISSUE-148, ISSUE-150 |
+| ISSUE-152 | - Deprecate AssertionExecutorRegistry + Unify Spring Bean Collection | IN_PROGRESS | PDR-036 | ISSUE-150 |
 | ISSUE-153 | Remove assertionResultToTaskResult from DagPhaseExecutor | WAITING | PDR-036 | ISSUE-151 |
 | ISSUE-154 | Unify DagPhaseExecutor assertion execution path | WAITING | PDR-037 | ISSUE-150, ISSUE-153 |
 | ISSUE-155 | Deprecate TaskExecutorLookup.findAssertionExecutor | WAITING | PDR-037 | ISSUE-154 |
@@ -943,3 +943,6 @@
 | 2026-07-14 | ISSUE-151 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-07-14 | ISSUE-151 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-14 | ISSUE-151 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-14 | ISSUE-151 | APPROVED → DONE | issue-next.sh |
+| 2026-07-14 | ISSUE-152 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-07-14 | ISSUE-152 | IN_REVIEW → APPROVED | Reviewer approved |
