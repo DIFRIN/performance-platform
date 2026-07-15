@@ -75,7 +75,7 @@ class AssertionExecutorAsTaskExecutorTest {
             assertThat(taskNames)
                     .containsExactlyInAnyOrder(
                             "gatling-metric",
-                            "database",
+                            "database-assertion",
                             "kafka",
                             "wiremock",
                             "http-mock",
@@ -90,9 +90,9 @@ class AssertionExecutorAsTaskExecutorTest {
         }
 
         @Test
-        @DisplayName("should resolve database via getFor()")
-        void shouldResolveDatabase() {
-            TaskExecutor executor = taskRegistry.getFor("database");
+        @DisplayName("should resolve database-assertion via getFor()")
+        void shouldResolveDatabaseAssertion() {
+            TaskExecutor executor = taskRegistry.getFor("database-assertion");
             assertThat(executor).isInstanceOf(DatabaseAssertionExecutor.class);
         }
 
@@ -149,7 +149,7 @@ class AssertionExecutorAsTaskExecutorTest {
 
             assertThat(assertionRegistry.getSupportedAssertionNames())
                     .containsExactlyInAnyOrder(
-                            "gatling-metric", "database", "kafka",
+                            "gatling-metric", "database-assertion", "kafka",
                             "wiremock", "http-mock", "file");
         }
     }

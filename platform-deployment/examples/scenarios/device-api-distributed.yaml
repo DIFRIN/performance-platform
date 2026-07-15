@@ -89,7 +89,7 @@ scenario:
 
     # Step 6 : Vérifier intégrité base de données
     - id: assert-db-intact
-      task: database
+      task: database-assertion
       phase: ASSERTION
       dependsOn: [load-test]
       requiredContexts: [load-test]

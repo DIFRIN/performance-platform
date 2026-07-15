@@ -41,11 +41,11 @@ import java.util.concurrent.Future;
  * Toute operation I/O bloquante (connexion DB, execution SQL) est
  * executee sous Virtual Threads.
  * <p>
- * Annotee {@code @Assertion(name = "database")} pour la
+ * Annotee {@code @Assertion(name = "database-assertion")} pour la
  * decouverte automatique par le {@code DefaultAssertionExecutorRegistry}.
  */
 @Component
-@Assertion(name = "database",
+@Assertion(name = "database-assertion",
            description = "SQL count/exists assertions")
 public class DatabaseAssertionExecutor implements AssertionExecutor {
 
@@ -68,7 +68,7 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
 
     @Override
     public String getSupportedAssertionName() {
-        return "database";
+        return "database-assertion";
     }
 
     @Override

@@ -13,7 +13,7 @@
 # Configuration des agents (dans docker-compose ou application.yml) :
 #   mock-agent:     agent.supported-tasks: [mock-server, http-client]
 #   gatling-agent:  agent.supported-tasks: [gatling, gatling-metric]
-#   standard-agent: agent.supported-tasks: [http-mock, database, kafka]
+#   standard-agent: agent.supported-tasks: [http-mock, database-assertion, kafka]
 #
 # Prerequis :
 #   docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml up -d

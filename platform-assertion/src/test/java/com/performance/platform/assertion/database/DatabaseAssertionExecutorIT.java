@@ -98,7 +98,7 @@ class DatabaseAssertionExecutorIT {
     }
 
     private static StepDefinition step(Map<String, Object> params) {
-        return new StepDefinition(ASSERTION_ID, "database", ASSERTION,
+        return new StepDefinition(ASSERTION_ID, "database-assertion", ASSERTION,
                 params, null, null, null, null);
     }
 
@@ -360,6 +360,6 @@ class DatabaseAssertionExecutorIT {
     @Test
     @DisplayName("should return supported assertion name")
     void shouldReturnSupportedAssertionName() {
-        assertThat(executor.getSupportedAssertionName()).isEqualTo("database");
+        assertThat(executor.getSupportedAssertionName()).isEqualTo("database-assertion");
     }
 }
