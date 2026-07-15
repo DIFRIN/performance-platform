@@ -38,7 +38,27 @@ web:
 #   AGENT_SUPPORTED_TASKS=mock-server,http-client,gatling
 #   → agent.supported-tasks: [mock-server, http-client, gatling]
 agent:
-  supported-tasks: []
+  supported-tasks:
+    # Preparation / Injection tasks (existants)
+    # - performance_test
+    # - gatling
+    # - database
+    # - mock-server
+    # - kafka-consumer
+    # - kafka-producer
+    # - http-client
+    # - shell
+    # - docker
+    # - filesystem
+    #
+    # Assertion tasks (ISSUE-156)
+    # - gatling-metric      # assertion Gatling metrics
+    # - kafka               # assertion Kafka metrics
+    # - wiremock            # assertion WireMock request count
+    # - http-mock           # assertion HTTP mock calls
+    # - file                # assertion fichier (EXISTS, CHECKSUM, etc.)
+    # - database-assertion  # assertion base de donnees (SQL count/exists)
+    []
 
 # ---- Transport distribue ----
 transport:

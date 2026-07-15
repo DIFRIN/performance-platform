@@ -2,7 +2,7 @@
 
 **PDR** : PDR-037
 **Module** : `platform-app`, `platform-assertion`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorite** : P1 (critique -- sans cette config, les agents distribues ne peuvent pas executer d'assertions)
 **Bloquee par** : ISSUE-150 (AssertionExecutor extends TaskExecutor), ISSUE-152 (registre unifie)
 **Estime** : M (1-3h)

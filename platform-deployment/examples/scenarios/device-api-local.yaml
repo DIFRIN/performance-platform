@@ -96,7 +96,7 @@ scenario:
       timeout: 2m
 
     - id: assert-db-intact
-      task: database
+      task: database-assertion
       phase: ASSERTION
       dependsOn: [load-test]
       requiredContexts: [load-test]

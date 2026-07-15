@@ -78,7 +78,7 @@ scenario:
         sourceTaskId: customer-api-load
       timeout: 10s
     - id: verify-db-row-count
-      task: database
+      task: database-assertion
       phase: ASSERTION
       requiredContexts: [customer-api-load]
       dependsOn: [customer-api-load]
