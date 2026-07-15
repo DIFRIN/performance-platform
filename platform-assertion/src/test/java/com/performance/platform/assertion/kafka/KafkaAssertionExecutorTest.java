@@ -11,12 +11,10 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.performance.platform.domain.scenario.Phase.ASSERTION;
@@ -80,6 +78,12 @@ class KafkaAssertionExecutorTest {
                                                   String operator, double value) {
         return Map.of("metric", "lag", "operator", operator,
                 "value", value, "refTaskId", refTaskId);
+    }
+
+    @BeforeAll
+    static void setupLocale() {
+        Locale.setDefault(Locale.US);
+        Locale.setDefault(Locale.Category.FORMAT, Locale.US);
     }
 
     @BeforeEach

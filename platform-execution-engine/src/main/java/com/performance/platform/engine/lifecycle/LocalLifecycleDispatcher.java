@@ -1,6 +1,6 @@
 package com.performance.platform.engine.lifecycle;
 
-import com.performance.platform.agent.local.LocalAgent;
+import com.performance.platform.agent.runtime.AgentRuntime;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,14 +16,14 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
 public class LocalLifecycleDispatcher implements ExecutionLifecycleDispatcher {
 
-    private final LocalAgent localAgent;
+    private final AgentRuntime localAgentRuntime;
 
-    public LocalLifecycleDispatcher(LocalAgent localAgent) {
-        this.localAgent = localAgent;
+    public LocalLifecycleDispatcher(AgentRuntime localAgentRuntime) {
+        this.localAgentRuntime = localAgentRuntime;
     }
 
     @Override
     public void dispatch(ExecutionLifecycleSignal signal) {
-        localAgent.onLifecycleSignal(signal);
+        localAgentRuntime.onLifecycleSignal(signal);
     }
 }

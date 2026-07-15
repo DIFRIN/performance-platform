@@ -92,7 +92,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * {@code @SpringBootTest} — incompatible Spring Boot 4.0.0 + JUnit 5.11.4).
  */
 @DisplayName("LocalFlowE2E")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class LocalFlowE2ETest {
 
     @Container
@@ -161,7 +161,7 @@ class LocalFlowE2ETest {
         // 7. LocalExecutionEngine
         var engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
-                eventPublisher, lookup);
+                eventPublisher, signal -> { /* no-op */ }, lookup);
 
         // 8. Scenario parsing
         var parser = new YamlScenarioParser();

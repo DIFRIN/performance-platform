@@ -95,7 +95,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * {@code @SpringBootTest}).
  */
 @DisplayName("LocalModeAllTasksE2E")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @Tag("integration")
 class LocalModeAllTasksE2ETest {
 
@@ -175,7 +175,7 @@ class LocalModeAllTasksE2ETest {
         // 8. LocalExecutionEngine
         var engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
-                eventPublisher, lookup);
+                eventPublisher, signal -> { /* no-op */ }, lookup);
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();

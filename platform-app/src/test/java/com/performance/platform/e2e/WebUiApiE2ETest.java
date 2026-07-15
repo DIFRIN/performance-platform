@@ -114,7 +114,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * All components are wired manually (no {@code @SpringBootTest}).
  */
 @DisplayName("WebUiApiE2E")
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @Tag("integration")
 class WebUiApiE2ETest {
 
@@ -189,7 +189,7 @@ class WebUiApiE2ETest {
         // 8. LocalExecutionEngine
         var engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
-                eventPublisher, lookup);
+                eventPublisher, signal -> { /* no-op */ }, lookup);
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();

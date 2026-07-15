@@ -303,20 +303,22 @@ public class ReportRendererContractTest {
 
         private static final byte[] PDF_MAGIC = "%PDF".getBytes(StandardCharsets.US_ASCII);
 
-        private final ReportRenderer renderer = new com.performance.platform.reporting.render.PdfReportRenderer(
-                new com.performance.platform.reporting.render.HtmlReportRenderer());
+        private ReportRenderer renderer() {
+            return new com.performance.platform.reporting.render.PdfReportRenderer(
+                    new com.performance.platform.reporting.render.HtmlReportRenderer());
+        }
 
         @Test
         @DisplayName("getFormat() must return PDF")
         void getFormatMustReturnPdf() {
-            assertEquals(ReportFormat.PDF, renderer.getFormat());
+            assertEquals(ReportFormat.PDF, renderer().getFormat());
         }
 
         @Test
         @DisplayName("render() must return non-null non-empty bytes for full report")
         void renderMustReturnNonEmptyBytes() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
-            byte[] result = renderer.render(report);
+            byte[] result = renderer().render(report);
             assertNotNull(result);
             assertTrue(result.length > 4, "PDF output must be larger than magic bytes alone");
         }
@@ -325,7 +327,7 @@ public class ReportRendererContractTest {
         @DisplayName("render() must start with %PDF magic bytes")
         void renderMustStartWithPdfMagic() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
-            byte[] result = renderer.render(report);
+            byte[] result = renderer().render(report);
             for (int i = 0; i < PDF_MAGIC.length; i++) {
                 assertEquals(PDF_MAGIC[i], result[i],
                         "PDF byte " + i + " must match '%PDF' magic");
@@ -336,7 +338,7 @@ public class ReportRendererContractTest {
         @DisplayName("render() must contain %%EOF trailer")
         void renderMustContainEofTrailer() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
-            byte[] result = renderer.render(report);
+            byte[] result = renderer().render(report);
             var content = new String(result, StandardCharsets.ISO_8859_1);
             assertTrue(content.contains("%%EOF"),
                     "PDF must contain %%EOF trailer marker");
@@ -346,7 +348,7 @@ public class ReportRendererContractTest {
         @DisplayName("render() must contain PDF structural markers")
         void renderMustContainStructuralMarkers() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
-            byte[] result = renderer.render(report);
+            byte[] result = renderer().render(report);
             var content = new String(result, StandardCharsets.ISO_8859_1);
             assertTrue(content.contains("/Type"),
                     "PDF must contain /Type marker");
@@ -358,7 +360,7 @@ public class ReportRendererContractTest {
         @DisplayName("render() must handle empty report gracefully")
         void renderMustHandleEmptyReport() {
             CampaignReport report = createEmptyReport(Verdict.SUCCESS);
-            byte[] result = renderer.render(report);
+            byte[] result = renderer().render(report);
             assertNotNull(result);
             assertTrue(result.length > 4, "Empty report PDF must be non-empty");
             for (int i = 0; i < PDF_MAGIC.length; i++) {
@@ -372,8 +374,8 @@ public class ReportRendererContractTest {
         void renderMustProduceDifferentOutputForDifferentVerdicts() {
             CampaignReport report1 = createFullReport(Verdict.SUCCESS, "All good");
             CampaignReport report2 = createFullReport(Verdict.FAILED, "Critical error");
-            byte[] result1 = renderer.render(report1);
-            byte[] result2 = renderer.render(report2);
+            byte[] result1 = renderer().render(report1);
+            byte[] result2 = renderer().render(report2);
             assertNotEquals(result1.length, result2.length,
                     "Different verdicts must produce different PDF sizes");
         }
@@ -382,8 +384,8 @@ public class ReportRendererContractTest {
         @DisplayName("render() must produce consistent output for same input")
         void renderMustBeIdempotent() {
             CampaignReport report = createFullReport(Verdict.SUCCESS, "All good");
-            byte[] result1 = renderer.render(report);
-            byte[] result2 = renderer.render(report);
+            byte[] result1 = renderer().render(report);
+            byte[] result2 = renderer().render(report);
             assertEquals(result1.length, result2.length,
                     "Same input must produce same-size PDF");
         }

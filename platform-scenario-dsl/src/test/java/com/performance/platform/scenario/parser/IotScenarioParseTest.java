@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("IoT Scenario Parse Verification")
 class IotScenarioParseTest {
 
-    private static final String BASE = "/mnt/c/Dev/wsl-shared/performance-platform/platform-deployment/examples/scenarios/";
+    private static final String BASE = "../platform-deployment/examples/scenarios/";
 
     private final YamlScenarioParser parser = new YamlScenarioParser();
 
