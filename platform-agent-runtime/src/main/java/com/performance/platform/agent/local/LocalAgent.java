@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
  * {@link ConcurrentHashMap}, {@link AtomicReference}, {@link AtomicInteger}.
  * L'exécution des tâches utilise {@code Thread.ofVirtual()}.
  */
-public class LocalAgent implements AgentRuntime {
+public class LocalAgent implements AgentRuntime, com.performance.platform.application.ports.out.LifecycleSignalHandler {
 
     private static final Logger log = LoggerFactory.getLogger(LocalAgent.class);
 

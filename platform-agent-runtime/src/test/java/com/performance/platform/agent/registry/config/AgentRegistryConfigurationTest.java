@@ -1,7 +1,11 @@
 package com.performance.platform.agent.registry.config;
 
 import com.performance.platform.agent.registry.AgentRegistry;
+import com.performance.platform.agent.registry.AgentTtlMonitor;
 import com.performance.platform.agent.registry.InMemoryAgentRegistry;
+import com.performance.platform.agent.registration.AgentLifecycleIngestion;
+import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AgentRegistryConfigurationTest {
 
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
-            .withUserConfiguration(AgentRegistryConfiguration.class);
+            .withUserConfiguration(AgentRegistryConfiguration.class)
+            .withBean(ExecutionTransport.class, InMemoryExecutionTransport::new);
 
     // ========================================================================
     // ORCHESTRATOR (le bean est cree)
@@ -51,6 +56,18 @@ class AgentRegistryConfigurationTest {
                     "runtime.role=ORCHESTRATOR"
             ).run(ctx -> {
                 assertThat(ctx).hasSingleBean(AgentRegistry.class);
+            });
+        }
+
+        @Test
+        @DisplayName("should create lifecycle ingestion and TTL monitor beans")
+        void shouldCreateLifecycleWiringBeans() {
+            runner.withPropertyValues(
+                    "runtime.mode=DISTRIBUTED",
+                    "runtime.role=ORCHESTRATOR"
+            ).run(ctx -> {
+                assertThat(ctx).hasSingleBean(AgentLifecycleIngestion.class);
+                assertThat(ctx).hasSingleBean(AgentTtlMonitor.class);
             });
         }
     }

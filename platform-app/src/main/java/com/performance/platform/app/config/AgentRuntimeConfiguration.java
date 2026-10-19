@@ -85,7 +85,7 @@ public class AgentRuntimeConfiguration {
      */
     @Bean
     @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
-    public AgentRuntime localAgentRuntime(
+    public LocalAgent localAgentRuntime(
             InMemoryExecutionTransport transport,
             List<TaskExecutor> taskExecutors,
             ObjectProvider<StatefulResourceCleaner> cleanersProvider) {
