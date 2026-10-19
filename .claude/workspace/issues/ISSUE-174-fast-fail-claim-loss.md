@@ -2,7 +2,7 @@
 
 **PDR** : PDR-045
 **Module** : `platform-execution-engine`
-**Statut** : IN_PROGRESS
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : ISSUE-171, ISSUE-173
 **Estime** : L (3-6h)

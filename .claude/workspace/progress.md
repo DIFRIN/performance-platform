@@ -186,7 +186,7 @@
 | ISSUE-171 | TaskCorrelationTracker Eviction + Loss + Completion Signal | IN_PROGRESS | PDR-044 | - |
 | ISSUE-172 | Typed Lifecycle Payload Codec + AGENT_LOST | DONE | PDR-045 | - |
 | ISSUE-173 | Lifecycle Ingestion Bridge + AgentTtlMonitor Wiring | DONE | PDR-045 | ISSUE-172 |
-| ISSUE-174 | Fast-Fail on Claim Loss + AgentLossRecoveryIT | IN_PROGRESS | PDR-045 | ISSUE-171, ISSUE-173 |
+| ISSUE-174 | Fast-Fail on Claim Loss + AgentLossRecoveryIT | DONE | PDR-045 | ISSUE-171, ISSUE-173 |
 | ISSUE-175 | Single Runtime Resolution incl. CLI args (T3) | IN_PROGRESS | PDR-046 | - |
 | ISSUE-176 | DSL Strictness + Version + Line-Numbered Errors (T7) | IN_PROGRESS | PDR-047 | - |
 | ISSUE-177 | Cut execution-engine → agent-runtime Edge | DONE | PDR-048 | - |
@@ -1014,3 +1014,5 @@
 | 2026-10-19 | ISSUE-190 | WAITING → DONE | Completion par CompletableFuture signale par le tracker, suppression du polling 500 ms. |
 
 | 2026-10-19 | ISSUE-169 | WAITING → DONE | Convention *Test/*E2ETest/*IT documentée ; E2E Testcontainers renommés *IT ; surefire exclut *IT. |
+
+| 2026-10-19 | ISSUE-174 | IN_PROGRESS → DONE | AgentLossRecoveryIT (T4) : fast-fail en 150 ms au lieu du timeout 30 s. |

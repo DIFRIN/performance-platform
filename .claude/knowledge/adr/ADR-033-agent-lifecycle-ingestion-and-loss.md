@@ -43,8 +43,8 @@ L'audit a mis en évidence une chaîne opérationnellement absente :
 - Un agent perdu libère les steps en cours sans attendre le timeout.
 - Les événements tardifs sont ignorés : `onTransportEvent` sort si
   `tracker.taskIdFor(...)` est nul après `release`.
-- Un IT de perte d'agent (`AgentLossRecoveryIT`) reste à écrire (ISSUE-174
-  IN_PROGRESS) ; la logique est couverte par des tests unitaires.
+- `AgentLossRecoveryIT` (T4) vérifie le fast-fail de bout en bout via le
+  transport in-memory (150 ms au lieu du timeout de 30 s).
 
 ## Preuves
 
