@@ -34,7 +34,6 @@ import com.performance.platform.infrastructure.persistence.ExecutionStateEntity;
 import com.performance.platform.infrastructure.persistence.TaskResultEntity;
 import com.performance.platform.infrastructure.persistence.mapper.ExecutionStateMapper;
 import com.performance.platform.infrastructure.persistence.mapper.TaskResultMapper;
-import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.reporting.ReportEngine;
 import com.performance.platform.reporting.engine.DefaultReportEngine;
@@ -141,14 +140,9 @@ class LocalFlowE2ETest {
                 return switch (taskName) {
                     case "filesystem" -> filesystemExecutor;
                     case "shell" -> shellExecutor;
+                    case "file" -> fileAssertionExecutor;
                     default -> null;
                 };
-            }
-
-            @Override
-            public AssertionExecutor findAssertionExecutor(String assertionName) {
-                if ("file".equals(assertionName)) return fileAssertionExecutor;
-                return null;
             }
         };
 
@@ -161,7 +155,7 @@ class LocalFlowE2ETest {
         // 7. LocalExecutionEngine
         var engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
-                eventPublisher, lookup);
+                eventPublisher, signal -> { }, lookup);
 
         // 8. Scenario parsing
         var parser = new YamlScenarioParser();

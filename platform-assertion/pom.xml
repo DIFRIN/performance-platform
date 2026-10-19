@@ -29,13 +29,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Gatling injection (InjectionResult pour assertions gatling-metric) -->
-        <dependency>
-            <groupId>com.performance</groupId>
-            <artifactId>platform-injection-gatling</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- Spring Context (@Component, injection) -->
         <dependency>
             <groupId>org.springframework</groupId>

@@ -49,7 +49,7 @@ import java.util.regex.Pattern;
  * Virtual Threads.
  * <p>
  * Annotee {@code @Assertion(name = "http-mock")} pour la decouverte
- * automatique par le {@code DefaultAssertionExecutorRegistry}.
+ * automatique par le {@code DefaultTaskExecutorRegistry}.
  * <p>
  * <b>CC-02 :</b> Pipeline cohesif d'evaluation WireMock inseparable —
  * resolution source (target/wiremockUrl/refTaskId) → appel WireMock

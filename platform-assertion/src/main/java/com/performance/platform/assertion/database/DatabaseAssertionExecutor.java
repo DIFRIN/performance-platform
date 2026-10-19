@@ -42,7 +42,7 @@ import java.util.concurrent.Future;
  * executee sous Virtual Threads.
  * <p>
  * Annotee {@code @Assertion(name = "database-assertion")} pour la
- * decouverte automatique par le {@code DefaultAssertionExecutorRegistry}.
+ * decouverte automatique par le {@code DefaultTaskExecutorRegistry}.
  */
 @Component
 @Assertion(name = "database-assertion",

@@ -152,13 +152,6 @@ class LocalModeAllTasksE2ETest {
                 return switch (taskName) {
                     case "mock-server" -> mockServerStub;
                     case "gatling" -> gatlingStub;
-                    default -> null;
-                };
-            }
-
-            @Override
-            public AssertionExecutor findAssertionExecutor(String assertionName) {
-                return switch (assertionName) {
                     case "http-mock" -> httpMockAssertionStub;
                     case "gatling-metric" -> gatlingMetricAssertionStub;
                     default -> null;
@@ -175,7 +168,7 @@ class LocalModeAllTasksE2ETest {
         // 8. LocalExecutionEngine
         var engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
-                eventPublisher, lookup);
+                eventPublisher, signal -> { }, lookup);
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();

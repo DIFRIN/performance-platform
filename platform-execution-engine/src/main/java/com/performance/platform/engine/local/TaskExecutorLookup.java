@@ -1,6 +1,5 @@
 package com.performance.platform.engine.local;
 
-import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 
 /**
@@ -20,20 +19,4 @@ public interface TaskExecutorLookup {
      */
     TaskExecutor findTaskExecutor(String taskName);
 
-    /**
-     * Trouve l'{@link AssertionExecutor} pour un nom d'assertion donne.
-     *
-     * @param assertionName le nom de l'assertion (ASSERTION)
-     * @return l'executeur d'assertion, ou null si non trouve
-     * @deprecated Depuis PDR-035, utiliser {@link #findTaskExecutor(String)}
-     *             qui resout aussi les assertions (AssertionExecutor extends TaskExecutor).
-     */
-    @Deprecated(since = "2.0", forRemoval = true)
-    default AssertionExecutor findAssertionExecutor(String assertionName) {
-        TaskExecutor executor = findTaskExecutor(assertionName);
-        if (executor instanceof AssertionExecutor ae) {
-            return ae;
-        }
-        return null;
-    }
 }

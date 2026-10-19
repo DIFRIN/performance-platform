@@ -685,25 +685,18 @@ class ExecutionEngineE2ETest {
 
     static class StubTaskExecutorLookup implements TaskExecutorLookup {
         private final Map<String, TaskExecutor> taskExecutors = new HashMap<>();
-        private final Map<String, AssertionExecutor> assertionExecutors = new HashMap<>();
 
         void registerTask(String taskName, TaskExecutor executor) {
             taskExecutors.put(taskName, executor);
         }
 
         void registerAssertion(String assertionName, AssertionExecutor executor) {
-            assertionExecutors.put(assertionName, executor);
             taskExecutors.put(assertionName, executor); // AssertionExecutor extends TaskExecutor
         }
 
         @Override
         public TaskExecutor findTaskExecutor(String taskName) {
             return taskExecutors.get(taskName);
-        }
-
-        @Override
-        public AssertionExecutor findAssertionExecutor(String assertionName) {
-            return assertionExecutors.get(assertionName);
         }
     }
 

@@ -170,39 +170,27 @@ class LocalExecutionEngineTest {
 
     static class StubTaskExecutorLookup implements TaskExecutorLookup {
         private final Map<String, TaskExecutor> taskExecutors = new HashMap<>();
-        private final Map<String, AssertionExecutor> assertionExecutors = new HashMap<>();
         private final List<String> taskLookups = new ArrayList<>();
-        private final List<String> assertionLookups = new ArrayList<>();
 
         void registerTask(String taskName, TaskExecutor executor) {
             taskExecutors.put(taskName, executor);
         }
 
         void registerAssertion(String assertionName, AssertionExecutor executor) {
-            assertionExecutors.put(assertionName, executor);
             taskExecutors.put(assertionName, executor); // AssertionExecutor extends TaskExecutor
         }
 
         List<String> getTaskLookups() { return List.copyOf(taskLookups); }
-        List<String> getAssertionLookups() { return List.copyOf(assertionLookups); }
 
         void reset() {
             taskExecutors.clear();
-            assertionExecutors.clear();
             taskLookups.clear();
-            assertionLookups.clear();
         }
 
         @Override
         public TaskExecutor findTaskExecutor(String taskName) {
             taskLookups.add(taskName);
             return taskExecutors.get(taskName);
-        }
-
-        @Override
-        public AssertionExecutor findAssertionExecutor(String assertionName) {
-            assertionLookups.add(assertionName);
-            return assertionExecutors.get(assertionName);
         }
     }
 

@@ -28,7 +28,7 @@ import java.util.Objects;
  * {@link AssertionOperator}.
  * <p>
  * Annotee {@code @Assertion(name = "kafka")} pour la decouverte
- * automatique par le {@code DefaultAssertionExecutorRegistry}.
+ * automatique par le {@code DefaultTaskExecutorRegistry}.
  */
 @Component
 @Assertion(name = "kafka",

@@ -1,7 +1,7 @@
 package com.performance.platform.assertion.e2e;
 
-import com.performance.platform.assertion.DefaultAssertionExecutorRegistry;
-import com.performance.platform.assertion.UnsupportedAssertionNameException;
+import com.performance.platform.infrastructure.executor.DefaultTaskExecutorRegistry;
+import com.performance.platform.infrastructure.executor.UnsupportedTaskNameException;
 import com.performance.platform.domain.assertion.AssertionOperator;
 import com.performance.platform.domain.assertion.AssertionResult;
 import com.performance.platform.domain.assertion.AssertionStatus;
@@ -39,15 +39,20 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Assertion Pipeline E2E")
 class AssertionPipelineE2ETest {
 
-    private DefaultAssertionExecutorRegistry registry;
+    private DefaultTaskExecutorRegistry registry;
     private ExecutionContext context;
     private static final ExecutionId EXECUTION_ID = ExecutionId.of("assert-e2e");
     private static final ScenarioId SCENARIO_ID = ScenarioId.of("assert-scenario");
 
     @BeforeEach
     void setUp() {
-        registry = new DefaultAssertionExecutorRegistry(List.of());
+        registry = new DefaultTaskExecutorRegistry(List.of());
         context = ExecutionContext.initial(EXECUTION_ID, SCENARIO_ID);
+    }
+
+    /** Resout un nom d'assertion depuis le registre unifie. */
+    private AssertionExecutor assertion(String name) {
+        return (AssertionExecutor) registry.getFor(name);
     }
 
     // ========================================================================
@@ -99,11 +104,11 @@ class AssertionPipelineE2ETest {
             });
 
             // Execute all three assertion types
-            var result1 = registry.getFor("gatling-metric")
+            var result1 = assertion("gatling-metric")
                     .evaluate(context, buildStep("assert-1", "gatling-metric"));
-            var result2 = registry.getFor("database")
+            var result2 = assertion("database")
                     .evaluate(context, buildStep("assert-2", "database"));
-            var result3 = registry.getFor("file")
+            var result3 = assertion("file")
                     .evaluate(context, buildStep("assert-3", "file"));
 
             assertEquals(1, gatlingCalls.get());
@@ -131,7 +136,7 @@ class AssertionPipelineE2ETest {
                 public String getSupportedAssertionName() { return "latency-check"; }
             });
 
-            AssertionResult result = registry.getFor("latency-check")
+            AssertionResult result = assertion("latency-check")
                     .evaluate(context, buildStep("lat-1", "latency-check"));
 
             assertEquals(AssertionStatus.PASSED, result.status());
@@ -155,7 +160,7 @@ class AssertionPipelineE2ETest {
                 public String getSupportedAssertionName() { return "error-rate"; }
             });
 
-            AssertionResult result = registry.getFor("error-rate")
+            AssertionResult result = assertion("error-rate")
                     .evaluate(context, buildStep("err-1", "error-rate"));
 
             assertEquals(AssertionStatus.FAILED, result.status());
@@ -164,10 +169,10 @@ class AssertionPipelineE2ETest {
         }
 
         @Test
-        @DisplayName("E2E-AS-04: Unknown assertion name throws UnsupportedAssertionNameException")
+        @DisplayName("E2E-AS-04: Unknown assertion name throws UnsupportedTaskNameException")
         void unknownAssertionNameThrows() {
-            assertThrows(UnsupportedAssertionNameException.class,
-                    () -> registry.getFor("non-existent-assertion-xyz"));
+            assertThrows(UnsupportedTaskNameException.class,
+                    () -> assertion("non-existent-assertion-xyz"));
         }
     }
 
@@ -219,20 +224,20 @@ class AssertionPipelineE2ETest {
             });
 
             // Run SLA checks with realistic values
-            AssertionResult p95Result = registry.getFor("p95-check")
+            AssertionResult p95Result = assertion("p95-check")
                     .evaluate(context, buildStep("sla-p95", "p95-check",
                             Map.of("p95Ms", 320.0, "threshold", 500.0)));
             results.add(p95Result);
             assertEquals(AssertionStatus.PASSED, p95Result.status());
 
-            AssertionResult errResult = registry.getFor("error-rate-check")
+            AssertionResult errResult = assertion("error-rate-check")
                     .evaluate(context, buildStep("sla-err", "error-rate-check",
                             Map.of("errorRate", 0.002, "threshold", 0.01)));
             results.add(errResult);
             assertEquals(AssertionStatus.PASSED, errResult.status());
 
             // Test failing case
-            AssertionResult failingP95 = registry.getFor("p95-check")
+            AssertionResult failingP95 = assertion("p95-check")
                     .evaluate(context, buildStep("sla-p95-fail", "p95-check",
                             Map.of("p95Ms", 750.0, "threshold", 500.0)));
             results.add(failingP95);
@@ -256,7 +261,7 @@ class AssertionPipelineE2ETest {
 
             boolean allPassed = true;
             for (int i = 0; i < 5; i++) {
-                AssertionResult r = registry.getFor("generic-pass")
+                AssertionResult r = assertion("generic-pass")
                         .evaluate(context, buildStep("pass-" + i, "generic-pass"));
                 allPassed &= r.isPassed();
             }
@@ -284,7 +289,7 @@ class AssertionPipelineE2ETest {
 
             List<AssertionResult> results = new ArrayList<>();
             for (int i = 0; i < 5; i++) {
-                results.add(registry.getFor("parity-check")
+                results.add(assertion("parity-check")
                         .evaluate(context, buildStep("parity-" + i, "parity-check")));
             }
 
@@ -328,7 +333,7 @@ class AssertionPipelineE2ETest {
                 public String getSupportedAssertionName() { return "dup"; }
             });
 
-            AssertionResult result = registry.getFor("dup")
+            AssertionResult result = assertion("dup")
                     .evaluate(context, buildStep("dup-1", "dup"));
             assertEquals("second", result.description());
         }
@@ -353,7 +358,7 @@ class AssertionPipelineE2ETest {
             for (int i = 0; i < threads; i++) {
                 final int idx = i;
                 threadArray[i] = new Thread(() -> {
-                    registry.getFor("concurrent").evaluate(context,
+                    assertion("concurrent").evaluate(context,
                             buildStep("conc-" + idx, "concurrent"));
                 });
                 threadArray[i].start();

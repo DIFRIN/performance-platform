@@ -4,7 +4,6 @@ import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.application.usecase.GetExecutionStatusService;
-import com.performance.platform.assertion.AssertionExecutorRegistry;
 import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.infrastructure.executor.TaskExecutorRegistry;
 import com.performance.platform.scenario.parser.YamlScenarioParser;
@@ -24,8 +23,8 @@ import org.springframework.web.client.RestClient;
  * <p>Ne cree QUE les beans qui ne peuvent pas etre self-wires dans leur
  * module d'origine, a savoir :
  * <ol>
- *   <li>La glue cross-module {@link TaskExecutorLookup} qui fait le pont
- *       entre {@code TaskExecutorRegistry} et {@code AssertionExecutorRegistry}</li>
+ *   <li>La glue cross-module {@link TaskExecutorLookup} adossee au registre
+ *       unifie {@code TaskExecutorRegistry}</li>
  *   <li>Le cablage du module framework-free {@code platform-scenario-dsl}
  *       ({@link YamlScenarioParser}, {@link ScenarioValidator},
  *       {@link ScenarioParsingUseCase})</li>
@@ -52,23 +51,18 @@ public class RuntimeAssemblyConfiguration {
     // ========================================================================
 
     /**
-     * Cree le {@link TaskExecutorLookup} qui fait le pont entre les registres
-     * de taches et d'assertions.
+     * Cree le {@link TaskExecutorLookup} adosse au registre unifie.
      *
-     * <p>Exception assumee par ADR-026 : {@code platform-app} est le seul
-     * module qui depend a la fois de {@code platform-infrastructure}
-     * ({@link TaskExecutorRegistry}) et de {@code platform-assertion}
-     * ({@link AssertionExecutorRegistry}).
+     * <p>Depuis PDR-035/PDR-036, les {@code AssertionExecutor} sont des
+     * {@code TaskExecutor} et sont collectes par le meme
+     * {@link TaskExecutorRegistry}. Aucun second registre n'est necessaire.</p>
      *
-     * @param taskRegistry      le registre des TaskExecutor (Spring bean)
-     * @param assertionRegistry le registre des AssertionExecutor (Spring bean)
-     * @return le lookup bridge
+     * @param taskRegistry le registre des TaskExecutor (Spring bean)
+     * @return le lookup
      */
     @Bean
-    public TaskExecutorLookup taskExecutorLookup(
-            TaskExecutorRegistry taskRegistry,
-            AssertionExecutorRegistry assertionRegistry) {
-        return new RegistryTaskExecutorLookup(taskRegistry, assertionRegistry);
+    public TaskExecutorLookup taskExecutorLookup(TaskExecutorRegistry taskRegistry) {
+        return new RegistryTaskExecutorLookup(taskRegistry);
     }
 
     // ========================================================================

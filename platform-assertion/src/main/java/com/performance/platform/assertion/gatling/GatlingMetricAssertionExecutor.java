@@ -32,7 +32,7 @@ import java.util.Objects;
  * et la compare a un seuil via un {@link AssertionOperator}.
  * <p>
  * Annotee {@code @Assertion(name = "gatling-metric")} pour la
- * decouverte automatique par le {@code DefaultAssertionExecutorRegistry}.
+ * decouverte automatique par le {@code DefaultTaskExecutorRegistry}.
  */
 @Component
 @Assertion(name = "gatling-metric",

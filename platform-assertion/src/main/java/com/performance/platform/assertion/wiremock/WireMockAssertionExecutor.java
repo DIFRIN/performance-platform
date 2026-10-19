@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  * All HTTP I/O runs under Virtual Threads.
  * <p>
  * Annotated {@code @Assertion(name = "wiremock")} for auto-discovery by
- * {@code DefaultAssertionExecutorRegistry}.
+ * {@code DefaultTaskExecutorRegistry}.
  * <p>
  * <b>CC-02:</b> Cohesive pipeline — resolve mock URL, call admin API,
  * extract count from JSON, evaluate operator, build result. Each step

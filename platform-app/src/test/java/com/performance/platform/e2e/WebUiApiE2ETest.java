@@ -171,12 +171,10 @@ class WebUiApiE2ETest {
         var lookup = new TaskExecutorLookup() {
             @Override
             public TaskExecutor findTaskExecutor(String taskName) {
+                if ("stub-assertion".equals(taskName)) {
+                    return stubAssertion;
+                }
                 return "stub-task".equals(taskName) ? stubExecutor : null;
-            }
-
-            @Override
-            public AssertionExecutor findAssertionExecutor(String assertionName) {
-                return "stub-assertion".equals(assertionName) ? stubAssertion : null;
             }
         };
 
@@ -189,7 +187,7 @@ class WebUiApiE2ETest {
         // 8. LocalExecutionEngine
         var engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
-                eventPublisher, lookup);
+                eventPublisher, signal -> { }, lookup);
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();
