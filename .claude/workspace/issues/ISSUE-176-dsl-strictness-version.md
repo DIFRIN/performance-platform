@@ -2,7 +2,7 @@
 
 **PDR** : PDR-047
 **Module** : `platform-scenario-dsl`
-**Statut** : IN_PROGRESS
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : —
 **Estime** : L (3-6h)
