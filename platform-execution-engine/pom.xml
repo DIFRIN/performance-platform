@@ -43,11 +43,14 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Assertion (AssertionResultMapper) — ISSUE-153 -->
+        <!-- Assertion (AssertionResultMapper) — tests uniquement.
+             Le code principal ne depend plus de platform-assertion : le
+             registre de taches resout aussi les assertions (PDR-035). -->
         <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-assertion</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- Transport (ExecutionTransport, TaskExecutionRequest, ExecutionEvent) — PDR-007 -->
@@ -57,12 +60,9 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Agent Runtime (LocalAgent) — pour dispatch lifecycle signals en mode LOCAL -->
-        <dependency>
-            <groupId>com.performance</groupId>
-            <artifactId>platform-agent-runtime</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+        <!-- Agent Runtime : plus de dependance compile.
+             Le dispatch lifecycle LOCAL passe par le port
+             application.ports.out.LifecycleSignalHandler. -->
 
         <!-- Spring context pour @Service, ApplicationEventPublisher, etc. -->
         <dependency>

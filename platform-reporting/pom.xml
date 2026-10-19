@@ -21,12 +21,13 @@
             <artifactId>platform-application</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- InjectionResult (PDR-013) -->
+        <!-- Logging structure -->
         <dependency>
-            <groupId>com.performance</groupId>
-            <artifactId>platform-injection-gatling</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
         </dependency>
+
         <!-- Jackson pour sérialisation JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
