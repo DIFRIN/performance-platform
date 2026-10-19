@@ -3,9 +3,9 @@ scenario:
   name: Distributed Multi-Agent Scenario
   version: 1.0.0
   tags: [distributed, multi-agent]
+  taskAvailabilityTimeoutSeconds: 60
   execution:
     mode: DISTRIBUTED
-    taskAvailabilityTimeoutSeconds: 60
   steps:
     - id: agent1-prep
       task: shell

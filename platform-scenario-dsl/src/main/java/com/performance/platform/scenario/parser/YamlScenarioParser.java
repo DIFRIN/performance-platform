@@ -18,9 +18,17 @@ import com.performance.platform.scenario.parser.dto.ScenarioYamlDto;
 import com.performance.platform.scenario.parser.dto.ScenarioYamlRoot;
 import com.performance.platform.scenario.parser.dto.StepYamlDto;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
+import org.yaml.snakeyaml.nodes.MappingNode;
+import org.yaml.snakeyaml.nodes.Node;
+import org.yaml.snakeyaml.nodes.NodeTuple;
+import org.yaml.snakeyaml.nodes.ScalarNode;
+import org.yaml.snakeyaml.nodes.SequenceNode;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -29,6 +37,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementation de ScenarioParser utilisant SnakeYAML pour le parsing brut
@@ -37,6 +46,17 @@ import java.util.Map;
  * 0 dependance Spring.
  */
 public class YamlScenarioParser implements ScenarioParser {
+
+    private static final Set<String> ROOT_KEYS = Set.of("scenario", "loadModels");
+    private static final Set<String> SCENARIO_KEYS = Set.of(
+            "id", "name", "version", "tags", "metadata", "execution",
+            "taskAvailabilityTimeoutSeconds", "steps");
+    private static final Set<String> EXECUTION_KEYS = Set.of("mode");
+    private static final Set<String> STEP_KEYS = Set.of(
+            "id", "task", "phase", "requiredContexts", "dependsOn",
+            "parameters", "timeout", "retryPolicy");
+    private static final Set<String> RETRY_KEYS = Set.of(
+            "maxAttempts", "initialDelay", "multiplier", "maxDelay", "retryableExceptions");
 
     private final Yaml snakeYaml;
     private final ObjectMapper objectMapper;
@@ -49,8 +69,10 @@ public class YamlScenarioParser implements ScenarioParser {
      */
     public YamlScenarioParser(Duration defaultTimeout) {
         this.snakeYaml = new Yaml();
+        // Defense en profondeur : meme si la validation structurelle est
+        // contournee, Jackson refuse une propriete inconnue.
         this.objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
         this.defaultTimeout = defaultTimeout;
     }
 
@@ -63,7 +85,13 @@ public class YamlScenarioParser implements ScenarioParser {
 
     @Override
     public ScenarioDefinition parse(InputStream yamlContent) throws ScenarioParsingException {
-        return parseInternal(loadYaml(yamlContent));
+        try {
+            return parse(new String(yamlContent.readAllBytes(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new ScenarioParsingException(
+                "Failed to read scenario YAML", List.of(e.getMessage())
+            );
+        }
     }
 
     @Override
@@ -73,6 +101,7 @@ public class YamlScenarioParser implements ScenarioParser {
                 "Failed to parse scenario YAML", List.of("YAML content is empty or null")
             );
         }
+        validateStructure(yamlContent);
         return parseInternal(loadYaml(yamlContent));
     }
 
@@ -89,12 +118,132 @@ public class YamlScenarioParser implements ScenarioParser {
 
     // --- Internals ---
 
-    private Map<String, Object> loadYaml(InputStream inputStream) {
-        return snakeYaml.load(inputStream);
+    private Map<String, Object> loadYaml(String content) {
+        try {
+            return snakeYaml.load(content);
+        } catch (YAMLException e) {
+            throw new ScenarioParsingException(
+                "Failed to parse scenario YAML", List.of("YAML syntax error: " + e.getMessage()));
+        }
     }
 
-    private Map<String, Object> loadYaml(String content) {
-        return snakeYaml.load(content);
+    /**
+     * Valide la structure du document avant le mapping Jackson.
+     * <p>
+     * Refuse les proprietes inconnues et rapporte le numero de ligne :
+     * une faute de frappe ({@code duraton:}) ne doit jamais produire un
+     * scenario silencieusement different de celui ecrit. Les sections
+     * libres ({@code parameters}, {@code metadata}, {@code loadModels})
+     * restent ouvertes.
+     */
+    private void validateStructure(String content) {
+        List<String> errors = new ArrayList<>();
+        Node root;
+        try {
+            root = snakeYaml.compose(new StringReader(content));
+        } catch (YAMLException e) {
+            errors.add("YAML syntax error: " + e.getMessage());
+            throw new ScenarioParsingException(
+                "Failed to parse scenario YAML", errors);
+        }
+        if (root == null) {
+            errors.add("YAML content is empty or null");
+            throw new ScenarioParsingException("Failed to parse scenario YAML", errors);
+        }
+
+        MappingNode rootMapping = asMapping(root, "root", errors);
+        if (rootMapping != null) {
+            validateKeys(rootMapping, "root", ROOT_KEYS, errors);
+            for (NodeTuple tuple : rootMapping.getValue()) {
+                String key = keyOf(tuple);
+                if ("scenario".equals(key)) {
+                    MappingNode scenario = asMapping(tuple.getValueNode(), "scenario", errors);
+                    if (scenario != null) {
+                        validateScenario(scenario, errors);
+                    }
+                } else if ("loadModels".equals(key)
+                        && !(tuple.getValueNode() instanceof MappingNode)) {
+                    errors.add(location(tuple.getValueNode())
+                            + "'loadModels' must be a mapping in root");
+                }
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ScenarioParsingException(
+                "Failed to parse scenario YAML: " + errors.size() + " error(s)", errors);
+        }
+    }
+
+    private void validateScenario(MappingNode scenario, List<String> errors) {
+        validateKeys(scenario, "scenario", SCENARIO_KEYS, errors);
+        for (NodeTuple tuple : scenario.getValue()) {
+            String key = keyOf(tuple);
+            if ("execution".equals(key)) {
+                MappingNode execution = asMapping(tuple.getValueNode(), "scenario.execution", errors);
+                if (execution != null) {
+                    validateKeys(execution, "scenario.execution", EXECUTION_KEYS, errors);
+                }
+            } else if ("steps".equals(key)) {
+                validateSteps(tuple.getValueNode(), errors);
+            }
+        }
+    }
+
+    private void validateSteps(Node stepsNode, List<String> errors) {
+        if (!(stepsNode instanceof SequenceNode sequence)) {
+            errors.add(location(stepsNode) + "'steps' must be a sequence in scenario");
+            return;
+        }
+        int index = 0;
+        for (Node item : sequence.getValue()) {
+            String path = "scenario.steps[" + index + "]";
+            MappingNode step = asMapping(item, path, errors);
+            if (step != null) {
+                validateKeys(step, path, STEP_KEYS, errors);
+                for (NodeTuple tuple : step.getValue()) {
+                    if ("retryPolicy".equals(keyOf(tuple))) {
+                        MappingNode retry = asMapping(tuple.getValueNode(), path + ".retryPolicy", errors);
+                        if (retry != null) {
+                            validateKeys(retry, path + ".retryPolicy", RETRY_KEYS, errors);
+                        }
+                    }
+                }
+            }
+            index++;
+        }
+    }
+
+    private void validateKeys(MappingNode node, String path, Set<String> allowed,
+                              List<String> errors) {
+        for (NodeTuple tuple : node.getValue()) {
+            if (!(tuple.getKeyNode() instanceof ScalarNode keyNode)) {
+                continue;
+            }
+            String key = keyNode.getValue();
+            if (!allowed.contains(key)) {
+                errors.add(location(keyNode) + "unknown property '" + key + "' in " + path);
+            }
+        }
+    }
+
+    private MappingNode asMapping(Node node, String path, List<String> errors) {
+        if (node instanceof MappingNode mapping) {
+            return mapping;
+        }
+        errors.add(location(node) + "'" + path + "' must be a mapping");
+        return null;
+    }
+
+    private static String keyOf(NodeTuple tuple) {
+        return tuple.getKeyNode() instanceof ScalarNode scalar ? scalar.getValue() : "";
+    }
+
+    private static String location(Node node) {
+        if (node == null || node.getStartMark() == null) {
+            return "";
+        }
+        return "line " + (node.getStartMark().getLine() + 1) + ": ";
     }
 
     private ScenarioDefinition parseInternal(Map<String, Object> rawYaml) throws ScenarioParsingException {

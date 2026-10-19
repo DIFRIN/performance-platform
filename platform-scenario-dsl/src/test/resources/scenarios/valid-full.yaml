@@ -7,9 +7,9 @@ scenario:
     owner: team-a
     jira: PERF-456
     environment: staging
+  taskAvailabilityTimeoutSeconds: 120
   execution:
     mode: LOCAL
-    taskAvailabilityTimeoutSeconds: 120
   steps:
     - id: purge-customer-db
       task: database

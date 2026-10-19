@@ -1012,21 +1012,25 @@ class YamlScenarioParserTest {
         }
 
         @Test
-        @DisplayName("unknown YAML fields are silently ignored")
-        void unknownFieldsIgnored() {
+        @DisplayName("unknown YAML fields are rejected with a line number")
+        void unknownFieldsRejected() {
             String yaml = """
                 scenario:
                   id: test
                   name: Test
                   version: 1.0.0
                   taskAvailabilityTimeoutSeconds: 120
-                  customField: should-be-ignored
+                  customField: should-be-rejected
                 """;
 
-            // Should not throw
-            ScenarioDefinition scenario = parser.parse(yaml);
-            assertNotNull(scenario);
-            assertEquals("test", scenario.id().value());
+            var exception = assertThrows(ScenarioParsingException.class,
+                    () -> parser.parse(yaml));
+            assertTrue(exception.getErrors().stream()
+                            .anyMatch(e -> e.contains("customField")),
+                    "error should name the offending property: " + exception.getErrors());
+            assertTrue(exception.getErrors().stream()
+                            .anyMatch(e -> e.startsWith("line 6:")),
+                    "error should carry the YAML line number: " + exception.getErrors());
         }
     }
 }
