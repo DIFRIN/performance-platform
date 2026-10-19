@@ -34,7 +34,8 @@ public class ExecutionEngineConfiguration {
                 props.taskAvailabilityTimeout(),
                 props.taskExecutionTimeout(),
                 props.workInProgressResetInterval(),
-                props.completionPolicy()
+                props.completionPolicy(),
+                props.resultSelectionPolicy()
         );
     }
 }

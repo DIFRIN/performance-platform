@@ -1,5 +1,6 @@
 package com.performance.platform.engine.config;
 
+import com.performance.platform.application.config.ResultSelectionPolicy;
 import com.performance.platform.domain.execution.TaskCompletionPolicy;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -17,13 +18,15 @@ import java.time.Duration;
  * @param taskExecutionTimeout delai max d'execution d'une tache (defaut 300s)
  * @param workInProgressResetInterval intervalle de reset des taches en cours (defaut 100s)
  * @param completionPolicy politique de completions (defaut FIRST_COMPLETE)
+ * @param resultSelectionPolicy selection du resultat multi-claim (defaut FIRST_COMPLETED)
  */
 @ConfigurationProperties(prefix = "execution")
 public record ExecutionEngineProperties(
         Duration taskAvailabilityTimeout,
         Duration taskExecutionTimeout,
         Duration workInProgressResetInterval,
-        TaskCompletionPolicy completionPolicy
+        TaskCompletionPolicy completionPolicy,
+        ResultSelectionPolicy resultSelectionPolicy
 ) {
 
     /** Valeurs par defaut pour tous les champs. */
@@ -39,6 +42,9 @@ public record ExecutionEngineProperties(
         }
         if (completionPolicy == null) {
             completionPolicy = TaskCompletionPolicy.FIRST_COMPLETE;
+        }
+        if (resultSelectionPolicy == null) {
+            resultSelectionPolicy = ResultSelectionPolicy.FIRST_COMPLETED;
         }
     }
 }

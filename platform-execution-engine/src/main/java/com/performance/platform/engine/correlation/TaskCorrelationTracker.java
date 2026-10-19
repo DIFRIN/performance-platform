@@ -1,5 +1,6 @@
 package com.performance.platform.engine.correlation;
 
+import com.performance.platform.application.config.ResultSelectionPolicy;
 import com.performance.platform.domain.execution.TaskCompletionPolicy;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
@@ -7,7 +8,9 @@ import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.task.TaskResult;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -109,6 +112,24 @@ public interface TaskCorrelationTracker {
      * @param agentId l'agent perdu
      */
     void onAgentLost(AgentId agentId);
+
+    /**
+     * Retourne les resultats dans l'ordre de completion des agents.
+     * Ordre deterministe, jamais l'ordre d'iteration d'une map.
+     *
+     * @param messageId identifiant du message
+     * @return liste immuable des resultats, dans l'ordre de completion
+     */
+    List<TaskResult> resultsInCompletionOrder(MessageId messageId);
+
+    /**
+     * Selectionne un resultat selon la politique demandee.
+     *
+     * @param messageId identifiant du message
+     * @param policy    politique de selection
+     * @return le resultat selectionne, ou vide si aucun agent n'a complete
+     */
+    Optional<TaskResult> selectResult(MessageId messageId, ResultSelectionPolicy policy);
 
     /**
      * Libere l'etat de correlation d'un messageId.

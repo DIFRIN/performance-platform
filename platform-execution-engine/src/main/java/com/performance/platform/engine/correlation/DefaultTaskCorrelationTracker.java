@@ -1,5 +1,6 @@
 package com.performance.platform.engine.correlation;
 
+import com.performance.platform.application.config.ResultSelectionPolicy;
 import com.performance.platform.domain.execution.TaskCompletionPolicy;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
@@ -11,12 +12,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Implementation thread-safe de {@link TaskCorrelationTracker} utilisant
@@ -59,7 +64,10 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
     @Override
     public void onCompleted(MessageId messageId, AgentId agentId, TaskResult result) {
         CorrelationState state = states.computeIfAbsent(messageId, k -> new CorrelationState());
-        state.completedAgents.add(agentId);
+        if (state.completedAgents.add(agentId)) {
+            // Premiere completion de cet agent : enregistrer l'ordre.
+            state.completionOrder.add(agentId);
+        }
         state.results.put(agentId, result);
         log.info("action=task_completed messageId={} agentId={} taskStatus={} completedCount={}/{}",
                 messageId.value(), agentId.value(), result.status(),
@@ -137,6 +145,36 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
     }
 
     @Override
+    public List<TaskResult> resultsInCompletionOrder(MessageId messageId) {
+        Objects.requireNonNull(messageId, "messageId must not be null");
+        CorrelationState state = states.get(messageId);
+        if (state == null) {
+            return List.of();
+        }
+        var ordered = new ArrayList<TaskResult>(state.completionOrder.size());
+        for (AgentId agentId : state.completionOrder) {
+            TaskResult result = state.results.get(agentId);
+            if (result != null) {
+                ordered.add(result);
+            }
+        }
+        return List.copyOf(ordered);
+    }
+
+    @Override
+    public Optional<TaskResult> selectResult(MessageId messageId, ResultSelectionPolicy policy) {
+        Objects.requireNonNull(policy, "policy must not be null");
+        List<TaskResult> ordered = resultsInCompletionOrder(messageId);
+        if (ordered.isEmpty()) {
+            return Optional.empty();
+        }
+        return switch (policy) {
+            case FIRST_COMPLETED -> Optional.of(ordered.getFirst());
+            case LAST_COMPLETED -> Optional.of(ordered.getLast());
+        };
+    }
+
+    @Override
     public void release(MessageId messageId) {
         Objects.requireNonNull(messageId, "messageId must not be null");
         if (states.remove(messageId) != null) {
@@ -175,5 +213,7 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
         final Set<AgentId> completedAgents = ConcurrentHashMap.newKeySet();
         final Set<AgentId> failedAgents = ConcurrentHashMap.newKeySet();
         final ConcurrentHashMap<AgentId, TaskResult> results = new ConcurrentHashMap<>();
+        /** Ordre atomique des premieres completions (determinisme de selection). */
+        final List<AgentId> completionOrder = new CopyOnWriteArrayList<>();
     }
 }

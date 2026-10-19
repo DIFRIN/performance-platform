@@ -1,6 +1,7 @@
 package com.performance.platform.engine.remote;
 
 import com.performance.platform.application.config.ExecutionConfig;
+import com.performance.platform.application.config.ResultSelectionPolicy;
 import com.performance.platform.application.exception.NoAvailableAgentException;
 import com.performance.platform.domain.event.TaskDispatched;
 import com.performance.platform.domain.execution.ExecutionContext;
@@ -21,6 +22,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Implémentation distribuée du {@link StepDispatcher}.
@@ -112,18 +114,21 @@ public class RemoteStepDispatcher implements StepDispatcher {
 
         while (System.currentTimeMillis() < deadlineMs) {
             if (tracker.isComplete(messageId, policy)) {
-                var results = tracker.getResults(messageId);
-                if (results != null && !results.isEmpty()) {
-                    // Return first successful result, or first if none succeeded
-                    var successResult = results.values().stream()
+                List<TaskResult> ordered = tracker.resultsInCompletionOrder(messageId);
+                if (!ordered.isEmpty()) {
+                    // Selection deterministe par ordre de completion, avec
+                    // preference pour un resultat reussi.
+                    ResultSelectionPolicy selectionPolicy = config.resultSelectionPolicy();
+                    List<TaskResult> candidates = selectionPolicy == ResultSelectionPolicy.LAST_COMPLETED
+                            ? ordered.reversed()
+                            : ordered;
+                    TaskResult selected = candidates.stream()
                             .filter(TaskResult::isSuccess)
-                            .findFirst();
-                    if (successResult.isPresent()) {
-                        log.debug("action=completion_satisfied messageId={} taskId={} policy={}",
-                                messageId.value(), taskId.value(), policy);
-                        return successResult.get();
-                    }
-                    return results.values().iterator().next();
+                            .findFirst()
+                            .orElse(candidates.getFirst());
+                    log.debug("action=completion_satisfied messageId={} taskId={} policy={} selection={}",
+                            messageId.value(), taskId.value(), policy, selectionPolicy);
+                    return selected;
                 }
                 return TaskResult.failed(taskId, taskId.value(),
                         Duration.ZERO, "No results received", null);
