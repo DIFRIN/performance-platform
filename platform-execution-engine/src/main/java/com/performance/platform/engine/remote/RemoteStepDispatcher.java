@@ -78,19 +78,25 @@ public class RemoteStepDispatcher implements StepDispatcher {
             // 4. Track for correlation (before dispatch to avoid race)
             tracker.trackDispatched(messageId, stepDef.id(), context.executionId());
 
-            // 5. Dispatch via transport
-            transport.dispatchTask(request);
+            // Release the correlation state in all cases: without this, every
+            // dispatched message leaks a permanent entry in the tracker (C3).
+            try {
+                // 5. Dispatch via transport
+                transport.dispatchTask(request);
 
-            // 6. Publish TaskDispatched domain event
-            eventPublisher.publishEvent(new TaskDispatched(
-                    context.executionId(), stepDef.id(), stepDef.taskName(),
-                    messageId, Instant.now()));
+                // 6. Publish TaskDispatched domain event
+                eventPublisher.publishEvent(new TaskDispatched(
+                        context.executionId(), stepDef.id(), stepDef.taskName(),
+                        messageId, Instant.now()));
 
-            log.info("action=task_dispatched taskId={} taskName={} messageId={}",
-                    stepDef.id().value(), stepDef.taskName(), messageId.value());
+                log.info("action=task_dispatched taskId={} taskName={} messageId={}",
+                        stepDef.id().value(), stepDef.taskName(), messageId.value());
 
-            // 7. Await completion (blocking within Virtual Thread)
-            return awaitCompletion(messageId, stepDef.id(), config);
+                // 7. Await completion (blocking within Virtual Thread)
+                return awaitCompletion(messageId, stepDef.id(), config);
+            } finally {
+                tracker.release(messageId);
+            }
         } catch (NoAvailableAgentException e) {
             log.warn("action=no_agent_available taskName={} error={}", stepDef.taskName(), e.getMessage());
             return TaskResult.failed(stepDef.id(), stepDef.taskName(), Duration.ZERO, e.getMessage(), e);

@@ -407,4 +407,113 @@ class DefaultTaskCorrelationTrackerTest {
             assertEquals(numAgents, tracker.claimsFor(messageId).size());
         }
     }
+
+    // ── Agent loss ──────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("onAgentLost")
+    class AgentLostTests {
+
+        @Test
+        @DisplayName("should make ALL_COMPLETE satisfiable when a claiming agent is lost")
+        void shouldMakeAllCompleteSatisfiable() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+            tracker.onClaimed(messageId, agentB);
+            tracker.onCompleted(messageId, agentA, successResult());
+
+            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
+
+            tracker.onAgentLost(agentB);
+
+            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
+        }
+
+        @Test
+        @DisplayName("should fast-fail FIRST_COMPLETE when every claiming agent is lost")
+        void shouldFastFailFirstCompleteWhenAllLost() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+            tracker.onClaimed(messageId, agentB);
+
+            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
+
+            tracker.onAgentLost(agentA);
+            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
+
+            tracker.onAgentLost(agentB);
+            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
+        }
+
+        @Test
+        @DisplayName("should not fail completed claims of the lost agent")
+        void shouldNotFailCompletedClaims() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+            tracker.onCompleted(messageId, agentA, successResult());
+
+            tracker.onAgentLost(agentA);
+
+            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
+            assertEquals(1, tracker.getResults(messageId).size());
+        }
+
+        @Test
+        @DisplayName("should be a no-op for an agent with no claims")
+        void shouldBeNoOpForUnknownAgent() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+
+            tracker.onAgentLost(agentB);
+
+            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
+        }
+
+        private TaskResult successResult() {
+            return TaskResult.success(taskId, "perf-test", Duration.ofSeconds(2), Map.of("p95", "120ms"));
+        }
+    }
+
+    // ── Release / memory ────────────────────────────────────────
+
+    @Nested
+    @DisplayName("release")
+    class ReleaseTests {
+
+        @Test
+        @DisplayName("should remove all state for a messageId")
+        void shouldRemoveState() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+
+            assertEquals(1, tracker.stateCount());
+
+            tracker.release(messageId);
+
+            assertEquals(0, tracker.stateCount());
+            assertTrue(tracker.claimsFor(messageId).isEmpty());
+            assertTrue(tracker.getResults(messageId).isEmpty());
+        }
+
+        @Test
+        @DisplayName("should be idempotent for an unknown messageId")
+        void shouldBeIdempotent() {
+            assertDoesNotThrow(() -> tracker.release(messageId));
+            assertEquals(0, tracker.stateCount());
+        }
+
+        @Test
+        @DisplayName("should not grow unbounded across dispatch/release cycles")
+        void shouldNotGrowUnbounded() {
+            for (int i = 0; i < 10_000; i++) {
+                var msg = MessageId.generate();
+                tracker.trackDispatched(msg, taskId, executionId);
+                tracker.onClaimed(msg, agentA);
+                tracker.onFailed(msg, agentA, "done");
+                tracker.release(msg);
+            }
+
+            assertEquals(0, tracker.stateCount());
+        }
+    }
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -90,7 +91,11 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
             return false;
         }
         return switch (policy) {
-            case FIRST_COMPLETE -> !state.completedAgents.isEmpty();
+            // Fast-fail: si tous les agents claimers ont echoue (agent perdu
+            // inclus), aucun succes n'est plus possible.
+            case FIRST_COMPLETE -> !state.completedAgents.isEmpty()
+                    || (!state.claimedAgents.isEmpty()
+                        && state.failedAgents.containsAll(state.claimedAgents));
             case ALL_COMPLETE -> isAllComplete(state);
         };
     }
@@ -108,6 +113,44 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
     public TaskId taskIdFor(MessageId messageId) {
         CorrelationState state = states.get(messageId);
         return state != null ? state.taskId : null;
+    }
+
+    @Override
+    public void onAgentLost(AgentId agentId) {
+        Objects.requireNonNull(agentId, "agentId must not be null");
+        int affected = 0;
+        for (var entry : states.entrySet()) {
+            CorrelationState state = entry.getValue();
+            if (state.claimedAgents.contains(agentId)
+                    && !state.completedAgents.contains(agentId)
+                    && state.failedAgents.add(agentId)) {
+                affected++;
+                log.warn("action=claim_failed_agent_lost messageId={} agentId={} taskId={}",
+                        entry.getKey().value(), agentId.value(),
+                        state.taskId != null ? state.taskId.value() : "?");
+            }
+        }
+        if (affected > 0) {
+            log.warn("action=agent_lost_claims_failed agentId={} affectedMessages={}",
+                    agentId.value(), affected);
+        }
+    }
+
+    @Override
+    public void release(MessageId messageId) {
+        Objects.requireNonNull(messageId, "messageId must not be null");
+        if (states.remove(messageId) != null) {
+            log.debug("action=correlation_released messageId={} trackedMessages={}",
+                    messageId.value(), states.size());
+        }
+    }
+
+    /**
+     * Nombre d'etats de correlation actuellement suivis.
+     * Visible au niveau package pour les tests de fuite memoire.
+     */
+    int stateCount() {
+        return states.size();
     }
 
     /**

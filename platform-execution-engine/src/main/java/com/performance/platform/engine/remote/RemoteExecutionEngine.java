@@ -4,6 +4,7 @@ import com.performance.platform.application.config.ExecutionConfig;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.NoAvailableAgentException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
+import com.performance.platform.domain.event.AgentLost;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.PhaseCompleted;
 import com.performance.platform.domain.event.PhaseStarted;
@@ -45,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -145,6 +147,23 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
         var remoteDispatcher = new RemoteStepDispatcher(transport, availabilityChecker, tracker, config, eventPublisher);
         this.dagPhaseExecutor = new DagPhaseExecutor(remoteDispatcher, lifecycleDispatcher);
         transport.subscribe(this::onTransportEvent);
+    }
+
+    // ==================== Agent lifecycle ====================
+
+    /**
+     * Invalide les claims d'un agent perdu : les steps en cours n'attendent
+     * plus le timeout complet ({@code ALL_COMPLETE} devient satisfiable,
+     * {@code FIRST_COMPLETE} echoue des que tous les claimers sont perdus).
+     *
+     * @param event evenement publie par le moniteur TTL ou l'ingestion
+     *              des evenements de cycle de vie
+     */
+    @EventListener
+    public void onAgentLost(AgentLost event) {
+        tracker.onAgentLost(event.agentId());
+        log.warn("action=agent_lost_claims_invalidated agentId={} reason={}",
+                event.agentId().value(), event.reason());
     }
 
     // ==================== UseCase API ====================

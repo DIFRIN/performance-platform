@@ -98,4 +98,23 @@ public interface TaskCorrelationTracker {
      * @return le taskId, ou {@code null}
      */
     TaskId taskIdFor(MessageId messageId);
+
+    /**
+     * Notifie le tracker qu'un agent est perdu (heartbeat expire).
+     * Tous les claims de cet agent qui ne sont ni completes ni echoues
+     * sont marques comme echoues, afin de rendre une politique
+     * {@code ALL_COMPLETE} satisfiable et de declencher un fast-fail
+     * plutot qu'une attente jusqu'au timeout.
+     *
+     * @param agentId l'agent perdu
+     */
+    void onAgentLost(AgentId agentId);
+
+    /**
+     * Libere l'etat de correlation d'un messageId.
+     * A appeler une fois le resultat consomme, sous peine de fuite memoire.
+     *
+     * @param messageId identifiant du message termine
+     */
+    void release(MessageId messageId);
 }
