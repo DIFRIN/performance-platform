@@ -509,3 +509,5 @@
 |---|---|---|---|
 | `RuntimeConfig` (record) / `RuntimeConfigResolver` | ⬜ PLANNED (ADR-032) | PDR-046 | ISSUE-175 |
 | `LocalLifecycleDispatcher` (déplacé engine → app) | ⬜ PLANNED | PDR-048 | ISSUE-177 |
+
+- `LocalDistributedEquivalenceIT` (T2) — test de garde LOCAL ≡ DISTRIBUTED (ISSUE-170).

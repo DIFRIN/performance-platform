@@ -182,7 +182,7 @@
 | ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | DONE | PDR-042 | ISSUE-166 |
 | ISSUE-168 | CI Pipeline GitHub Actions | DONE | PDR-043 | - |
 | ISSUE-169 | Test-Tier Normalization | DONE | PDR-043 | - |
-| ISSUE-170 | LocalDistributedEquivalenceTest (T2) | WAITING | PDR-043 | ISSUE-169 |
+| ISSUE-170 | LocalDistributedEquivalenceTest (T2) | DONE | PDR-043 | ISSUE-169 |
 | ISSUE-171 | TaskCorrelationTracker Eviction + Loss + Completion Signal | DONE | PDR-044 | - |
 | ISSUE-172 | Typed Lifecycle Payload Codec + AGENT_LOST | DONE | PDR-045 | - |
 | ISSUE-173 | Lifecycle Ingestion Bridge + AgentTtlMonitor Wiring | DONE | PDR-045 | ISSUE-172 |
@@ -1024,3 +1024,5 @@
 | 2026-10-19 | ISSUE-178 | WAITING → DONE | Port HttpTargetResolver ; assertion ne dépend plus de infrastructure en compile (test-scope conservé). |
 
 | 2026-10-19 | ISSUE-171 | IN_PROGRESS → DONE | Eviction, onAgentLost et signal de completion livrés (voir aussi ISSUE-190). |
+
+| 2026-10-19 | ISSUE-170 | WAITING → DONE | T2 : LocalDistributedEquivalenceIT — même verdict et mêmes statuts via LOCAL et DISTRIBUTED (transport in-memory + agent réel). |

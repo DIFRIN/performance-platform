@@ -2,7 +2,7 @@
 
 **PDR** : PDR-043
 **Module** : `platform-app`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P0 (test le plus précieux du repo — gate de la fusion A1)
 **Bloquée par** : —
 **Estime** : L (3-6h)
