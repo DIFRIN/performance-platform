@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -59,6 +60,7 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
         state.claimedAgents.add(agentId);
         log.info("action=task_claimed messageId={} agentId={} claimCount={}",
                 messageId.value(), agentId.value(), state.claimedAgents.size());
+        signalCompletedPolicies(state);
     }
 
     @Override
@@ -72,6 +74,7 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
         log.info("action=task_completed messageId={} agentId={} taskStatus={} completedCount={}/{}",
                 messageId.value(), agentId.value(), result.status(),
                 state.completedAgents.size(), state.claimedAgents.size());
+        signalCompletedPolicies(state);
     }
 
     @Override
@@ -81,6 +84,7 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
         log.warn("action=task_failed messageId={} agentId={} error={} failedCount={}/{}",
                 messageId.value(), agentId.value(), error,
                 state.failedAgents.size(), state.claimedAgents.size());
+        signalCompletedPolicies(state);
     }
 
     @Override
@@ -95,9 +99,10 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
     @Override
     public boolean isComplete(MessageId messageId, TaskCompletionPolicy policy) {
         CorrelationState state = states.get(messageId);
-        if (state == null) {
-            return false;
-        }
+        return state != null && isComplete(state, policy);
+    }
+
+    private static boolean isComplete(CorrelationState state, TaskCompletionPolicy policy) {
         return switch (policy) {
             // Fast-fail: si tous les agents claimers ont echoue (agent perdu
             // inclus), aucun succes n'est plus possible.
@@ -106,6 +111,35 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
                         && state.failedAgents.containsAll(state.claimedAgents));
             case ALL_COMPLETE -> isAllComplete(state);
         };
+    }
+
+    @Override
+    public CompletableFuture<Void> completionSignal(MessageId messageId,
+                                                    TaskCompletionPolicy policy) {
+        Objects.requireNonNull(messageId, "messageId must not be null");
+        Objects.requireNonNull(policy, "policy must not be null");
+        CorrelationState state = states.get(messageId);
+        if (state == null) {
+            // Message inconnu (ou deja libere) : ne pas bloquer l'appelant.
+            return CompletableFuture.completedFuture(null);
+        }
+        CompletableFuture<Void> signal = state.completionSignals
+                .computeIfAbsent(policy, p -> new CompletableFuture<>());
+        if (isComplete(state, policy)) {
+            signal.complete(null);
+        }
+        return signal;
+    }
+
+    /**
+     * Complete les futurs de toutes les politiques devenues satisfaites.
+     */
+    private static void signalCompletedPolicies(CorrelationState state) {
+        state.completionSignals.forEach((policy, signal) -> {
+            if (isComplete(state, policy)) {
+                signal.complete(null);
+            }
+        });
     }
 
     @Override
@@ -136,6 +170,7 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
                 log.warn("action=claim_failed_agent_lost messageId={} agentId={} taskId={}",
                         entry.getKey().value(), agentId.value(),
                         state.taskId != null ? state.taskId.value() : "?");
+                signalCompletedPolicies(state);
             }
         }
         if (affected > 0) {
@@ -177,7 +212,10 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
     @Override
     public void release(MessageId messageId) {
         Objects.requireNonNull(messageId, "messageId must not be null");
-        if (states.remove(messageId) != null) {
+        CorrelationState removed = states.remove(messageId);
+        if (removed != null) {
+            // Ne pas laisser des appelants bloques sur un etat libere.
+            removed.completionSignals.values().forEach(signal -> signal.complete(null));
             log.debug("action=correlation_released messageId={} trackedMessages={}",
                     messageId.value(), states.size());
         }
@@ -195,7 +233,7 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
      * Verifie la completion ALL_COMPLETE : tous les agents ayant claim
      * ont soit complete, soit echoue. Necessite au moins un claim.
      */
-    private boolean isAllComplete(CorrelationState state) {
+    private static boolean isAllComplete(CorrelationState state) {
         if (state.claimedAgents.isEmpty()) {
             return false;
         }
@@ -215,5 +253,8 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
         final ConcurrentHashMap<AgentId, TaskResult> results = new ConcurrentHashMap<>();
         /** Ordre atomique des premieres completions (determinisme de selection). */
         final List<AgentId> completionOrder = new CopyOnWriteArrayList<>();
+        /** Signaux de completion par politique (remplace le polling). */
+        final ConcurrentHashMap<TaskCompletionPolicy, CompletableFuture<Void>> completionSignals =
+                new ConcurrentHashMap<>();
     }
 }

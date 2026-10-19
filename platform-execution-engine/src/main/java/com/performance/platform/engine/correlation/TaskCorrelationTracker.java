@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Suit la correlation MessageId -> claims -> resultats (1:N) et determine
@@ -121,6 +122,19 @@ public interface TaskCorrelationTracker {
      * @return liste immuable des resultats, dans l'ordre de completion
      */
     List<TaskResult> resultsInCompletionOrder(MessageId messageId);
+
+    /**
+     * Retourne un signal complete lorsque la politique est satisfaite.
+     * Remplace le polling : le tracker complete le futur des qu'un
+     * evenement (claim, completion, echec, perte d'agent) rend la
+     * completion vraie. Si la completion est deja vraie, le futur retourne
+     * est deja complete.
+     *
+     * @param messageId identifiant du message
+     * @param policy    politique de completion
+     * @return un futur complete a la satisfaction de la politique
+     */
+    CompletableFuture<Void> completionSignal(MessageId messageId, TaskCompletionPolicy policy);
 
     /**
      * Selectionne un resultat selon la politique demandee.

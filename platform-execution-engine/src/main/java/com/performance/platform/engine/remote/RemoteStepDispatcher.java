@@ -23,6 +23,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Implémentation distribuée du {@link StepDispatcher}.
@@ -36,9 +40,6 @@ import java.util.List;
 public class RemoteStepDispatcher implements StepDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(RemoteStepDispatcher.class);
-
-    /** Intervalle de polling pour les completions (ms). */
-    private static final long POLL_COMPLETION_MS = 500;
 
     private final ExecutionTransport transport;
     private final AgentAvailabilityChecker availabilityChecker;
@@ -106,46 +107,48 @@ public class RemoteStepDispatcher implements StepDispatcher {
     }
 
     /**
-     * Poll the tracker until completion policy is satisfied or timeout.
+     * Attend le signal de completion emis par le tracker, puis selectionne
+     * le resultat de facon deterministe. Aucun polling : le tracker complete
+     * le futur des qu'un evenement satisfait la politique.
      */
     private TaskResult awaitCompletion(MessageId messageId, TaskId taskId, ExecutionConfig config) {
-        long deadlineMs = System.currentTimeMillis() + config.taskExecutionTimeout().toMillis();
         TaskCompletionPolicy policy = config.completionPolicy();
+        CompletableFuture<Void> signal = tracker.completionSignal(messageId, policy);
 
-        while (System.currentTimeMillis() < deadlineMs) {
-            if (tracker.isComplete(messageId, policy)) {
-                List<TaskResult> ordered = tracker.resultsInCompletionOrder(messageId);
-                if (!ordered.isEmpty()) {
-                    // Selection deterministe par ordre de completion, avec
-                    // preference pour un resultat reussi.
-                    ResultSelectionPolicy selectionPolicy = config.resultSelectionPolicy();
-                    List<TaskResult> candidates = selectionPolicy == ResultSelectionPolicy.LAST_COMPLETED
-                            ? ordered.reversed()
-                            : ordered;
-                    TaskResult selected = candidates.stream()
-                            .filter(TaskResult::isSuccess)
-                            .findFirst()
-                            .orElse(candidates.getFirst());
-                    log.debug("action=completion_satisfied messageId={} taskId={} policy={} selection={}",
-                            messageId.value(), taskId.value(), policy, selectionPolicy);
-                    return selected;
-                }
-                return TaskResult.failed(taskId, taskId.value(),
-                        Duration.ZERO, "No results received", null);
-            }
-
-            try {
-                Thread.sleep(POLL_COMPLETION_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return TaskResult.failed(taskId, taskId.value(),
-                        Duration.ZERO, "Interrupted while awaiting completion", null);
-            }
+        try {
+            signal.get(config.taskExecutionTimeout().toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.warn("action=completion_timeout messageId={} taskId={} policy={}",
+                    messageId.value(), taskId.value(), policy);
+            return TaskResult.failed(taskId, taskId.value(),
+                    config.taskExecutionTimeout(), "Task execution timed out", null);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return TaskResult.failed(taskId, taskId.value(),
+                    Duration.ZERO, "Interrupted while awaiting completion", null);
+        } catch (ExecutionException e) {
+            return TaskResult.failed(taskId, taskId.value(),
+                    Duration.ZERO, "Completion signal failed: " + e.getMessage(), e);
         }
 
-        log.warn("action=completion_timeout messageId={} taskId={} policy={}",
-                messageId.value(), taskId.value(), policy);
-        return TaskResult.failed(taskId, taskId.value(),
-                config.taskExecutionTimeout(), "Task execution timed out", null);
+        List<TaskResult> ordered = tracker.resultsInCompletionOrder(messageId);
+        if (ordered.isEmpty()) {
+            return TaskResult.failed(taskId, taskId.value(),
+                    Duration.ZERO, "No results received", null);
+        }
+
+        // Selection deterministe par ordre de completion, avec preference
+        // pour un resultat reussi.
+        ResultSelectionPolicy selectionPolicy = config.resultSelectionPolicy();
+        List<TaskResult> candidates = selectionPolicy == ResultSelectionPolicy.LAST_COMPLETED
+                ? ordered.reversed()
+                : ordered;
+        TaskResult selected = candidates.stream()
+                .filter(TaskResult::isSuccess)
+                .findFirst()
+                .orElse(candidates.getFirst());
+        log.debug("action=completion_satisfied messageId={} taskId={} policy={} selection={}",
+                messageId.value(), taskId.value(), policy, selectionPolicy);
+        return selected;
     }
 }

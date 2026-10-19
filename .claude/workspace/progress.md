@@ -202,7 +202,7 @@
 | ISSUE-187 | Rewire Agent Config + Delete LocalAgent/DistributedAgentRuntime | WAITING | PDR-050 | ISSUE-186, ISSUE-177 |
 | ISSUE-188 | Verify Equivalence + Boundary Post-Merge | WAITING | PDR-050 | ISSUE-184, ISSUE-185, ISSUE-186, ISSUE-187 |
 | ISSUE-189 | Deterministic Result Selection Policy (T6) | DONE | PDR-051 | ISSUE-185 |
-| ISSUE-190 | Poll → Completion Signal (C2) | WAITING | PDR-051 | ISSUE-171, ISSUE-189 |
+| ISSUE-190 | Poll → Completion Signal (C2) | DONE | PDR-051 | ISSUE-171, ISSUE-189 |
 | ISSUE-191 | Define Segregated Transport Ports | WAITING | PDR-052 | - |
 | ISSUE-192 | Migrate 5 Transport Implementations | WAITING | PDR-052 | ISSUE-191 |
 | ISSUE-193 | Migrate Transport Consumers | WAITING | PDR-052 | ISSUE-192 |
@@ -263,7 +263,7 @@
 | PDR-048 | Cross-Module Boundary Enforcement | IN_PROGRESS | WAITING | ISSUE-177,178,179,180 | PDR-004, PDR-010, PDR-014, PDR-022, PDR-037 |
 | PDR-049 | Spring Modulith Decision | DONE | WAITING | ISSUE-183 | PDR-048 |
 | PDR-050 | Engine & Agent Consolidation | platform-execution-engine, platform-agent-runtime, platform-app | WAITING | ISSUE-184,185,186,187,188 | PDR-043, PDR-048, PDR-039, PDR-045 |
-| PDR-051 | Distributed Completion Semantics | platform-execution-engine | IN_PROGRESS | ISSUE-189,190 | PDR-044, PDR-050 |
+| PDR-051 | Distributed Completion Semantics | platform-execution-engine | DONE | ISSUE-189,190 | PDR-044, PDR-050 |
 | PDR-052 | Transport Interface Segregation | platform-transport | WAITING | ISSUE-191,192,193 | PDR-007, PDR-008 |
 | PDR-053 | ExecutionContext Named Outputs | platform-domain | WAITING | ISSUE-194,195 | PDR-001 |
 | PDR-054 | Security Posture | platform-app | WAITING | ISSUE-196 | PDR-018 |
@@ -1010,3 +1010,5 @@
 | 2026-10-19 | ISSUE-168..183 (selection) | WAITING → DONE/IN_PROGRESS | Implementation du programme : CI, tracker eviction + onAgentLost, lifecycle ingestion + TTL + AGENT_LOST + fast-fail, résolution runtime CLI, DSL strict + lignes, coupe des arêtes engine→agent-runtime / reporting→injection-gatling, test de frontières ASM (ArchUnit est vide sur Java 25), suppression registre d'assertion + Modulith. Suites des modules modifiés vertes. |
 
 | 2026-10-19 | ISSUE-189 | WAITING → DONE | Selection multi-claim deterministe (ADR-034, T6 1000 runs). |
+
+| 2026-10-19 | ISSUE-190 | WAITING → DONE | Completion par CompletableFuture signale par le tracker, suppression du polling 500 ms. |

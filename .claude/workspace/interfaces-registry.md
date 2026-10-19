@@ -465,7 +465,7 @@
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
-| `TaskCorrelationTracker` (+`onAgentLost`, `release`, `resultsInCompletionOrder`, `selectResult`) | ✅ STABLE (additif) — `remove/size/onComplete` restent PLANNED | PDR-044, PDR-051 | ISSUE-171, ISSUE-189 |
+| `TaskCorrelationTracker` (+`onAgentLost`, `release`, `resultsInCompletionOrder`, `selectResult`, `completionSignal`) | ✅ STABLE (additif) — `remove/size/onComplete` restent PLANNED | PDR-044, PDR-051 | ISSUE-171, ISSUE-189 |
 | `ResultSelectionPolicy` (enum) | ✅ STABLE | PDR-051 | ISSUE-189 |
 | `ExecutionEngine` (unifié, remplace Local/Remote) | ⬜ PLANNED | PDR-050 | ISSUE-184, ISSUE-185 |
 | `TransportExecutionEventHandler` | ⬜ PLANNED | PDR-050 | ISSUE-184 |

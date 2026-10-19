@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -467,6 +468,88 @@ class DefaultTaskCorrelationTrackerTest {
             tracker.onAgentLost(agentB);
 
             assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
+        }
+
+        private TaskResult successResult() {
+            return TaskResult.success(taskId, "perf-test", Duration.ofSeconds(2), Map.of("p95", "120ms"));
+        }
+    }
+
+    // ── Completion signal ───────────────────────────────────────
+
+    @Nested
+    @DisplayName("completionSignal")
+    class CompletionSignalTests {
+
+        @Test
+        @DisplayName("should complete immediately when the policy is already satisfied")
+        void shouldCompleteImmediatelyWhenAlreadySatisfied() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+            tracker.onCompleted(messageId, agentA, successResult());
+
+            CompletableFuture<Void> signal =
+                    tracker.completionSignal(messageId, TaskCompletionPolicy.FIRST_COMPLETE);
+
+            assertTrue(signal.isDone());
+        }
+
+        @Test
+        @DisplayName("should complete when the first agent completes")
+        void shouldCompleteOnFirstCompletion() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+
+            CompletableFuture<Void> signal =
+                    tracker.completionSignal(messageId, TaskCompletionPolicy.FIRST_COMPLETE);
+            assertFalse(signal.isDone());
+
+            tracker.onCompleted(messageId, agentA, successResult());
+
+            assertTrue(signal.isDone());
+        }
+
+        @Test
+        @DisplayName("should wait for every claim under ALL_COMPLETE")
+        void shouldWaitForAllClaims() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+            tracker.onClaimed(messageId, agentB);
+
+            CompletableFuture<Void> signal =
+                    tracker.completionSignal(messageId, TaskCompletionPolicy.ALL_COMPLETE);
+
+            tracker.onCompleted(messageId, agentA, successResult());
+            assertFalse(signal.isDone());
+
+            tracker.onCompleted(messageId, agentB, successResult());
+            assertTrue(signal.isDone());
+        }
+
+        @Test
+        @DisplayName("should complete on agent loss fast-fail")
+        void shouldCompleteOnAgentLoss() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+
+            CompletableFuture<Void> signal =
+                    tracker.completionSignal(messageId, TaskCompletionPolicy.FIRST_COMPLETE);
+            tracker.onAgentLost(agentA);
+
+            assertTrue(signal.isDone());
+        }
+
+        @Test
+        @DisplayName("should unblock waiters when the state is released")
+        void shouldUnblockOnRelease() {
+            tracker.trackDispatched(messageId, taskId, executionId);
+            tracker.onClaimed(messageId, agentA);
+
+            CompletableFuture<Void> signal =
+                    tracker.completionSignal(messageId, TaskCompletionPolicy.ALL_COMPLETE);
+            tracker.release(messageId);
+
+            assertTrue(signal.isDone());
         }
 
         private TaskResult successResult() {

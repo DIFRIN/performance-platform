@@ -102,9 +102,6 @@ public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExec
 
     private static final Logger log = LoggerFactory.getLogger(RemoteExecutionEngine.class);
 
-    /** Intervalle de polling pour les completions (ms). */
-    static final long POLL_COMPLETION_MS = 500;
-
     // Payload keys des ExecutionEvent
     static final String PAYLOAD_TASK_ID = "taskId";
     static final String PAYLOAD_STATUS = "status";
