@@ -183,14 +183,14 @@
 | ISSUE-168 | CI Pipeline GitHub Actions | DONE | PDR-043 | - |
 | ISSUE-169 | Test-Tier Normalization | DONE | PDR-043 | - |
 | ISSUE-170 | LocalDistributedEquivalenceTest (T2) | WAITING | PDR-043 | ISSUE-169 |
-| ISSUE-171 | TaskCorrelationTracker Eviction + Loss + Completion Signal | IN_PROGRESS | PDR-044 | - |
+| ISSUE-171 | TaskCorrelationTracker Eviction + Loss + Completion Signal | DONE | PDR-044 | - |
 | ISSUE-172 | Typed Lifecycle Payload Codec + AGENT_LOST | DONE | PDR-045 | - |
 | ISSUE-173 | Lifecycle Ingestion Bridge + AgentTtlMonitor Wiring | DONE | PDR-045 | ISSUE-172 |
 | ISSUE-174 | Fast-Fail on Claim Loss + AgentLossRecoveryIT | DONE | PDR-045 | ISSUE-171, ISSUE-173 |
 | ISSUE-175 | Single Runtime Resolution incl. CLI args (T3) | DONE | PDR-046 | - |
 | ISSUE-176 | DSL Strictness + Version + Line-Numbered Errors (T7) | DONE | PDR-047 | - |
 | ISSUE-177 | Cut execution-engine → agent-runtime Edge | DONE | PDR-048 | - |
-| ISSUE-178 | Cut assertion → infrastructure Edge (HttpTargetResolver) | WAITING | PDR-048 | - |
+| ISSUE-178 | Cut assertion → infrastructure Edge (HttpTargetResolver) | DONE | PDR-048 | - |
 | ISSUE-179 | Drop reporting → injection-gatling pom Dependency | DONE | PDR-048 | - |
 | ISSUE-180 | ModuleDependencyArchTest (T1) | DONE | PDR-048 | ISSUE-177, ISSUE-178, ISSUE-179 |
 | ISSUE-181 | Remove TaskExecutorLookup.findAssertionExecutor | DONE | PDR-037 | - |
@@ -1020,3 +1020,7 @@
 | 2026-10-19 | ISSUE-175 | IN_PROGRESS → DONE | RuntimeConfigResolver unique (env > CLI > property), T3 paramétré. |
 
 | 2026-10-19 | ISSUE-176 | IN_PROGRESS → DONE | T7 : clés inconnues/typos rejetées avec ligne ; version requise par le validator via le parsing service. |
+
+| 2026-10-19 | ISSUE-178 | WAITING → DONE | Port HttpTargetResolver ; assertion ne dépend plus de infrastructure en compile (test-scope conservé). |
+
+| 2026-10-19 | ISSUE-171 | IN_PROGRESS → DONE | Eviction, onAgentLost et signal de completion livrés (voir aussi ISSUE-190). |

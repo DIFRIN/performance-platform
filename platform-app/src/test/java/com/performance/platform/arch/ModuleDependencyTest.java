@@ -98,12 +98,10 @@ class ModuleDependencyTest {
     }
 
     @Test
-    @DisplayName("assertion ne depend de infrastructure que pour HttpMockAssertionExecutor")
-    void assertionMustNotDependOnInfrastructureExceptHttpMock() {
-        assertNoDependency(ASSERTION, INFRASTRUCTURE,
-                Set.of(ASSERTION + "httpmock/HttpMockAssertionExecutor"),
-                "seule l'assertion HTTP a besoin de HttpTargetRegistry "
-                        + "(exception documentee, candidate a une extraction)");
+    @DisplayName("assertion ne depend pas de infrastructure")
+    void assertionMustNotDependOnInfrastructure() {
+        assertNoDependency(ASSERTION, INFRASTRUCTURE, Set.of(),
+                "les cibles HTTP passent par le port application.ports.out.HttpTargetResolver");
     }
 
     // ------------------------------------------------------------------

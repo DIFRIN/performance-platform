@@ -495,7 +495,7 @@
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
 | `LifecycleSignalHandler` (port sortant) | ✅ STABLE | PDR-048 | ISSUE-177 |
-| `HttpTargetResolver` (port sortant) | ⬜ PLANNED (ADR-036) | PDR-048 | ISSUE-178 |
+| `HttpTargetResolver` + `HttpTarget` (ports sortants) | ✅ STABLE | PDR-048 | ISSUE-178 |
 
 ### platform-assertion
 

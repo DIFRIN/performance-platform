@@ -2,7 +2,7 @@
 
 **PDR** : PDR-048
 **Module** : `platform-application`, `platform-assertion`, `platform-infrastructure`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : —
 **Estime** : L (3-6h)

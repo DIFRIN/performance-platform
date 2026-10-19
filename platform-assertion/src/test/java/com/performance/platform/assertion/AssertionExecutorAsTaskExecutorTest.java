@@ -8,7 +8,6 @@ import com.performance.platform.assertion.kafka.KafkaAssertionExecutor;
 import com.performance.platform.assertion.wiremock.WireMockAssertionExecutor;
 import com.performance.platform.infrastructure.executor.DefaultTaskExecutorRegistry;
 import com.performance.platform.infrastructure.executor.TaskExecutorRegistry;
-import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
 import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
@@ -57,7 +55,7 @@ class AssertionExecutorAsTaskExecutorTest {
                 new KafkaAssertionExecutor(),
                 new WireMockAssertionExecutor(),
                 new HttpMockAssertionExecutor(
-                        new HttpTargetRegistry(Map.of(), RestClient.builder())),
+                        name -> null),
                 new FileAssertionExecutor());
 
         taskRegistry = new DefaultTaskExecutorRegistry(executors);
@@ -140,7 +138,7 @@ class AssertionExecutorAsTaskExecutorTest {
                     new KafkaAssertionExecutor(),
                     new WireMockAssertionExecutor(),
                     new HttpMockAssertionExecutor(
-                            new HttpTargetRegistry(Map.of(), RestClient.builder())),
+                            name -> null),
                     new FileAssertionExecutor());
 
             var taskRegistry = new DefaultTaskExecutorRegistry(executors);

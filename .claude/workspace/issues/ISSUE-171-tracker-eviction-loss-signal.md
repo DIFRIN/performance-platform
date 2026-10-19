@@ -2,7 +2,7 @@
 
 **PDR** : PDR-044
 **Module** : `platform-execution-engine`
-**Statut** : IN_PROGRESS
+**Statut** : DONE
 **Priorité** : P0 (prévient l'OOM production, débloque B3/B4 et C2)
 **Bloquée par** : —
 **Estime** : L (3-6h)
