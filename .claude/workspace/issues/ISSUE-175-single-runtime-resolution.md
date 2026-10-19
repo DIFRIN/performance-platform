@@ -2,7 +2,7 @@
 
 **PDR** : PDR-046
 **Module** : `platform-app`
-**Statut** : IN_PROGRESS
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : —
 **Estime** : M (1-3h)

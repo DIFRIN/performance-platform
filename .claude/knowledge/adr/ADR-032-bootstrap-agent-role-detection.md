@@ -34,9 +34,10 @@ La fonction est pure et testée (`PerformancePlatformApplicationTest`).
 
 - `--runtime.role=AGENT` et `--spring.profiles.active=agent` forcent
   `WebApplicationType.NONE`.
-- La résolution Spring reste basée sur `RuntimeModeResolver` / `Environment`
-  pour les beans ; l'unification complète des trois parseurs reste suivie par
-  ISSUE-175.
+- `RuntimeConfigResolver` est la source unique : constantes, priorité et
+  parsing sont partagés avec `RuntimeModeResolver` (facade)
+  et `RuntimeConfigEnvironmentPostProcessor`.
+- Priorité unifiée : env > argument CLI > property > défaut.
 
 ## Preuves
 

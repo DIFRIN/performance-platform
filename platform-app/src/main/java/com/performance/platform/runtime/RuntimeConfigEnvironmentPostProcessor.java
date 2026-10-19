@@ -33,21 +33,21 @@ public class RuntimeConfigEnvironmentPostProcessor implements EnvironmentPostPro
         var overrides = new HashMap<String, Object>();
 
         // RUNTIME_MODE env var → runtime.mode property
-        var runtimeMode = System.getenv("RUNTIME_MODE");
+        var runtimeMode = System.getenv(RuntimeConfigResolver.ENV_RUNTIME_MODE);
         if (runtimeMode != null && !runtimeMode.isBlank()) {
-            overrides.put("runtime.mode", runtimeMode.strip());
+            overrides.put(RuntimeConfigResolver.PROP_RUNTIME_MODE, runtimeMode.strip());
         }
 
         // MODE env var → runtime.role property
-        var mode = System.getenv("MODE");
+        var mode = System.getenv(RuntimeConfigResolver.ENV_MODE);
         if (mode != null && !mode.isBlank()) {
-            overrides.put("runtime.role", mode.strip());
+            overrides.put(RuntimeConfigResolver.PROP_RUNTIME_ROLE, mode.strip());
         }
 
         // TRANSPORT_TYPE env var → transport.type property
-        var transportType = System.getenv("TRANSPORT_TYPE");
+        var transportType = System.getenv(RuntimeConfigResolver.ENV_TRANSPORT_TYPE);
         if (transportType != null && !transportType.isBlank()) {
-            overrides.put("transport.type", transportType.strip());
+            overrides.put(RuntimeConfigResolver.PROP_TRANSPORT_TYPE, transportType.strip());
         }
 
         if (!overrides.isEmpty()) {

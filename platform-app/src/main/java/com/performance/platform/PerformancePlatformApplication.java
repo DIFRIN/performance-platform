@@ -5,6 +5,7 @@ import com.performance.platform.app.config.AgentProperties;
 import com.performance.platform.app.plugin.PluginProperties;
 import com.performance.platform.app.web.WebUiProperties;
 import com.performance.platform.reporting.output.ReportProperties;
+import com.performance.platform.runtime.RuntimeConfigResolver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,12 +102,14 @@ public class PerformancePlatformApplication {
      * l'{@code Environment} ne soit construit (ADR-019).
      */
     private static boolean isAgentMode(String[] args) {
-        return detectAgentRole(args, System.getenv("MODE"), System.getProperty("runtime.role"));
+        return RuntimeConfigResolver.isAgent(args,
+                System.getenv(RuntimeConfigResolver.ENV_MODE),
+                System.getProperty(RuntimeConfigResolver.PROP_RUNTIME_ROLE));
     }
 
     /**
      * Fonction pure de detection du role AGENT, testable sans variables
-     * globales.
+     * globales. Delegue a {@link RuntimeConfigResolver} (source unique).
      *
      * @param args          arguments CLI Spring Boot (peut etre null)
      * @param envMode       valeur de la variable d'environnement {@code MODE}
@@ -114,42 +117,7 @@ public class PerformancePlatformApplication {
      * @return true si l'instance doit tourner en AGENT
      */
     static boolean detectAgentRole(String[] args, String envMode, String roleProperty) {
-        if (isAgentValue(envMode) || isAgentValue(roleProperty)) {
-            return true;
-        }
-        if (args == null) {
-            return false;
-        }
-        for (String arg : args) {
-            if (arg == null) {
-                continue;
-            }
-            if (arg.startsWith("--runtime.role=")
-                    && isAgentValue(arg.substring("--runtime.role=".length()))) {
-                return true;
-            }
-            if (arg.startsWith("--spring.profiles.active=")
-                    && profilesContainAgent(arg.substring("--spring.profiles.active=".length()))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean isAgentValue(String value) {
-        return value != null && value.strip().equalsIgnoreCase("AGENT");
-    }
-
-    private static boolean profilesContainAgent(String profiles) {
-        if (profiles == null) {
-            return false;
-        }
-        for (String profile : profiles.split(",")) {
-            if (profile.strip().equalsIgnoreCase("agent")) {
-                return true;
-            }
-        }
-        return false;
+        return RuntimeConfigResolver.isAgent(args, envMode, roleProperty);
     }
 
     /**
