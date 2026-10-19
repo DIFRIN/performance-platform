@@ -2,7 +2,7 @@
 
 **PDR** : PDR-043
 **Module** : root + tous modules (surefire/failsafe)
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : —
 **Estime** : M (1-3h)

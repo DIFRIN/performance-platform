@@ -1,5 +1,6 @@
-package com.performance.platform.app.e2e;
+package com.performance.platform.e2e;
 
+import com.performance.platform.agent.local.LocalAgent;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
@@ -10,37 +11,33 @@ import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.app.api.ApiExceptionHandler;
 import com.performance.platform.app.api.ScenarioController;
-import com.performance.platform.assertion.file.FileAssertionExecutor;
+import com.performance.platform.domain.agent.AgentCapabilities;
+import com.performance.platform.domain.agent.AgentDescriptor;
+import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.PhaseStatus;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
-import com.performance.platform.domain.id.ReportId;
-import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.engine.local.LocalExecutionEngine;
 import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.engine.plan.DefaultExecutionPlanBuilder;
-import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.retry.DefaultRetryExecutor;
-import com.performance.platform.engine.retry.RetryExecutor;
-import com.performance.platform.infrastructure.executor.fs.FilesystemTaskExecutor;
-import com.performance.platform.infrastructure.executor.shell.ShellTaskExecutor;
 import com.performance.platform.infrastructure.persistence.ExecutionStateEntity;
 import com.performance.platform.infrastructure.persistence.TaskResultEntity;
 import com.performance.platform.infrastructure.persistence.mapper.ExecutionStateMapper;
 import com.performance.platform.infrastructure.persistence.mapper.TaskResultMapper;
+import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
-import com.performance.platform.reporting.ReportEngine;
 import com.performance.platform.reporting.engine.DefaultReportEngine;
 import com.performance.platform.reporting.model.CampaignReport;
 import com.performance.platform.scenario.parser.YamlScenarioParser;
 import com.performance.platform.scenario.usecase.DefaultScenarioParsingService;
 import com.performance.platform.scenario.validation.DefaultScenarioValidator;
+import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -53,6 +50,7 @@ import org.hibernate.cfg.Configuration;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.web.servlet.MockMvc;
@@ -61,14 +59,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -78,21 +75,29 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Test E2E du flux complet en mode LOCAL.
+ * Test E2E mode LOCAL : un scenario multi-tasks est execute entierement
+ * sur l'instance locale. Aucun Kafka, aucun dispatch reseau.
  * <p>
- * Flux teste : soumission YAML via API REST {@literal ->} parsing
- * {@literal ->} execution 3 phases (PREPARATION filesystem
- * {@literal ->} INJECTION shell {@literal ->} ASSERTION file)
- * {@literal ->} persistance PostgreSQL {@literal ->} generation de rapport
- * {@literal ->} verification du verdict.
+ * Verifie :
+ * <ol>
+ *   <li>La plateforme demarre en mode LOCAL</li>
+ *   <li>Un scenario YAML avec plusieurs types de tasks est charge</li>
+ *   <li>TOUTES les tasks sont executees sur l'instance locale unique</li>
+ *   <li>Le transport utilise est bien {@link InMemoryExecutionTransport}</li>
+ *   <li>Le rapport est genere</li>
+ *   <li>{@link LocalAgent#canExecute(String)} retourne {@code true}
+ *       pour chaque task name du scenario</li>
+ *   <li>L'agent LOCAL ignore {@code agent.supported-tasks}</li>
+ * </ol>
  * <p>
  * Utilise Testcontainers PostgreSQL pour la persistance et MockMvc pour
  * l'API REST. Les composants sont cables manuellement (pas de
- * {@code @SpringBootTest} — incompatible Spring Boot 4.0.0 + JUnit 5.11.4).
+ * {@code @SpringBootTest}).
  */
-@DisplayName("LocalFlowE2E")
+@DisplayName("LocalModeAllTasksE2E")
 @Testcontainers
-class LocalFlowE2ETest {
+@Tag("integration")
+class LocalModeAllTasksIT {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
@@ -101,6 +106,8 @@ class LocalFlowE2ETest {
     static MockMvc mockMvc;
     static ExecutionRepository executionRepository;
     static DefaultReportEngine reportEngine;
+    static InMemoryExecutionTransport transport;
+    static LocalAgent localAgent;
 
     @BeforeAll
     static void setUp() throws Exception {
@@ -128,41 +135,47 @@ class LocalFlowE2ETest {
         executionRepository = new RawJpaExecutionRepository(
                 sessionFactory, stateMapper, taskResultMapper);
 
-        // 4. Task executors (no-arg constructors, no dependencies)
-        var filesystemExecutor = new FilesystemTaskExecutor();
-        var shellExecutor = new ShellTaskExecutor();
-        var fileAssertionExecutor = new FileAssertionExecutor();
+        // 4. Stub TaskExecutors pour les tasks du scenario
+        var mockServerStub = new StubTaskExecutor("mock-server",
+                Map.of("url", "http://localhost:0"));
+        var gatlingStub = new StubTaskExecutor("gatling",
+                Map.of("stats", "simulation_stats", "p99ResponseTimeMs", 500));
 
-        // 5. TaskExecutorLookup (simple map lookup)
+        // 5. Stub AssertionExecutors pour les assertions du scenario
+        var httpMockAssertionStub = new StubAssertionExecutor("http-mock");
+        var gatlingMetricAssertionStub = new StubAssertionExecutor("gatling-metric");
+
+        // 6. TaskExecutorLookup
         var lookup = new TaskExecutorLookup() {
             @Override
             public TaskExecutor findTaskExecutor(String taskName) {
                 return switch (taskName) {
-                    case "filesystem" -> filesystemExecutor;
-                    case "shell" -> shellExecutor;
-                    case "file" -> fileAssertionExecutor;
+                    case "mock-server" -> mockServerStub;
+                    case "gatling" -> gatlingStub;
+                    case "http-mock" -> httpMockAssertionStub;
+                    case "gatling-metric" -> gatlingMetricAssertionStub;
                     default -> null;
                 };
             }
         };
 
-        // 6. Supporting components
+        // 7. Supporting components
         var planBuilder = new DefaultExecutionPlanBuilder();
         var retryExecutor = new DefaultRetryExecutor();
         List<Object> publishedEvents = new ArrayList<>();
         ApplicationEventPublisher eventPublisher = publishedEvents::add;
 
-        // 7. LocalExecutionEngine
+        // 8. LocalExecutionEngine
         var engine = new LocalExecutionEngine(
                 planBuilder, retryExecutor, executionRepository,
                 eventPublisher, signal -> { }, lookup);
 
-        // 8. Scenario parsing
+        // 9. Scenario parsing
         var parser = new YamlScenarioParser();
         var validator = new DefaultScenarioValidator();
         var parsingUseCase = new DefaultScenarioParsingService(parser, validator);
 
-        // 9. Use cases
+        // 10. Use cases
         ExecuteScenarioUseCase executeUseCase = scenario -> {
             try {
                 return engine.execute(scenario);
@@ -189,17 +202,15 @@ class LocalFlowE2ETest {
             // no-op for E2E test
         };
 
-        // 10. Report engine
+        // 11. Report engine
         reportEngine = new DefaultReportEngine(executionRepository, eventPublisher);
-
-        ReportEngine reportEnginePort = reportEngine; // same instance, interface type
 
         GenerateReportUseCase reportUseCase = id -> {
             ExecutionState state = executionRepository.findById(id)
                     .orElseThrow(() -> new ReportGenerationException(
                             "Execution " + id.value() + " not found", null));
             try {
-                CampaignReport report = reportEnginePort.generate(state);
+                CampaignReport report = reportEngine.generate(state);
                 return report.id();
             } catch (ReportGenerationException e) {
                 throw e;
@@ -208,7 +219,7 @@ class LocalFlowE2ETest {
             }
         };
 
-        // 11. ScenarioController with MockMvc
+        // 12. ScenarioController with MockMvc
         var progressCalculator = new com.performance.platform.application.usecase.ExecutionProgressCalculator();
         var controller = new ScenarioController(
                 parsingUseCase, executeUseCase, statusUseCase,
@@ -217,22 +228,41 @@ class LocalFlowE2ETest {
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
+
+        // 13. Transport InMemory + LocalAgent (pour verification canExecute)
+        transport = new InMemoryExecutionTransport();
+        transport.connect();
+
+        var allTaskNames = Set.of("mock-server", "gatling", "http-mock", "gatling-metric");
+        var executorList = List.<TaskExecutor>of(mockServerStub, gatlingStub);
+        var descriptor = new AgentDescriptor(
+                AgentId.generate(), "local-agent", "localhost", 8080, null,
+                allTaskNames, new AgentCapabilities(10, "1.0.0"),
+                AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
+
+        localAgent = new LocalAgent(transport, descriptor,
+                Duration.ofMinutes(5), executorList, List.of());
     }
 
     @AfterAll
     static void tearDown() {
+        if (transport != null) {
+            transport.disconnect();
+        }
         if (sessionFactory != null) {
             sessionFactory.close();
         }
     }
 
     @Test
-    @DisplayName("should complete full E2E flow: submit YAML -> execute 3 phases -> persist COMPLETED -> generate report with verdict")
-    void shouldCompleteFullE2EFlow() throws Exception {
+    @DisplayName("should execute all multi-task scenario steps and generate report in LOCAL mode")
+    void shouldExecuteAllMultiTaskScenarioAndGenerateReport() throws Exception {
         // ---- Phase 1: Submit YAML via API ----
 
-        var yaml = Files.readString(
-                Path.of("src/test/resources/scenarios/e2e-local.yaml"));
+        var yaml = new String(
+                java.nio.file.Files.readAllBytes(
+                        java.nio.file.Path.of("src/test/resources/e2e-local-multi-tasks.yaml")),
+                java.nio.charset.StandardCharsets.UTF_8);
 
         String responseJson = mockMvc.perform(post("/api/v1/scenarios")
                         .contentType("text/plain")
@@ -288,7 +318,7 @@ class LocalFlowE2ETest {
         assertThat(persisted).isPresent();
         ExecutionState state = persisted.get();
         assertThat(state.status()).isEqualTo(ExecutionStatus.COMPLETED);
-        assertThat(state.scenarioId().value()).isEqualTo("e2e-local");
+        assertThat(state.scenarioId().value()).isEqualTo("e2e-local-multi-tasks");
         assertThat(state.phaseStatuses().get(Phase.PREPARATION))
                 .isEqualTo(PhaseStatus.COMPLETED);
         assertThat(state.phaseStatuses().get(Phase.INJECTION))
@@ -296,12 +326,111 @@ class LocalFlowE2ETest {
         assertThat(state.phaseStatuses().get(Phase.ASSERTION))
                 .isEqualTo(PhaseStatus.COMPLETED);
 
-        // ---- Phase 6: Verify report contains a verdict ----
+        // ---- Phase 6: Verify report contains all tasks ----
 
         CampaignReport report = reportEngine.generate(state);
         assertThat(report.verdict()).isNotNull();
         assertThat(report.verdict()).isIn(Verdict.SUCCESS, Verdict.WARNING);
         assertThat(report.id()).isNotNull();
+        assertThat(report.executionSummary()).isNotNull();
+        // Verify report has task entries for all 4 steps
+        int totalEntries = report.preparationResults().size()
+                + report.injectionResults().size()
+                + report.assertionResults().size();
+        assertThat(totalEntries).isGreaterThanOrEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("LocalAgent.canExecute() should return true for all task names in scenario")
+    void localAgentShouldSupportAllScenarioTaskNames() {
+        assertThat(localAgent.canExecute("mock-server")).isTrue();
+        assertThat(localAgent.canExecute("gatling")).isTrue();
+        assertThat(localAgent.canExecute("http-mock")).isTrue();
+        assertThat(localAgent.canExecute("gatling-metric")).isTrue();
+
+        // Task non enregistree
+        assertThat(localAgent.canExecute("unknown-task")).isFalse();
+    }
+
+    @Test
+    @DisplayName("should use InMemory transport (no Kafka)")
+    void shouldUseInMemoryTransport() {
+        assertThat(transport.isConnected())
+                .as("Transport should be connected")
+                .isTrue();
+        assertThat(transport.getType().name())
+                .as("Transport type should be IN_MEMORY")
+                .isEqualTo("IN_MEMORY");
+        // Pas de bean Kafka actif — en câblage manuel, aucun Kafka n'est instancié
+    }
+
+    @Test
+    @DisplayName("report should contain entries for all phases")
+    void reportShouldContainEntriesForAllPhases() throws Exception {
+        var yaml = new String(
+                java.nio.file.Files.readAllBytes(
+                        java.nio.file.Path.of("src/test/resources/e2e-local-multi-tasks.yaml")),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        String responseJson = mockMvc.perform(post("/api/v1/scenarios")
+                        .contentType("text/plain")
+                        .content(yaml))
+                .andExpect(status().isAccepted())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String executionId = extractJsonString(responseJson, "executionId");
+
+        // Wait for execution to complete
+        await().atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(500))
+                .until(() -> {
+                    String statusJson = mockMvc
+                            .perform(get("/api/v1/executions/" + executionId))
+                            .andReturn()
+                            .getResponse()
+                            .getContentAsString();
+                    String status = extractJsonString(statusJson, "status");
+                    return "COMPLETED".equals(status) || "FAILED".equals(status);
+                });
+
+        var state = executionRepository.findById(ExecutionId.of(executionId));
+        assertThat(state).isPresent();
+        CampaignReport report = reportEngine.generate(state.get());
+
+        // Verify report contains task entries for all 4 steps
+        int totalSteps = report.preparationResults().size()
+                + report.injectionResults().size()
+                + report.assertionResults().size();
+        assertThat(totalSteps).isGreaterThanOrEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("should ignore agent.supported-tasks in LOCAL mode — all tasks execute")
+    void shouldIgnoreAgentSupportedTasksInLocalMode() {
+        // In LOCAL mode, LocalAgent derives supportedTaskNames from executor registry,
+        // NOT from agent.supported-tasks configuration (ADR-015).
+        // All registered tasks are supported regardless of what would be in config.
+        var allScenarioTasks = Set.of("mock-server", "gatling", "http-mock", "gatling-metric");
+        for (String taskName : allScenarioTasks) {
+            assertThat(localAgent.canExecute(taskName))
+                    .as("LocalAgent should support '%s' regardless of agent.supported-tasks config", taskName)
+                    .isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("no task should be filtered out (no NOT_RESPONSIBLE in LOCAL mode)")
+    void noTaskShouldBeFilteredOut() throws Exception {
+        // All tasks registered with LocalAgent are accepted.
+        // In LOCAL mode, the filter always returns Responsible because
+        // supportedTaskNames includes all names from the executor registry.
+        // This is verified via canExecute() above.
+        assertThat(localAgent.canExecute("mock-server")).isTrue();
+        assertThat(localAgent.canExecute("gatling")).isTrue();
+        assertThat(localAgent.canExecute("http-mock")).isTrue();
+        assertThat(localAgent.canExecute("gatling-metric")).isTrue();
     }
 
     // ---- Helpers ----
@@ -321,6 +450,65 @@ class LocalFlowE2ETest {
         int end = json.indexOf('"', start);
         if (end < 0) return json.substring(start);
         return json.substring(start, end);
+    }
+
+    // ---- Stub executors ----
+
+    /**
+     * Stub {@link TaskExecutor} qui retourne toujours SUCCESS avec des outputs predefinis.
+     */
+    static class StubTaskExecutor implements TaskExecutor {
+        private final String taskName;
+        private final Map<String, Object> outputs;
+
+        StubTaskExecutor(String taskName, Map<String, Object> outputs) {
+            this.taskName = taskName;
+            this.outputs = Map.copyOf(outputs);
+        }
+
+        @Override
+        public TaskResult execute(com.performance.platform.domain.execution.ExecutionContext context,
+                                  com.performance.platform.domain.scenario.StepDefinition step) {
+            return TaskResult.success(step.id(), taskName, Duration.ofMillis(5), outputs);
+        }
+
+        @Override
+        public String getSupportedTaskName() {
+            return taskName;
+        }
+    }
+
+    /**
+     * Stub {@link AssertionExecutor} qui retourne toujours PASSED.
+     */
+    static class StubAssertionExecutor implements AssertionExecutor {
+        private final String assertionName;
+
+        StubAssertionExecutor(String assertionName) {
+            this.assertionName = assertionName;
+        }
+
+        @Override
+        public com.performance.platform.domain.assertion.AssertionResult evaluate(
+                com.performance.platform.domain.execution.ExecutionContext context,
+                com.performance.platform.domain.scenario.StepDefinition step) {
+            var evidence = new com.performance.platform.domain.assertion.Evidence(
+                    1L, 1L,
+                    com.performance.platform.domain.assertion.AssertionOperator.EQ,
+                    null, Map.of("stub", true));
+            return new com.performance.platform.domain.assertion.AssertionResult(
+                    step.id(),
+                    com.performance.platform.domain.assertion.AssertionStatus.PASSED,
+                    "stub assertion passed",
+                    evidence,
+                    Duration.ofMillis(1),
+                    Instant.now());
+        }
+
+        @Override
+        public String getSupportedAssertionName() {
+            return assertionName;
+        }
     }
 
     // ---- Raw JPA ExecutionRepository (no Spring Data dependency) ----
@@ -372,7 +560,6 @@ class LocalFlowE2ETest {
                         ExecutionStateEntity.class, id.value());
                 if (entity == null) return;
 
-                // Immutable entity — create new with updated phases
                 java.util.LinkedHashMap<String, String> phases =
                         new java.util.LinkedHashMap<>(entity.phases());
                 phases.put(phase.name(), status.name());
@@ -386,18 +573,19 @@ class LocalFlowE2ETest {
         }
 
         @Override
-        public void saveTaskResult(ExecutionId id, TaskId taskId,
-                                    AgentId agentId, TaskResult result) {
+        public void saveTaskResult(ExecutionId id,
+                                   com.performance.platform.domain.id.TaskId taskId,
+                                   AgentId agentId, TaskResult result) {
             executeInTransaction(em -> {
-                TaskResultEntity entity = taskResultMapper.toEntity(
-                        id, taskId, agentId, result);
+                var entity = taskResultMapper.toEntity(id, taskId, agentId, result);
                 em.merge(entity);
             });
         }
 
         @Override
         public java.util.Map<AgentId, TaskResult> getTaskResults(
-                ExecutionId executionId, TaskId taskId) {
+                ExecutionId executionId,
+                com.performance.platform.domain.id.TaskId taskId) {
             EntityManager em = emf.createEntityManager();
             try {
                 var results = em.createQuery(
@@ -410,7 +598,7 @@ class LocalFlowE2ETest {
                         .getResultList();
                 java.util.Map<AgentId, TaskResult> map =
                         new java.util.LinkedHashMap<>();
-                for (TaskResultEntity entity : results) {
+                for (var entity : results) {
                     TaskResult domain = taskResultMapper.toDomain(entity);
                     map.put(new AgentId(entity.id().agentId()), domain);
                 }

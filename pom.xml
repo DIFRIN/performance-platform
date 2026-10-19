@@ -158,12 +158,22 @@
                         </compilerArgs>
                     </configuration>
                 </plugin>
+                <!--
+                  Convention de paliers de tests :
+                    *Test.java        -> unitaire (surefire, mvn test) : rapide, sans conteneur
+                    *E2ETest.java     -> E2E in-memory (surefire) : pas de Testcontainers
+                    *IT.java          -> integration (failsafe, mvn verify -P integration-tests)
+                  Tout test necessitant Testcontainers/Docker DOIT etre *IT.
+                -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.2</version>
                     <configuration>
                         <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                        <excludes>
+                            <exclude>**/*IT.java</exclude>
+                        </excludes>
                     </configuration>
                 </plugin>
                 <plugin>

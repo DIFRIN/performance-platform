@@ -116,7 +116,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("WebUiApiE2E")
 @Testcontainers
 @Tag("integration")
-class WebUiApiE2ETest {
+class WebUiApiIT {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");

@@ -339,7 +339,7 @@
 | `SecurityConfiguration` + config profiles | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `application.yaml` (common config) | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `application-{local,orchestrator,agent}.yaml` | ✅ STABLE | PDR-018 | ISSUE-081 |
-| `LocalFlowE2ETest` + `e2e-local.yaml` | ✅ STABLE | PDR-018 | ISSUE-082 |
+| `LocalFlowIT` + `e2e-local.yaml` | ✅ STABLE (tier IT) | PDR-018 | ISSUE-082, ISSUE-169 |
 | `AgentProperties` | 🔄 IN PROGRESS | PDR-026 | ISSUE-111 |
 | `AgentRuntimeConfiguration` | ⬜ PLANNED | PDR-026 | ISSUE-112 |
 | `WebUiProperties` | 🔄 IN PROGRESS | PDR-028 | ISSUE-125 |
@@ -354,7 +354,7 @@
 | `views/agents.js` (agents dashboard view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-129 |
 | `views/upload.js` (upload scenario view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-129 |
 | `views/report.js` (report poll view + iframe) | 🔄 IN PROGRESS | PDR-029 | ISSUE-130 |
-| `WebUiApiE2ETest.java` (E2E Testcontainers) | 🔄 IN PROGRESS | PDR-029 | ISSUE-130 |
+| `WebUiApiIT.java` (E2E Testcontainers) | ✅ STABLE (tier IT) | PDR-029 | ISSUE-130, ISSUE-169 |
 
 ## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
 

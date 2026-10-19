@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
  * et le code de sortie.
  * <p>
  * Note: les tests sont unitaires avec dependances mockees (ne chargent
- * pas le contexte Spring complet). Les E2E (LocalFlowE2ETest) couvrent
+ * pas le contexte Spring complet). Les E2E (LocalFlowIT) couvrent
  * deja le flux complet en mode LOCAL via PostgreSQL + MockMvc.
  */
 @DisplayName("CliScenarioRunner")

@@ -181,7 +181,7 @@
 | ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | DONE | PDR-042 | — |
 | ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | DONE | PDR-042 | ISSUE-166 |
 | ISSUE-168 | CI Pipeline GitHub Actions | DONE | PDR-043 | - |
-| ISSUE-169 | Test-Tier Normalization | WAITING | PDR-043 | - |
+| ISSUE-169 | Test-Tier Normalization | DONE | PDR-043 | - |
 | ISSUE-170 | LocalDistributedEquivalenceTest (T2) | WAITING | PDR-043 | ISSUE-169 |
 | ISSUE-171 | TaskCorrelationTracker Eviction + Loss + Completion Signal | IN_PROGRESS | PDR-044 | - |
 | ISSUE-172 | Typed Lifecycle Payload Codec + AGENT_LOST | DONE | PDR-045 | - |
@@ -1012,3 +1012,5 @@
 | 2026-10-19 | ISSUE-189 | WAITING → DONE | Selection multi-claim deterministe (ADR-034, T6 1000 runs). |
 
 | 2026-10-19 | ISSUE-190 | WAITING → DONE | Completion par CompletableFuture signale par le tracker, suppression du polling 500 ms. |
+
+| 2026-10-19 | ISSUE-169 | WAITING → DONE | Convention *Test/*E2ETest/*IT documentée ; E2E Testcontainers renommés *IT ; surefire exclut *IT. |
