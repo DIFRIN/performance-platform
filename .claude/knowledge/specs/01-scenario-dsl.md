@@ -37,7 +37,7 @@ scenario:
 
   steps:
     - id: purge-db
-      task: database                   # matché avec agent.supportedTasks
+      task: database                   # matché avec agent.supported-tasks
       phase: PREPARATION
       requiredContexts: []             # aucun contexte requis
       dependsOn: []
@@ -233,7 +233,20 @@ public interface LoadModelRegistry {
 
 ---
 
+```mermaid
+flowchart LR
+    YAML["Contenu YAML"] --> P["YamlScenarioParser"]
+    P -->|ScenarioDefinition| V["DefaultScenarioValidator"]
+    P -->|"clé inconnue / YAML invalide"| PE["ScenarioParsingException"]
+    V -->|erreurs| VE["ScenarioValidationException"]
+    V -->|valide| OK["ScenarioDefinition validé"]
+```
+
 ## 5. Règles de Validation
+
+Le parser rejette toute clé inconnue (`FAIL_ON_UNKNOWN_PROPERTIES` + listes explicites
+`ROOT_KEYS`, `SCENARIO_KEYS`, `EXECUTION_KEYS`, `STEP_KEYS`, `RETRY_KEYS`) : une faute de
+frappe dans un nom de propriété produit une erreur de parsing, jamais un champ ignoré.
 
 ### Erreurs (bloquantes)
 - `scenario.id` : obligatoire, alphanumérique + tirets, max 100 chars
@@ -278,7 +291,7 @@ public record ScenarioDefinition(
  */
 public record StepDefinition(
     TaskId id,                            // identifiant unique dans le scénario
-    String taskName,                      // nom libre matchant agent.supportedTasks
+    String taskName,                      // nom libre matchant agent.supported-tasks
     Phase phase,                          // PREPARATION | INJECTION | ASSERTION
     Map<String, Object> parameters,       // paramètres spécifiques à la task
     List<TaskId> dependsOn,               // dépendances DAG

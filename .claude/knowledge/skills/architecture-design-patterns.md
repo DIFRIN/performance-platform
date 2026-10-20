@@ -11,12 +11,26 @@
 
 Le domaine est au centre. Toute dépendance externe passe par un port.
 
-```
-External World          Application Core           External World
-─────────────          ────────────────           ─────────────
-HTTP Request  ──▶  [Driving Port]  ──▶  Domain  ──▶  [Driven Port]  ──▶  PostgreSQL
-CLI           ──▶  UseCase iface         Logic   ──▶  Repository iface  ──▶  Kafka
-Tests         ──▶                                 ──▶                   ──▶  S3
+```mermaid
+flowchart LR
+    subgraph IN["External world"]
+        HTTP["HTTP · CLI · Tests"]
+    end
+    subgraph CORE["Application core"]
+        PIN["Driving ports"]
+        DOMAIN["Domain logic"]
+        POUT["Driven ports"]
+    end
+    subgraph OUT["External world"]
+        DB[("PostgreSQL")]
+        KAFKA[("Kafka")]
+        STORE[("Object storage")]
+    end
+
+    HTTP --> PIN --> DOMAIN --> POUT
+    POUT --> DB
+    POUT --> KAFKA
+    POUT --> STORE
 ```
 
 **Règles impératives pour ce projet :**
@@ -126,15 +140,14 @@ public record TaskCompleted(
 public record TaskEvent(String type, Object payload) {} // type ambigu, payload non typé
 ```
 
-**Règle de consommation dans ce projet (Spring Modulith) :**
+**Règle de consommation dans ce projet (Spring standard, Modulith retiré — ADR-035) :**
 ```java
-// @ApplicationModuleListener = async + transactionnel par défaut
-// Utiliser pour tous les listeners inter-modules
-@ApplicationModuleListener
+// @EventListener standard. Pas de @ApplicationModuleListener.
+@Component
 public class ObservabilityEventListener {
     @EventListener
     public void on(TaskCompleted event) {
-        meterRegistry.counter("task.completed", "taskName", event.taskName()).increment();
+        meterRegistry.counter("task.completed", "taskName", event.result().taskName()).increment();
     }
 }
 ```
@@ -149,7 +162,7 @@ Nouveau comportement = nouveau composant, zéro modification de l'existant.
 Extension Points de ce projet :
   TaskExecutor     → @Preparation / @Injection / @Assertion + getSupportedTaskName()
   ExecutionTransport → @ConditionalOnProperty + implémentation de l'interface
-  ReportPublisher  → @ConditionalOnProperty + implémentation de l'interface
+  ReportRenderer   → implémentation de l'interface + bean Spring
 
 Chaque point d'extension :
   ✅ Déclaré par une interface dans platform-application/port/
@@ -158,7 +171,7 @@ Chaque point d'extension :
 ```
 
 **Test de l'extensibilité :** si ajouter un nouveau transport nécessite de modifier
-`RemoteExecutionEngine` ou `TaskDispatcher` → le design est fermé à l'extension.
+`ExecutionEngine` ou `StepDispatcher` → le design est fermé à l'extension.
 
 ---
 
@@ -213,7 +226,7 @@ Voir roadmap.md Phase de cleanup pour la liste des suppressions planifiées.
 
 ## 8. Bounded Context — Frontières de Modules
 
-Chaque module Spring Modulith est un Bounded Context avec son propre vocabulaire.
+Chaque module Maven fonctionnel est un Bounded Context avec son propre vocabulaire.
 
 ```
 platform-execution-engine
@@ -225,7 +238,7 @@ platform-injection-gatling
   Ne parle pas de : ExecutionPlan, DAG, AgentRegistry
 
 platform-reporting
-  Vocabulaire : CampaignReport, Verdict, Evidence, ReportPublisher
+  Vocabulaire : CampaignReport, Verdict, Evidence, ReportRenderer
   Ne parle pas de : GatlingRunner, TaskExecutor, Transport
 ```
 

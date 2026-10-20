@@ -11,7 +11,7 @@
 Décider :
 - Quel type ? `@Preparation`, `@Injection`, ou `@Assertion`
 - Quel `name` ? C'est la valeur que les scénarios YAML mettront dans `task:` et que les
-  agents déclarent dans `agent.supportedTasks`
+  agents déclarent dans `agent.supported-tasks`
 
 ```java
 // Exemples :
@@ -101,9 +101,11 @@ Packager en JAR fat et déposer dans `/plugins`. La plateforme charge automatiqu
 
 ```yaml
 agent:
-  supportedTasks:
-    - mon-executor    # correspond au name de l'annotation
+  supported-tasks:       # DISTRIBUTED : source unique de spécialisation (ADR-015)
+    - mon-executor       # correspond au name de l'annotation
 ```
+
+En LOCAL, cette propriété est ignorée : tous les exécuteurs enregistrés sont supportés.
 
 ---
 

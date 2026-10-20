@@ -7,361 +7,392 @@
 
 ## 1. Objectif
 
-Abstraire complètement le mécanisme de communication entre Orchestrator et Agents.
-Changer de transport = changer une ligne de config. Zéro changement de code.
+Abstraire le mécanisme de communication entre orchestrateur et agents. Changer de
+transport = changer `transport.type` ; aucun changement de code métier.
 
-Le transport implémente un modèle **broadcast + filtre côté agent** :
-l'orchestrateur publie une `TaskExecutionRequest` sans ciblage.
-Chaque agent décide localement s'il est concerné (voir `TaskSpecializationFilter` en spec 04).
+Modèle de communication : **broadcast + filtre côté agent**. L'orchestrateur publie une
+`TaskExecutionRequest` sans ciblage ; chaque agent décide localement s'il est concerné
+(`TaskSpecializationFilter`, spec 04).
+
+Depuis ADR-028, `ExecutionTransport` n'est plus une interface monolithique : c'est une
+**façade composite de migration** qui étend cinq ports étroits. Les consommateurs
+dépendent du port dont ils ont besoin (ISP), et `getType()` a été supprimé (aucun
+`if/switch` sur le type — CF-03).
 
 ---
 
-## 2. Interface Principale
+## 2. Ports
 
 ```java
-public interface ExecutionTransport {
+public interface TaskChannel {
+    void dispatchTask(TaskExecutionRequest request);   // orchestrateur → agents (broadcast)
+    void receiveTask(TaskRequestHandler handler);      // côté agent
+}
 
-    /**
-     * Dispatche une demande d'exécution en broadcast vers tous les agents.
-     * L'orchestrateur ne cible pas d'agent spécifique.
-     * Chaque agent filtre localement par spécialisation.
-     *
-     * Kafka/AMQP : publication sur le topic/exchange tasks → tous les agents reçoivent.
-     * HTTP : envoi à tous les agents enregistrés supportant taskName (broadcast HTTP).
-     */
-    void dispatchTask(TaskExecutionRequest request);
+public interface SignalChannel {
+    void broadcastSignal(AgentSignal signal);          // restart, START/STOP
+    void receiveSignal(AgentSignalHandler handler);    // côté agent
+}
 
-    /**
-     * Publier un signal vers tous les agents (ScenarioRestartSignal, etc.).
-     * Broadcast non filtré — tous les agents reçoivent.
-     */
-    void broadcastSignal(AgentSignal signal);
-
-    /**
-     * Publier un event d'exécution (côté agent → orchestrateur).
-     * Ex: TaskClaimedByAgent, TaskWorkInProgress, TaskCompleted, TaskFailed.
-     */
-    void publishEvent(ExecutionEvent event);
-
-    /**
-     * S'abonner aux events (côté orchestrateur).
-     * Reçoit TaskClaimedByAgent, TaskWorkInProgress, TaskCompleted, TaskFailed,
-     * AgentRegistered, AgentHeartbeat.
-     */
+public interface EventChannel {
+    void publishEvent(ExecutionEvent event);           // agents → orchestrateur
     Subscription subscribe(ExecutionEventHandler handler);
+}
 
-    /**
-     * Recevoir les demandes de task (côté agent).
-     * Bloquant ou push selon l'implémentation.
-     * L'agent appelle TaskSpecializationFilter avant d'exécuter.
-     */
-    void receiveTask(TaskRequestHandler handler);
+public interface LifecycleChannel {
+    void publishAgentEvent(AgentLifecycleEvent event); // registration/heartbeat/lost
+    Subscription subscribeAgentEvents(AgentLifecycleEventHandler handler);
+}
 
-    /**
-     * Recevoir les signaux broadcast (côté agent).
-     * Ex: ScenarioRestartSignal.
-     */
-    void receiveSignal(AgentSignalHandler handler);
-
-    /** Lifecycle */
+public interface ConnectionLifecycle {
     void connect() throws TransportException;
     void disconnect();
     boolean isConnected();
-    TransportType getType();
 }
 
-@FunctionalInterface
-public interface TaskRequestHandler {
-    void onRequest(TaskExecutionRequest request);
-}
-
-@FunctionalInterface
-public interface AgentSignalHandler {
-    void onSignal(AgentSignal signal);
-}
-
-@FunctionalInterface
-public interface ExecutionEventHandler {
-    void onEvent(ExecutionEvent event);
-}
+// Façade conservée pour les beans Spring et TransportConfiguration
+public interface ExecutionTransport
+        extends TaskChannel, SignalChannel, EventChannel, LifecycleChannel, ConnectionLifecycle {}
 ```
+
+Handlers :
+
+```java
+@FunctionalInterface public interface TaskRequestHandler { void onRequest(TaskExecutionRequest r); }
+@FunctionalInterface public interface AgentSignalHandler { void onSignal(AgentSignal s); }
+@FunctionalInterface public interface ExecutionEventHandler { void onEvent(ExecutionEvent e); }
+@FunctionalInterface public interface AgentLifecycleEventHandler { void onEvent(AgentLifecycleEvent e); }
+```
+
+```mermaid
+classDiagram
+    direction LR
+    class ExecutionTransport
+    class TaskChannel {
+        <<interface>>
+    }
+    class SignalChannel {
+        <<interface>>
+    }
+    class EventChannel {
+        <<interface>>
+    }
+    class LifecycleChannel {
+        <<interface>>
+    }
+    class ConnectionLifecycle {
+        <<interface>>
+    }
+    class InMemoryExecutionTransport
+    class KafkaExecutionTransport
+    class RabbitMQExecutionTransport
+    class HttpExecutionTransport
+    class SocketExecutionTransport
+
+    ExecutionTransport --|> TaskChannel
+    ExecutionTransport --|> SignalChannel
+    ExecutionTransport --|> EventChannel
+    ExecutionTransport --|> LifecycleChannel
+    ExecutionTransport --|> ConnectionLifecycle
+    InMemoryExecutionTransport ..|> ExecutionTransport
+    KafkaExecutionTransport ..|> ExecutionTransport
+    RabbitMQExecutionTransport ..|> ExecutionTransport
+    HttpExecutionTransport ..|> ExecutionTransport
+    SocketExecutionTransport ..|> ExecutionTransport
+```
+
+Consommateurs et ports utilisés :
+
+| Consommateur | Port |
+|---|---|
+| `RemoteStepDispatcher` | `TaskChannel` |
+| `RemoteLifecycleDispatcher` | `SignalChannel` |
+| `TaskExecutionPipeline` | `EventChannel` |
+| `TransportExecutionEventHandler` | `EventChannel` |
+| `TransportAgentRegistration` | `LifecycleChannel` |
+| `AgentLifecycleIngestion` | `LifecycleChannel` |
+| `TaskAgentRuntime` | `TaskChannel` + `SignalChannel` + `EventChannel` + `ConnectionLifecycle` |
 
 ---
 
-## 3. Messages et Events
+## 3. Messages et événements
 
-### TaskExecutionRequest (remplace TaskMessage)
+### 3.1 TaskExecutionRequest (remplace TaskMessage)
 
 ```java
-/**
- * Demande d'exécution d'une task, diffusée en broadcast.
- * Pas de targetAgentId — la sélection appartient aux agents.
- */
 public record TaskExecutionRequest(
-    MessageId id,                     // clé d'idempotence côté agent
+    MessageId id,                       // clé d'idempotence côté agent
     ExecutionId executionId,
-    StepDefinition step,              // contient taskName, phase, parameters
-
-    /**
-     * Contexte partiel — uniquement les clés déclarées dans step.requiredContexts().
-     * L'orchestrateur construit ce sous-ensemble depuis l'ExecutionContext global.
-     * NOTE R4 : pour des résultats Gatling volumineux (rawStats), ce contexte peut
-     * dépasser 1 MB. Acceptable compte tenu des ressources JVM cibles (2-4 GB).
-     * À surveiller si des steps accumulent de nombreux requiredContexts avec InjectionResult.
-     */
-    PartialExecutionContext context,
-
+    StepDefinition step,                // taskName, phase, parameters, timeout, retryPolicy
+    PartialExecutionContext context,    // uniquement step.requiredContexts()
     Instant dispatchedAt,
     RetryPolicy retryPolicy
 ) {}
 ```
 
-### ExecutionEvent
+- **Pas de `targetAgentId`** : la sélection appartient aux agents.
+- Le payload du contexte peut être volumineux (résultats Gatling) ; surveiller la taille
+  si de nombreux `requiredContexts` sont déclarés.
+
+### 3.2 ExecutionEvent (agents → orchestrateur)
 
 ```java
-/**
- * Event publié par un agent vers l'orchestrateur.
- * eventType détermine la structure du payload.
- */
 public record ExecutionEvent(
     EventId id,
     ExecutionId executionId,
-    MessageId correlationId,          // MessageId de la TaskExecutionRequest correspondante
-    AgentId agentId,                  // agent qui publie l'event
-    String eventType,                 // voir constantes ci-dessous
-    Map<String, Object> payload,
+    MessageId correlationId,       // MessageId de la TaskExecutionRequest
+    AgentId agentId,
+    String eventType,
+    Map<String, Object> payload,   // copie défensive immuable
     Instant occurredAt
 ) {
-    // Types d'events publiés par les agents
-    public static final String AGENT_REGISTERED        = "AgentRegistered";
-    public static final String AGENT_HEARTBEAT         = "AgentHeartbeat";
-    public static final String TASK_CLAIMED            = "TaskClaimedByAgent";
-    public static final String TASK_WORK_IN_PROGRESS   = "TaskWorkInProgress";
-    public static final String TASK_COMPLETED          = "TaskCompleted";
-    public static final String TASK_FAILED             = "TaskFailed";
+    public static final String TASK_CLAIMED          = "TaskClaimedByAgent";
+    public static final String TASK_WORK_IN_PROGRESS = "TaskWorkInProgress";
+    public static final String TASK_COMPLETED        = "TaskCompleted";
+    public static final String TASK_FAILED           = "TaskFailed";
 }
 ```
 
-### AgentSignal
+Types de payload :
+- `TASK_CLAIMED` : `taskName`, `agentId` ;
+- `TASK_WORK_IN_PROGRESS` : `taskId`, `agentId`, `messageId` ;
+- `TASK_COMPLETED` : `taskName`, `taskId`, `status`, `durationMs`, `outputs` ;
+- `TASK_FAILED` : `taskName`, `taskId`, `status`, `durationMs`, `error`.
+
+### 3.3 AgentLifecycleEvent (canal séparé, ADR-012)
 
 ```java
-public sealed interface AgentSignal
-        permits ScenarioRestartSignal {
+public record AgentLifecycleEvent(
+    EventId id,
+    AgentId agentId,
+    String eventType,              // AGENT_REGISTERED | AGENT_HEARTBEAT |
+                                   // AGENT_DEREGISTERED | AGENT_LOST
+    Map<String, Object> payload,   // AgentDescriptor ou AgentHeartbeat (codec typé)
+    Instant occurredAt
+) {}
+```
+
+Séparé du canal d'exécution : pas d'`ExecutionId`, pas de pollution du tracker de
+corrélation.
+
+### 3.4 AgentSignal
+
+```java
+public sealed interface AgentSignal permits ScenarioRestartSignal, ExecutionLifecycleSignal {
     SignalId id();
     Instant issuedAt();
 }
 ```
 
-### PartialExecutionContext
+### 3.5 PartialExecutionContext
 
 ```java
-/**
- * Sous-ensemble de l'ExecutionContext global.
- * Contient uniquement les entrées déclarées dans StepDefinition.requiredContexts().
- * Structure du store : taskId → Map<AgentId, TaskResult>
- */
 public record PartialExecutionContext(
     ExecutionId executionId,
     ScenarioId scenarioId,
-    Map<String, Map<String, Object>> store   // taskId → (agentId → outputs)
+    Map<String, Map<String, Object>> store   // taskId → agentId → outputs nommés
 ) {
-    public <T> Optional<T> get(String taskId, String agentId, Class<T> type) { ... }
-
-    // Accès au premier résultat disponible pour une task (politique FIRST_COMPLETE)
-    public <T> Optional<T> getFirst(String taskId, Class<T> type) { ... }
+    <T> Optional<T> getOutput(String taskId, String agentId, String outputName, Class<T> type);
+    <T> Optional<T> getFirstOutput(String taskId, String outputName, Class<T> type);
+    <T> Optional<T> get(String taskId, String agentId, Class<T> type);   // historique
+    <T> Optional<T> getFirst(String taskId, Class<T> type);              // historique
 }
 ```
+
+Les messages récents transportent la map complète des outputs ; les anciens messages à
+valeur brute restent lisibles via les accesseurs historiques.
 
 ---
 
 ## 4. Implémentations
 
-### 4.1 Kafka Transport
+### 4.1 InMemory (LOCAL, tests)
+
+- Sélection : `transport.type` absent ou `IN_MEMORY` (`matchIfMissing = true`).
+- Livraison **synchrone** : `dispatchTask` invoque immédiatement les handlers ;
+  `publishEvent` notifie les souscripteurs.
+- Aucun broker, aucun serveur. Utilisé par le `TaskAgentRuntime` LOCAL.
+
+### 4.2 Kafka
 
 ```yaml
 transport:
   type: KAFKA
   kafka:
-    bootstrapServers: kafka:9092
-    # Topic unique pour les demandes de task (broadcast)
-    # Chaque agent a son propre consumer group → reçoit tous les messages → filtre local
-    # Voir ADR-009 pour la justification du consumer group par agent
-    tasksTopic: agents-tasks
-    eventsTopic: agents-events
-    signalsTopic: agents-signals
-    producerAcks: all
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    tasks-topic: platform-tasks
+    events-topic: platform-events
+    signals-topic: platform-signals
+    producer-acks: all
+    consumer-group: ${AGENT_ID:agent}-${random.uuid}   # agent ; "orchestrator" côté orchestrateur
 ```
 
-**Consumer group côté agent** (config de l'agent, pas de l'orchestrateur) :
+- Producer : `KafkaTemplate<String, byte[]>` qualifié `transportKafkaTemplate`.
+- Consumer : `DynamicKafkaListenerRegistry` crée un `KafkaMessageListenerContainer` par
+  agent et par type de flux (tasks, signals, events exécution, events lifecycle).
+- `AckMode.RECORD`, `auto.offset.reset=earliest`, `enable.auto.commit=false`.
+- **ADR-009** : chaque agent a un consumer group unique, sinon Kafka distribuerait les
+  messages entre agents au lieu de les broadcaster.
+- Topics : tasks (orchestrateur → tous les agents), signals (orchestrateur → agents),
+  events (agents → orchestrateur, groupe `orchestrator`).
+- Beans qualifiés `transport*` pour éviter les collisions avec les clusters métier
+  (`platform.kafka-clusters.*`) et l'auto-configuration `spring.kafka.*`.
 
-```yaml
-agent:
-  transport:
-    kafka:
-      # Consumer group unique par agent — OBLIGATOIRE pour recevoir tous les messages.
-      # Si plusieurs agents partagent le même group, Kafka distribue les messages
-      # entre eux (load balancing) au lieu de les broadcaster.
-      # Règle : consumerGroup = agent.id (auto-configuré si absent)
-      consumerGroup: ${agent.id}
+```mermaid
+sequenceDiagram
+    autonumber
+    participant ORCH as Orchestrateur
+    participant KT as tasks topic
+    participant A1 as Agent g1
+    participant A2 as Agent g2
+    participant ET as events topic
+
+    ORCH->>KT: TaskExecutionRequest (broadcast)
+    KT-->>A1: message (g1)
+    KT-->>A2: message (g2)
+    A1->>ET: TASK_CLAIMED / TASK_COMPLETED
+    ET-->>ORCH: consommation (group orchestrator)
 ```
 
-**Topics** :
-
-| Topic | Producteur | Consommateurs | Partitions recommandées |
-|---|---|---|---|
-| `agents-tasks` | Orchestrateur | Tous les agents (consumer group distinct par agent) | 1 (ordering) |
-| `agents-events` | Tous les agents | Orchestrateur | N (parallélisme) |
-| `agents-signals` | Orchestrateur | Tous les agents | 1 |
-
-### 4.2 RabbitMQ Transport
+### 4.3 RabbitMQ
 
 ```yaml
 transport:
   type: RABBITMQ
   rabbitmq:
-    host: rabbitmq
+    host: ${RABBITMQ_HOST:localhost}
     port: 5672
-    virtualHost: /performance
-    # Exchange FANOUT pour broadcast vers tous les agents
-    # Chaque agent crée une queue exclusive auto-delete à son démarrage
-    tasksExchange: agents.tasks
-    tasksExchangeType: FANOUT          # FANOUT = broadcast natif
-    eventsExchange: agents.events
-    eventsExchangeType: DIRECT
-    signalsExchange: agents.signals
-    signalsExchangeType: FANOUT
-    username: ${RABBITMQ_USER}
-    password: ${RABBITMQ_PASSWORD}
+    virtual-host: /
+    tasks-exchange: tasks
+    events-exchange: events
+    signals-exchange: signals
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 ```
 
-### 4.3 HTTP Transport
+- Exchanges FANOUT pour tasks/signals (broadcast), queue exclusive auto-delete par agent.
+- Ack manuel, at-least-once, I/O sur Virtual Threads.
+- `RabbitMQConsumerManager` gère les consommateurs et la reconnexion.
+
+### 4.4 HTTP
 
 ```yaml
 transport:
   type: HTTP
   http:
-    # L'orchestrateur envoie la TaskExecutionRequest à tous les agents enregistrés
-    # supportant le taskName concerné (broadcast HTTP).
-    # broadcastMode:
-    #   ALL_CAPABLE  : envoie à tous les agents supportant la task (multi-claim natif)
-    #   FIRST_AVAILABLE : envoie au premier agent disponible uniquement
-    broadcastMode: ALL_CAPABLE
-    requestTimeoutSeconds: 30
-    # NOTE R5 : taskAvailabilityTimeoutSeconds doit être supérieur au temps de
-    # démarrage d'un agent dans l'environnement cible.
-    # En K8s avec cold start, prévoir minimum 120s.
-    # En dev local, 30s est suffisant.
-    taskAvailabilityTimeoutSeconds: 120
-    # Endpoint de l'orchestrateur où les agents envoient leurs callbacks
-    callbackBasePath: /api/v1/events
+    broadcast-mode: ALL_CAPABLE        # ALL_CAPABLE | FIRST_AVAILABLE
+    request-timeout-seconds: 30
+    task-availability-timeout-seconds: 120
+    callback-base-path: /api/v1/events
 ```
 
-### 4.4 Socket Transport
+- L'orchestrateur POST les `TaskExecutionRequest` aux agents capables via leur
+  `httpCallbackUrl` ; l'agent répond `202 Accepted`.
+- Les agents remontent leurs événements en POST sur `/api/v1/events`
+  (`HttpEventCallbackController`), qui les republie dans le transport local.
+- `ALL_CAPABLE` = multi-claim natif ; `FIRST_AVAILABLE` = un seul agent.
+- Appels bloquants exécutés sur Virtual Threads (client JDK `HttpClient`).
+
+> **Limite actuelle** : le code fournit l'envoi sortant et le contrôleur de callbacks
+> d'événements (`POST /api/v1/events`), mais **aucun endpoint entrant de tâches**
+> (`TaskExecutionRequest`) n'est exposé par la plateforme. Un agent HTTP nécessiterait
+> un récepteur externe. De plus, un nœud AGENT démarre sans serveur web (ADR-019), donc
+> `HttpEventCallbackController` n'y est pas actif. Le transport HTTP est utilisable pour
+> le dispatch orchestrateur → système externe et les callbacks, pas comme canal complet
+> orchestrateur ↔ agent plateforme en l'état.
+
+### 4.5 Socket
 
 ```yaml
 transport:
   type: SOCKET
   socket:
-    orchestratorHost: orchestrator
-    orchestratorPort: 9000
-    backlog: 100
-    keepAlive: true
-    reconnectIntervalMs: 5000
-    # Broadcast implémenté côté orchestrateur : envoi sur toutes les connexions actives
+    orchestrator-host: localhost
+    orchestrator-port: 9090
+    backlog: 50
+    keep-alive: true
+    reconnect-interval-ms: 5000
 ```
 
-### 4.5 InMemory Transport (tests + mode LOCAL)
+- Connexions TCP persistantes, `SocketConnectionRegistry` côté orchestrateur.
+- Détection de rôle : bind réussi = orchestrateur, port occupé = agent.
+- Best-effort (pas de garantie at-least-once), reconnexion automatique côté agent.
 
-```yaml
-transport:
-  type: IN_MEMORY
-  # Utilisé automatiquement en mode LOCAL
-  # Queues en mémoire, synchrone ou asynchrone selon config
-  inMemory:
-    asyncDelivery: false    # false = synchrone pour les tests déterministes
-```
+### 4.6 CUSTOM
+
+`transport.type=CUSTOM` est réservé à une configuration explicite de bean ; il n'existe
+pas d'implémentation fournie. Aucun chargement dynamique par nom de classe.
 
 ---
 
-## 5. Sélection par Configuration
+## 5. Sélection par configuration
 
 ```java
 @Configuration
+@EnableConfigurationProperties({
+    KafkaTransportProperties.class, RabbitMQTransportProperties.class,
+    HttpTransportProperties.class, SocketTransportProperties.class})
 public class TransportConfiguration {
 
-    @Bean
-    @ConditionalOnProperty(name = "transport.type", havingValue = "KAFKA")
-    public ExecutionTransport kafkaTransport(KafkaTransportProperties props) {
-        return new KafkaExecutionTransport(props);
-    }
+    @Bean @ConditionalOnProperty(name="transport.type", havingValue="IN_MEMORY", matchIfMissing=true)
+    InMemoryExecutionTransport inMemoryExecutionTransport() { ... }
 
-    @Bean
-    @ConditionalOnProperty(name = "transport.type", havingValue = "RABBITMQ")
-    public ExecutionTransport rabbitTransport(RabbitMQTransportProperties props) {
-        return new RabbitMQExecutionTransport(props);
-    }
+    @Bean @ConditionalOnProperty(name="transport.type", havingValue="RABBITMQ")
+    ExecutionTransport rabbitMQExecutionTransport(RabbitMQTransportProperties props) { ... }
 
-    @Bean
-    @ConditionalOnProperty(name = "transport.type", havingValue = "HTTP")
-    public ExecutionTransport httpTransport(HttpTransportProperties props,
-                                            AgentRegistry registry) {
-        return new HttpExecutionTransport(props, registry);
-    }
+    @Bean @ConditionalOnProperty(name="transport.type", havingValue="HTTP")
+    ExecutionTransport httpExecutionTransport(HttpTransportProperties props,
+                                               ObjectProvider<AgentRegistryPort> registry) { ... }
 
-    @Bean
-    @ConditionalOnProperty(name = "transport.type", havingValue = "SOCKET")
-    public ExecutionTransport socketTransport(SocketTransportProperties props) {
-        return new SocketExecutionTransport(props);
-    }
-
-    @Bean
-    @ConditionalOnProperty(name = "transport.type",
-                           havingValue = "IN_MEMORY",
-                           matchIfMissing = false)
-    @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
-    public ExecutionTransport inMemoryTransport() {
-        return new InMemoryExecutionTransport();
-    }
+    @Bean @ConditionalOnProperty(name="transport.type", havingValue="SOCKET")
+    ExecutionTransport socketExecutionTransport(SocketTransportProperties props) { ... }
 }
 ```
 
+Kafka est configuré dans `KafkaTransportBeans`, conditionnel à `transport.type=KAFKA`.
+
+Priorité de configuration (ADR-006) : `TRANSPORT_TYPE` env > `--transport.type=` >
+`transport.type` property > défaut `IN_MEMORY`.
+
 ---
 
-## 6. Garanties de Livraison
+## 6. Garanties de livraison
 
-| Transport | Modèle | At-least-once | Ordering tasks | Idempotence requise |
+| Transport | Modèle | At-least-once | Ordre | Idempotence agent |
 |---|---|---|---|---|
-| IN_MEMORY | Synchrone | Oui | Garanti | Non (single thread) |
-| SOCKET | Broadcast connexions | Non (best-effort) | Par connexion | Oui |
-| RABBITMQ | FANOUT + ack | Oui | Par queue | Oui |
-| KAFKA | Broadcast par consumer group | Oui (offset) | Par partition | Oui |
-| HTTP | POST direct + retry | Oui (retry orchestrateur) | N/A | Oui |
+| IN_MEMORY | synchrone | oui (même JVM) | garanti | non nécessaire |
+| KAFKA | broadcast par consumer group | oui (offsets) | par partition | requise (`MessageId`) |
+| RABBITMQ | FANOUT + ack manuel | oui | par queue | requise |
+| HTTP | POST + timeouts | via retry orchestrateur | non garanti | requise |
+| SOCKET | broadcast connexions | non (best-effort) | par connexion | requise |
 
-Clé d'idempotence côté agent : `TaskExecutionRequest.id` (MessageId).
-Un agent ne doit pas ré-exécuter une request avec un `MessageId` déjà traité.
+Clé d'idempotence : `TaskExecutionRequest.id`. Un agent ne ré-exécute jamais un
+`MessageId` déjà traité.
 
 ---
 
-## 7. Flux de Registration via Transport
+## 7. Enregistrement des agents
 
-L'enregistrement des agents passe par le transport pour rester cohérent
-quel que soit le mécanisme de communication.
+L'enregistrement passe par le **canal lifecycle** (ADR-012), pas par le canal exécution :
 
 ```
 Agent démarre
-  → transport.connect()
-  → publie ExecutionEvent(eventType=AgentRegistered, payload=AgentDescriptor)
-  → Orchestrateur reçoit via subscribe() → AgentRegistry.onAgentRegistered()
+  → connection.connect()
+  → LifecycleChannel.publishAgentEvent(AGENT_REGISTERED, AgentDescriptor)
+  → orchestrateur : AgentLifecycleIngestion → AgentRegistry.onAgentRegistered
 
-Agent heartbeat (toutes les heartbeat.intervalSeconds)
-  → publie ExecutionEvent(eventType=AgentHeartbeat, payload=AgentHeartbeat)
-  → Orchestrateur → AgentRegistry.onAgentHeartbeat() → refresh TTL
+Heartbeat (toutes les 10 s)
+  → LifecycleChannel.publishAgentEvent(AGENT_HEARTBEAT, AgentHeartbeat)
+  → AgentRegistry.onAgentHeartbeat → refresh TTL
 
-Agent s'arrête (graceful)
-  → publie ExecutionEvent(eventType=AgentDeregistered)
-  → Orchestrateur → AgentRegistry.onAgentDeregistered()
+Arrêt graceful
+  → LifecycleChannel.publishAgentEvent(AGENT_DEREGISTERED)
+  → AgentRegistry.onAgentDeregistered
 
-TTL expiré (pas de heartbeat pendant registrationTtl)
-  → Orchestrateur → AgentRegistry.onAgentExpired()
-  → Orchestrateur publie ScenarioRestartSignal si exécution en cours sur cet agent
+TTL expiré
+  → AgentTtlMonitor publie AgentLost
+  → tracker invalide les claims → fast-fail des steps en cours
 ```
+
+L'orchestrateur ne peut dispatcher que si `AgentLifecycleIngestion` est actif
+(DISTRIBUTED + ORCHESTRATOR). Sans lui, le registre reste vide.

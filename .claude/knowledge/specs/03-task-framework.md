@@ -1,6 +1,7 @@
 # Spec 03 — Task Framework
 
-**Module** : `platform-infrastructure` (implémentations), `platform-domain` (interfaces)  
+**Modules** : `platform-plugin-api` (contrats + annotations),
+`platform-infrastructure` (implémentations internes, registre, plugins)
 **Dépend de** : `platform-domain`, `platform-application`
 
 ---
@@ -11,11 +12,11 @@
 public interface TaskExecutor {
     /**
      * Exécute la tâche et retourne un résultat immuable.
-     * NE PAS lancer d'exception pour un échec métier → retourner TaskResult.failed()
-     * Lancer une exception UNIQUEMENT pour erreur technique irrécupérable.
+     * NE PAS lancer d'exception pour un échec métier → retourner TaskResult.failed().
+     * Lancer une exception UNIQUEMENT pour une erreur technique irrécupérable.
      *
-     * Le paramètre StepDefinition remplace l'ancienne TaskDefinition.
-     * taskName matche la spécialisation déclarée dans agent.supportedTasks.
+     * StepDefinition remplace l'ancienne TaskDefinition.
+     * taskName matche la spécialisation déclarée dans agent.supported-tasks.
      */
     TaskResult execute(ExecutionContext context, StepDefinition step);
 
@@ -28,32 +29,41 @@ public interface TaskExecutor {
 }
 
 public interface TaskExecutorRegistry {
-    void register(TaskExecutor executor);
-    TaskExecutor getFor(String taskName) throws UnsupportedTaskTypeException;
+    void register(TaskExecutor executor);          // dernier enregistré gagne (WARN si remplacement)
+    TaskExecutor getFor(String taskName) throws UnsupportedTaskNameException;
     Set<String> getSupportedTaskNames();
 }
 ```
 
 ---
 
+```mermaid
+flowchart LR
+    STEP["steps[] : task + phase"] --> REG["TaskExecutorRegistry"]
+    ANN["@Preparation · @Injection · @Assertion"] -.->|"name"| REG
+    PLUG["PluginRegistry"] -.->|"JARs externes (non câblé au moteur)"| REG
+    REG --> EX["TaskExecutor.execute()"]
+    EX --> RES["TaskResult"]
+```
+
 ## 2. TaskResult
 
 ```java
 public record TaskResult(
     TaskId taskId,
-    TaskType taskType,
+    String taskName,                    // String libre — jamais d'enum
     TaskStatus status,                  // SUCCESS | FAILED | SKIPPED | TIMEOUT
     Duration duration,
-    Map<String, Object> outputs,        // résultats stockés dans ExecutionContext
+    Map<String, Object> outputs,        // outputs nommés, stockés dans ExecutionContext
     String errorMessage,                // null si SUCCESS
     Throwable cause,                    // null si SUCCESS
     Instant completedAt
 ) {
-    public static TaskResult success(TaskId id, TaskType type, Duration duration,
+    public static TaskResult success(TaskId id, String taskName, Duration duration,
                                      Map<String, Object> outputs) { ... }
-    public static TaskResult failed(TaskId id, TaskType type, Duration duration,
+    public static TaskResult failed(TaskId id, String taskName, Duration duration,
                                     String message, Throwable cause) { ... }
-    public static TaskResult skipped(TaskId id, TaskType type, String reason) { ... }
+    public static TaskResult skipped(TaskId id, String taskName, String reason) { ... }
     public boolean isSuccess() { return status == TaskStatus.SUCCESS; }
 }
 ```
@@ -62,98 +72,143 @@ public record TaskResult(
 
 ## 3. Types de Tâches et Paramètres YAML
 
-### DATABASE
+Chaque step déclare `task:` (nom résolu par annotation) et `phase:`. Les paramètres
+spécifiques vivent sous `parameters:`. Les exemples ci-dessous sont des extraits de
+`steps:`.
+
+### `database` — PREPARATION
 ```yaml
-type: DATABASE
-operation: PURGE              # PURGE | POPULATE | MIGRATION | BACKUP | RESTORE
-datasource: customer-db       # référence à une datasource configurée
-table: orders                 # optionnel pour PURGE
-scriptPath: sql/populate.sql  # pour POPULATE
-timeout: 60s
+- id: purge-db
+  task: database
+  phase: PREPARATION
+  parameters:
+    operation: PURGE            # PURGE | POPULATE | QUERY
+    datasource: customer-db     # datasource nommée (ADR-014)
+    table: orders               # PURGE
+    scriptPath: sql/populate.sql # POPULATE
+    query: "SELECT COUNT(*) FROM orders" # QUERY
+    queryType: COUNT            # COUNT | EXISTS | SCALAR (QUERY)
+  timeout: 60s
 ```
+Outputs : `rowsAffected` (PURGE), `scriptExecuted` (POPULATE), `rows`/`rowCount` (QUERY SELECT) ou `rowsAffected` (QUERY UPDATE), plus `duration`.
 
-Outputs stockés : `{ "rowsAffected": 1500, "duration": "2.3s" }`
-
-### FILESYSTEM
+### `filesystem` — PREPARATION
 ```yaml
-type: FILESYSTEM
-operation: CREATE             # CREATE | DELETE | UPLOAD | CLEANUP
-path: /data/input
-source: s3://bucket/file.csv  # pour UPLOAD
-recursive: true               # pour DELETE/CLEANUP
+- id: prepare-files
+  task: filesystem
+  phase: PREPARATION
+  parameters:
+    operation: CREATE           # CREATE | DELETE | UPLOAD | CLEANUP
+    path: /data/input
+    source: classpath:fixtures/input.csv   # UPLOAD
+    recursive: true             # DELETE / CLEANUP
 ```
+Outputs : `path`, `filesAffected`.
 
-### SHELL
+### `shell` — PREPARATION
 ```yaml
-type: SHELL
-command: "./scripts/prepare.sh"
-args:
-  - "--env"
-  - "prod"
-workingDirectory: /app
-env:
-  MY_VAR: value
-timeout: 2m
-successExitCodes: [0, 1]      # default [0]
+- id: seed
+  task: shell
+  phase: PREPARATION
+  parameters:
+    command: ./scripts/prepare.sh
+    args: ["--env", "prod"]
+    workingDirectory: /app
+    env:
+      MY_VAR: value
+    successExitCodes: [0, 1]    # défaut [0]
+  timeout: 2m
 ```
+Outputs : `exitCode`, `stdout`, `stderr`.
 
-Outputs stockés : `{ "exitCode": 0, "stdout": "...", "stderr": "..." }`
-
-### DOCKER
+### `docker` — PREPARATION
 ```yaml
-type: DOCKER
-action: START                 # START | STOP | PULL
-image: nginx:latest
-containerName: test-nginx
-ports:
-  - "8080:80"
-env:
-  NGINX_PORT: "80"
-waitForHealthCheck: true
-healthCheckTimeout: 30s
+- id: start-nginx
+  task: docker
+  phase: PREPARATION
+  parameters:
+    action: START               # START | STOP | PULL
+    image: nginx:latest
+    containerName: test-nginx
+    ports: ["8080:80"]
+    env:
+      NGINX_PORT: "80"
+    waitForHealthCheck: true
+    healthCheckTimeout: 30s
 ```
+Outputs : `containerId`, `status`, `image` (selon action).
 
-### KAFKA_CONSUMER
+### `kafka-producer` — PREPARATION / INJECTION
 ```yaml
-type: KAFKA_CONSUMER
-operation: MONITOR            # MONITOR | CONSUME | COUNT
-topic: customer-events
-groupId: perf-monitor
-bootstrapServers: kafka:9092  # optionnel si config globale
-maxMessages: 1000
-timeout: 5m
+- id: preload
+  task: kafka-producer
+  phase: PREPARATION
+  parameters:
+    operation: PRELOAD          # PRODUCE | PRELOAD
+    cluster: default            # cluster nommé (préféré)
+    # bootstrapServers: kafka:9092   # legacy, WARN
+    topic: input-events
+    messageCount: 10000
+    messageTemplate: "event-{index}"
+    batchSize: 500
 ```
+Outputs : `messagesProduced`, `messagesFailed`. La tâche échoue si
+`messagesFailed > 0`. Les appels Kafka sont bornés par le `timeout` du step.
 
-Outputs stockés : `{ "messagesConsumed": 850, "lag": 12 }`
-
-### KAFKA_PRODUCER
+### `kafka-consumer` — PREPARATION / ASSERTION
 ```yaml
-type: KAFKA_PRODUCER
-operation: PRELOAD
-topic: input-events
-bootstrapServers: kafka:9092
-messageCount: 10000
-messageTemplate: classpath:kafka/event-template.json
-batchSize: 500
+- id: consume
+  task: kafka-consumer
+  phase: PREPARATION
+  parameters:
+    operation: CONSUME          # CONSUME | COUNT
+    cluster: default
+    topic: customer-events
+    groupId: perf-monitor
+    maxMessages: 1000
+  timeout: 5m
 ```
+Outputs : `messagesConsumed`, `lag`.
 
-### MOCK_SERVER
+### `mock-server` — PREPARATION
 ```yaml
-type: MOCK_SERVER
-deployment: EMBEDDED          # EMBEDDED | EXTERNAL
-port: 8090
-mappingsPath: wiremock/mappings
-action: START                 # START | STOP | RESET | VERIFY
-externalUrl: http://mock:8090 # pour deployment: EXTERNAL
+- id: start-mock
+  task: mock-server
+  phase: PREPARATION
+  parameters:
+    deployment: EMBEDDED        # EMBEDDED | EXTERNAL
+    action: START               # START | STOP | RESET | VERIFY
+    port: 8090                  # EMBEDDED
+    mappingsPath: wiremock/mappings
+    target: wiremock            # EXTERNAL : cible nommée
+    wiremockUrl: http://mock:8080  # EXTERNAL (legacy)
 ```
+Outputs : `port`, `url`, `totalRequests` (VERIFY). Un port `0` demande un port éphémère.
 
-Outputs stockés : `{ "port": 8090, "url": "http://localhost:8090" }`
-
-### GATLING (voir spec 06 pour le détail)
+### `http-client` — PREPARATION
 ```yaml
-type: GATLING
-simulation: com.example.CustomerApiSimulation
-loadModel: api-load
+- id: health
+  task: http-client
+  phase: PREPARATION
+  parameters:
+    target: device-api          # cible nommée (platform.http-targets)
+    method: GET                 # GET | POST | PUT | PATCH | DELETE
+    path: health                # chemin logique mappé par la cible
+    expectedStatus: 200
+    body: '{"x":1}'             # POST/PUT/PATCH
+    contentType: application/json
+```
+Outputs : `statusCode`, `responseBody`, `durationMs`.
+
+### `gatling` — INJECTION (voir spec 06)
+```yaml
+- id: load
+  task: gatling
+  phase: INJECTION
+  parameters:
+    simulation: com.example.CustomerApiSimulation
+    loadModel: api-load
+  timeout: 20m
 ```
 
 ---
@@ -209,8 +264,11 @@ Exemples de clés dans l'ExecutionContext global (côté orchestrateur) :
 - `"start-mock"` → `{ "agent-local": TaskResult(outputs={port: 8090, url: "..."}) }`
 - `"customer-api-load"` → `{ "agent-perf-01": TaskResult(outputs=InjectionResult) }`
 
-Les assertions accèdent au contexte via `context.getFirst(taskId, type)` ou
-`context.getAll(taskId)` (voir spec 02 section 4).
+Les assertions accèdent au contexte via les **outputs nommés** :
+`context.getOutput(taskId, agentId, outputName, type)` ou
+`context.getFirstOutput(taskId, outputName, type)` (ordre déterministe par `agentId`).
+`context.getAll(taskId)` reste disponible pour itérer sur les résultats multi-agents
+(voir spec 02 section 4).
 
 ---
 
@@ -323,23 +381,44 @@ public @interface Assertion {
 Les composants internes de la plateforme utilisent exactement les mêmes annotations :
 
 ```java
-@Preparation(name = "database", description = "DB operations: purge, populate, migrate")
+@Preparation(name = "database", version = "1.0.0", description = "DB operations: purge, populate, query")
 public class DatabaseTaskExecutor implements TaskExecutor { ... }
 
-@Preparation(name = "kafka-consumer", description = "Kafka consume/monitor/count")
+@Preparation(name = "kafka-consumer", ...)
 public class KafkaConsumerTaskExecutor implements TaskExecutor { ... }
 
-@Preparation(name = "mock-server", description = "WireMock embedded/external")
+@Preparation(name = "kafka-producer", ...)
+public class KafkaProducerTaskExecutor implements TaskExecutor { ... }
+
+@Preparation(name = "mock-server", ...)
 public class MockServerTaskExecutor implements TaskExecutor { ... }
+
+@Preparation(name = "shell", ...)
+public class ShellTaskExecutor implements TaskExecutor { ... }
+
+@Preparation(name = "docker", ...)
+public class DockerTaskExecutor implements TaskExecutor { ... }
+
+@Preparation(name = "filesystem", ...)
+public class FilesystemTaskExecutor implements TaskExecutor { ... }
+
+@Preparation(name = "http-client", ...)
+public class HttpClientTaskExecutor implements TaskExecutor { ... }
 
 @Injection(name = "gatling", description = "Gatling load injection")
 public class GatlingTaskExecutor implements TaskExecutor { ... }
 
-@Assertion(name = "gatling-metric", description = "Gatling metrics: p95, errorRate...")
-public class GatlingMetricAssertionExecutor implements TaskExecutor { ... }
+// Assertions : AssertionExecutor extends TaskExecutor
+@Assertion(name = "gatling-metric", ...)
+public class GatlingMetricAssertionExecutor implements AssertionExecutor { ... }
 
-@Assertion(name = "database", description = "SQL count/exists assertions")
-public class DatabaseAssertionExecutor implements TaskExecutor { ... }
+@Assertion(name = "database-assertion", ...)
+public class DatabaseAssertionExecutor implements AssertionExecutor { ... }
+
+@Assertion(name = "kafka", ...)          public class KafkaAssertionExecutor
+@Assertion(name = "wiremock", ...)      public class WireMockAssertionExecutor
+@Assertion(name = "http-mock", ...)     public class HttpMockAssertionExecutor
+@Assertion(name = "file", ...)          public class FileAssertionExecutor
 ```
 
 ### 7.4 Usage — Plugin Externe
@@ -360,18 +439,20 @@ public class AcmeDbSeeder implements TaskExecutor {
 
 ```yaml
 # Scénario — aucune distinction interne/externe dans le YAML
-preparation:
+steps:
   - id: seed-acme
-    type: my-custom-seeder     # → résolu par @Preparation(name = "my-custom-seeder")
-    connectionString: jdbc:legacy://host:1521/acme
+    task: my-custom-seeder     # → résolu par @Preparation(name = "my-custom-seeder")
+    phase: PREPARATION
+    parameters:
+      connectionString: jdbc:legacy://host:1521/acme
 ```
 
 ### 7.5 Résolution DSL → Implémentation
 
-Le `type` dans le YAML est la clé de lookup dans le registre :
+Le `task` du YAML (avec la `phase`) est la clé de lookup dans le registre :
 
 ```
-DSL type value  →  PluginRegistry.lookup(phase, name)
+DSL (phase, task)  →  PluginRegistry.lookup(phase, name)
                      ↓
                    cherche @Preparation(name="X") si phase=PREPARATION
                    cherche @Injection(name="X")   si phase=INJECTION
@@ -385,26 +466,15 @@ WARN PluginRegistry - Override: @Preparation(name="database") from plugin
      acme-plugin-1.0.jar supersedes internal DatabaseTaskExecutor
 ```
 
-### 7.6 Transport et Publisher Custom via Properties
+### 7.6 Extensions transport / reporting
 
-Pour les extensions de transport et de publisher, pas d'annotation — configuration
-par nom de classe qualifié :
-
-```yaml
-# Transport custom (doit implémenter ExecutionTransport)
-transport:
-  type: CUSTOM
-  custom-class: com.acme.MyCustomTransport
-
-# Publisher custom (doit implémenter ReportPublisher)
-reporting:
-  publishers:
-    - target: CUSTOM
-      custom-class: com.acme.MyNexusPublisher
-      properties:
-        url: https://nexus.acme.com
-        repo: perf-reports
-```
+Il n'y a **pas** de chargement dynamique par nom de classe ni de publisher de rapport.
+- Transport : ajouter une implémentation des 5 canaux et un `@Bean`
+  `@ConditionalOnProperty(name="transport.type", havingValue="…")`.
+  `transport.type=CUSTOM` est un emplacement de configuration, pas un mécanisme de
+  chargement automatique.
+- Reporting : la sortie est locale (`reporting.output-directory`, ADR-022). Pour un
+  nouveau format, implémenter `ReportRenderer` et l'exposer comme bean.
 
 ### 7.7 Interface PluginLoader
 
@@ -423,6 +493,14 @@ public record PluginLoadResult(
 }
 ```
 
+> **État du câblage d'exécution (2026-10-20)** : `PluginLoader` + `PluginRegistry`
+> découvrent et enregistrent les exécuteurs externes, mais le moteur LOCAL
+> (`RegistryTaskExecutorLookup`) et l'agent (`List<TaskExecutor>` injectée) ne lisent
+> que `TaskExecutorRegistry`, alimenté par les beans Spring. Un exécuteur chargé depuis
+> un JAR externe est donc visible dans `PluginRegistry` mais **pas encore exécutable**
+> par le moteur. Le raccordement `PluginRegistry → TaskExecutorRegistry` (ou un
+> adaptateur de lookup) reste à implémenter.
+
 **Comportement au démarrage** :
 - JAR invalide (corrompu, manque de dépendances) → `PluginError` loggé, JAR ignoré
 - Collision de `name` → `PluginWarning` loggé, plugin externe gagne
@@ -431,14 +509,15 @@ public record PluginLoadResult(
 
 ### 7.8 Module platform-plugin-api
 
-Module Maven léger fourni aux développeurs de plugins.
-Contient **uniquement** :
-- Les 3 annotations (`@Preparation`, `@Injection`, `@Assertion`)
-- L'interface `TaskExecutor`
-- Les records `TaskResult`, `ExecutionContext`, `StepDefinition`, `TaskId`
-- L'interface `TaskExecutor` (avec `execute(context, step)` et `getSupportedTaskName()`)
-- Note : `TaskType` enum supprimé — le type est le `String taskName` de `StepDefinition`
-- Pas de dépendance Spring
+Module Maven léger fourni aux développeurs de plugins. Il dépend de
+`platform-domain` pour les types métier, et ne contient **que** :
+- les 3 annotations (`@Preparation`, `@Injection`, `@Assertion`) ;
+- l'interface `TaskExecutor` ;
+- `AssertionExecutor` (extends `TaskExecutor`) ;
+- `StatefulResourceCleaner`.
+Les records `TaskResult`, `ExecutionContext`, `StepDefinition`, `TaskId` vivent dans
+`platform-domain` (0 framework). `TaskType` est supprimé — le type est le `String
+taskName` de `StepDefinition`. Aucune dépendance Spring.
 
 ```xml
 <dependency>

@@ -30,23 +30,15 @@ bash .claude/scripts/dev-loop.sh --dry-run
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────┐
-│              dev-loop.sh (BASH LOOP)                 │
-│                                                      │
-│  Each iteration = NEW claude process = FRESH CONTEXT │
-│                                                      │
-│  ┌───────────┐    ┌───────────┐                     │
-│  │ DEVELOPER │───▶│ REVIEWER  │──▶ DONE + COMMIT    │
-│  │ (claude)  │    │ (claude)  │                     │
-│  └───────────┘    └───────────┘                     │
-│       │                 │                           │
-│       │    CHANGES_REQUESTED                        │
-│       └──────▶ DEVELOPER (fix) ──▶ REVIEWER        │
-│                                                      │
-│  State in: .claude/workspace/progress.md                       │
-│  Recommendations in: .claude/workspace/recommendations-tracking.md │
-└──────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    START["dev-loop.sh"] --> DETECT["detect next action<br/>progress.md"]
+    DETECT --> DEV["Developer<br/>claude subprocess"]
+    DEV --> VERIFY1["verify status<br/>IN_REVIEW"]
+    VERIFY1 --> REV["Reviewer<br/>claude subprocess"]
+    REV -->|APPROVED| DONE["issue-review APPROVED<br/>next issue"]
+    REV -->|CHANGES_REQUESTED| DEV
+    DONE --> DETECT
 ```
 
 ---

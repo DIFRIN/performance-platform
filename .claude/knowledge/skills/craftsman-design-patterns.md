@@ -112,23 +112,19 @@ new CampaignReport(id, name, version, tags, meta, env, prep, inj, assertions, ve
 Chaque variante de comportement est une implémentation d'interface, pas une branche.
 
 ```java
-// ✅ CORRECT — ajout d'un nouveau transport = nouvelle classe, 0 modification
-public interface ExecutionTransport {
-    void dispatchTask(TaskExecutionRequest request);
-    TransportType getType();
-}
-
+// ✅ CORRECT — ajout d'un transport = nouvelle implémentation des canaux, 0 modification
+// (ExecutionTransport est une façade des 5 ports étroits, ADR-028 ; getType() supprimé)
 @ConditionalOnProperty(name = "transport.type", havingValue = "KAFKA")
 public class KafkaExecutionTransport implements ExecutionTransport { ... }
 
-@ConditionalOnProperty(name = "transport.type", havingValue = "GRPC")
-public class GrpcExecutionTransport implements ExecutionTransport { ... }
+@ConditionalOnProperty(name = "transport.type", havingValue = "RABBITMQ")
+public class RabbitMQExecutionTransport implements ExecutionTransport { ... }
 
 // ❌ INCORRECT — OCP violé, chaque ajout modifie le code existant
 public void dispatch(TaskExecutionRequest req) {
-    if (type == KAFKA) kafkaDispatch(req);
-    else if (type == GRPC) grpcDispatch(req);
-    else if (type == RABBITMQ) rabbitDispatch(req);
+    if (type.equals("KAFKA")) kafkaDispatch(req);
+    else if (type.equals("RABBITMQ")) rabbitDispatch(req);
+    else if (type.equals("HTTP")) httpDispatch(req);
 }
 ```
 
@@ -141,24 +137,24 @@ La communication entre composants passe par des events, jamais par injection dir
 ```java
 // ✅ CORRECT — le moteur ne connaît pas le module Reporting
 @Component
-public class LocalExecutionEngine {
+public class ExecutionEngine {
     private final ApplicationEventPublisher events;
 
     private void completeTask(TaskResult result, ExecutionId execId) {
-        events.publishEvent(new TaskCompleted(execId, result.taskId(),
-            result.taskName(), result, result.duration(), Instant.now()));
+        events.publishEvent(new TaskCompleted(execId, result.taskId(), agentId,
+            result, result.duration(), Instant.now()));
     }
 }
 
-@ApplicationModuleListener
-public class ReportingListener {
+@Component
+public class ReportingListener {          // Spring standard (Modulith retiré, ADR-035)
     @EventListener
-    public void on(TaskCompleted event) { /* mise à jour rapport */ }
+    public void on(TaskCompleted event) { /* génération du rapport */ }
 }
 
 // ❌ INCORRECT — couplage direct entre modules
 @Autowired ReportingService reporting;
-reporting.onTaskCompleted(result); // viole Spring Modulith
+reporting.onTaskCompleted(result); // viole les frontières de modules
 ```
 
 ---
@@ -185,7 +181,7 @@ public abstract class AbstractExecutionEngine implements ExecutionEngine {
         return plan.id();
     }
 
-    // Étape variable — implémentée par LocalExecutionEngine ou RemoteExecutionEngine
+    // Étape variable — implémentée par LocalStepDispatcher ou RemoteStepDispatcher
     protected abstract ExecutionContext executePhase(
         List<ExecutionStep> steps, ExecutionContext context);
 }
@@ -235,7 +231,7 @@ public class RetryingTaskDispatcher implements TaskDispatcher {
 }
 
 // ❌ Hériter pour ajouter du comportement
-public class RetryingExecutionEngine extends LocalExecutionEngine { ... }
+public class RetryingStepDispatcher implements StepDispatcher { ... }  // décorateur
 ```
 
 ### Small Methods, Single Responsibility

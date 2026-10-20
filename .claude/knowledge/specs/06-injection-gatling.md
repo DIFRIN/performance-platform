@@ -84,6 +84,24 @@ public interface LoadModelTranslator {
 
 ---
 
+```mermaid
+flowchart TB
+    subgraph PREP["Préparation de la simulation"]
+        direction LR
+        STEP["step gatling"] --> LM["LoadModel"]
+        LM --> TR["LoadModelTranslator"]
+        TR --> HOLDER["SimulationInjectionHolder"]
+    end
+    subgraph EXEC["Exécution et résultat"]
+        direction LR
+        HOLDER --> RUN["DefaultGatlingRunner"]
+        RUN --> GAT["Gatling.fromArgs()"]
+        GAT --> DIR["répertoire de résultats"]
+        DIR --> PARSE["DefaultGatlingResultParser"]
+        PARSE --> IR["InjectionResult"]
+    end
+```
+
 ## 5. InjectionResult
 
 ```java
@@ -124,20 +142,25 @@ return TaskResult.success(
     elapsed,
     Map.of("result", injectionResult)
 );
-// L'orchestrateur fait ensuite : context.with(step.id(), Map.of(agentId, taskResult))
+// L'orchestrateur fait ensuite : context.with(step.id().value(), agentId, taskResult)
 ```
 
 ---
 
 ## 7. Protocoles Supportés
 
-| Protocole | Classe de config Gatling | Dépendance Maven |
+| Protocole | Support | Dépendance |
 |---|---|---|
-| HTTP/HTTPS | `HttpProtocolBuilder` | `gatling-http` |
-| WebSocket | `HttpProtocolBuilder` (ws) | `gatling-http` |
-| Kafka | `KafkaProtocolBuilder` | `gatling-kafka` |
-| JMS | `JmsProtocolBuilder` | `gatling-jms` |
-| gRPC | `GrpcProtocolBuilder` | `gatling-grpc` |
+| HTTP/HTTPS | oui (`HttpProtocolBuilder`) | `gatling-http` |
+| WebSocket | oui (`HttpProtocolBuilder`, ws) | `gatling-http` |
+| Kafka | déclaré dans `ProtocolSupportInfo`, **dépendance non fournie** (pas de `io.gatling:gatling-kafka` en 3.11.x) — plugin externe requis | — |
+| JMS | oui (`JmsProtocolBuilder`) | `gatling-jms` (optionnel) |
+| gRPC | **exclu du périmètre** — aucune dépendance, aucun `TransportType.GRPC` | — |
+
+La liste canonique est exposée par `ProtocolSupportInfo.SUPPORTED_PROTOCOLS`
+(HTTP, HTTPS, WebSocket, Kafka, JMS) ; `gRPC` figure dans `EXCLUDED_PROTOCOLS`.
+Attention : « supporté » signifie que le protocole est déclaré côté DSL ; pour Kafka,
+l'artefact Gatling n'est pas empaqueté et doit être fourni par l'utilisateur.
 
 ---
 
