@@ -1,5 +1,8 @@
 package com.performance.platform.infrastructure.executor.http;
 
+import com.performance.platform.application.ports.out.HttpTarget;
+import com.performance.platform.application.ports.out.HttpTargetResolver;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -11,7 +14,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class HttpTargetRegistry {
+public class HttpTargetRegistry implements HttpTargetResolver {
 
     private static final Logger log = LoggerFactory.getLogger(HttpTargetRegistry.class);
 
@@ -28,6 +31,23 @@ public class HttpTargetRegistry {
 
     public HttpTargetProperties get(String targetName) {
         return targets.get(targetName);
+    }
+
+    /**
+     * Resolution framework-free pour les modules fournisseurs (assertions).
+     */
+    @Override
+    public HttpTarget resolve(String targetName) {
+        HttpTargetProperties properties = targets.get(targetName);
+        if (properties == null) {
+            return null;
+        }
+        return new HttpTarget(
+                properties.baseUrl(),
+                properties.connectionTimeout(),
+                properties.readTimeout(),
+                properties.defaultHeaders(),
+                properties.paths());
     }
 
     public RestClient clientFor(String targetName) {
