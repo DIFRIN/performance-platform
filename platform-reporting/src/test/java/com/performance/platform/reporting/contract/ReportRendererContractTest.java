@@ -48,9 +48,16 @@ public class ReportRendererContractTest {
     // ── Shared fixtures ──
 
     private static CampaignReport createFullReport(Verdict verdict, String reason) {
-        var reportId = ReportId.generate();
+        return createFullReport(ReportId.generate(), Instant.now(), verdict, reason);
+    }
+
+    /**
+     * Builds a full report with an explicit identity/timestamp so two reports
+     * can differ only by verdict and reason.
+     */
+    private static CampaignReport createFullReport(ReportId reportId, Instant now,
+                                                   Verdict verdict, String reason) {
         var scenarioId = new ScenarioId("contract-test");
-        var now = Instant.now();
 
         var prepEntry = new TaskReportEntry(
                 new TaskId("prep-1"), "database-setup", TaskStatus.SUCCESS,
@@ -370,12 +377,30 @@ public class ReportRendererContractTest {
         @Test
         @DisplayName("render() must produce different output for different verdicts")
         void renderMustProduceDifferentOutputForDifferentVerdicts() {
-            CampaignReport report1 = createFullReport(Verdict.SUCCESS, "All good");
-            CampaignReport report2 = createFullReport(Verdict.FAILED, "Critical error");
-            byte[] result1 = renderer.render(report1);
-            byte[] result2 = renderer.render(report2);
-            assertNotEquals(result1.length, result2.length,
-                    "Different verdicts must produce different PDF sizes");
+            // Same identity/timestamp: only verdict and reason differ.
+            var reportId = ReportId.generate();
+            var now = Instant.now();
+            CampaignReport report1 = createFullReport(reportId, now, Verdict.SUCCESS, "All good");
+            CampaignReport report2 = createFullReport(reportId, now, Verdict.FAILED, "Critical error");
+
+            String text1 = extractPdfText(renderer.render(report1));
+            String text2 = extractPdfText(renderer.render(report2));
+
+            assertNotEquals(text1, text2,
+                    "Different verdicts must produce different PDF content");
+            assertTrue(text1.contains(Verdict.SUCCESS.name()),
+                    "SUCCESS report must render its verdict");
+            assertTrue(text2.contains(Verdict.FAILED.name()),
+                    "FAILED report must render its verdict");
+        }
+
+        private static String extractPdfText(byte[] pdf) {
+            try (org.apache.pdfbox.pdmodel.PDDocument document =
+                         org.apache.pdfbox.pdmodel.PDDocument.load(pdf)) {
+                return new org.apache.pdfbox.text.PDFTextStripper().getText(document);
+            } catch (java.io.IOException e) {
+                throw new AssertionError("Unable to extract text from rendered PDF", e);
+            }
         }
 
         @Test

@@ -55,7 +55,7 @@ class KafkaProducerTaskExecutorTest {
                     TaskId.of("step-v1"), "kafka-producer", Phase.PREPARATION,
                     Map.of("operation", "PRODUCE",
                             "bootstrapServers", "localhost:9092"),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -71,7 +71,7 @@ class KafkaProducerTaskExecutorTest {
                     Map.of("operation", "PRODUCE",
                             "topic", "   ",
                             "bootstrapServers", "localhost:9092"),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -86,7 +86,7 @@ class KafkaProducerTaskExecutorTest {
                     TaskId.of("step-v3"), "kafka-producer", Phase.PREPARATION,
                     Map.of("operation", "PRODUCE",
                             "topic", "my-topic"),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -102,7 +102,7 @@ class KafkaProducerTaskExecutorTest {
                     Map.of("operation", "PRODUCE",
                             "topic", "my-topic",
                             "bootstrapServers", ""),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -118,7 +118,7 @@ class KafkaProducerTaskExecutorTest {
                     Map.of("operation", "UNKNOWN_OP",
                             "topic", "some-topic",
                             "bootstrapServers", "localhost:9092"),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -149,13 +149,14 @@ class KafkaProducerTaskExecutorTest {
                     Map.of("cluster", "iot-sut",
                             "topic", "iot-commands",
                             "messageCount", 5),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = exec.execute(emptyContext(), step);
 
             // Will be FAILED because no real Kafka at localhost:9999,
             // but the cluster resolution logic was exercised
-            assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+            assertThat(result.status()).as("msg=%s outputs=%s", result.errorMessage(), result.outputs())
+                    .isEqualTo(TaskStatus.FAILED);
             assertThat(result.taskName()).isEqualTo("kafka-producer");
             exec.cleanup(null);
         }
@@ -171,7 +172,7 @@ class KafkaProducerTaskExecutorTest {
                     Map.of("cluster", "nonexistent",
                             "topic", "my-topic",
                             "messageCount", 1),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             // resolveTopic returns logicalTopic for unknown cluster
             // producerFactory for unknown cluster throws
@@ -196,7 +197,7 @@ class KafkaProducerTaskExecutorTest {
                             "bootstrapServers", "should-not-be-used:9092",
                             "topic", "test-topic",
                             "messageCount", 1),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = exec.execute(emptyContext(), step);
             // Will fail (no real Kafka) but cluster param was used
@@ -220,7 +221,7 @@ class KafkaProducerTaskExecutorTest {
                             "topic", "test-topic",
                             "bootstrapServers", "invalid-host:9999",
                             "messageCount", 3),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -248,7 +249,7 @@ class KafkaProducerTaskExecutorTest {
                     Map.of("topic", "test-topic",
                             "bootstrapServers", "localhost:9999",
                             "messageCount", 1),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
             assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
@@ -264,7 +265,7 @@ class KafkaProducerTaskExecutorTest {
                             "topic", "test-topic",
                             "bootstrapServers", "localhost:9999",
                             "messageCount", 1),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
             assertThat(result.status()).isEqualTo(TaskStatus.FAILED);

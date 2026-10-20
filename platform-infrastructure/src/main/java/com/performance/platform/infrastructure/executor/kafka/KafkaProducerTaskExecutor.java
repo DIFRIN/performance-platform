@@ -157,7 +157,8 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
 
         if (clusterName != null) {
             physicalTopic = clusterRegistry.resolveTopic(clusterName, topic);
-            kafkaTemplate = new KafkaTemplate<>(clusterRegistry.producerFactory(clusterName));
+            kafkaTemplate = new KafkaTemplate<>(
+                    clusterRegistry.producerFactory(clusterName, Duration.ofMillis(timeoutMs)));
             log.info("action=produce_via_cluster clusterName={} logicalTopic={} physicalTopic={} messageCount={} executionId={}",
                     clusterName, topic, physicalTopic, messageCount, executionId.value());
         } else {
@@ -165,7 +166,8 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
             log.warn("action=produce_via_legacy_bootstrap bootstrapServers={} topic={} executionId={} "
                     + "consider migrating to named cluster reference",
                     bootstrapServers, topic, executionId.value());
-            ProducerFactory<String, String> ephemeralFactory = createEphemeralFactory(bootstrapServers);
+            ProducerFactory<String, String> ephemeralFactory =
+                    createEphemeralFactory(bootstrapServers, Duration.ofMillis(timeoutMs));
             kafkaTemplate = new KafkaTemplate<>(ephemeralFactory);
         }
 
@@ -195,10 +197,12 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
             if (failed.get() > 0) {
                 log.warn("action=produce_done_with_errors topic={} produced={} failed={} executionId={} stepId={}",
                         physicalTopic, produced.get(), failed.get(), executionId.value(), step.id().value());
-            } else {
-                log.info("action=produce_done topic={} messagesProduced={} executionId={} stepId={}",
-                        physicalTopic, produced.get(), executionId.value(), step.id().value());
+                return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed,
+                        "PRODUCE failed for " + failed.get() + " of " + messageCount
+                                + " message(s) on topic '" + physicalTopic + "'", null);
             }
+            log.info("action=produce_done topic={} messagesProduced={} executionId={} stepId={}",
+                    physicalTopic, produced.get(), executionId.value(), step.id().value());
 
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, outputs);
 
@@ -267,7 +271,8 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
      * Creates an ephemeral {@link ProducerFactory} from inline bootstrap servers
      * (legacy path). Logs a WARN to encourage migration to named clusters.
      */
-    private ProducerFactory<String, String> createEphemeralFactory(String bootstrapServers) {
+    private ProducerFactory<String, String> createEphemeralFactory(String bootstrapServers,
+                                                                  Duration operationTimeout) {
         var config = new HashMap<String, Object>();
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -275,6 +280,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
         config.put(ProducerConfig.ACKS_CONFIG, "all");
         config.put(ProducerConfig.RETRIES_CONFIG, 3);
         config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
+        KafkaClusterRegistry.applyOperationTimeout(config, operationTimeout);
         return new DefaultKafkaProducerFactory<>(config);
     }
 
