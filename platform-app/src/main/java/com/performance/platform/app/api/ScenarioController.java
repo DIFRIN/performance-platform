@@ -15,6 +15,7 @@ import com.performance.platform.domain.id.ExecutionId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
  * Progress is computed via {@link ExecutionProgressCalculator} (ISSUE-121).
  */
 @RestController
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @RequestMapping("/api/v1")
 @ConditionalOnProperty(prefix = "platform.datasources.default", name = "url")
 public class ScenarioController {

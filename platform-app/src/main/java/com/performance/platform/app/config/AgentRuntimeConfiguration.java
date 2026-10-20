@@ -20,6 +20,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -171,6 +172,51 @@ public class AgentRuntimeConfiguration {
                 registrationPort,               // non-null : DISTRIBUTED
                 Duration.ofSeconds(10)          // heartbeat interval
         );
+    }
+
+    /**
+     * Demarre l'agent distribue avec le contexte Spring et l'arrete proprement
+     * a la fermeture (drain, deregister, disconnect).
+     * <p>
+     * Sans ce lifecycle, le bean {@link TaskAgentRuntime} serait cree mais
+     * jamais demarre : aucun enregistrement, aucun heartbeat, aucun abonnement
+     * aux taches.
+     */
+    @Bean
+    @ConditionalOnExpression("'${runtime.mode:LOCAL}'.equals('DISTRIBUTED') && '${runtime.role:NONE}'.equals('AGENT')")
+    public SmartLifecycle agentRuntimeLifecycle(TaskAgentRuntime distributedAgentRuntime) {
+        return new SmartLifecycle() {
+            private volatile boolean running;
+
+            @Override
+            public void start() {
+                distributedAgentRuntime.start();
+                running = true;
+            }
+
+            @Override
+            public void stop() {
+                if (running) {
+                    distributedAgentRuntime.stop();
+                    running = false;
+                }
+            }
+
+            @Override
+            public boolean isRunning() {
+                return running;
+            }
+
+            @Override
+            public boolean isAutoStartup() {
+                return true;
+            }
+
+            @Override
+            public int getPhase() {
+                return 0;
+            }
+        };
     }
 
     // ========================================================================

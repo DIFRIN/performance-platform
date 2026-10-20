@@ -92,14 +92,11 @@ platform:
         device-events: ${DEVICE_TOPIC_EVENTS:device-events}
 
 # ---- Securite OAuth2/JWT ----
-# Configurer l'issuer URI via env var OAUTH2_ISSUER_URI.
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:}
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI:}
+# Si platform.security.enabled=true, fournir via env :
+#   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+#   (ou SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI)
+# Ne pas declarer de placeholder vide : Spring Boot considere une jwk-set-uri
+# vide comme configuree et echoue au demarrage ("jwkSetUri cannot be empty").
 
 # ---- Reporting ----
 reporting:

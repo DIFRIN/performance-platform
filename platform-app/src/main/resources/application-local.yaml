@@ -45,6 +45,15 @@ platform:
       paths:
         submit-event: /api/events
 
+  # Named Kafka clusters for local development (the kafka-producer/consumer
+  # executors need a cluster reference even when the transport is IN_MEMORY).
+  kafka-clusters:
+    default:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      producer-acks: all
+      consumer-group: perf-consumer-local
+      topics: {}
+
 # ---- Logging plus verbeux en local ----
 logging:
   level:
