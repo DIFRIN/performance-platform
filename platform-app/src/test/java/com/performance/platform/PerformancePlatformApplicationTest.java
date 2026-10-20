@@ -41,12 +41,27 @@ class PerformancePlatformApplicationTest {
         }
 
         @Test
-        @DisplayName("should detect --spring.profiles.active=agent")
+        @DisplayName("should detect agent Spring profiles")
         void shouldDetectAgentProfile() {
             assertThat(PerformancePlatformApplication.detectAgentRole(
                     new String[]{"--spring.profiles.active=agent"}, null, null)).isTrue();
             assertThat(PerformancePlatformApplication.detectAgentRole(
                     new String[]{"--spring.profiles.active=local,agent"}, null, null)).isTrue();
+            assertThat(PerformancePlatformApplication.detectAgentRole(
+                    new String[]{"--spring.profiles.active=agent-injector"}, null, null)).isTrue();
+            assertThat(PerformancePlatformApplication.detectAgentRole(
+                    new String[]{"--spring.profiles.active=agent-asserter"}, null, null)).isTrue();
+        }
+
+        @Test
+        @DisplayName("should detect an agent profile passed as a system property")
+        void shouldDetectAgentProfileSystemProperty() {
+            System.setProperty("spring.profiles.active", "agent-injector");
+            try {
+                assertThat(PerformancePlatformApplication.isAgentMode(new String[0])).isTrue();
+            } finally {
+                System.clearProperty("spring.profiles.active");
+            }
         }
 
         @Test

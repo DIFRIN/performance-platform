@@ -1,0 +1,76 @@
+# =============================================================================
+# IDE profile — remote INJECTOR agent (PREPARATION + INJECTION)
+# =============================================================================
+# Run from the IDE with the Spring profile `agent-injector`.
+# The agent has no web server (ADR-019). It registers with the orchestrator
+# over Kafka (localhost:9092) and executes preparation/injection tasks.
+#
+# Start the orchestrator (`ide-orchestrator`) first: it owns Flyway.
+# =============================================================================
+
+runtime:
+  mode: DISTRIBUTED
+  role: AGENT
+
+transport:
+  type: KAFKA
+  kafka:
+    bootstrap-servers: localhost:9092
+    # Stable consumer group: avoids replaying old task messages on restart.
+    consumer-group: ide-agent-injector
+    tasks-topic: platform-tasks
+    events-topic: platform-events
+    signals-topic: platform-signals
+    producer-acks: all
+
+agent:
+  supported-tasks:
+    - database
+    - mock-server
+    - kafka-producer
+    - kafka-consumer
+    - http-client
+    - gatling
+    - shell
+    - filesystem
+
+platform:
+  security:
+    enabled: false
+
+  http-targets:
+    wiremock:
+      base-url: http://localhost:8090
+      connection-timeout: 2s
+      read-timeout: 5s
+      paths:
+        count-requests: /__admin/requests/count
+
+  # The injector needs a datasource for the `database` preparation task
+  # (and for the JPA beans that the app always wires when a datasource exists).
+  datasources:
+    default:
+      url: jdbc:postgresql://localhost:5432/performance
+      username: postgres
+      password: changeme
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 5
+        minimum-idle: 1
+        connection-timeout: 30000
+
+  kafka-clusters:
+    default:
+      bootstrap-servers: localhost:9092
+      producer-acks: all
+      consumer-group: ide-agent-injector
+      topics: {}
+
+spring:
+  flyway:
+    # No migration from an agent: the orchestrator owns the schema.
+    enabled: false
+
+web:
+  ui:
+    enabled: false

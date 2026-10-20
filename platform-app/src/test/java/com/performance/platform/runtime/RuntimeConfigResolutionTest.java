@@ -58,10 +58,24 @@ class RuntimeConfigResolutionTest {
     }
 
     @Test
-    @DisplayName("should infer AGENT from the Spring agent profile")
+    @DisplayName("should infer AGENT from the Spring agent profiles")
     void shouldInferAgentFromProfile() {
         assertThat(resolver.resolveRole(new String[]{"--spring.profiles.active=local,agent"}))
                 .isEqualTo(RuntimeRole.AGENT);
+        assertThat(resolver.resolveRole(new String[]{"--spring.profiles.active=agent-injector"}))
+                .isEqualTo(RuntimeRole.AGENT);
+        assertThat(resolver.resolveRole(new String[]{"--spring.profiles.active=agent-asserter"}))
+                .isEqualTo(RuntimeRole.AGENT);
+    }
+
+    @Test
+    @DisplayName("isAgentProfile recognizes agent and agent-* profiles")
+    void shouldRecognizeAgentProfiles() {
+        assertThat(RuntimeConfigResolver.isAgentProfile("agent")).isTrue();
+        assertThat(RuntimeConfigResolver.isAgentProfile("agent-injector")).isTrue();
+        assertThat(RuntimeConfigResolver.isAgentProfile("agent-asserter,local")).isTrue();
+        assertThat(RuntimeConfigResolver.isAgentProfile("local")).isFalse();
+        assertThat(RuntimeConfigResolver.isAgentProfile(null)).isFalse();
     }
 
     // ------------------------------------------------------------------

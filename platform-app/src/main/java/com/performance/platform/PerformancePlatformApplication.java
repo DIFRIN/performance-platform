@@ -101,10 +101,16 @@ public class PerformancePlatformApplication {
      * Spring : le {@link WebApplicationType} est choisi avant que
      * l'{@code Environment} ne soit construit (ADR-019).
      */
-    private static boolean isAgentMode(String[] args) {
+    static boolean isAgentMode(String[] args) {
         return RuntimeConfigResolver.isAgent(args,
                 System.getenv(RuntimeConfigResolver.ENV_MODE),
-                System.getProperty(RuntimeConfigResolver.PROP_RUNTIME_ROLE));
+                System.getProperty(RuntimeConfigResolver.PROP_RUNTIME_ROLE))
+                // IDE run configurations commonly pass the profile as an env
+                // var or as a VM option (-Dspring.profiles.active=...).
+                || RuntimeConfigResolver.isAgentProfile(
+                        System.getenv("SPRING_PROFILES_ACTIVE"))
+                || RuntimeConfigResolver.isAgentProfile(
+                        System.getProperty("spring.profiles.active"));
     }
 
     /**

@@ -165,12 +165,29 @@ public final class RuntimeConfigResolver {
     }
 
     static boolean cliProfileHasAgent(String[] args) {
-        String profiles = cliValue(args, CLI_PROFILES);
+        return isAgentProfile(cliValue(args, CLI_PROFILES));
+    }
+
+    /**
+     * Indique si une liste de profils Spring designe un agent.
+     * <p>
+     * Reconnait {@code agent} ainsi que les profils specialises
+     * {@code agent-injector}, {@code agent-asserter}, etc. Cette detection
+     * est utilisee avant le demarrage de Spring pour choisir
+     * {@code WebApplicationType.NONE} (ADR-019).
+     *
+     * @param profiles valeur de {@code spring.profiles.active} (peut etre null)
+     * @return true si au moins un profil est un profil agent
+     */
+    public static boolean isAgentProfile(String profiles) {
         if (profiles == null) {
             return false;
         }
         for (String profile : profiles.split(",")) {
-            if (profile.strip().equalsIgnoreCase("agent")) {
+            String value = profile.strip().toLowerCase();
+            if (value.equals("agent")
+                    || value.startsWith("agent-")
+                    || value.startsWith("agent_")) {
                 return true;
             }
         }
