@@ -2,10 +2,10 @@ package com.performance.platform.app.config;
 
 import com.performance.platform.agent.filter.TaskFilterResult;
 import com.performance.platform.agent.filter.TaskSpecializationFilter;
-import com.performance.platform.agent.local.LocalAgent;
+
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.runtime.AgentRuntime;
-import com.performance.platform.agent.runtime.DistributedAgentRuntime;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.PartialExecutionContext;
 import com.performance.platform.domain.execution.RetryPolicy;
@@ -108,8 +108,8 @@ class AgentRuntimeConfigurationTest {
     class LocalModeTests {
 
         @Test
-        @DisplayName("should create LocalAgent bean")
-        void shouldCreateLocalAgent() {
+        @DisplayName("should create TaskAgentRuntime bean")
+        void shouldCreateTaskAgentRuntime() {
             runner.withPropertyValues("runtime.mode=LOCAL")
                     .run(ctx -> {
                         assertThat(ctx.containsBean("localAgentRuntime")).isTrue();
@@ -117,12 +117,12 @@ class AgentRuntimeConfigurationTest {
                         assertThat(ctx.containsBean("agentRegistrationPort")).isFalse();
 
                         var runtime = ctx.getBean(AgentRuntime.class);
-                        assertThat(runtime).isInstanceOf(LocalAgent.class);
+                        assertThat(runtime).isInstanceOf(TaskAgentRuntime.class);
                     });
         }
 
         @Test
-        @DisplayName("LocalAgent should support all task names from registered executors")
+        @DisplayName("TaskAgentRuntime should support all task names from registered executors")
         void localAgentShouldSupportAllTaskNames() {
             runner.withPropertyValues("runtime.mode=LOCAL")
                     .run(ctx -> {
@@ -141,7 +141,7 @@ class AgentRuntimeConfigurationTest {
                     .run(ctx -> {
                         assertThat(ctx).hasSingleBean(AgentRuntime.class);
                         var agent = ctx.getBean(AgentRuntime.class);
-                        assertThat(agent).isInstanceOf(LocalAgent.class);
+                        assertThat(agent).isInstanceOf(TaskAgentRuntime.class);
                         var taskNames = agent.getDescriptor().supportedTaskNames();
                         assertThat(taskNames).containsExactlyInAnyOrder("mock-server", "http-client");
                     });
@@ -168,8 +168,8 @@ class AgentRuntimeConfigurationTest {
     class DistributedAgentModeTests {
 
         @Test
-        @DisplayName("should create DistributedAgentRuntime bean")
-        void shouldCreateDistributedAgentRuntime() {
+        @DisplayName("should create TaskAgentRuntime bean")
+        void shouldCreateTaskAgentRuntime() {
             runner.withPropertyValues(
                     "runtime.mode=DISTRIBUTED",
                     "runtime.role=AGENT"
@@ -178,7 +178,7 @@ class AgentRuntimeConfigurationTest {
                 assertThat(ctx.containsBean("localAgentRuntime")).isFalse();
 
                 var runtime = ctx.getBean(AgentRuntime.class);
-                assertThat(runtime).isInstanceOf(DistributedAgentRuntime.class);
+                assertThat(runtime).isInstanceOf(TaskAgentRuntime.class);
             });
         }
 
@@ -209,7 +209,7 @@ class AgentRuntimeConfigurationTest {
         }
 
         @Test
-        @DisplayName("DistributedAgentRuntime with agent.supported-tasks should support configured tasks")
+        @DisplayName("TaskAgentRuntime with agent.supported-tasks should support configured tasks")
         void distributedAgentShouldSupportConfiguredTasks() {
             runner.withPropertyValues(
                     "runtime.mode=DISTRIBUTED",
@@ -267,7 +267,7 @@ class AgentRuntimeConfigurationTest {
     class EmptySupportedTasksTests {
 
         @Test
-        @DisplayName("should create DistributedAgentRuntime with empty supported tasks when not configured")
+        @DisplayName("should create TaskAgentRuntime with empty supported tasks when not configured")
         void shouldCreateAgentWithEmptySupportedTasks() {
             runner.withPropertyValues(
                     "runtime.mode=DISTRIBUTED",
@@ -275,7 +275,7 @@ class AgentRuntimeConfigurationTest {
             ).run(ctx -> {
                 // Pas de property agent.supported-tasks → liste vide
                 var runtime = ctx.getBean(AgentRuntime.class);
-                assertThat(runtime).isInstanceOf(DistributedAgentRuntime.class);
+                assertThat(runtime).isInstanceOf(TaskAgentRuntime.class);
                 // L'agent est cree mais ne supporte aucune tache
                 assertThat(runtime.canExecute("mock-server")).isFalse();
                 assertThat(runtime.canExecute("http-client")).isFalse();
@@ -291,7 +291,7 @@ class AgentRuntimeConfigurationTest {
                     "agent.supported-tasks="
             ).run(ctx -> {
                 var runtime = ctx.getBean(AgentRuntime.class);
-                assertThat(runtime).isInstanceOf(DistributedAgentRuntime.class);
+                assertThat(runtime).isInstanceOf(TaskAgentRuntime.class);
                 assertThat(runtime.canExecute("any-task")).isFalse();
             });
         }
@@ -378,7 +378,7 @@ class AgentRuntimeConfigurationTest {
                     .run(ctx -> {
                         assertThat(ctx).hasSingleBean(AgentRuntime.class);
                         var agent = ctx.getBean(AgentRuntime.class);
-                        assertThat(agent).isInstanceOf(DistributedAgentRuntime.class);
+                        assertThat(agent).isInstanceOf(TaskAgentRuntime.class);
 
                         var taskNames = agent.getDescriptor().supportedTaskNames();
                         // Seulement les 2 de la config, PAS "gatling" du registre

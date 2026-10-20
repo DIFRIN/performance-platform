@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * conversion {@link PartialExecutionContext} → {@link ExecutionContext},
  * exécution, publication du résultat, et nettoyage final.
  * <p>
- * Utilisé par {@link DistributedAgentRuntime} et {@code LocalAgent}.
+ * Utilisé par {@link TaskAgentRuntime}.
  */
 public class TaskExecutionPipeline {
 

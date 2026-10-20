@@ -2,7 +2,7 @@ package com.performance.platform.e2e;
 
 import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.registration.TransportAgentRegistration;
-import com.performance.platform.agent.runtime.DistributedAgentRuntime;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.application.config.ExecutionConfig;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.domain.agent.AgentCapabilities;
@@ -24,12 +24,15 @@ import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
+import com.performance.platform.engine.ExecutionEngine;
 import com.performance.platform.engine.availability.AgentAvailabilityChecker;
 import com.performance.platform.engine.correlation.DefaultTaskCorrelationTracker;
-import com.performance.platform.engine.local.LocalExecutionEngine;
+import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
+import com.performance.platform.engine.local.LocalStepDispatcher;
 import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.engine.plan.DefaultExecutionPlanBuilder;
-import com.performance.platform.engine.remote.RemoteExecutionEngine;
+import com.performance.platform.engine.remote.RemoteStepDispatcher;
+import com.performance.platform.engine.remote.TransportExecutionEventHandler;
 import com.performance.platform.engine.retry.DefaultRetryExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
@@ -72,13 +75,13 @@ class LocalDistributedEquivalenceIT {
         var localEvents = new CopyOnWriteArrayList<Object>();
         var localRepository = new InMemoryExecutionRepository();
         TaskExecutorLookup localLookup = executors::get;
-        var localEngine = new LocalExecutionEngine(
+        var localEngine = new ExecutionEngine(
                 new DefaultExecutionPlanBuilder(),
-                new DefaultRetryExecutor(),
                 localRepository,
                 localEvents::add,
                 signal -> { },
-                localLookup);
+                new LocalStepDispatcher(localLookup, new DefaultRetryExecutor()),
+                new LocalOutcomeEventPublisher(localEvents::add));
 
         ExecutionId localId = localEngine.execute(scenario);
 
@@ -92,43 +95,49 @@ class LocalDistributedEquivalenceIT {
                 Set.copyOf(TASK_NAMES), new AgentCapabilities(1, "1.0.0"),
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(1));
 
-        var agent = new DistributedAgentRuntime(
+        var agent = new TaskAgentRuntime(
                 transport,
                 new DefaultTaskSpecializationFilter(Set.copyOf(TASK_NAMES), agentId),
-                new TransportAgentRegistration(transport),
                 descriptor,
-                Duration.ofSeconds(1),
                 Duration.ofSeconds(30),
                 List.copyOf(executors.values()),
-                List.of());
+                List.of(),
+                new TransportAgentRegistration(transport),
+                Duration.ofSeconds(1));
         agent.start();
 
         try {
             var remoteEvents = new CopyOnWriteArrayList<Object>();
             var remoteRepository = new InMemoryExecutionRepository();
-            var remoteEngine = new RemoteExecutionEngine(
+            var tracker = new DefaultTaskCorrelationTracker();
+            var eventHandler = new TransportExecutionEventHandler(
+                    transport, tracker, remoteRepository, remoteEvents::add);
+            var remoteEngine = new ExecutionEngine(
                     new DefaultExecutionPlanBuilder(),
-                    new AgentAvailabilityChecker() {
-                        @Override
-                        public void awaitAgentFor(String taskName, Duration timeout) {
-                            // available immediately
-                        }
-
-                        @Override
-                        public boolean hasAgentFor(String taskName) {
-                            return true;
-                        }
-                    },
-                    new DefaultTaskCorrelationTracker(),
-                    transport,
                     remoteRepository,
-                    new ExecutionConfig(
-                            Duration.ofSeconds(5),
-                            Duration.ofSeconds(20),
-                            Duration.ofSeconds(5),
-                            TaskCompletionPolicy.FIRST_COMPLETE),
                     remoteEvents::add,
-                    signal -> { });
+                    signal -> { },
+                    new RemoteStepDispatcher(
+                            transport,
+                            new AgentAvailabilityChecker() {
+                                @Override
+                                public void awaitAgentFor(String taskName, Duration timeout) {
+                                    // available immediately
+                                }
+
+                                @Override
+                                public boolean hasAgentFor(String taskName) {
+                                    return true;
+                                }
+                            },
+                            tracker,
+                            new ExecutionConfig(
+                                    Duration.ofSeconds(5),
+                                    Duration.ofSeconds(20),
+                                    Duration.ofSeconds(5),
+                                    TaskCompletionPolicy.FIRST_COMPLETE),
+                            remoteEvents::add),
+                    (executionId, outcomes, phase) -> { });
 
             ExecutionId remoteId = remoteEngine.execute(scenario);
 

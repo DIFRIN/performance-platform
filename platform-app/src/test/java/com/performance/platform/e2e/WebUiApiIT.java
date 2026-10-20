@@ -12,7 +12,8 @@ import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.AgentRegistryPort;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.application.usecase.ExecutionProgressCalculator;
-import com.performance.platform.agent.local.LocalAgent;
+import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.app.api.AgentController;
 import com.performance.platform.app.api.ApiExceptionHandler;
 import com.performance.platform.app.api.ExecutionController;
@@ -33,7 +34,9 @@ import com.performance.platform.domain.report.ReportFormat;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.engine.local.LocalExecutionEngine;
+import com.performance.platform.engine.ExecutionEngine;
+import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
+import com.performance.platform.engine.local.LocalStepDispatcher;
 import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.engine.plan.DefaultExecutionPlanBuilder;
 import com.performance.platform.engine.retry.DefaultRetryExecutor;
@@ -128,7 +131,7 @@ class WebUiApiIT {
     static ReportFileWriter reportFileWriter;
     static Path outputDir;
     static InMemoryExecutionTransport transport;
-    static LocalAgent localAgent;
+    static TaskAgentRuntime localAgent;
     static StubAgentRegistry agentRegistry;
     static ExecutionProgressCalculator progressCalculator;
 
@@ -185,9 +188,10 @@ class WebUiApiIT {
         ApplicationEventPublisher eventPublisher = publishedEvents::add;
 
         // 8. LocalExecutionEngine
-        var engine = new LocalExecutionEngine(
-                planBuilder, retryExecutor, executionRepository,
-                eventPublisher, signal -> { }, lookup);
+        var engine = new ExecutionEngine(
+                planBuilder, executionRepository, eventPublisher, signal -> { },
+                new LocalStepDispatcher(lookup, retryExecutor),
+                new LocalOutcomeEventPublisher(eventPublisher));
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();
@@ -309,8 +313,10 @@ class WebUiApiIT {
                 Set.of("stub-task"), new AgentCapabilities(10, "1.0.0"),
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-        localAgent = new LocalAgent(transport, agentDesc,
-                Duration.ofMinutes(5), taskExecutorList, List.of());
+        var agentFilter = new DefaultTaskSpecializationFilter(
+                agentDesc.supportedTaskNames(), agentDesc.id());
+        localAgent = new TaskAgentRuntime(transport, agentFilter, agentDesc,
+                Duration.ofMinutes(5), taskExecutorList, List.of(), null, null);
     }
 
     @AfterAll

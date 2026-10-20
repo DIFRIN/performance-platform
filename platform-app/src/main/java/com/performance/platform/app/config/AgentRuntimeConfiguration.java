@@ -2,11 +2,9 @@ package com.performance.platform.app.config;
 
 import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.filter.TaskSpecializationFilter;
-import com.performance.platform.agent.local.LocalAgent;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.TransportAgentRegistration;
-import com.performance.platform.agent.runtime.AgentRuntime;
-import com.performance.platform.agent.runtime.DistributedAgentRuntime;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
@@ -37,10 +35,10 @@ import java.util.stream.Collectors;
  * <p>
  * Selectionne le {@link AgentRuntime} selon le mode :
  * <ul>
- *   <li>{@code runtime.mode=LOCAL} -> {@code LocalAgent} avec tous les task names
+ *   <li>{@code runtime.mode=LOCAL} -> {@code TaskAgentRuntime} avec tous les task names
  *       des {@link TaskExecutor} enregistres dans le contexte Spring</li>
  *   <li>{@code runtime.mode=DISTRIBUTED} et {@code runtime.role=AGENT} ->
- *       {@code DistributedAgentRuntime} avec {@code agent.supported-tasks}
+ *       {@code TaskAgentRuntime} avec {@code agent.supported-tasks}
  *       de la configuration</li>
  * </ul>
  * <p>
@@ -51,9 +49,9 @@ import java.util.stream.Collectors;
  * {@link ConditionalOnProperty} (CF-03).
  *
  * <h3>ADR-015 — Configuration-Driven Agent Specialization</h3>
- * <p>{@code LocalAgent} derive tous les task names des executors enregistres,
+ * <p>{@code TaskAgentRuntime} local derive tous les task names des executors enregistres,
  * ignorant {@code AgentProperties.supportedTasks()}.
- * {@code DistributedAgentRuntime} utilise exclusivement
+ * {@code TaskAgentRuntime} distribue utilise exclusivement
  * {@code AgentProperties.supportedTasks()} comme source.
  *
  * <h3>ADR-006 — Priorite env var > property</h3>
@@ -69,11 +67,11 @@ public class AgentRuntimeConfiguration {
     private static final Logger log = LoggerFactory.getLogger(AgentRuntimeConfiguration.class);
 
     // ========================================================================
-    // Mode LOCAL : LocalAgent avec TOUS les task names des executors
+    // Mode LOCAL : TaskAgentRuntime avec TOUS les task names des executors
     // ========================================================================
 
     /**
-     * Cree un {@link LocalAgent} en mode LOCAL.
+     * Cree un {@link TaskAgentRuntime} en mode LOCAL (sans enregistrement).
      * <p>
      * Tous les {@link TaskExecutor} enregistres dans le contexte Spring sont
      * automatiquement collectes via injection de liste. L'agent declare
@@ -85,7 +83,7 @@ public class AgentRuntimeConfiguration {
      */
     @Bean
     @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
-    public LocalAgent localAgentRuntime(
+    public TaskAgentRuntime localAgentRuntime(
             InMemoryExecutionTransport transport,
             List<TaskExecutor> taskExecutors,
             ObjectProvider<StatefulResourceCleaner> cleanersProvider) {
@@ -109,16 +107,19 @@ public class AgentRuntimeConfiguration {
                 Duration.ofMinutes(5)
         );
 
+        var filter = new DefaultTaskSpecializationFilter(allTaskNames, agentId);
         var cleaners = cleanersProvider.stream().toList();
-        return new LocalAgent(transport, descriptor, Duration.ofMinutes(5), taskExecutors, cleaners);
+        return new TaskAgentRuntime(transport, filter, descriptor, Duration.ofMinutes(5),
+                taskExecutors, cleaners, null, null);
     }
 
     // ========================================================================
-    // Mode DISTRIBUTED, role AGENT : DistributedAgentRuntime avec config
+    // Mode DISTRIBUTED, role AGENT : TaskAgentRuntime avec config
     // ========================================================================
 
     /**
-     * Cree un {@link DistributedAgentRuntime} en mode DISTRIBUTED, role AGENT.
+     * Cree un {@link TaskAgentRuntime} en mode DISTRIBUTED, role AGENT
+     * (enregistrement + heartbeat).
      * <p>
      * Utilise exclusivement {@code AgentProperties.supportedTasks()}
      * comme source de {@code supportedTaskNames} (ADR-015).
@@ -128,7 +129,7 @@ public class AgentRuntimeConfiguration {
      */
     @Bean
     @ConditionalOnExpression("'${runtime.mode:LOCAL}'.equals('DISTRIBUTED') && '${runtime.role:NONE}'.equals('AGENT')")
-    public AgentRuntime distributedAgentRuntime(
+    public TaskAgentRuntime distributedAgentRuntime(
             ExecutionTransport transport,
             AgentProperties agentProperties,
             AgentRegistrationPort registrationPort,
@@ -159,15 +160,15 @@ public class AgentRuntimeConfiguration {
         var filter = new DefaultTaskSpecializationFilter(supportedTaskNames, agentId);
         var cleaners = cleanersProvider.stream().toList();
 
-        return new DistributedAgentRuntime(
+        return new TaskAgentRuntime(
                 transport,
                 filter,
-                registrationPort,
                 descriptor,
-                Duration.ofSeconds(10),         // heartbeat interval
                 Duration.ofMinutes(5),          // task execution timeout
                 taskExecutors,
-                cleaners
+                cleaners,
+                registrationPort,               // non-null : DISTRIBUTED
+                Duration.ofSeconds(10)          // heartbeat interval
         );
     }
 
@@ -193,7 +194,7 @@ public class AgentRuntimeConfiguration {
      * Filtre de specialisation partage, disponible pour d'autres
      * consommateurs (ex: observability).
      * <p>
-     * Note : le {@code DistributedAgentRuntime} utilise son propre filtre
+     * Note : le {@code TaskAgentRuntime} distribue utilise son propre filtre
      * cree localement. Ce bean est un point d'acces supplementaire
      * pour les composants qui ont besoin de connaitre la specialisation
      * de l'agent sans dependre du runtime.

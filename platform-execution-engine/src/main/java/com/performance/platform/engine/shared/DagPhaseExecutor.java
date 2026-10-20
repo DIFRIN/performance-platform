@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
  * Exécute une phase (PREPARATION / INJECTION / ASSERTION) niveau DAG par niveau DAG.
  * Les étapes d'un même dagLevel sont exécutées en parallèle via Virtual Threads.
  *
- * <p>Cette classe est partagée entre {@code LocalExecutionEngine} et
- * {@code RemoteExecutionEngine}. La stratégie d'exécution d'un step individuel
+ * <p>Cette classe est utilisée par l'{@code ExecutionEngine} unique.
+ * La stratégie d'exécution d'un step individuel
  * est déléguée au {@link StepDispatcher}.</p>
  *
  * <p>Règles :

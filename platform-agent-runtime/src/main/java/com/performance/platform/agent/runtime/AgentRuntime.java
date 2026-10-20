@@ -10,8 +10,7 @@ import com.performance.platform.domain.event.ScenarioRestartSignal;
  * <p>
  * Implémentations :
  * <ul>
- *   <li>{@code DistributedAgentRuntime} — mode DISTRIBUTED, role AGENT</li>
- *   <li>{@code LocalAgent} — mode LOCAL (ISSUE-038)</li>
+ *   <li>{@code TaskAgentRuntime} — mode LOCAL et DISTRIBUTED</li>
  * </ul>
  * <p>
  * Le cycle de vie nominal est :

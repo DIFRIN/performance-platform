@@ -467,9 +467,9 @@
 |---|---|---|---|
 | `TaskCorrelationTracker` (+`onAgentLost`, `release`, `resultsInCompletionOrder`, `selectResult`, `completionSignal`) | ✅ STABLE (additif) — `remove/size/onComplete` restent PLANNED | PDR-044, PDR-051 | ISSUE-171, ISSUE-189 |
 | `ResultSelectionPolicy` (enum) | ✅ STABLE | PDR-051 | ISSUE-189 |
-| `ExecutionEngine` (unifié, remplace Local/Remote) | ⬜ PLANNED | PDR-050 | ISSUE-184, ISSUE-185 |
-| `TransportExecutionEventHandler` | ⬜ PLANNED | PDR-050 | ISSUE-184 |
-| `LocalExecutionEngine` / `RemoteExecutionEngine` | ⚠️ BREAKING → REMOVED (ADR-037) | PDR-050 | ISSUE-185 |
+| `ExecutionEngine` (unifié) | ✅ STABLE | PDR-050 | ISSUE-184, ISSUE-185 |
+| `TransportExecutionEventHandler` | ✅ STABLE | PDR-050 | ISSUE-184 |
+| `LocalExecutionEngine` / `RemoteExecutionEngine` | ❌ REMOVED (ADR-037) | PDR-050 | ISSUE-185 |
 | `TaskExecutorLookup.findAssertionExecutor` | ❌ REMOVED (ADR-029) | PDR-037 | ISSUE-181 |
 
 ### platform-agent-runtime
@@ -479,7 +479,7 @@
 | `TaskAgentRuntime` (unifié, remplace Local/Distributed) | ⬜ PLANNED | PDR-050 | ISSUE-186, ISSUE-187 |
 | `AgentLifecycleIngestion` (InitializingBean/DisposableBean + AgentLifecycleEventHandler) | ✅ STABLE | PDR-045 | ISSUE-173 |
 | `AgentTtlMonitor` (bean, start/stop + onExpired → AgentLost) | ✅ STABLE | PDR-045 | ISSUE-173 |
-| `LocalAgent` / `DistributedAgentRuntime` | ⚠️ BREAKING → REMOVED (ADR-037) | PDR-050 | ISSUE-187 |
+| `LocalAgent` / `DistributedAgentRuntime` | ❌ REMOVED (ADR-037) | PDR-050 | ISSUE-187 |
 
 ### platform-transport
 

@@ -15,6 +15,7 @@ import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
+import com.performance.platform.engine.ExecutionEngine;
 import com.performance.platform.engine.correlation.DefaultTaskCorrelationTracker;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
@@ -68,17 +69,22 @@ class AgentLossRecoveryIT {
             claimed.countDown();
         });
 
-        var engine = new RemoteExecutionEngine(
+        var eventHandler = new TransportExecutionEventHandler(
+                transport, tracker, repository, event -> { });
+        var engine = new ExecutionEngine(
                 planBuilderFor(scenario),
-                new RemoteExecutionEngineTest.StubAgentAvailabilityChecker(),
-                tracker,
-                transport,
                 repository,
-                new ExecutionConfig(
-                        Duration.ofSeconds(30), EXECUTION_TIMEOUT,
-                        Duration.ofSeconds(10), TaskCompletionPolicy.FIRST_COMPLETE),
                 event -> { },
-                signal -> { });
+                signal -> { },
+                new RemoteStepDispatcher(
+                        transport,
+                        new RemoteExecutionEngineTest.StubAgentAvailabilityChecker(),
+                        tracker,
+                        new ExecutionConfig(
+                                Duration.ofSeconds(30), EXECUTION_TIMEOUT,
+                                Duration.ofSeconds(10), TaskCompletionPolicy.FIRST_COMPLETE),
+                        event -> { }),
+                (executionId, outcomes, phase) -> { });
 
         var executionId = new AtomicReference<ExecutionId>();
         long startNs = System.nanoTime();
@@ -88,7 +94,7 @@ class AgentLossRecoveryIT {
         assertThat(claimed.await(5, TimeUnit.SECONDS))
                 .as("agent should claim the dispatched task").isTrue();
 
-        engine.onAgentLost(new AgentLost(agentId, "heartbeat timeout", Instant.now()));
+        eventHandler.onAgentLost(new AgentLost(agentId, "heartbeat timeout", Instant.now()));
 
         engineThread.join(5_000);
         long elapsedMs = (System.nanoTime() - startNs) / 1_000_000;

@@ -33,6 +33,7 @@ import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
+import com.performance.platform.engine.ExecutionEngine;
 import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.retry.DefaultRetryExecutor;
@@ -90,7 +91,7 @@ class LocalExecutionEngineTest {
     // No-op lifecycle dispatcher for tests
     private final ExecutionLifecycleDispatcher lifecycleDispatcher = signal -> { /* no-op */ };
 
-    private LocalExecutionEngine engine;
+    private ExecutionEngine engine;
 
     @BeforeEach
     void setUp() {
@@ -102,9 +103,11 @@ class LocalExecutionEngineTest {
         planMap.clear();
         taskExecutorLookup.reset();
 
-        engine = new LocalExecutionEngine(
-                planBuilder, retryExecutor, executionRepository,
-                eventPublisher, lifecycleDispatcher, taskExecutorLookup);
+        engine = new ExecutionEngine(
+                planBuilder, executionRepository,
+                eventPublisher, lifecycleDispatcher,
+                new LocalStepDispatcher(taskExecutorLookup, retryExecutor),
+                new LocalOutcomeEventPublisher(eventPublisher));
     }
 
     @AfterEach

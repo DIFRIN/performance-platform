@@ -12,7 +12,7 @@ import java.time.Duration;
  * ou les variables d'environnement (ADR-006 : env prioritaire).
  *
  * <p>Ces proprietes sont utilisees exclusivement par le
- * {@code RemoteExecutionEngine} en mode DISTRIBUTED.</p>
+ * {@code RemoteStepDispatcher} en mode DISTRIBUTED.</p>
  *
  * @param taskAvailabilityTimeout delai max d'attente de disponibilite d'un agent (defaut 120s)
  * @param taskExecutionTimeout delai max d'execution d'une tache (defaut 300s)

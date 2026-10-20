@@ -4,6 +4,9 @@ import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.id.AgentId;
+import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 
@@ -20,11 +23,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Verifie que le {@link LocalAgent} accepte TOUS les task names
+ * Verifie que le {@link TaskAgentRuntime} accepte TOUS les task names
  * derives du registre des {@link TaskExecutor} et ignore
  * {@code AgentProperties.supportedTasks()} (ADR-015).
  */
-@DisplayName("LocalAgent — all task names from registry")
+@DisplayName("TaskAgentRuntime — all task names from registry")
 class LocalAgentAllTaskNamesTest {
 
     @Test
@@ -45,7 +48,7 @@ class LocalAgentAllTaskNamesTest {
                 allTaskNames, new AgentCapabilities(10, "1.0.0"),
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-        var agent = new LocalAgent(transport, descriptor,
+        var agent = localRuntime(transport, descriptor,
                 Duration.ofMinutes(5), List.of(exec1, exec2, exec3), List.of());
 
         // Then: canExecute() retourne true pour chaque task name
@@ -60,7 +63,7 @@ class LocalAgentAllTaskNamesTest {
     @Test
     @DisplayName("should ignore AgentProperties — derive supportedTaskNames from descriptor only")
     void localAgentShouldIgnoreAgentProperties() {
-        // Le LocalAgent derive ses supportedTaskNames du registre,
+        // Le TaskAgentRuntime derive ses supportedTaskNames du registre,
         // pas de AgentProperties. Ce test confirme que meme avec
         // un supportedTaskNames partiel, canExecute() reflete le descriptor.
         var exec = mock(TaskExecutor.class);
@@ -72,10 +75,24 @@ class LocalAgentAllTaskNamesTest {
                 partialNames, new AgentCapabilities(10, "1.0.0"),
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-        var agent = new LocalAgent(transport, descriptor,
+        var agent = localRuntime(transport, descriptor,
                 Duration.ofMinutes(5), List.of(exec), List.of());
 
         assertThat(agent.canExecute("mock-server")).isTrue();
         assertThat(agent.canExecute("gatling")).isFalse(); // non inclus dans le descriptor
     }
+
+    private static TaskAgentRuntime localRuntime(InMemoryExecutionTransport transport,
+                                                  AgentDescriptor descriptor,
+                                                  Duration timeout,
+                                                  List<TaskExecutor> executors,
+                                                  List<StatefulResourceCleaner> cleaners) {
+        var filter = descriptor != null
+                ? new DefaultTaskSpecializationFilter(
+                        Set.copyOf(descriptor.supportedTaskNames()), descriptor.id())
+                : new DefaultTaskSpecializationFilter(Set.of(), AgentId.generate());
+        return new TaskAgentRuntime(transport, filter, descriptor, timeout,
+                executors, cleaners, null, null);
+    }
+
 }

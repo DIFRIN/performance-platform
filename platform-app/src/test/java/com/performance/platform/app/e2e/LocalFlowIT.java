@@ -22,7 +22,9 @@ import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
-import com.performance.platform.engine.local.LocalExecutionEngine;
+import com.performance.platform.engine.ExecutionEngine;
+import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
+import com.performance.platform.engine.local.LocalStepDispatcher;
 import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.engine.plan.DefaultExecutionPlanBuilder;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
@@ -153,9 +155,10 @@ class LocalFlowIT {
         ApplicationEventPublisher eventPublisher = publishedEvents::add;
 
         // 7. LocalExecutionEngine
-        var engine = new LocalExecutionEngine(
-                planBuilder, retryExecutor, executionRepository,
-                eventPublisher, signal -> { }, lookup);
+        var engine = new ExecutionEngine(
+                planBuilder, executionRepository, eventPublisher, signal -> { },
+                new LocalStepDispatcher(lookup, retryExecutor),
+                new LocalOutcomeEventPublisher(eventPublisher));
 
         // 8. Scenario parsing
         var parser = new YamlScenarioParser();

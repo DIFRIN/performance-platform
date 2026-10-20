@@ -7,13 +7,14 @@ import com.performance.platform.agent.registration.HeartbeatScheduler;
 import com.performance.platform.agent.registration.RegistrationException;
 import com.performance.platform.agent.restart.ScenarioRestartHandler;
 import com.performance.platform.agent.runtime.lifecycle.DefaultLifecycleSignalHandler;
-import com.performance.platform.plugin.StatefulResourceCleaner;
+import com.performance.platform.application.ports.out.LifecycleSignalHandler;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.event.AgentSignal;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
-import com.performance.platform.domain.id.*;
+import com.performance.platform.domain.id.MessageId;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.TransportException;
@@ -24,56 +25,47 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Implémentation distribuée de {@link AgentRuntime} pour le mode DISTRIBUTED, role AGENT.
+ * Runtime d'agent unique (PDR-050), independant du mode.
  * <p>
- * Cycle de vie : OFFLINE → REGISTERING → IDLE → EXECUTING → (DRAINING) → OFFLINE.
- * Chaque transition est tracée via SLF4J avec contexte (agentId, executionId, taskName).
- * </p>
- *
- * <h3>Flux de réception d'une tâche</h3>
- * <ol>
- *   <li>Réception broadcast via {@link ExecutionTransport#receiveTask}</li>
- *   <li>Filtrage via {@link TaskSpecializationFilter} — match sur supportedTaskNames</li>
- *   <li>Si {@code Responsible} : vérification d'idempotence (MessageId déjà traité ?)</li>
- *   <li>Publication {@code TASK_CLAIMED} via {@link TaskExecutionPipeline#publishClaimEvent}</li>
- *   <li>Exécution sur {@code Virtual Thread} via {@link TaskExecutionPipeline#execute}</li>
- * </ol>
- *
- * <h3>Multi-claim (ADR-011)</h3>
- * Chaque agent spécialisé exécute indépendamment. Pas de coordination inter-agents.
- * L'orchestrateur consolide les résultats selon {@code TaskCompletionPolicy}.
- *
- * <h3>Idempotence</h3>
- * Les {@code MessageId} déjà traités sont ignorés. Le set est nettoyé périodiquement
- * (rétention basée sur le {@code taskExecutionTimeout}).
- *
- * <h3>ScenarioRestart</h3>
- * Délégué à {@link ScenarioRestartHandler} qui orchestre le cleanup des ressources
- * stateful, l'annulation des tâches actives et la transition d'état.
- *
- * <h3>Thread safety</h3>
- * Tous les champs mutables utilisent des structures concurrentes :
- * {@link ConcurrentHashMap}, {@link AtomicReference}, {@link AtomicInteger}.
- * L'exécution des tâches utilise {@code Thread.ofVirtual()}.
+ * La difference LOCAL / DISTRIBUTED est portee par deux collaborations
+ * optionnelles :</p>
+ * <ul>
+ *   <li>{@code registrationPort == null} → agent LOCAL : pas de REGISTERING,
+ *       pas de heartbeat, pas de deregister ;</li>
+ *   <li>{@code registrationPort != null} → agent DISTRIBUTED : enregistrement,
+ *       heartbeat periodique et deregister.</li>
+ * </ul>
+ * <p>
+ * Le transport, le filtre de specialisation et les executeurs sont injectes :
+ * aucun {@code if/switch} sur {@code runtime.mode}.
  */
-public class DistributedAgentRuntime implements AgentRuntime {
+public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(DistributedAgentRuntime.class);
+    private static final Logger log = LoggerFactory.getLogger(TaskAgentRuntime.class);
 
-    // === Dépendances ===
+    // === Dependances ===
 
     private final ExecutionTransport transport;
     private final TaskSpecializationFilter filter;
-    private final AgentRegistrationPort registrationPort;
-    private final HeartbeatScheduler heartbeatScheduler;
+    private final AgentRegistrationPort registrationPort; // nullable
+    private final HeartbeatScheduler heartbeatScheduler;  // nullable
     private final AgentDescriptor staticDescriptor;
     private final Duration taskExecutionTimeout;
 
@@ -83,67 +75,61 @@ public class DistributedAgentRuntime implements AgentRuntime {
     private final ScenarioRestartHandler restartHandler;
     private final DefaultLifecycleSignalHandler lifecycleSignalHandler;
 
-    // === État concurrent ===
+    // === Etat concurrent ===
 
     private final AtomicReference<AgentState> currentState =
             new AtomicReference<>(AgentState.OFFLINE);
     private final AtomicInteger activeTaskCount = new AtomicInteger(0);
 
-    /** Messages déjà traités (idempotence). Nettoyé périodiquement. */
     private final Set<MessageId> processedMessageIds = ConcurrentHashMap.newKeySet();
-
-    /** Tâches en cours d'exécution, indexées par MessageId (pour annulation). */
     private final ConcurrentMap<MessageId, Future<?>> activeTasks = new ConcurrentHashMap<>();
 
-    /** Scheduler pour les rapports de progression périodiques. */
     private final ScheduledExecutorService progressScheduler =
             Executors.newSingleThreadScheduledExecutor(Thread.ofVirtual().factory());
-
-    /** Scheduler pour le nettoyage des MessageId expirés. */
     private final ScheduledExecutorService cleanupScheduler =
             Executors.newSingleThreadScheduledExecutor(Thread.ofVirtual().factory());
     private volatile ScheduledFuture<?> cleanupFuture;
 
-    /** Executor pour l'exécution des tâches (Virtual Threads). */
     private final ExecutorService taskExecutorService = Executors.newVirtualThreadPerTaskExecutor();
-
-    // === Verrou pour start/stop ===
 
     private final Object lifecycleLock = new Object();
     private volatile boolean started = false;
     private volatile boolean stopped = false;
 
-    /**
-     * Construit un runtime d'agent distribué.
-     *
-     * @param transport            le transport de communication
-     * @param filter               le filtre de spécialisation
-     * @param registrationPort     le port d'enregistrement
-     * @param descriptor           le descripteur statique de l'agent (id, nom, capacités, etc.)
-     * @param heartbeatInterval    l'intervalle entre deux heartbeats
-     * @param taskExecutionTimeout le timeout d'exécution d'une tâche (utilisé pour le reporting)
-     * @param taskExecutors        la liste des {@link TaskExecutor} disponibles (résolus par taskName)
-     * @param cleaners             la liste des {@link StatefulResourceCleaner} (peut être vide)
-     */
-    public DistributedAgentRuntime(
+    public TaskAgentRuntime(
             ExecutionTransport transport,
             TaskSpecializationFilter filter,
-            AgentRegistrationPort registrationPort,
             AgentDescriptor descriptor,
-            Duration heartbeatInterval,
             Duration taskExecutionTimeout,
             List<TaskExecutor> taskExecutors,
-            List<StatefulResourceCleaner> cleaners
-    ) {
+            List<StatefulResourceCleaner> cleaners,
+            AgentRegistrationPort registrationPort,
+            Duration heartbeatInterval) {
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
         this.filter = Objects.requireNonNull(filter, "filter must not be null");
-        this.registrationPort = Objects.requireNonNull(registrationPort, "registrationPort must not be null");
         this.staticDescriptor = Objects.requireNonNull(descriptor, "descriptor must not be null");
-        this.taskExecutionTimeout = Objects.requireNonNull(taskExecutionTimeout, "taskExecutionTimeout must not be null");
+        this.taskExecutionTimeout = Objects.requireNonNull(taskExecutionTimeout,
+                "taskExecutionTimeout must not be null");
         if (taskExecutionTimeout.isNegative() || taskExecutionTimeout.isZero()) {
-            throw new IllegalArgumentException("taskExecutionTimeout must be positive, got " + taskExecutionTimeout);
+            throw new IllegalArgumentException(
+                    "taskExecutionTimeout must be positive, got " + taskExecutionTimeout);
         }
         Objects.requireNonNull(taskExecutors, "taskExecutors must not be null");
+        this.registrationPort = registrationPort;
+
+        if (registrationPort != null) {
+            Objects.requireNonNull(heartbeatInterval, "heartbeatInterval required when registration is enabled");
+            var heartbeatSeconds = Math.toIntExact(heartbeatInterval.getSeconds());
+            if (heartbeatSeconds < 1) {
+                throw new IllegalArgumentException("heartbeatInterval must be >= 1 second");
+            }
+            this.heartbeatScheduler = new HeartbeatScheduler(
+                    registrationPort, descriptor.id(), heartbeatSeconds,
+                    this::getState, activeTaskCount::get);
+        } else {
+            this.heartbeatScheduler = null;
+        }
+
         var executorMap = taskExecutors.stream()
                 .collect(Collectors.toUnmodifiableMap(
                         TaskExecutor::getSupportedTaskName,
@@ -154,23 +140,10 @@ public class DistributedAgentRuntime implements AgentRuntime {
                         }
                 ));
 
-        var heartbeatSeconds = Math.toIntExact(heartbeatInterval.getSeconds());
-        if (heartbeatSeconds < 1) {
-            throw new IllegalArgumentException("heartbeatInterval must be >= 1 second");
-        }
-        this.heartbeatScheduler = new HeartbeatScheduler(
-                registrationPort,
-                descriptor.id(),
-                heartbeatSeconds,
-                this::getState,
-                activeTaskCount::get
-        );
-
         this.taskPipeline = new TaskExecutionPipeline(
                 transport, executorMap, descriptor.id(),
                 progressScheduler, taskExecutionTimeout,
-                activeTasks, activeTaskCount, currentState
-        );
+                activeTasks, activeTaskCount, currentState);
 
         this.restartHandler = new ScenarioRestartHandler(
                 Objects.requireNonNull(cleaners, "cleaners must not be null"));
@@ -192,46 +165,46 @@ public class DistributedAgentRuntime implements AgentRuntime {
             stopped = false;
         }
 
-        log.info("action=agent_starting agentId={} name={} supportedTasks={}",
+        boolean distributed = registrationPort != null;
+        log.info("action=agent_starting agentId={} name={} supportedTasks={} distributed={}",
                 staticDescriptor.id().value(), staticDescriptor.name(),
-                staticDescriptor.supportedTaskNames());
+                staticDescriptor.supportedTaskNames(), distributed);
 
         try {
-            // 1. Connexion au transport
             transport.connect();
             log.info("action=transport_connected agentId={}", staticDescriptor.id().value());
 
-            // 2. Enregistrement auprès de l'orchestrateur
-            currentState.set(AgentState.REGISTERING);
-            registrationPort.register(liveDescriptor());
-            log.info("action=agent_registered agentId={} name={}",
-                    staticDescriptor.id().value(), staticDescriptor.name());
+            if (distributed) {
+                currentState.set(AgentState.REGISTERING);
+                registrationPort.register(getDescriptor());
+                heartbeatScheduler.start();
+                log.info("action=agent_registered agentId={} name={}",
+                        staticDescriptor.id().value(), staticDescriptor.name());
+            }
 
-            // 3. Démarrage du heartbeat
-            heartbeatScheduler.start();
-
-            // 4. Abonnement aux tâches et signaux
             transport.receiveTask(this::onTaskReceived);
             transport.receiveSignal(this::onSignalReceived);
 
-            // 5. Nettoyage périodique des MessageId expirés
             long cleanupIntervalSeconds = Math.max(60, taskExecutionTimeout.toSeconds() * 2);
             cleanupFuture = cleanupScheduler.scheduleAtFixedRate(
                     this::cleanupExpiredMessageIds,
                     cleanupIntervalSeconds,
                     cleanupIntervalSeconds,
-                    TimeUnit.SECONDS
-            );
+                    TimeUnit.SECONDS);
 
             currentState.set(AgentState.IDLE);
-            log.info("action=agent_started agentId={} state=IDLE heartbeatInterval={}s ttl={}s",
-                    staticDescriptor.id().value(),
-                    heartbeatScheduler.registrationTtlSeconds() / 3,
-                    heartbeatScheduler.registrationTtlSeconds());
-
+            log.info("action=agent_started agentId={} state=IDLE distributed={}",
+                    staticDescriptor.id().value(), distributed);
         } catch (TransportException | RegistrationException e) {
             currentState.set(AgentState.OFFLINE);
-            log.error("action=agent_start_failed agentId={}", staticDescriptor.id().value(), e);
+            log.error("action=agent_start_failed agentId={} distributed={}",
+                    staticDescriptor.id().value(), distributed, e);
+            if (registrationPort == null && e instanceof TransportException transportException) {
+                // Comportement LOCAL historique : TransportException explicite.
+                throw new TransportException(
+                        "Failed to start local agent: " + staticDescriptor.id().value(),
+                        transportException);
+            }
             throw new RegistrationException(
                     "Failed to start agent: " + staticDescriptor.id().value(), e);
         }
@@ -252,27 +225,26 @@ public class DistributedAgentRuntime implements AgentRuntime {
                 staticDescriptor.id().value(), activeTaskCount.get());
         currentState.set(AgentState.DRAINING);
 
-        // Drain des tâches actives avec timeout
         drainActiveTasks();
 
-        // Arrêter le heartbeat
-        heartbeatScheduler.stop();
+        if (heartbeatScheduler != null) {
+            heartbeatScheduler.stop();
+        }
 
-        // Arrêter le nettoyage périodique
         var cf = cleanupFuture;
         if (cf != null) {
             cf.cancel(false);
         }
 
-        // Désenregistrement
-        try {
-            registrationPort.deregister(staticDescriptor.id());
-        } catch (RegistrationException e) {
-            log.warn("action=deregister_failed agentId={} (continuing stop)",
-                    staticDescriptor.id().value(), e);
+        if (registrationPort != null) {
+            try {
+                registrationPort.deregister(staticDescriptor.id());
+            } catch (RegistrationException e) {
+                log.warn("action=deregister_failed agentId={} (continuing stop)",
+                        staticDescriptor.id().value(), e);
+            }
         }
 
-        // Déconnexion du transport
         try {
             transport.disconnect();
         } catch (Exception e) {
@@ -291,7 +263,21 @@ public class DistributedAgentRuntime implements AgentRuntime {
 
     @Override
     public AgentDescriptor getDescriptor() {
-        return liveDescriptor();
+        Duration ttl = heartbeatScheduler != null
+                ? Duration.ofSeconds(heartbeatScheduler.registrationTtlSeconds())
+                : staticDescriptor.registrationTtl();
+        return new AgentDescriptor(
+                staticDescriptor.id(),
+                staticDescriptor.name(),
+                staticDescriptor.host(),
+                staticDescriptor.port(),
+                staticDescriptor.httpCallbackUrl(),
+                staticDescriptor.supportedTaskNames(),
+                staticDescriptor.capabilities(),
+                currentState.get(),
+                staticDescriptor.registeredAt(),
+                Instant.now(),
+                ttl);
     }
 
     @Override
@@ -318,14 +304,8 @@ public class DistributedAgentRuntime implements AgentRuntime {
         lifecycleSignalHandler.handle(signal);
     }
 
-    // === Réception de tâche (broadcast) ===
+    // === Reception de tache (broadcast) ===
 
-    /**
-     * Handler appelé par le transport à la réception d'une {@link TaskExecutionRequest}.
-     * <p>
-     * Exécuté sur le thread du transport (peut être un Virtual Thread selon l'implémentation).
-     * La tâche elle-même est soumise à un Virtual Thread dédié via {@link TaskExecutionPipeline}.
-     */
     private void onTaskReceived(TaskExecutionRequest request) {
         if (currentState.get() == AgentState.OFFLINE || currentState.get() == AgentState.DRAINING) {
             log.debug("action=task_ignored agentId={} messageId={} state={}",
@@ -333,7 +313,6 @@ public class DistributedAgentRuntime implements AgentRuntime {
             return;
         }
 
-        // 1. Filtrage
         var filterResult = filter.filter(request);
         if (filterResult instanceof TaskFilterResult.NotResponsible) {
             log.debug("action=task_not_responsible agentId={} messageId={} taskName={}",
@@ -342,7 +321,6 @@ public class DistributedAgentRuntime implements AgentRuntime {
             return;
         }
 
-        // 2. Idempotence
         if (!processedMessageIds.add(request.id())) {
             log.info("action=task_duplicate agentId={} messageId={} taskName={}",
                     staticDescriptor.id().value(), request.id().value(),
@@ -354,19 +332,14 @@ public class DistributedAgentRuntime implements AgentRuntime {
                 staticDescriptor.id().value(), request.executionId().value(),
                 request.id().value(), request.step().taskName());
 
-        // 3. Publication du claim
         taskPipeline.publishClaimEvent(request);
 
-        // 4. Transition d'état
         currentState.compareAndSet(AgentState.IDLE, AgentState.EXECUTING);
         activeTaskCount.incrementAndGet();
 
-        // 5. Exécution asynchrone sur Virtual Thread
         var future = taskExecutorService.submit(() -> taskPipeline.execute(request));
         activeTasks.put(request.id(), future);
     }
-
-    // === Réception de signal ===
 
     private void onSignalReceived(AgentSignal signal) {
         log.info("action=signal_received agentId={} signalType={}",
@@ -379,11 +352,8 @@ public class DistributedAgentRuntime implements AgentRuntime {
         }
     }
 
-    // === Drain des tâches actives ===
+    // === Drain / cleanup ===
 
-    /**
-     * Attend la fin des tâches actives (avec timeout), puis annule les restantes.
-     */
     private void drainActiveTasks() {
         long drainTimeoutMs = taskExecutionTimeout.toMillis() * 2;
         long deadline = System.currentTimeMillis() + drainTimeoutMs;
@@ -408,12 +378,6 @@ public class DistributedAgentRuntime implements AgentRuntime {
         }
     }
 
-    // === Nettoyage des MessageId expirés ===
-
-    /**
-     * Nettoie périodiquement le set des MessageId déjà traités pour éviter
-     * une fuite mémoire. Supprime les entrées si le set dépasse un seuil raisonnable.
-     */
     private void cleanupExpiredMessageIds() {
         int beforeSize = processedMessageIds.size();
         if (beforeSize > 10_000) {
@@ -423,50 +387,29 @@ public class DistributedAgentRuntime implements AgentRuntime {
         }
     }
 
-    // === Helpers ===
-
-    /**
-     * Construit un {@link AgentDescriptor} reflétant l'état courant.
-     */
-    private AgentDescriptor liveDescriptor() {
-        return new AgentDescriptor(
-                staticDescriptor.id(),
-                staticDescriptor.name(),
-                staticDescriptor.host(),
-                staticDescriptor.port(),
-                staticDescriptor.httpCallbackUrl(),
-                staticDescriptor.supportedTaskNames(),
-                staticDescriptor.capabilities(),
-                currentState.get(),
-                staticDescriptor.registeredAt(),
-                Instant.now(),
-                Duration.ofSeconds(heartbeatScheduler.registrationTtlSeconds())
-        );
-    }
-
     // === Accesseurs package-private pour les tests ===
 
-    int activeTaskCount() {
+    public int activeTaskCount() {
         return activeTaskCount.get();
     }
 
-    int processedMessageCount() {
+    public int processedMessageCount() {
         return processedMessageIds.size();
     }
 
-    boolean isStarted() {
+    public boolean isStarted() {
         return started;
     }
 
-    boolean isStopped() {
+    public boolean isStopped() {
         return stopped;
     }
 
-    int executorCount() {
+    public int executorCount() {
         return taskPipeline.executorCount();
     }
 
-    int cleanerCount() {
+    public int cleanerCount() {
         return restartHandler.cleanerCount();
     }
 }

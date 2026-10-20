@@ -2,7 +2,7 @@
 
 **PDR** : PDR-050
 **Module** : `platform-execution-engine`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-180, ISSUE-170
 **Estime** : L (3-6h)

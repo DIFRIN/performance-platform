@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  * expirations intempestives côté orchestrateur.
  * <p>
  * Les {@link Supplier} d'état et de tâches actives permettent à
- * {@code DistributedAgentRuntime} de fournir l'état réel à chaque heartbeat.
+ * {@code TaskAgentRuntime} de fournir l'état réel à chaque heartbeat.
  */
 public class HeartbeatScheduler {
 

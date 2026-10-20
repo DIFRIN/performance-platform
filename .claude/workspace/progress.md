@@ -196,11 +196,11 @@
 | ISSUE-181 | Remove TaskExecutorLookup.findAssertionExecutor | DONE | PDR-037 | - |
 | ISSUE-182 | Delete AssertionExecutorRegistry | DONE | PDR-036 | ISSUE-181 |
 | ISSUE-183 | Drop Decorative @Modulith + ModulithVerificationTest | DONE | PDR-049 | ISSUE-180 |
-| ISSUE-184 | Unified ExecutionEngine | WAITING | PDR-050 | ISSUE-180, ISSUE-170 |
-| ISSUE-185 | Rewire Config + Delete Local/RemoteExecutionEngine | WAITING | PDR-050 | ISSUE-184 |
-| ISSUE-186 | Unified TaskAgentRuntime | WAITING | PDR-050 | ISSUE-180 |
-| ISSUE-187 | Rewire Agent Config + Delete LocalAgent/DistributedAgentRuntime | WAITING | PDR-050 | ISSUE-186, ISSUE-177 |
-| ISSUE-188 | Verify Equivalence + Boundary Post-Merge | WAITING | PDR-050 | ISSUE-184, ISSUE-185, ISSUE-186, ISSUE-187 |
+| ISSUE-184 | Unified ExecutionEngine | DONE | PDR-050 | ISSUE-180, ISSUE-170 |
+| ISSUE-185 | Rewire Config + Delete Local/RemoteExecutionEngine | DONE | PDR-050 | ISSUE-184 |
+| ISSUE-186 | Unified TaskAgentRuntime | DONE | PDR-050 | ISSUE-180 |
+| ISSUE-187 | Rewire Agent Config + Delete LocalAgent/DistributedAgentRuntime | DONE | PDR-050 | ISSUE-186, ISSUE-177 |
+| ISSUE-188 | Verify Equivalence + Boundary Post-Merge | DONE | PDR-050 | ISSUE-184, ISSUE-185, ISSUE-186, ISSUE-187 |
 | ISSUE-189 | Deterministic Result Selection Policy (T6) | DONE | PDR-051 | ISSUE-185 |
 | ISSUE-190 | Poll → Completion Signal (C2) | DONE | PDR-051 | ISSUE-171, ISSUE-189 |
 | ISSUE-191 | Define Segregated Transport Ports | WAITING | PDR-052 | - |
@@ -262,7 +262,7 @@
 | PDR-047 | DSL Strictness & Version | platform-scenario-dsl | DONE | ISSUE-176 | PDR-005 |
 | PDR-048 | Cross-Module Boundary Enforcement | platform-app, engine, assertion, infrastructure, reporting, application | DONE | ISSUE-177,178,179,180 | PDR-004, PDR-010, PDR-014, PDR-022, PDR-037 |
 | PDR-049 | Spring Modulith Decision | platform-app | DONE | ISSUE-183 | PDR-048 |
-| PDR-050 | Engine & Agent Consolidation | platform-execution-engine, platform-agent-runtime, platform-app | WAITING | ISSUE-184,185,186,187,188 | PDR-043, PDR-048, PDR-039, PDR-045 |
+| PDR-050 | Engine & Agent Consolidation | platform-execution-engine, platform-agent-runtime, platform-app | DONE | ISSUE-184,185,186,187,188 | PDR-043, PDR-048, PDR-039, PDR-045 |
 | PDR-051 | Distributed Completion Semantics | platform-execution-engine | DONE | ISSUE-189,190 | PDR-044, PDR-050 |
 | PDR-052 | Transport Interface Segregation | platform-transport | WAITING | ISSUE-191,192,193 | PDR-007, PDR-008 |
 | PDR-053 | ExecutionContext Named Outputs | platform-domain | WAITING | ISSUE-194,195 | PDR-001 |
@@ -1026,3 +1026,5 @@
 | 2026-10-19 | ISSUE-171 | IN_PROGRESS → DONE | Eviction, onAgentLost et signal de completion livrés (voir aussi ISSUE-190). |
 
 | 2026-10-19 | ISSUE-170 | WAITING → DONE | T2 : LocalDistributedEquivalenceIT — même verdict et mêmes statuts via LOCAL et DISTRIBUTED (transport in-memory + agent réel). |
+
+| 2026-10-20 | ISSUE-184..188 | WAITING → DONE | Fusion engine/agent : ExecutionEngine + TaskAgentRuntime uniques, 4 classes supprimées, T2/T1/ITs verts (ADR-037). |

@@ -1,9 +1,13 @@
 package com.performance.platform.agent.e2e;
 
+import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.agent.filter.TaskSpecializationFilter;
+import com.performance.platform.plugin.StatefulResourceCleaner;
+
 import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.TransportAgentRegistration;
-import com.performance.platform.agent.runtime.DistributedAgentRuntime;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
@@ -19,6 +23,7 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.AgentLifecycleEvent;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
@@ -56,7 +61,7 @@ import static org.awaitility.Awaitility.await;
  * {@code platform-transport/KafkaExecutionTransportIT}.
  *
  * <h3>ADR-015 — Configuration-Driven Agent Specialization</h3>
- * <p>Le {@code DistributedAgentRuntime} utilise exclusivement
+ * <p>Le {@code TaskAgentRuntime} utilise exclusivement
  * {@code AgentProperties.supportedTasks()} comme source de
  * {@code supportedTaskNames}. Les {@code TaskExecutor} presents dans le
  * registre Spring sont ignores pour le filtrage.
@@ -353,7 +358,7 @@ class AgentConfigToExecutionE2ETest {
         };
     }
 
-    private DistributedAgentRuntime buildAgent(
+    private TaskAgentRuntime buildAgent(
             Set<String> configuredNames,
             AgentId agentId,
             List<TaskExecutor> executors) {
@@ -375,7 +380,7 @@ class AgentConfigToExecutionE2ETest {
                 Duration.ofMinutes(5)
         );
 
-        return new DistributedAgentRuntime(
+        return distributedRuntime(
                 transport,
                 filter,
                 registrationPort,
@@ -397,4 +402,18 @@ class AgentConfigToExecutionE2ETest {
                 PartialExecutionContext.empty(executionId, ScenarioId.of("test-scenario")),
                 Instant.now(), RetryPolicy.defaults());
     }
+
+    private static TaskAgentRuntime distributedRuntime(
+            ExecutionTransport transport,
+            TaskSpecializationFilter filter,
+            AgentRegistrationPort registrationPort,
+            AgentDescriptor descriptor,
+            Duration heartbeatInterval,
+            Duration taskExecutionTimeout,
+            List<TaskExecutor> taskExecutors,
+            List<StatefulResourceCleaner> cleaners) {
+        return new TaskAgentRuntime(transport, filter, descriptor, taskExecutionTimeout,
+                taskExecutors, cleaners, registrationPort, heartbeatInterval);
+    }
+
 }

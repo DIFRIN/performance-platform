@@ -1,6 +1,7 @@
 package com.performance.platform.e2e;
 
-import com.performance.platform.agent.local.LocalAgent;
+import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
@@ -22,7 +23,9 @@ import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.engine.local.LocalExecutionEngine;
+import com.performance.platform.engine.ExecutionEngine;
+import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
+import com.performance.platform.engine.local.LocalStepDispatcher;
 import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.engine.plan.DefaultExecutionPlanBuilder;
 import com.performance.platform.engine.retry.DefaultRetryExecutor;
@@ -107,7 +110,7 @@ class LocalModeAllTasksIT {
     static ExecutionRepository executionRepository;
     static DefaultReportEngine reportEngine;
     static InMemoryExecutionTransport transport;
-    static LocalAgent localAgent;
+    static TaskAgentRuntime localAgent;
 
     @BeforeAll
     static void setUp() throws Exception {
@@ -166,9 +169,10 @@ class LocalModeAllTasksIT {
         ApplicationEventPublisher eventPublisher = publishedEvents::add;
 
         // 8. LocalExecutionEngine
-        var engine = new LocalExecutionEngine(
-                planBuilder, retryExecutor, executionRepository,
-                eventPublisher, signal -> { }, lookup);
+        var engine = new ExecutionEngine(
+                planBuilder, executionRepository, eventPublisher, signal -> { },
+                new LocalStepDispatcher(lookup, retryExecutor),
+                new LocalOutcomeEventPublisher(eventPublisher));
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();
@@ -240,8 +244,10 @@ class LocalModeAllTasksIT {
                 allTaskNames, new AgentCapabilities(10, "1.0.0"),
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-        localAgent = new LocalAgent(transport, descriptor,
-                Duration.ofMinutes(5), executorList, List.of());
+        var agentFilter = new DefaultTaskSpecializationFilter(
+                descriptor.supportedTaskNames(), descriptor.id());
+        localAgent = new TaskAgentRuntime(transport, agentFilter, descriptor,
+                Duration.ofMinutes(5), executorList, List.of(), null, null);
     }
 
     @AfterAll

@@ -34,8 +34,8 @@ import org.springframework.web.client.RestClient;
  * <p><strong>NE contient PAS</strong> :
  * <ul>
  *   <li>{@code ExecuteScenarioUseCase} / {@code CancelExecutionUseCase} —
- *       fournis par l'engine actif ({@code LocalExecutionEngine} ou
- *       {@code RemoteExecutionEngine}) qui implemente directement les ports</li>
+ *       fournis par l'{@code ExecutionEngine} unique, qui implemente
+ *       directement les ports</li>
  *   <li>{@code ExecutionConfig} / {@code AgentRegistry} —
  *       possedes par leurs modules respectifs (engine, agent-runtime)</li>
  * </ul>

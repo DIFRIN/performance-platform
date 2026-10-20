@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Implementation LOCAL du dispatcher de signaux de cycle de vie.
- * Appelle {@code LocalAgent.onLifecycleSignal()} directement (meme JVM, pas de transport).
+ * Appelle {@code TaskAgentRuntime.onLifecycleSignal()} directement (meme JVM, pas de transport).
  *
  * <p>Active uniquement quand {@code runtime.mode=LOCAL}.</p>
  */

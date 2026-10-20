@@ -2,7 +2,7 @@
 
 **PDR** : PDR-050
 **Module** : `platform-app`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-184, ISSUE-185, ISSUE-186, ISSUE-187
 **Estime** : S (< 1h)

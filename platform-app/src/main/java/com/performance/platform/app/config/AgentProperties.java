@@ -12,7 +12,7 @@ import java.util.List;
  * {@code AGENT_SUPPORTED_TASKS} (valeurs separees par des virgules) ecrase
  * cette liste via le mecanisme standard Spring Boot de binding de liste.
  * <p>
- * En mode LOCAL, cette propriete est ignoree : {@code LocalAgent} derive
+ * En mode LOCAL, cette propriete est ignoree : {@code TaskAgentRuntime} derive
  * automatiquement tous les task names du {@code TaskExecutorRegistry}
  * (voir ADR-015).
  * <p>

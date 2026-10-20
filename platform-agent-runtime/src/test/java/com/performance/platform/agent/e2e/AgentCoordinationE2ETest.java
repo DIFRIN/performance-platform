@@ -1,10 +1,12 @@
 package com.performance.platform.agent.e2e;
 
+import com.performance.platform.transport.ExecutionTransport;
+
 import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.filter.TaskSpecializationFilter;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.TransportAgentRegistration;
-import com.performance.platform.agent.runtime.DistributedAgentRuntime;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
@@ -16,6 +18,7 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.StatefulResourceCleaner;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 import com.performance.platform.transport.message.ExecutionEvent;
@@ -76,7 +79,7 @@ class AgentCoordinationE2ETest {
                 public String getSupportedTaskName() { return "database"; }
             };
 
-            var runtime = new DistributedAgentRuntime(
+            var runtime = distributedRuntime(
                     transport, filter, regPort, desc,
                     Duration.ofSeconds(5), Duration.ofSeconds(60),
                     List.of(executor), List.of());
@@ -103,7 +106,7 @@ class AgentCoordinationE2ETest {
                     Set.of("database"), desc.id());
             var regPort = new TransportAgentRegistration(transport);
 
-            var runtime = new DistributedAgentRuntime(
+            var runtime = distributedRuntime(
                     transport, filter, regPort, desc,
                     Duration.ofSeconds(5), Duration.ofSeconds(60),
                     List.of(), List.of());
@@ -141,7 +144,7 @@ class AgentCoordinationE2ETest {
                 public String getSupportedTaskName() { return "database"; }
             };
 
-            var runtime = new DistributedAgentRuntime(
+            var runtime = distributedRuntime(
                     transport, filter, regPort, desc,
                     Duration.ofSeconds(5), Duration.ofSeconds(60),
                     List.of(executor), List.of());
@@ -172,7 +175,7 @@ class AgentCoordinationE2ETest {
         @DisplayName("E2E-A-10: Agent transitions OFFLINE -> IDLE on start")
         @Timeout(value = 30)
         void agentStartupTransition() {
-            DistributedAgentRuntime runtime = buildRuntime("startup", Set.of("shell"), List.of());
+            TaskAgentRuntime runtime = buildRuntime("startup", Set.of("shell"), List.of());
             assertThat(runtime.getState()).isEqualTo(AgentState.OFFLINE);
             runtime.start();
             assertThat(runtime.getState()).isEqualTo(AgentState.IDLE);
@@ -183,7 +186,7 @@ class AgentCoordinationE2ETest {
         @DisplayName("E2E-A-11: Agent transitions IDLE -> OFFLINE on stop")
         @Timeout(value = 30)
         void agentShutdownTransition() {
-            DistributedAgentRuntime runtime = buildRuntime("shutdown", Set.of("shell"), List.of());
+            TaskAgentRuntime runtime = buildRuntime("shutdown", Set.of("shell"), List.of());
             runtime.start();
             assertThat(runtime.getState()).isEqualTo(AgentState.IDLE);
             runtime.stop();
@@ -202,7 +205,7 @@ class AgentCoordinationE2ETest {
             var cleanupCount = new AtomicInteger(0);
             StatefulResourceCleaner cleaner = (executionId) -> cleanupCount.incrementAndGet();
 
-            DistributedAgentRuntime runtime = buildRuntime("cleaner", Set.of("shell"),
+            TaskAgentRuntime runtime = buildRuntime("cleaner", Set.of("shell"),
                     List.of(cleaner));
             runtime.start();
 
@@ -238,7 +241,7 @@ class AgentCoordinationE2ETest {
                 public String getSupportedTaskName() { return "shell"; }
             };
 
-            DistributedAgentRuntime runtime = buildRuntimeWithExecutor(
+            TaskAgentRuntime runtime = buildRuntimeWithExecutor(
                     "concurrent", Set.of("shell"), executor);
             var events = captureExecutionEvents();
             runtime.start();
@@ -269,20 +272,20 @@ class AgentCoordinationE2ETest {
                 Duration.ofSeconds(30));
     }
 
-    private DistributedAgentRuntime buildRuntime(String name, Set<String> supportedTasks,
+    private TaskAgentRuntime buildRuntime(String name, Set<String> supportedTasks,
                                                   List<StatefulResourceCleaner> cleaners) {
         AgentDescriptor desc = buildDescriptor(name, supportedTasks);
         var filter = new DefaultTaskSpecializationFilter(
                 supportedTasks, desc.id());
         var regPort = new TransportAgentRegistration(transport);
 
-        return new DistributedAgentRuntime(
+        return distributedRuntime(
                 transport, filter, regPort, desc,
                 Duration.ofSeconds(5), Duration.ofSeconds(60),
                 List.of(), cleaners);
     }
 
-    private DistributedAgentRuntime buildRuntimeWithExecutor(String name,
+    private TaskAgentRuntime buildRuntimeWithExecutor(String name,
                                                               Set<String> supportedTasks,
                                                               TaskExecutor executor) {
         AgentDescriptor desc = buildDescriptor(name, supportedTasks);
@@ -290,7 +293,7 @@ class AgentCoordinationE2ETest {
                 supportedTasks, desc.id());
         var regPort = new TransportAgentRegistration(transport);
 
-        return new DistributedAgentRuntime(
+        return distributedRuntime(
                 transport, filter, regPort, desc,
                 Duration.ofSeconds(5), Duration.ofSeconds(60),
                 List.of(executor), List.of());
@@ -312,4 +315,18 @@ class AgentCoordinationE2ETest {
         transport.subscribe(events::add);
         return events;
     }
+
+    private static TaskAgentRuntime distributedRuntime(
+            ExecutionTransport transport,
+            TaskSpecializationFilter filter,
+            AgentRegistrationPort registrationPort,
+            AgentDescriptor descriptor,
+            Duration heartbeatInterval,
+            Duration taskExecutionTimeout,
+            List<TaskExecutor> taskExecutors,
+            List<StatefulResourceCleaner> cleaners) {
+        return new TaskAgentRuntime(transport, filter, descriptor, taskExecutionTimeout,
+                taskExecutors, cleaners, registrationPort, heartbeatInterval);
+    }
+
 }
