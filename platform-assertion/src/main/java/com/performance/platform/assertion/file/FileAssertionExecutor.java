@@ -40,7 +40,7 @@ import java.util.Objects;
  * {@code CHECKSUM} (sha256), {@code SIZE_GT}, {@code SIZE_LT}.
  * <p>
  * Annotee {@code @Assertion(name = "file")} pour la decouverte
- * automatique par le {@code DefaultAssertionExecutorRegistry}.
+ * automatique par le {@code DefaultTaskExecutorRegistry}.
  */
 @Component
 @Assertion(name = "file",

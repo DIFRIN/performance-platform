@@ -155,7 +155,6 @@ class TransportConfigurationTest {
 
             var transport = ctx.getBean(ExecutionTransport.class);
             assertThat(transport).isInstanceOf(InMemoryExecutionTransport.class);
-            assertThat(transport.getType()).isEqualTo(TransportType.IN_MEMORY);
         });
     }
 

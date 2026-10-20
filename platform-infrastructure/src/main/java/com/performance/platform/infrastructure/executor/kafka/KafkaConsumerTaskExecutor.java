@@ -171,7 +171,8 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
         if (clusterName != null) {
             physicalTopic = clusterRegistry.resolveTopic(clusterName, topic);
             String effectiveGroupId = resolveGroupId(groupId, clusterName);
-            ConsumerFactory<String, String> factory = clusterRegistry.consumerFactory(clusterName, effectiveGroupId);
+            ConsumerFactory<String, String> factory = clusterRegistry.consumerFactory(
+                    clusterName, effectiveGroupId, java.time.Duration.ofMillis(timeoutMs));
             consumer = factory.createConsumer();
             log.info("action=consume_via_cluster clusterName={} logicalTopic={} physicalTopic={} groupId={} executionId={}",
                     clusterName, topic, physicalTopic, effectiveGroupId, executionId.value());
@@ -181,7 +182,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
                     + "consider migrating to named cluster reference",
                     bootstrapServers, topic, executionId.value());
             String effectiveGroupId = groupId != null && !groupId.isBlank() ? groupId : "perf-consumer-group";
-            consumer = createEphemeralConsumerFactory(bootstrapServers, effectiveGroupId).createConsumer();
+            consumer = createEphemeralConsumerFactory(bootstrapServers, effectiveGroupId, timeoutMs).createConsumer();
         }
 
         String executionKey = step.id().value();
@@ -268,7 +269,8 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
             physicalTopic = clusterRegistry.resolveTopic(clusterName, topic);
             // COUNT uses a unique ephemeral group to avoid affecting real consumer group offsets
             String countGroupId = "perf-count-" + System.currentTimeMillis();
-            ConsumerFactory<String, String> factory = clusterRegistry.consumerFactory(clusterName, countGroupId);
+            ConsumerFactory<String, String> factory = clusterRegistry.consumerFactory(
+                    clusterName, countGroupId, java.time.Duration.ofMillis(timeoutMs));
             consumer = factory.createConsumer();
             log.info("action=count_via_cluster clusterName={} logicalTopic={} physicalTopic={} executionId={}",
                     clusterName, topic, physicalTopic, executionId.value());
@@ -278,7 +280,7 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
                     + "consider migrating to named cluster reference",
                     bootstrapServers, topic, executionId.value());
             String countGroupId = "perf-count-" + System.currentTimeMillis();
-            consumer = createEphemeralConsumerFactory(bootstrapServers, countGroupId).createConsumer();
+            consumer = createEphemeralConsumerFactory(bootstrapServers, countGroupId, timeoutMs).createConsumer();
         }
 
         try {
@@ -383,7 +385,9 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
      * Creates an ephemeral {@link ConsumerFactory} from inline bootstrap servers
      * (legacy path). Logs a WARN to encourage migration to named clusters.
      */
-    private ConsumerFactory<String, String> createEphemeralConsumerFactory(String bootstrapServers, String groupId) {
+    private ConsumerFactory<String, String> createEphemeralConsumerFactory(String bootstrapServers,
+                                                                         String groupId,
+                                                                         long timeoutMs) {
         var config = new HashMap<String, Object>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -391,6 +395,11 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
         config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        long boundedTimeoutMs = Math.max(1_000L, timeoutMs);
+        int requestTimeoutMs = (int) Math.min(boundedTimeoutMs, 10_000L);
+        config.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
+        config.put(ConsumerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MS_CONFIG, requestTimeoutMs);
+        config.put(ConsumerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS_CONFIG, (long) requestTimeoutMs);
         return new DefaultKafkaConsumerFactory<>(config);
     }
 

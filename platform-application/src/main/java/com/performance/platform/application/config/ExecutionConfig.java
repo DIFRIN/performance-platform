@@ -15,10 +15,31 @@ import java.time.Duration;
  * @param taskExecutionTimeout delai max d'execution d'une tache
  * @param workInProgressResetInterval intervalle de reset des taches en cours
  * @param completionPolicy politique de completions (FIRST_COMPLETE ou ALL_COMPLETE)
+ * @param resultSelectionPolicy politique de selection du resultat en multi-claim
  */
 public record ExecutionConfig(
     Duration taskAvailabilityTimeout,
     Duration taskExecutionTimeout,
     Duration workInProgressResetInterval,
-    TaskCompletionPolicy completionPolicy
-) {}
+    TaskCompletionPolicy completionPolicy,
+    ResultSelectionPolicy resultSelectionPolicy
+) {
+
+    /**
+     * Constructeur de compatibilite : selectionne le premier resultat complete.
+     */
+    public ExecutionConfig(Duration taskAvailabilityTimeout,
+                           Duration taskExecutionTimeout,
+                           Duration workInProgressResetInterval,
+                           TaskCompletionPolicy completionPolicy) {
+        this(taskAvailabilityTimeout, taskExecutionTimeout,
+                workInProgressResetInterval, completionPolicy,
+                ResultSelectionPolicy.FIRST_COMPLETED);
+    }
+
+    public ExecutionConfig {
+        if (resultSelectionPolicy == null) {
+            resultSelectionPolicy = ResultSelectionPolicy.FIRST_COMPLETED;
+        }
+    }
+}

@@ -1,6 +1,6 @@
 package com.performance.platform.engine.lifecycle;
 
-import com.performance.platform.agent.local.LocalAgent;
+import com.performance.platform.application.ports.out.LifecycleSignalHandler;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.LifecycleAction;
 import com.performance.platform.domain.id.ExecutionId;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 class LocalLifecycleDispatcherTest {
 
     @Mock
-    private LocalAgent localAgent;
+    private LifecycleSignalHandler localAgent;
 
     @InjectMocks
     private LocalLifecycleDispatcher dispatcher;

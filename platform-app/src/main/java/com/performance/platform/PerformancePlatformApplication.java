@@ -5,6 +5,7 @@ import com.performance.platform.app.config.AgentProperties;
 import com.performance.platform.app.plugin.PluginProperties;
 import com.performance.platform.app.web.WebUiProperties;
 import com.performance.platform.reporting.output.ReportProperties;
+import com.performance.platform.runtime.RuntimeConfigResolver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,14 +15,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.modulith.Modulith;
 
 /**
  * Point d'entree unique de la plateforme (CF-01 : un seul JAR executable).
  * <p>
- * L'annotation {@link Modulith} active la verification des modules
- * Spring Modulith et interdit les dependances directes entre modules —
- * toute communication inter-module doit passer par {@code ApplicationEventPublisher}.
+ * Les frontieres inter-modules sont verifiees par
+ * {@code ModuleDependencyTest} (scan bytecode ASM, compatible Java 25).
+ * Toute communication inter-module passe par {@code ApplicationEventPublisher}.
  * <p>
  * Profils Spring actifs (via {@code MODE} env var ou {@code spring.profiles.active}) :
  * <ul>
@@ -44,7 +44,6 @@ import org.springframework.modulith.Modulith;
  * Sans {@code --scenario=}, le comportement serveur reste inchange.
  */
 @SpringBootApplication
-@Modulith
 @EnableConfigurationProperties({PluginProperties.class, AgentProperties.class, ReportProperties.class, WebUiProperties.class})
 public class PerformancePlatformApplication {
 
@@ -58,7 +57,7 @@ public class PerformancePlatformApplication {
 
             // ADR-021/ADR-019: --scenario= is invalid in AGENT mode.
             // Agent nodes receive TaskExecutionRequest via transport, never a CLI scenario.
-            if (isAgentMode()) {
+            if (isAgentMode(args)) {
                 System.err.println("ERROR: --scenario= is not supported in AGENT mode. "
                         + "AGENT nodes receive tasks via the transport layer, not the CLI.");
                 System.exit(2);
@@ -81,7 +80,7 @@ public class PerformancePlatformApplication {
         SpringApplication app = new SpringApplication(PerformancePlatformApplication.class);
 
         // ADR-019: Agent never exposes a web server (no Tomcat)
-        if (isAgentMode()) {
+        if (isAgentMode(args)) {
             app.setWebApplicationType(WebApplicationType.NONE);
             log.info("action=agent_mode web_server=disabled");
         }
@@ -93,19 +92,38 @@ public class PerformancePlatformApplication {
     /**
      * Detecte si l'instance doit tourner en mode AGENT.
      * <p>
-     * Verifie d'abord la variable d'environnement {@code MODE} (ADR-006 :
-     * env var prioritaire), puis la propriete systeme {@code runtime.role}.
+     * Priorite (ADR-006) : variable d'environnement {@code MODE}, puis
+     * propriete systeme {@code runtime.role}, puis arguments de ligne de
+     * commande Spring Boot ({@code --runtime.role=AGENT} ou
+     * {@code --spring.profiles.active=agent}).
+     * <p>
+     * Les arguments CLI doivent etre inspectes ici, avant le demarrage de
+     * Spring : le {@link WebApplicationType} est choisi avant que
+     * l'{@code Environment} ne soit construit (ADR-019).
      */
-    private static boolean isAgentMode() {
-        String modeEnv = System.getenv("MODE");
-        if (modeEnv != null && modeEnv.equalsIgnoreCase("AGENT")) {
-            return true;
-        }
-        String roleProp = System.getProperty("runtime.role");
-        if (roleProp != null && roleProp.equalsIgnoreCase("AGENT")) {
-            return true;
-        }
-        return false;
+    static boolean isAgentMode(String[] args) {
+        return RuntimeConfigResolver.isAgent(args,
+                System.getenv(RuntimeConfigResolver.ENV_MODE),
+                System.getProperty(RuntimeConfigResolver.PROP_RUNTIME_ROLE))
+                // IDE run configurations commonly pass the profile as an env
+                // var or as a VM option (-Dspring.profiles.active=...).
+                || RuntimeConfigResolver.isAgentProfile(
+                        System.getenv("SPRING_PROFILES_ACTIVE"))
+                || RuntimeConfigResolver.isAgentProfile(
+                        System.getProperty("spring.profiles.active"));
+    }
+
+    /**
+     * Fonction pure de detection du role AGENT, testable sans variables
+     * globales. Delegue a {@link RuntimeConfigResolver} (source unique).
+     *
+     * @param args          arguments CLI Spring Boot (peut etre null)
+     * @param envMode       valeur de la variable d'environnement {@code MODE}
+     * @param roleProperty  valeur de la propriete systeme {@code runtime.role}
+     * @return true si l'instance doit tourner en AGENT
+     */
+    static boolean detectAgentRole(String[] args, String envMode, String roleProperty) {
+        return RuntimeConfigResolver.isAgent(args, envMode, roleProperty);
     }
 
     /**

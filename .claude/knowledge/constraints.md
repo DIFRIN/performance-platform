@@ -8,8 +8,9 @@
 ## Contraintes Fonctionnelles
 
 ### CF-01 — Artefact Unique
-Un seul fichier JAR. Le mode (LOCAL / DISTRIBUTED / ORCHESTRATOR / AGENT) est déterminé par variables
-d'environnement (prioritaires) ou configuration YAML (défaut). Voir ADR-006.
+Un seul fichier JAR. Le **mode** (`LOCAL` / `DISTRIBUTED`) et le **rôle**
+(`ORCHESTRATOR` / `AGENT` / `NONE`) sont déterminés par variables d'environnement
+(prioritaires), arguments CLI, puis configuration YAML. Voir ADR-006 et ADR-032.
 Aucun profil Maven différent, aucune classe main différente.
 
 ### CF-02 — Immutabilité du Contexte
@@ -47,6 +48,17 @@ de plugins. Ses interfaces (`TaskExecutor`, `ExecutionContext`, `TaskResult`) et
 annotations (`@Preparation`, `@Injection`, `@Assertion`) ne peuvent pas changer
 sans un ADR et un changement de version majeure.
 
+### CF-09 — Sortie de rapport locale uniquement
+Les rapports sont écrits sous `reporting.output-directory`. Aucun publisher externe
+(Confluence, S3, Git, SharePoint, Nexus) n'est supporté (ADR-022) ; toute intégration
+externe doit être un consommateur du fichier produit, pas un composant du moteur.
+
+### CF-10 — Exécuteurs bornés par le timeout du step
+Tout client I/O dont les bibliothèques ont des timeouts par défaut supérieurs au step
+(Kafka `max.block.ms`, HTTP read timeout, etc.) doit configurer ces timeouts à partir de
+`StepDefinition.timeout`. Un step ne doit jamais bloquer significativement au-delà de son
+timeout déclaré.
+
 ---
 
 ## Contraintes Non-Fonctionnelles
@@ -70,8 +82,9 @@ sans un ADR et un changement de version majeure.
 ### CNF-04 — Observabilité (Obligatoire)
 Toute exécution doit exposer :
 - Métriques Micrometer : `execution_duration`, `task_duration`, `task_failures_total`
-- Traces OpenTelemetry sur chaque tâche et chaque phase
-- Logs structurés JSON avec : `executionId`, `scenarioId`, `taskId`, `agentId`, `phase`
+- Traces OpenTelemetry : extension prévue via Micrometer Tracing (non câblée dans la
+  version courante) ; les métriques Micrometer et les logs structurés sont obligatoires
+- Logs structurés avec MDC : `executionId`, `scenarioId`, `taskId`, `agentId`, `phase`
 
 ### CNF-05 — Performance Propre
 La plateforme elle-même ne doit pas consommer plus de :
@@ -95,12 +108,13 @@ La plateforme elle-même ne doit pas consommer plus de :
 
 ### CC-03 — Dépendances
 - Aucune dépendance cyclique entre modules Maven
-- Aucune dépendance directe entre modules Spring Modulith
+- Aucune dépendance directe entre modules fonctionnels ; les frontières sont vérifiées par `ModuleDependencyTest` (scan ASM, ADR-035)
 - Toute nouvelle dépendance Maven : commentaire dans le pom.xml parent avec justification
 
 ### CC-04 — Backwards Compatibility
-- Les interfaces publiques (`TaskExecutor`, `ExecutionTransport`, `ReportPublisher`)
-  sont versionnées. Toute modification breaking : nouvel ADR obligatoire.
+- Les interfaces publiques (`TaskExecutor`, `AssertionExecutor`, les 5 canaux de
+  transport, `ExecutionRepository`) sont versionnées. Toute modification breaking :
+  nouvel ADR obligatoire.
 
 ### CC-05 — Spring-first Infrastructure (ADR-013)
 Pour tout nouveau composant infrastructure, vérifier d'abord si Spring/Spring Boot

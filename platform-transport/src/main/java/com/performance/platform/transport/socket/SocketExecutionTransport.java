@@ -14,7 +14,6 @@ import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.Subscription;
 import com.performance.platform.transport.TaskRequestHandler;
 import com.performance.platform.transport.TransportException;
-import com.performance.platform.transport.TransportType;
 import com.performance.platform.transport.config.SocketTransportProperties;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
@@ -195,10 +194,6 @@ public class SocketExecutionTransport implements ExecutionTransport {
         return connected.get();
     }
 
-    @Override
-    public TransportType getType() {
-        return TransportType.SOCKET;
-    }
 
     /**
      * {@inheritDoc}
@@ -367,6 +362,19 @@ public class SocketExecutionTransport implements ExecutionTransport {
             throw new TransportException("handler must not be null");
         }
         signalHandlers.add(handler);
+    }
+
+    /**
+     * Nombre de connexions agent actuellement enregistrees cote orchestrateur.
+     * <p>
+     * L'enregistrement se produit dans l'accept loop, donc apres le retour de
+     * {@code connect()} cote agent. Visibilite package pour permettre aux
+     * tests de se synchroniser sur l'etablissement effectif de la connexion.
+     *
+     * @return le nombre de connexions agent enregistrees
+     */
+    int activeConnectionCount() {
+        return connectionRegistry.getActiveCount();
     }
 
     // === Internal: Accept loop (orchestrator) ===

@@ -166,11 +166,6 @@ class TransportInterfaceTest {
         }
 
         @Override
-        public TransportType getType() {
-            return TransportType.IN_MEMORY;
-        }
-
-        @Override
         public void publishAgentEvent(AgentLifecycleEvent event) {
             // no-op
         }
@@ -202,13 +197,6 @@ class TransportInterfaceTest {
             transport.connect();
             transport.disconnect();
             assertThat(transport.isConnected()).isFalse();
-        }
-
-        @Test
-        @DisplayName("should return transport type")
-        void shouldReturnTransportType() {
-            var transport = new NoOpTransport();
-            assertThat(transport.getType()).isEqualTo(TransportType.IN_MEMORY);
         }
 
         @Test

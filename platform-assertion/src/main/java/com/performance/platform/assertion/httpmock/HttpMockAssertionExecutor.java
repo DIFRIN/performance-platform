@@ -6,14 +6,17 @@ import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.assertion.Evidence;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.scenario.StepDefinition;
+import com.performance.platform.application.ports.out.HttpTarget;
+import com.performance.platform.application.ports.out.HttpTargetResolver;
 import com.performance.platform.domain.task.TaskResult;
-import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
 import com.performance.platform.plugin.Assertion;
 import com.performance.platform.plugin.AssertionExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -41,7 +44,7 @@ import java.util.regex.Pattern;
  * {@code /__admin/requests/count}.
  * <p>
  * <b>v2.0.0 :</b> Supporte la resolution de la cible WireMock via
- * {@link HttpTargetRegistry} (parametre {@code target}) en plus du flux
+ * {@link HttpTargetResolver} (parametre {@code target}) en plus du flux
  * legacy {@code refTaskId} (URL depuis ExecutionContext) et
  * {@code wiremockUrl} direct.
  * <p>
@@ -49,7 +52,7 @@ import java.util.regex.Pattern;
  * Virtual Threads.
  * <p>
  * Annotee {@code @Assertion(name = "http-mock")} pour la decouverte
- * automatique par le {@code DefaultAssertionExecutorRegistry}.
+ * automatique par le {@code DefaultTaskExecutorRegistry}.
  * <p>
  * <b>CC-02 :</b> Pipeline cohesif d'evaluation WireMock inseparable —
  * resolution source (target/wiremockUrl/refTaskId) → appel WireMock
@@ -95,22 +98,22 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     private static final Pattern COUNT_PATTERN =
             Pattern.compile("\"count\"\\s*:\\s*(\\d+)");
 
-    private final HttpTargetRegistry targetRegistry;
+    private final HttpTargetResolver targetResolver;
     private final HttpClient httpClient;
 
     @Autowired
-    public HttpMockAssertionExecutor(HttpTargetRegistry targetRegistry) {
-        this.targetRegistry = Objects.requireNonNull(targetRegistry,
-                "targetRegistry must not be null");
+    public HttpMockAssertionExecutor(HttpTargetResolver targetResolver) {
+        this.targetResolver = Objects.requireNonNull(targetResolver,
+                "targetResolver must not be null");
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
     }
 
     // Package-private pour tests
-    HttpMockAssertionExecutor(HttpTargetRegistry targetRegistry, HttpClient httpClient) {
-        this.targetRegistry = Objects.requireNonNull(targetRegistry,
-                "targetRegistry must not be null");
+    HttpMockAssertionExecutor(HttpTargetResolver targetResolver, HttpClient httpClient) {
+        this.targetResolver = Objects.requireNonNull(targetResolver,
+                "targetResolver must not be null");
         this.httpClient = Objects.requireNonNull(httpClient,
                 "httpClient must not be null");
     }
@@ -118,6 +121,23 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     @Override
     public String getSupportedAssertionName() {
         return "http-mock";
+    }
+
+    /**
+     * Construit un client HTTP a partir de la description framework-free
+     * resolue par le port {@link HttpTargetResolver}.
+     */
+    private static RestClient buildClient(HttpTarget target) {
+        var client = HttpClient.newBuilder()
+                .connectTimeout(target.connectionTimeout())
+                .build();
+        var requestFactory = new JdkClientHttpRequestFactory(client);
+        requestFactory.setReadTimeout(target.readTimeout());
+        return RestClient.builder()
+                .baseUrl(target.baseUrl())
+                .requestFactory(requestFactory)
+                .defaultHeaders(headers -> target.defaultHeaders().forEach(headers::set))
+                .build();
     }
 
     /**
@@ -169,10 +189,8 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
             String mockUrl;
 
             if (targetName != null && !targetName.isBlank()) {
-                RestClient restClient;
-                try {
-                    restClient = targetRegistry.clientFor(targetName);
-                } catch (IllegalArgumentException e) {
+                HttpTarget target = targetResolver.resolve(targetName);
+                if (target == null) {
                     log.warn("action=http_mock_assertion_target_not_found executionId={} "
                              + "assertionId={} target={}",
                              context.executionId().value(), step.id().value(), targetName);
@@ -181,9 +199,8 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
                             + "Check platform.http-targets configuration.",
                             params);
                 }
-                actualValue = fetchRequestCountViaRestClient(restClient);
-                mockUrl = targetRegistry.get(targetName) != null
-                        ? targetRegistry.get(targetName).baseUrl() : targetName;
+                actualValue = fetchRequestCountViaRestClient(buildClient(target));
+                mockUrl = target.baseUrl();
             } else if (wiremockUrl != null && !wiremockUrl.isBlank()) {
                 log.warn("action=deprecated_param param=wiremockUrl executionId={} "
                          + "assertionId={} — use 'target:' instead",
@@ -262,8 +279,12 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     double fetchRequestCountViaRestClient(RestClient restClient) {
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             Future<Double> future = executor.submit(() -> {
-                String json = restClient.get()
+                // WireMock 3 exposes POST /__admin/requests/count with a criteria
+                // body; a GET is interpreted as /__admin/requests/{id}.
+                String json = restClient.post()
                         .uri(ADMIN_REQUESTS_COUNT_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{}")
                         .retrieve()
                         .body(String.class);
                 return extractCount(json);
@@ -303,7 +324,8 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
-                .GET()
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{}"))
                 .build();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {

@@ -122,7 +122,7 @@ public class DefaultTaskExecutorRegistry implements TaskExecutorRegistry {
     @Override
     public TaskExecutor getFor(String taskName) {
         return Optional.ofNullable(registry.get(taskName))
-            .orElseThrow(() -> new UnsupportedTaskTypeException(taskName));
+            .orElseThrow(() -> new UnsupportedTaskNameException(taskName));
     }
 }
 
@@ -140,7 +140,7 @@ public class DefaultTaskExecutorRegistry implements TaskExecutorRegistry {
 ```java
 // ✅ CORRECT — découplé via Spring Events
 @Component
-public class LocalExecutionEngine implements ExecutionEngine {
+public class ExecutionEngine implements ExecuteScenarioUseCase {
 
     private final ApplicationEventPublisher events;
 
@@ -151,7 +151,7 @@ public class LocalExecutionEngine implements ExecutionEngine {
 }
 
 // ✅ CORRECT — listener dans le module Reporting
-@ApplicationModuleListener  // Spring Modulith — async par défaut
+@EventListener               // Spring standard (Modulith retiré, ADR-035)
 public class ReportingEventListener {
     @EventListener
     public void on(TaskCompleted event) {

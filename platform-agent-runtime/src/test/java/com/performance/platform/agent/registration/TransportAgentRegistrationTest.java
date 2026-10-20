@@ -137,7 +137,6 @@ class TransportAgentRegistrationTest {
                 public void connect() {}
                 public void disconnect() {}
                 public boolean isConnected() { return false; }
-                public com.performance.platform.transport.TransportType getType() { return com.performance.platform.transport.TransportType.IN_MEMORY; }
             };
             var brokenReg = new TransportAgentRegistration(broken);
 

@@ -9,7 +9,6 @@ import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.Subscription;
 import com.performance.platform.transport.TaskRequestHandler;
 import com.performance.platform.transport.TransportException;
-import com.performance.platform.transport.TransportType;
 import com.performance.platform.transport.config.KafkaTransportProperties;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
@@ -108,8 +107,6 @@ public class KafkaExecutionTransport implements ExecutionTransport {
     @Override
     public boolean isConnected() { return connected.get(); }
 
-    @Override
-    public TransportType getType() { return TransportType.KAFKA; }
 
     @Override
     public void dispatchTask(TaskExecutionRequest request) {

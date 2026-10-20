@@ -63,7 +63,7 @@ class GatlingMetricAssertionExecutorTest {
     private static ExecutionContext contextWithResult(InjectionResult result) {
         var taskResult = TaskResult.success(
                 TASK_ID, "gatling", Duration.ofSeconds(120),
-                Map.of("injectionResult", result));
+                Map.of(InjectionResult.OUTPUT_KEY, result));
         return ExecutionContext.initial(EXEC_ID, SCENARIO_ID)
                 .with(TASK_ID.value(), "agent-1", taskResult);
     }
@@ -200,7 +200,7 @@ class GatlingMetricAssertionExecutorTest {
                 Path.of("/tmp/report"), Map.of());
         var taskResult = TaskResult.success(
                 refTaskId, "gatling", Duration.ofSeconds(60),
-                Map.of("injectionResult", refResult));
+                Map.of(InjectionResult.OUTPUT_KEY, refResult));
         ExecutionContext ctx = emptyContext()
                 .with(refTaskId.value(), "agent-1", taskResult);
         StepDefinition step = step(Map.of(

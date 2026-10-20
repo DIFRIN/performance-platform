@@ -17,9 +17,11 @@ import org.springframework.security.web.SecurityFilterChain;
  * Deux modes selon la propriete {@code platform.security.enabled} :
  * <ul>
  *   <li><b>false</b> (defaut, mode LOCAL) : tout est autorise —
- *       pas d'authentification, pas d'autorisation.</li>
+ *       pas d'authentification, pas d'autorisation. Un WARN explicite est
+ *       emis au demarrage (posture permissive opt-in, ADR-038).</li>
  *   <li><b>true</b> (mode DISTRIBUTED) : API REST securisee via OAuth2/JWT.
- *       Les endpoints {@code /api/**} necessitent un token JWT valide.
+ *       Les endpoints {@code /api/**} necessitent un token JWT valide portant
+ *       le role {@code USER} ou {@code ADMIN}.
  *       Les endpoints {@code /actuator/health/**}, {@code /}, {@code /index.html}
  *       et {@code /assets/**} restent publics (probes Kubernetes + UI statique
  *       sans authentification).</li>
@@ -41,6 +43,9 @@ public class SecurityConfiguration {
 
     public static final String PROP_SECURITY_ENABLED = "platform.security.enabled";
     public static final String PROP_OAUTH2_ISSUER = "spring.security.oauth2.resourceserver.jwt.issuer-uri";
+
+    /** Roles requis sur {@code /api/**} lorsque la securite est activee. */
+    public static final String[] API_ROLES = {"USER", "ADMIN"};
 
     private final Environment environment;
 
@@ -65,9 +70,11 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable);
 
         if (!securityEnabled) {
-            // Mode LOCAL — tout est autorise
+            // Mode LOCAL — tout est autorise, mais la posture doit etre visible.
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-            log.info("action=security_disabled mode=permissive_all");
+            log.warn("action=security_disabled mode=permissive_all "
+                    + "reason=platform.security.enabled=false "
+                    + "hint=set platform.security.enabled=true for DISTRIBUTED deployments");
             return http.build();
         }
 
@@ -81,8 +88,8 @@ public class SecurityConfiguration {
                 .requestMatchers("/actuator/health").permitAll()
                 // UI statique — publique (ADR-019 : pas de login screen v1)
                 .requestMatchers("/", "/index.html", "/assets/**").permitAll()
-                // API REST — authentification requise
-                .requestMatchers("/api/**").authenticated()
+                // API REST — authentification + role requis
+                .requestMatchers("/api/**").hasAnyRole(API_ROLES)
                 // Tout le reste — autorise (swagger, etc.)
                 .anyRequest().permitAll()
         );

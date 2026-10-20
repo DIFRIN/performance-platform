@@ -1,0 +1,101 @@
+# =============================================================================
+# Remote demo — DISTRIBUTED execution
+# =============================================================================
+# Covers the three executor families on an agent:
+#   - PostgreSQL  : database (schema + seed) and database-assertion (row count)
+#   - Kafka       : kafka-producer (100 messages) and kafka assertion
+#   - Mock HTTP   : http-client (WireMock GET) and http-mock assertion
+#
+# Run via the orchestrator REST API:
+#   curl -X POST http://localhost:8080/api/v1/scenarios \
+#        -H 'Content-Type: application/yaml' \
+#        --data-binary @remote-demo.yaml
+# =============================================================================
+scenario:
+  id: demo-remote-db-kafka-http
+  name: "Remote demo — DB + Kafka + WireMock"
+  version: "1.0.0"
+  tags: [demo, distributed, database, kafka, http]
+  metadata:
+    owner: perf-team
+    objective: "Demonstrate DISTRIBUTED execution across DB, Kafka and mock HTTP"
+  execution:
+    mode: DISTRIBUTED
+  steps:
+
+    - id: db-schema
+      task: database
+      phase: PREPARATION
+      parameters:
+        operation: QUERY
+        datasource: default
+        query: "CREATE TABLE IF NOT EXISTS perf_events_remote (id SERIAL PRIMARY KEY, payload VARCHAR(255))"
+      timeout: 30s
+
+    - id: db-seed
+      task: database
+      phase: PREPARATION
+      dependsOn: [db-schema]
+      parameters:
+        operation: QUERY
+        datasource: default
+        query: "INSERT INTO perf_events_remote(payload) VALUES ('seed-1'),('seed-2'),('seed-3')"
+      timeout: 30s
+
+    - id: http-call
+      task: http-client
+      phase: INJECTION
+      dependsOn: [db-seed]
+      parameters:
+        target: wiremock
+        method: GET
+        path: /api/users
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: kafka-produce
+      task: kafka-producer
+      phase: INJECTION
+      dependsOn: [db-seed]
+      parameters:
+        cluster: default
+        topic: perf-demo-remote
+        operation: PRODUCE
+        messageCount: 100
+        messageTemplate: "remote-demo-{index}"
+      timeout: 60s
+
+    - id: assert-db
+      task: database-assertion
+      phase: ASSERTION
+      dependsOn: [db-seed]
+      parameters:
+        datasource: default
+        query: "SELECT COUNT(*) FROM perf_events_remote"
+        operator: GTE
+        value: 3
+        unit: rows
+      timeout: 30s
+
+    - id: assert-http
+      task: http-mock
+      phase: ASSERTION
+      dependsOn: [http-call]
+      parameters:
+        target: wiremock
+        metric: receivedCalls
+        operator: GTE
+        value: 1
+      timeout: 30s
+
+    - id: assert-kafka
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [kafka-produce]
+      requiredContexts: [kafka-produce]
+      parameters:
+        metric: producedCount
+        refTaskId: kafka-produce
+        operator: GTE
+        value: 100
+      timeout: 30s

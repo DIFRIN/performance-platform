@@ -22,17 +22,17 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Ports applicatifs (HttpTargetResolver) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Plugin API (AssertionExecutor, @Assertion) -->
         <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-plugin-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- Gatling injection (InjectionResult pour assertions gatling-metric) -->
-        <dependency>
-            <groupId>com.performance</groupId>
-            <artifactId>platform-injection-gatling</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -48,11 +48,14 @@
             <artifactId>spring-web</artifactId>
         </dependency>
 
-        <!-- Infra (HttpTargetRegistry, HttpTargetProperties) -->
+        <!-- Infrastructure : dependance de TEST uniquement.
+             Le code principal passe par le port HttpTargetResolver ; les tests
+             verifient l'integration avec DefaultTaskExecutorRegistry. -->
         <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-infrastructure</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- Logging structuré -->

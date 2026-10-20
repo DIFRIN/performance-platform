@@ -73,36 +73,25 @@ class LocalStepDispatcherTest {
 
     static class StubTaskExecutorLookup implements TaskExecutorLookup {
         private final Map<String, TaskExecutor> taskExecutors = new HashMap<>();
-        private final Map<String, AssertionExecutor> assertionExecutors = new HashMap<>();
         final List<String> taskLookups = new ArrayList<>();
-        final List<String> assertionLookups = new ArrayList<>();
 
         void registerTask(String taskName, TaskExecutor executor) {
             taskExecutors.put(taskName, executor);
         }
 
         void registerAssertion(String assertionName, AssertionExecutor executor) {
-            assertionExecutors.put(assertionName, executor);
             taskExecutors.put(assertionName, executor); // AssertionExecutor extends TaskExecutor
         }
 
         void reset() {
             taskExecutors.clear();
-            assertionExecutors.clear();
             taskLookups.clear();
-            assertionLookups.clear();
         }
 
         @Override
         public TaskExecutor findTaskExecutor(String taskName) {
             taskLookups.add(taskName);
             return taskExecutors.get(taskName);
-        }
-
-        @Override
-        public AssertionExecutor findAssertionExecutor(String assertionName) {
-            assertionLookups.add(assertionName);
-            return assertionExecutors.get(assertionName);
         }
     }
 

@@ -42,7 +42,7 @@ import java.util.concurrent.Future;
  * executee sous Virtual Threads.
  * <p>
  * Annotee {@code @Assertion(name = "database-assertion")} pour la
- * decouverte automatique par le {@code DefaultAssertionExecutorRegistry}.
+ * decouverte automatique par le {@code DefaultTaskExecutorRegistry}.
  */
 @Component
 @Assertion(name = "database-assertion",
@@ -58,6 +58,9 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
     static final String PARAM_OPERATOR = "operator";
     static final String PARAM_VALUE = "value";
     static final String PARAM_UNIT = "unit";
+
+    /** Nom logique de la datasource primaire exposee par DatasourceConfiguration. */
+    static final String PRIMARY_DATASOURCE_ALIAS = "default";
 
     private final ApplicationContext applicationContext;
 
@@ -163,8 +166,22 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
         try {
             return applicationContext.getBean(datasourceName, DataSource.class);
         } catch (Exception e) {
+            // Le nom logique "default" ne correspond pas au nom du bean Spring
+            // (ADR-014 : bean primaire nomme "dataSource") : fallback sur la
+            // DataSource primaire pour ce seul alias. Pour tout autre nom
+            // introuvable on retourne null — sinon une faute de frappe ferait
+            // silencieusement tourner l'assertion sur la mauvaise base.
+            if (PRIMARY_DATASOURCE_ALIAS.equals(datasourceName)) {
+                try {
+                    return applicationContext.getBean(DataSource.class);
+                } catch (Exception primaryMissing) {
+                    log.warn("action=db_primary_datasource_missing datasource={} error={}",
+                            datasourceName, primaryMissing.getMessage());
+                    return null;
+                }
+            }
             log.warn("action=db_datasource_not_found datasource={} error={}",
-                     datasourceName, e.getMessage());
+                    datasourceName, e.getMessage());
             return null;
         }
     }

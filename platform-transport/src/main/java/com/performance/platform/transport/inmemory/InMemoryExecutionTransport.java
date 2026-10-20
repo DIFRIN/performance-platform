@@ -158,10 +158,6 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
         return connected.get();
     }
 
-    @Override
-    public TransportType getType() {
-        return TransportType.IN_MEMORY;
-    }
 
     // === Package-private pour les tests ===
 

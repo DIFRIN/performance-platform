@@ -1,19 +1,17 @@
 package com.performance.platform.agent.registration;
 
-import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentHeartbeat;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.EventId;
 import com.performance.platform.transport.AgentLifecycleEvent;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.LifecycleChannel;
 import com.performance.platform.transport.TransportException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,9 +26,9 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
 
     private static final Logger log = LoggerFactory.getLogger(TransportAgentRegistration.class);
 
-    private final ExecutionTransport transport;
+    private final LifecycleChannel transport;
 
-    public TransportAgentRegistration(ExecutionTransport transport) {
+    public TransportAgentRegistration(LifecycleChannel transport) {
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
     }
 
@@ -42,7 +40,7 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
                     EventId.generate(),
                     descriptor.id(),
                     AgentLifecycleEvent.AGENT_REGISTERED,
-                    toPayload(descriptor),
+                    AgentLifecyclePayloadCodec.encode(descriptor),
                     Instant.now()
             );
             transport.publishAgentEvent(event);
@@ -82,7 +80,7 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
                     EventId.generate(),
                     agentId,
                     AgentLifecycleEvent.AGENT_HEARTBEAT,
-                    toPayload(heartbeat),
+                    AgentLifecyclePayloadCodec.encode(heartbeat),
                     Instant.now()
             );
             transport.publishAgentEvent(event);
@@ -94,38 +92,4 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
         }
     }
 
-    // === Conversion des objets domaine en payload Map ===
-    // NOTE: synchroniser avec AgentDescriptor si le record évolue (ARCH-12)
-
-    private static Map<String, Object> toPayload(AgentDescriptor d) {
-        var payload = new LinkedHashMap<String, Object>();
-        payload.put("agentId", d.id().value());
-        payload.put("name", d.name());
-        payload.put("host", d.host());
-        payload.put("port", d.port());
-        payload.put("httpCallbackUrl", d.httpCallbackUrl());
-        payload.put("supportedTaskNames", d.supportedTaskNames());
-        payload.put("state", d.state().name());
-        payload.put("registeredAt", d.registeredAt().toString());
-        payload.put("lastHeartbeatAt", d.lastHeartbeatAt().toString());
-        payload.put("registrationTtlSeconds", d.registrationTtl().toSeconds());
-        payload.put("capabilities", capabilitiesToPayload(d.capabilities()));
-        return payload;
-    }
-
-    private static Map<String, Object> toPayload(AgentHeartbeat h) {
-        var payload = new LinkedHashMap<String, Object>();
-        payload.put("agentId", h.agentId().value());
-        payload.put("state", h.state().name());
-        payload.put("activeTasks", h.activeTasks());
-        payload.put("sentAt", h.sentAt().toString());
-        return payload;
-    }
-
-    private static Map<String, Object> capabilitiesToPayload(AgentCapabilities caps) {
-        var map = new LinkedHashMap<String, Object>();
-        map.put("maxConcurrentTasks", caps.maxConcurrentTasks());
-        map.put("version", caps.version());
-        return map;
-    }
 }

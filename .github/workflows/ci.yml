@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Surefire exclut **/*IT.java : seuls les tests unitaires tournent ici.
+      - name: Run unit tests
+        run: mvn -B -ntp -T1C test
+
+  integration:
+    name: Integration tests (Testcontainers)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Les ITs Testcontainers sont @Testcontainers(disabledWithoutDocker = true)
+      # pour la plupart : sans ce garde-fou, un runner sans Docker passerait au
+      # vert en sautant tous les ITs.
+      - name: Verify Docker is available
+        run: docker version && docker info
+
+      # -Dskip.unit.tests=true : les tests unitaires ont deja tourne dans le job
+      # "unit" (profile skip-unit-tests du pom racine). Failsafe lance **/*IT.java.
+      - name: Run integration tests
+        run: mvn -B -ntp verify -P integration-tests -Dskip.unit.tests=true
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/target/surefire-reports/**
+            **/target/failsafe-reports/**
+          if-no-files-found: ignore
+          retention-days: 7

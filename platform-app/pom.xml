@@ -117,24 +117,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Spring Modulith -->
-        <dependency>
-            <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-starter-core</artifactId>
-        </dependency>
-
         <!-- Tests -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.modulith</groupId>
-            <artifactId>spring-modulith-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Testcontainers (E2E tests with real PostgreSQL) -->
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -176,6 +164,16 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <!--
+                      Par defaut, failsafe met le JAR du projet sur le classpath des
+                      IT. Ici ce JAR est le fat jar Spring Boot (repackage au phase
+                      package) : les classes sont sous BOOT-INF/classes et ne sont
+                      donc pas visibles des ITs (NoClassDefFoundError). Forcer le
+                      repertoire des classes compilees evite cette substitution.
+                    -->
+                    <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -68,6 +68,13 @@ class WebSecurityTest {
             assertThat(SecurityConfiguration.PROP_OAUTH2_ISSUER)
                     .isEqualTo("spring.security.oauth2.resourceserver.jwt.issuer-uri");
         }
+
+        @Test
+        @DisplayName("API_ROLES should require USER or ADMIN on /api/**")
+        void shouldDocumentApiRoles() {
+            assertThat(SecurityConfiguration.API_ROLES)
+                    .containsExactly("USER", "ADMIN");
+        }
     }
 
     @Nested

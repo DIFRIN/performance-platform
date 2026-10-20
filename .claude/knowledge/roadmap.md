@@ -1,6 +1,11 @@
 # Roadmap — Performance Engineering Platform
 
-> L'ordre des phases est obligatoire. Chaque phase est un prérequis de la suivante.
+> **Document historique.** Toutes les phases ci-dessous ont été livrées (196 issues,
+> voir `progress.md`). Les cases ne sont pas maintenues à jour ; certains termes
+> (`LocalExecutionEngine`, `ReportPublisher`, `RemoteExecutionEngine`) ont été remplacés
+> — voir `architecture.md` et le glossaire pour l'état courant.
+>
+> L'ordre des phases était obligatoire. Chaque phase est un prérequis de la suivante.
 > Ne pas démarrer une phase si la précédente n'est pas terminée et validée.
 
 ---

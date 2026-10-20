@@ -55,7 +55,7 @@ class KafkaConsumerTaskExecutorTest {
                     TaskId.of("step-v1"), "kafka-consumer", Phase.PREPARATION,
                     Map.of("operation", "CONSUME",
                             "bootstrapServers", "localhost:9092"),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -71,7 +71,7 @@ class KafkaConsumerTaskExecutorTest {
                     Map.of("operation", "CONSUME",
                             "topic", "   ",
                             "bootstrapServers", "localhost:9092"),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -86,7 +86,7 @@ class KafkaConsumerTaskExecutorTest {
                     TaskId.of("step-v3"), "kafka-consumer", Phase.PREPARATION,
                     Map.of("operation", "CONSUME",
                             "topic", "my-topic"),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -102,7 +102,7 @@ class KafkaConsumerTaskExecutorTest {
                     Map.of("operation", "CONSUME",
                             "topic", "my-topic",
                             "bootstrapServers", ""),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -118,7 +118,7 @@ class KafkaConsumerTaskExecutorTest {
                     Map.of("operation", "UNKNOWN_OP",
                             "topic", "some-topic",
                             "bootstrapServers", "localhost:9092"),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -148,12 +148,12 @@ class KafkaConsumerTaskExecutorTest {
                             "topic", "iot-commands",
                             "operation", "CONSUME",
                             "maxMessages", 5),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = exec.execute(emptyContext(), step);
 
             // No real Kafka at localhost:9999, but poll returns empty -> SUCCESS
-            assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+            assertThat(result.status()).as(result.errorMessage()).isEqualTo(TaskStatus.SUCCESS);
             assertThat(result.taskName()).isEqualTo("kafka-consumer");
             assertThat(result.outputs()).containsKeys("messagesConsumed", "lag");
             exec.cleanup(null);
@@ -171,7 +171,7 @@ class KafkaConsumerTaskExecutorTest {
                             "topic", "my-topic",
                             "operation", "CONSUME",
                             "maxMessages", 1),
-                    null, null, Duration.ofSeconds(10), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             // resolveTopic returns logicalTopic, producerFactory throws
             TaskResult result = exec.execute(emptyContext(), step);
@@ -196,7 +196,7 @@ class KafkaConsumerTaskExecutorTest {
                             "topic", "test-topic",
                             "operation", "CONSUME",
                             "maxMessages", 1),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = exec.execute(emptyContext(), step);
             // Cluster param was used; poll returns empty from non-existent Kafka
@@ -218,7 +218,7 @@ class KafkaConsumerTaskExecutorTest {
                             "topic", "test-topic",
                             "operation", "CONSUME",
                             "maxMessages", 1),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = exec.execute(emptyContext(), step);
             assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
@@ -241,7 +241,7 @@ class KafkaConsumerTaskExecutorTest {
                             "operation", "CONSUME",
                             "groupId", "my-override-group",
                             "maxMessages", 1),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = exec.execute(emptyContext(), step);
             assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
@@ -265,7 +265,7 @@ class KafkaConsumerTaskExecutorTest {
                             "topic", "test-topic",
                             "bootstrapServers", "invalid-host:9999",
                             "maxMessages", 3),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -281,7 +281,7 @@ class KafkaConsumerTaskExecutorTest {
                     Map.of("operation", "COUNT",
                             "topic", "test-topic",
                             "bootstrapServers", "invalid-host:9999"),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
 
@@ -310,7 +310,7 @@ class KafkaConsumerTaskExecutorTest {
                     Map.of("topic", "test-topic",
                             "bootstrapServers", "localhost:9999",
                             "maxMessages", 1),
-                    null, null, Duration.ofSeconds(5), null);
+                    null, null, Duration.ofSeconds(2), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
             // Defaults to CONSUME, poll returns empty

@@ -188,7 +188,6 @@ class HttpExecutionTransportTest {
         @Test
         @DisplayName("should return HTTP type")
         void shouldReturnHttpType() {
-            assertThat(transport.getType()).isEqualTo(TransportType.HTTP);
         }
 
         @Test

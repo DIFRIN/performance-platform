@@ -10,10 +10,15 @@
 
 | Terme | Définition | Classe/Interface |
 |---|---|---|
-| **Campaign** | Ensemble complet d'une exécution de performance (préparation + injection + assertions) | `Campaign` |
+| **Campaign** | Exécution complète d'un scénario (préparation + injection + assertions), matérialisée par `ExecutionState` puis `CampaignReport` | `ExecutionState`, `CampaignReport` |
 | **Scenario** | Définition déclarative YAML d'une campagne. Immuable après parsing. | `ScenarioDefinition` |
 | **ScenarioId** | Identifiant unique d'un scénario (value object) | `ScenarioId` |
-| **ExecutionPlan** | Graphe d'exécution résolu à partir d'un Scenario. Représente le DAG. | `ExecutionPlan` |
+| **ExecutionPlan** | Graphe d'exécution résolu à partir d'un Scenario. Représente le DAG et distingue les assertions d'intervalle. | `ExecutionPlan` |
+| **ExecutionEngine** | Moteur unique LOCAL/DISTRIBUTED ; implémente `ExecuteScenarioUseCase` et `CancelExecutionUseCase` (ADR-037) | `ExecutionEngine` |
+| **StepDispatcher** | Stratégie d'exécution d'un step : `LocalStepDispatcher` ou `RemoteStepDispatcher` | `StepDispatcher` |
+| **DagPhaseExecutor** | Parcours DAG niveau par niveau, parallélisme Virtual Threads, skip des dépendances échouées | `DagPhaseExecutor` |
+| **Output nommé** | Valeur d'un `TaskResult.outputs` accédée par nom contractuel (`result`, `assertion`, `p95Ms`, …) | `ExecutionContext.getOutput(...)` |
+| **PersistentStore** | Implémentation par couches du store d'ExecutionContext (copy-on-write O(profondeur)) | `ExecutionContext.PersistentStore` |
 | **ExecutionContext** | État partagé et immuable entre toutes les étapes d'une exécution | `ExecutionContext` |
 | **ExecutionId** | Identifiant unique d'une exécution (value object) | `ExecutionId` |
 | **Phase** | Une des trois étapes d'exécution : PREPARATION, INJECTION, ASSERTION | `Phase` (enum) |
@@ -40,10 +45,10 @@
 
 | Terme | Définition | Classe/Interface |
 |---|---|---|
-| **Injection** | Phase de génération de charge (load injection) | `InjectionPhase` |
+| **Injection** | Phase de génération de charge (load injection) | `Phase.INJECTION` |
 | **LoadModel** | Définition réutilisable du profil de charge (RAMP, CONSTANT, SPIKE...) | `LoadModel` |
 | **LoadModelType** | Type de profil : RAMP, RAMP_UP_DOWN, CONSTANT, SPIKE, STAIR, SOAK, BURST, CUSTOM | `LoadModelType` (enum) |
-| **Simulation** | Classe Gatling identifiée par son nom qualifié | `SimulationReference` |
+| **Simulation** | Classe Gatling identifiée par son nom qualifié (String) | `GatlingRunConfig.simulationClass` |
 | **InjectionResult** | Métriques agrégées d'une injection (p50/p90/p95/p99, errorRate, throughput) | `InjectionResult` |
 
 ---
@@ -52,9 +57,9 @@
 
 | Terme | Définition | Classe/Interface |
 |---|---|---|
-| **Assertion** | Vérification post-injection sur une métrique ou état | `AssertionDefinition` |
+| **Assertion** | Vérification sur une métrique ou un état, déclarée comme `StepDefinition` de phase `ASSERTION` | `StepDefinition` + `AssertionResult` |
 | **AssertionExecutor** | Interface qui évalue une assertion | `AssertionExecutor` |
-| **AssertionResult** | Résultat d'une assertion : PASSED ou FAILED avec evidence | `AssertionResult` |
+| **AssertionResult** | Résultat d'une assertion : PASSED, FAILED, SKIPPED ou ERROR avec evidence | `AssertionResult` |
 | **AssertionOperator** | Opérateur de comparaison : LT, LTE, GT, GTE, EQ, NEQ | `AssertionOperator` (enum) |
 | **Evidence** | Preuve attachée au résultat d'une assertion | `Evidence` |
 
@@ -64,14 +69,15 @@
 
 | Terme | Définition | Classe/Interface |
 |---|---|---|
-| **ExecutionTransport** | Abstraction de communication entre Orchestrator et Agent | `ExecutionTransport` |
-| **TransportType** | Type de transport : SOCKET, RABBITMQ, KAFKA, GRPC | `TransportType` (enum) |
+| **ExecutionTransport** | Façade composite des 5 canaux de communication (ADR-028) | `ExecutionTransport` |
+| **TaskChannel / SignalChannel / EventChannel / LifecycleChannel** | Ports étroits du transport | interfaces `transport.*` |
+| **TransportType** | Type de transport : `KAFKA`, `RABBITMQ`, `HTTP`, `SOCKET`, `IN_MEMORY`, `CUSTOM` (gRPC exclu) | `TransportType` (enum) |
 | **Agent** | Instance du runtime capable de recevoir et exécuter des tâches | `AgentRuntime` |
 | **AgentId** | Identifiant unique d'un agent | `AgentId` |
-| **AgentDescriptor** | Métadonnées d'un agent (id, tags, capacités, état) | `AgentDescriptor` |
+| **AgentDescriptor** | Métadonnées d'un agent (id, `supportedTaskNames`, capacités, état, TTL) | `AgentDescriptor` |
 | **AgentState** | État cycle de vie d'un agent : REGISTERING, IDLE, EXECUTING, DRAINING, OFFLINE | `AgentState` (enum) |
-| **AgentSelector** | ~~Supprimé~~ — remplacé par la spécialisation déclarative (voir ADR-008) | — |
-| **Orchestrator** | Composant central qui orchestre l'exécution distribuée | `Orchestrator` |
+| **AgentSelector** | ~~Supprimé~~ — remplacé par la spécialisation déclarative (ADR-015) | — |
+| **Orchestrator** | Instance DISTRIBUTED de rôle `ORCHESTRATOR` ; héberge `ExecutionEngine`, le registre d'agents et le reporting | rôle `RuntimeRole.ORCHESTRATOR` |
 | **TaskMessage** | ~~Supprimé~~ — remplacé par `TaskExecutionRequest` (sans targetAgentId, avec PartialExecutionContext) | `TaskExecutionRequest` |
 | **ExecutionEvent** | Événement du cycle de vie d'une exécution | `ExecutionEvent` |
 
@@ -83,8 +89,8 @@
 |---|---|---|
 | **CampaignReport** | Rapport complet d'une campagne exécutée | `CampaignReport` |
 | **Verdict** | Résultat global d'une campagne : SUCCESS, WARNING, FAILED | `Verdict` (enum) |
-| **ReportPublisher** | Interface d'envoi du rapport vers une destination | `ReportPublisher` |
-| **PublicationTarget** | Destination : CONFLUENCE, S3, SHAREPOINT, GIT, NEXUS | `PublicationTarget` (enum) |
+| **ReportRenderer** | Rendu d'un `CampaignReport` vers HTML/PDF/JSON | `ReportRenderer` |
+| **ReportFileWriter** | Écriture locale des rapports dans `<output>/<executionId>/` | `ReportFileWriter` |
 
 ---
 
@@ -129,11 +135,16 @@
 | **TaskCompletionPolicy** | Politique de complétion multi-agents : `FIRST_COMPLETE` ou `ALL_COMPLETE` | `TaskCompletionPolicy` (enum) |
 | **TaskCorrelationTracker** | Suit la corrélation MessageId → claims → résultats (1:N) | `TaskCorrelationTracker` |
 | **AgentAvailabilityChecker** | Vérifie la présence d'un agent compétent sans sélectionner | `AgentAvailabilityChecker` |
+| **AgentLifecycleEvent** | Événement de cycle de vie agent (registered/heartbeat/deregistered/lost) sur un canal séparé (ADR-012) | `AgentLifecycleEvent` |
+| **AgentLifecycleIngestion** | Pont transport lifecycle → registre d'agents côté orchestrateur (ADR-033) | `AgentLifecycleIngestion` |
+| **AgentTtlMonitor** | Surveille les TTL et publie `AgentLost` pour déclencher le fast-fail | `AgentTtlMonitor` |
+| **ResultSelectionPolicy** | Sélection déterministe du résultat multi-claim : `FIRST_COMPLETED` ou `LAST_COMPLETED` (ADR-034) | `ResultSelectionPolicy` (enum) |
 | **TaskClaimedByAgent** | Event publié par l'agent quand il accepte une `TaskExecutionRequest` | `TaskClaimedByAgent` (record) |
 | **TaskWorkInProgress** | Event périodique publié par l'agent pour signaler qu'il est actif | `TaskWorkInProgress` (record) |
 | **TaskDispatched** | Event publié par l'orchestrateur après dispatch d'une task | `TaskDispatched` (record) |
 | **ScenarioRestartSignal** | Signal broadcast de l'orchestrateur vers tous les agents — déclenche cleanup stateful | `ScenarioRestartSignal` (record) |
-| **LocalAgent** | Agent unique en mode LOCAL — déclare toutes les spécialisations disponibles | `LocalAgent` |
+| **TaskAgentRuntime** | Runtime d'agent unique LOCAL/DISTRIBUTED (ADR-037) | `TaskAgentRuntime` |
+| **LocalAgent** | ~~Supprimé~~ — remplacé par `TaskAgentRuntime` avec `registrationPort == null` | — |
 
 ---
 
@@ -152,4 +163,11 @@
 | `getSupportedType()` | Remplacé par `getSupportedTaskName()` |
 | `AgentSelector` | Remplacé par la spécialisation déclarative — ne plus utiliser |
 | `AgentAllocator` | Supprimé — ne plus utiliser |
+| `TaskType` (enum) / `getSupportedType()` | Remplacés par `taskName` String + `getSupportedTaskName()` |
+| `LocalExecutionEngine` / `RemoteExecutionEngine` | Supprimés — un seul `ExecutionEngine` + `StepDispatcher` (ADR-037) |
+| `LocalAgent` / `DistributedAgentRuntime` | Supprimés — un seul `TaskAgentRuntime` (ADR-037) |
+| `TaskMessage` | Remplacé par `TaskExecutionRequest` |
+| `ReportPublisher` / `PublicationTarget` | Supprimés — rapport local uniquement (ADR-022) |
+| `AGENT_TAGS` / `agentTags` | Remplacés par `AGENT_SUPPORTED_TASKS` / `agent.supported-tasks` (ADR-015) |
+| `Spring Modulith` / `@ApplicationModuleListener` | Retirés — frontières vérifiées par `ModuleDependencyTest` ASM (ADR-035) |
 | `Data` suffixé | Utiliser le nom du concept : `InjectionResult` pas `InjectionData` |

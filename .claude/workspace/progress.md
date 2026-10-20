@@ -167,7 +167,7 @@
 | ISSUE-153 | - Remove assertionResultToTaskResult from DagPhaseExecutor | DONE | PDR-036 | ISSUE-151 |
 | ISSUE-154 | - Unify DagPhaseExecutor Assertion Execution Path | DONE | PDR-037 | ISSUE-150, ISSUE-153 |
 | ISSUE-155 | - Deprecate TaskExecutorLookup.findAssertionExecutor | DONE | PDR-037 | ISSUE-154 |
-| ISSUE-156 | - Add Assertion Task Names to Agent Configuration | APPROVED | PDR-037 | ISSUE-150, ISSUE-152 |
+| ISSUE-156 | - Add Assertion Task Names to Agent Configuration | DONE | PDR-037 | ISSUE-150, ISSUE-152 |
 
 | ISSUE-157 | ExecutionLifecycleSignal Domain Type | DONE | PDR-038 | — |
 | ISSUE-158 | Engine Lifecycle Signal Dispatch | DONE | PDR-037 | ISSUE-157 |
@@ -180,6 +180,35 @@
 | ISSUE-165 | Task Executor Doctrine ADR-022 + Package Documentation | DONE | PDR-041 | — |
 | ISSUE-166 | DatabaseTaskExecutor: Add QUERY Operation | DONE | PDR-042 | — |
 | ISSUE-167 | DatabaseTaskExecutor QUERY Operation Tests | DONE | PDR-042 | ISSUE-166 |
+| ISSUE-168 | CI Pipeline GitHub Actions | DONE | PDR-043 | - |
+| ISSUE-169 | Test-Tier Normalization | DONE | PDR-043 | - |
+| ISSUE-170 | LocalDistributedEquivalenceTest (T2) | DONE | PDR-043 | ISSUE-169 |
+| ISSUE-171 | TaskCorrelationTracker Eviction + Loss + Completion Signal | DONE | PDR-044 | - |
+| ISSUE-172 | Typed Lifecycle Payload Codec + AGENT_LOST | DONE | PDR-045 | - |
+| ISSUE-173 | Lifecycle Ingestion Bridge + AgentTtlMonitor Wiring | DONE | PDR-045 | ISSUE-172 |
+| ISSUE-174 | Fast-Fail on Claim Loss + AgentLossRecoveryIT | DONE | PDR-045 | ISSUE-171, ISSUE-173 |
+| ISSUE-175 | Single Runtime Resolution incl. CLI args (T3) | DONE | PDR-046 | - |
+| ISSUE-176 | DSL Strictness + Version + Line-Numbered Errors (T7) | DONE | PDR-047 | - |
+| ISSUE-177 | Cut execution-engine → agent-runtime Edge | DONE | PDR-048 | - |
+| ISSUE-178 | Cut assertion → infrastructure Edge (HttpTargetResolver) | DONE | PDR-048 | - |
+| ISSUE-179 | Drop reporting → injection-gatling pom Dependency | DONE | PDR-048 | - |
+| ISSUE-180 | ModuleDependencyArchTest (T1) | DONE | PDR-048 | ISSUE-177, ISSUE-178, ISSUE-179 |
+| ISSUE-181 | Remove TaskExecutorLookup.findAssertionExecutor | DONE | PDR-037 | - |
+| ISSUE-182 | Delete AssertionExecutorRegistry | DONE | PDR-036 | ISSUE-181 |
+| ISSUE-183 | Drop Decorative @Modulith + ModulithVerificationTest | DONE | PDR-049 | ISSUE-180 |
+| ISSUE-184 | Unified ExecutionEngine | DONE | PDR-050 | ISSUE-180, ISSUE-170 |
+| ISSUE-185 | Rewire Config + Delete Local/RemoteExecutionEngine | DONE | PDR-050 | ISSUE-184 |
+| ISSUE-186 | Unified TaskAgentRuntime | DONE | PDR-050 | ISSUE-180 |
+| ISSUE-187 | Rewire Agent Config + Delete LocalAgent/DistributedAgentRuntime | DONE | PDR-050 | ISSUE-186, ISSUE-177 |
+| ISSUE-188 | Verify Equivalence + Boundary Post-Merge | DONE | PDR-050 | ISSUE-184, ISSUE-185, ISSUE-186, ISSUE-187 |
+| ISSUE-189 | Deterministic Result Selection Policy (T6) | DONE | PDR-051 | ISSUE-185 |
+| ISSUE-190 | Poll → Completion Signal (C2) | DONE | PDR-051 | ISSUE-171, ISSUE-189 |
+| ISSUE-191 | Define Segregated Transport Ports | DONE | PDR-052 | - |
+| ISSUE-192 | Migrate 5 Transport Implementations | DONE | PDR-052 | ISSUE-191 |
+| ISSUE-193 | Migrate Transport Consumers | DONE | PDR-052 | ISSUE-192 |
+| ISSUE-194 | ExecutionContext Named Outputs + Persistent Store | DONE | PDR-053 | - |
+| ISSUE-195 | Migrate Context Consumers | DONE | PDR-053 | ISSUE-194 |
+| ISSUE-196 | Security Posture Decision | DONE | PDR-054 | - |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -219,13 +248,25 @@
 | PDR-033 | Assemblage runtime : self-wiring par module + composition root mince | engine + application + agent-runtime + app + infrastructure | WAITING | ISSUE-143,144,145,146,147 | PDR-030 (ADR-026, ADR-025) |
 | PDR-034 | AssertionSummary Domain Records | platform-domain | WAITING | ISSUE-148,149 | PDR-001 |
 | PDR-035 | Unified Assertion Executor Contract | platform-plugin-api | WAITING | ISSUE-150 | PDR-003, PDR-034 |
-| PDR-036 | Assertion Executor Registration & Discovery | platform-assertion, platform-infrastructure | WAITING | ISSUE-151,152,153 | PDR-035, PDR-010 |
-| PDR-037 | Engine Unified Assertion Dispatch & Lifecycle Signals | platform-execution-engine, platform-agent-runtime | WAITING | ISSUE-154,155,156,158,159 | PDR-035, PDR-036, PDR-038 |
+| PDR-036 | Assertion Executor Registration & Discovery | platform-assertion, platform-infrastructure | WAITING | ISSUE-151,152,153,182 | PDR-035, PDR-010 |
+| PDR-037 | Engine Unified Assertion Dispatch & Lifecycle Signals | platform-execution-engine, platform-agent-runtime | WAITING | ISSUE-154,155,156,158,159,181 | PDR-035, PDR-036, PDR-038 |
 | PDR-038 | Lifecycle Signals (ExecutionLifecycleSignal) | platform-domain | WAITING | ISSUE-157 | PDR-001, PDR-002 |
 | PDR-039 | Shared DAG Executor Extraction | platform-execution-engine | WAITING | ISSUE-160,161,162 | PDR-006 |
 | PDR-040 | Event Package Formalization | platform-domain | WAITING | ISSUE-163,164 | PDR-002 |
 | PDR-041 | Task Executor Audit & Doctrine | platform-infrastructure | WAITING | ISSUE-165 | PDR-010 |
 | PDR-042 | DatabaseTaskExecutor Refinement | platform-infrastructure | WAITING | ISSUE-166,167 | PDR-010 |
+| PDR-043 | Safety Net: CI + Test Tiers + Equivalence | root, platform-app, all | DONE | ISSUE-168,169,170 | — |
+| PDR-044 | Task Correlation Tracker Lifecycle | platform-execution-engine | DONE | ISSUE-171 | PDR-006 |
+| PDR-045 | Agent Lifecycle Ingestion & Loss Fast-Fail | platform-agent-runtime, platform-transport, platform-execution-engine | DONE | ISSUE-172,173,174 | PDR-044, PDR-009, PDR-007 |
+| PDR-046 | Single Runtime Resolution | platform-app | DONE | ISSUE-175 | PDR-018 |
+| PDR-047 | DSL Strictness & Version | platform-scenario-dsl | DONE | ISSUE-176 | PDR-005 |
+| PDR-048 | Cross-Module Boundary Enforcement | platform-app, engine, assertion, infrastructure, reporting, application | DONE | ISSUE-177,178,179,180 | PDR-004, PDR-010, PDR-014, PDR-022, PDR-037 |
+| PDR-049 | Spring Modulith Decision | platform-app | DONE | ISSUE-183 | PDR-048 |
+| PDR-050 | Engine & Agent Consolidation | platform-execution-engine, platform-agent-runtime, platform-app | DONE | ISSUE-184,185,186,187,188 | PDR-043, PDR-048, PDR-039, PDR-045 |
+| PDR-051 | Distributed Completion Semantics | platform-execution-engine | DONE | ISSUE-189,190 | PDR-044, PDR-050 |
+| PDR-052 | Transport Interface Segregation | platform-transport | DONE | ISSUE-191,192,193 | PDR-007, PDR-008 |
+| PDR-053 | ExecutionContext Named Outputs | platform-domain | DONE | ISSUE-194,195 | PDR-001 |
+| PDR-054 | Security Posture | platform-app | DONE | ISSUE-196 | PDR-018 |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
 | — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
@@ -963,3 +1004,31 @@
 | 2026-07-15 | ISSUE-156 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-07-15 | ISSUE-156 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-07-15 | ISSUE-156 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-07-15 | ISSUE-156 | APPROVED → DONE | issue-next.sh |
+| 2026-10-19 | PDR-043..054 + ISSUE-168..196 | — → WAITING | System Designer — Programme de rémédiation architecturale (improvements.md). 12 PDRs + 29 Issues. Safety net (CI/T9, test-tiers/D2, équivalence LOCAL≡DISTRIBUTED/T2) ; Correctness (tracker eviction/C3/T5, lifecycle ingestion + AgentLost + fast-fail/B3/B4/T4/T8, résolution runtime unique/B5/T3, DSL strict+version/B6/T7) ; Boundaries (A3/T1, migration assertion A2 sous PDR-036/037, Modulith A5) ; Consolidation (merge engine+agent/A1 gated par T1+T2) ; Refinements (sélection déterministe/B2/T6, ségrégation transport/A4, poll→signal/C2, ExecutionContext named outputs/B1, dead lifecycle/A6 via ADR-033, sécurité/D4). ADR-028..038 requis (voir résumé). |
+
+| 2026-10-19 | ISSUE-168..183 (selection) | WAITING → DONE/IN_PROGRESS | Implementation du programme : CI, tracker eviction + onAgentLost, lifecycle ingestion + TTL + AGENT_LOST + fast-fail, résolution runtime CLI, DSL strict + lignes, coupe des arêtes engine→agent-runtime / reporting→injection-gatling, test de frontières ASM (ArchUnit est vide sur Java 25), suppression registre d'assertion + Modulith. Suites des modules modifiés vertes. |
+
+| 2026-10-19 | ISSUE-189 | WAITING → DONE | Selection multi-claim deterministe (ADR-034, T6 1000 runs). |
+
+| 2026-10-19 | ISSUE-190 | WAITING → DONE | Completion par CompletableFuture signale par le tracker, suppression du polling 500 ms. |
+
+| 2026-10-19 | ISSUE-169 | WAITING → DONE | Convention *Test/*E2ETest/*IT documentée ; E2E Testcontainers renommés *IT ; surefire exclut *IT. |
+
+| 2026-10-19 | ISSUE-174 | IN_PROGRESS → DONE | AgentLossRecoveryIT (T4) : fast-fail en 150 ms au lieu du timeout 30 s. |
+
+| 2026-10-19 | ISSUE-175 | IN_PROGRESS → DONE | RuntimeConfigResolver unique (env > CLI > property), T3 paramétré. |
+
+| 2026-10-19 | ISSUE-176 | IN_PROGRESS → DONE | T7 : clés inconnues/typos rejetées avec ligne ; version requise par le validator via le parsing service. |
+
+| 2026-10-19 | ISSUE-178 | WAITING → DONE | Port HttpTargetResolver ; assertion ne dépend plus de infrastructure en compile (test-scope conservé). |
+
+| 2026-10-19 | ISSUE-171 | IN_PROGRESS → DONE | Eviction, onAgentLost et signal de completion livrés (voir aussi ISSUE-190). |
+
+| 2026-10-19 | ISSUE-170 | WAITING → DONE | T2 : LocalDistributedEquivalenceIT — même verdict et mêmes statuts via LOCAL et DISTRIBUTED (transport in-memory + agent réel). |
+
+| 2026-10-20 | ISSUE-184..188 | WAITING → DONE | Fusion engine/agent : ExecutionEngine + TaskAgentRuntime uniques, 4 classes supprimées, T2/T1/ITs verts (ADR-037). |
+
+| 2026-10-20 | ISSUE-191..193 | WAITING → DONE | 5 ports étroits, façade composite, getType() supprimé, consommateurs migrés (ADR-028). |
+
+| 2026-10-20 | ISSUE-194,195 | WAITING → DONE | Outputs nommés + store persistant O(path), suppression des getters type-erasés, consommateurs migrés (ADR-031). |

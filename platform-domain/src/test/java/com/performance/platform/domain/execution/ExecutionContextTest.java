@@ -187,8 +187,8 @@ class ExecutionContextTest {
             var ctx = ExecutionContext.initial(execId(), scenarioId())
                 .with("task-a", "agent-1", result);
 
-            assertEquals(100L, ctx.get("task-a", "agent-1", Long.class).orElseThrow());
-            assertEquals(45, ctx.get("task-a", "agent-1", Integer.class).orElseThrow());
+            assertEquals(100L, ctx.getOutput("task-a", "agent-1", "rps", Long.class).orElseThrow());
+            assertEquals(45, ctx.getOutput("task-a", "agent-1", "latency", Integer.class).orElseThrow());
         }
 
         @Test
@@ -196,7 +196,7 @@ class ExecutionContextTest {
         void emptyIfTaskIdMissing() {
             var ctx = ExecutionContext.initial(execId(), scenarioId());
 
-            assertTrue(ctx.get("absent", "agent-1", Object.class).isEmpty());
+            assertTrue(ctx.getOutput("absent", "agent-1", "x", Object.class).isEmpty());
         }
 
         @Test
@@ -206,7 +206,7 @@ class ExecutionContextTest {
             var ctx = ExecutionContext.initial(execId(), scenarioId())
                 .with("task-a", "agent-1", result);
 
-            assertTrue(ctx.get("task-a", "agent-absent", Object.class).isEmpty());
+            assertTrue(ctx.getOutput("task-a", "agent-absent", "x", Object.class).isEmpty());
         }
 
         @Test
@@ -216,7 +216,7 @@ class ExecutionContextTest {
             var ctx = ExecutionContext.initial(execId(), scenarioId())
                 .with("task-a", "agent-1", result);
 
-            assertTrue(ctx.get("task-a", "agent-1", Double.class).isEmpty());
+            assertTrue(ctx.getOutput("task-a", "agent-1", "rps", Double.class).isEmpty());
         }
 
         @Test
@@ -224,7 +224,7 @@ class ExecutionContextTest {
         void nullTaskIdThrows() {
             var ctx = ExecutionContext.initial(execId(), scenarioId());
             assertThrows(NullPointerException.class,
-                () -> ctx.get(null, "agent-1", Object.class));
+                () -> ctx.getOutput(null, "agent-1", "x", Object.class));
         }
 
         @Test
@@ -232,7 +232,7 @@ class ExecutionContextTest {
         void nullAgentIdThrows() {
             var ctx = ExecutionContext.initial(execId(), scenarioId());
             assertThrows(NullPointerException.class,
-                () -> ctx.get("task-a", null, Object.class));
+                () -> ctx.getOutput("task-a", null, "x", Object.class));
         }
 
         @Test
@@ -240,7 +240,7 @@ class ExecutionContextTest {
         void nullTypeThrows() {
             var ctx = ExecutionContext.initial(execId(), scenarioId());
             assertThrows(NullPointerException.class,
-                () -> ctx.get("task-a", "agent-1", null));
+                () -> ctx.getOutput("task-a", "agent-1", "x", null));
         }
     }
 
@@ -259,7 +259,7 @@ class ExecutionContextTest {
                 .with("task-a", "agent-1", r1)
                 .with("task-a", "agent-2", r2);
 
-            var value = ctx.getFirst("task-a", Long.class);
+            var value = ctx.getFirstOutput("task-a", "rps", Long.class);
             assertTrue(value.isPresent());
             assertTrue(value.get() instanceof Long);
         }
@@ -269,7 +269,7 @@ class ExecutionContextTest {
         void emptyIfTaskIdMissing() {
             var ctx = ExecutionContext.initial(execId(), scenarioId());
 
-            assertTrue(ctx.getFirst("absent", Object.class).isEmpty());
+            assertTrue(ctx.getFirstOutput("absent", "x", Object.class).isEmpty());
         }
 
         @Test
@@ -279,7 +279,7 @@ class ExecutionContextTest {
             var ctx = ExecutionContext.initial(execId(), scenarioId())
                 .with("task-a", "agent-1", result);
 
-            assertTrue(ctx.getFirst("task-a", Double.class).isEmpty());
+            assertTrue(ctx.getFirstOutput("task-a", "rps", Double.class).isEmpty());
         }
 
         @Test
@@ -287,7 +287,7 @@ class ExecutionContextTest {
         void nullTaskIdThrows() {
             var ctx = ExecutionContext.initial(execId(), scenarioId());
             assertThrows(NullPointerException.class,
-                () -> ctx.getFirst(null, Object.class));
+                () -> ctx.getFirstOutput(null, "x", Object.class));
         }
 
         @Test
@@ -295,7 +295,7 @@ class ExecutionContextTest {
         void nullTypeThrows() {
             var ctx = ExecutionContext.initial(execId(), scenarioId());
             assertThrows(NullPointerException.class,
-                () -> ctx.getFirst("task-a", null));
+                () -> ctx.getFirstOutput("task-a", "rps", null));
         }
     }
 

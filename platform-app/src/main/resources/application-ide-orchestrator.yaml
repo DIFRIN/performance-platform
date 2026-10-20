@@ -1,0 +1,68 @@
+# =============================================================================
+# IDE profile — ORCHESTRATOR
+# =============================================================================
+# Run from the IDE with the Spring profile `ide-orchestrator`.
+# Kafka, PostgreSQL and WireMock run locally in Docker (see
+# platform-deployment/local-dev/docker-compose.yaml).
+#
+# No environment variable is required: all endpoints target localhost.
+# =============================================================================
+
+runtime:
+  mode: DISTRIBUTED
+  role: ORCHESTRATOR
+
+transport:
+  type: KAFKA
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer-group: ide-orchestrator
+    tasks-topic: platform-tasks
+    events-topic: platform-events
+    signals-topic: platform-signals
+    producer-acks: all
+
+platform:
+  security:
+    enabled: false
+
+  # HTTP targets (the orchestrator does not execute HTTP tasks, but this
+  # keeps the configuration symmetric for LOCAL runs if needed).
+  http-targets:
+    wiremock:
+      base-url: http://localhost:8090
+      connection-timeout: 2s
+      read-timeout: 5s
+      paths:
+        count-requests: /__admin/requests/count
+
+  # PostgreSQL from Docker.
+  datasources:
+    default:
+      url: jdbc:postgresql://localhost:5432/performance
+      username: postgres
+      password: changeme
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+        connection-timeout: 30000
+
+  # Named Kafka cluster used by executors (not needed by the orchestrator,
+  # kept for completeness).
+  kafka-clusters:
+    default:
+      bootstrap-servers: localhost:9092
+      producer-acks: all
+      consumer-group: ide-orchestrator
+      topics: {}
+
+web:
+  ui:
+    enabled: true
+
+reporting:
+  output-directory: reports
+  formats:
+    - HTML
+    - JSON

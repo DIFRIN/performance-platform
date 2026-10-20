@@ -31,9 +31,10 @@ COPY platform-assertion/pom.xml platform-assertion/pom.xml
 COPY platform-reporting/pom.xml platform-reporting/pom.xml
 COPY platform-observability/pom.xml platform-observability/pom.xml
 COPY platform-app/pom.xml platform-app/pom.xml
+COPY platform-deployment/pom.xml platform-deployment/pom.xml
 
-# Resoudre les dependances (couche stable tant que les POMs ne changent pas)
-RUN mvn dependency:resolve -pl platform-app -am -B -q
+# NOTE: dependency:resolve ne resout pas les modules SNAPSHOT du reactor
+# (ils ne sont pas installes). La resolution se fait dans le build ci-dessous.
 
 # --- Couche 2 : code source ---
 COPY platform-domain/src platform-domain/src
@@ -83,11 +84,10 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 EXPOSE 8080 9000
 
 # JVM options Java 25 :
-# -XX:+UseVirtualThreads : activation Project Loom Virtual Threads (tout I/O bloquant)
+# Virtual Threads sont natifs depuis Java 21 (aucun flag necessaire).
 # -XX:MaxRAMPercentage=75.0 : limite heap a 75% de la memoire container (graceful OOM)
 # ADR-006 : le mode (LOCAL/DISTRIBUTED) et le role (ORCHESTRATOR/AGENT) sont definis
 #           par les variables d'environnement RUNTIME_MODE / MODE, pas en dur ici
 ENTRYPOINT ["java", \
-  "-XX:+UseVirtualThreads", \
   "-XX:MaxRAMPercentage=75.0", \
   "-jar", "app.jar"]

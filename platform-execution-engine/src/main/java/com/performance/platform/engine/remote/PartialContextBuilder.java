@@ -14,7 +14,7 @@ import java.util.Set;
  * listees dans {@code requiredContextKeys}.
  *
  * <p>Pour chaque cle de contexte requise, les TaskResult sont visites et
- * leurs outputs sont extraits. Le resultat est un sous-ensemble immuable du
+ * leurs outputs nommes sont conserves. Le resultat est un sous-ensemble immuable du
  * contexte complet, pret a etre transmis aux agents via le transport.</p>
  *
  * <p>0 annotation framework — classe Java pure.</p>
@@ -62,9 +62,9 @@ public final class PartialContextBuilder {
             for (var entry : agentResults.entrySet()) {
                 TaskResult result = entry.getValue();
                 if (result.outputs() != null && !result.outputs().isEmpty()) {
-                    // Extraire la premiere valeur des outputs comme valeur principale
-                    Object firstOutput = result.outputs().values().iterator().next();
-                    extractedOutputs.put(entry.getKey(), firstOutput);
+                    // Conserver tous les outputs nommes : les assertions distantes
+                    // peuvent ainsi lire une cle contractuelle (PDR-053).
+                    extractedOutputs.put(entry.getKey(), result.outputs());
                 }
             }
 

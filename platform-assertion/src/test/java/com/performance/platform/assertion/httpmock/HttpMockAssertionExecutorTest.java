@@ -10,8 +10,8 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 
-import com.performance.platform.infrastructure.executor.http.HttpTargetProperties;
-import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
+import com.performance.platform.application.ports.out.HttpTarget;
+import com.performance.platform.application.ports.out.HttpTargetResolver;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,8 +41,8 @@ class HttpMockAssertionExecutorTest {
             throw new IllegalArgumentException("No count configured");
         };
 
-        TestableHttpMockAssertionExecutor(HttpTargetRegistry registry) {
-            super(registry);
+        TestableHttpMockAssertionExecutor(HttpTargetResolver resolver) {
+            super(resolver);
         }
 
         void setCount(double count) {
@@ -73,16 +73,14 @@ class HttpMockAssertionExecutorTest {
     private static final ExecutionId EXEC_ID = new ExecutionId("exec-001");
     private static final ScenarioId SCENARIO_ID = new ScenarioId("scenario-001");
 
-    private static HttpTargetRegistry defaultRegistry() {
-        var props = new HttpTargetProperties(
+    private static HttpTargetResolver defaultRegistry() {
+        var target = new HttpTarget(
                 "http://localhost:8090",
                 Duration.ofSeconds(1),
                 Duration.ofSeconds(5),
                 Map.of(),
                 Map.of());
-        return new HttpTargetRegistry(
-                Map.of("wiremock", props),
-                RestClient.builder());
+        return name -> "wiremock".equals(name) ? target : null;
     }
 
     @BeforeEach

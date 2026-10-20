@@ -75,7 +75,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
     // ── Output keys ───────────────────────────────────────────────────────────
 
-    static final String OUTPUT_RESULT = "result";
+    static final String OUTPUT_RESULT = InjectionResult.OUTPUT_KEY;
 
     // ── Defaults ──────────────────────────────────────────────────────────────
 

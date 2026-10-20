@@ -1,0 +1,43 @@
+{
+  "mappings": [
+    {
+      "name": "GET /api/users",
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/users"
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "users": [
+            { "id": 1, "name": "Alice" },
+            { "id": 2, "name": "Bob" }
+          ],
+          "total": 2
+        }
+      }
+    },
+    {
+      "name": "POST /api/users",
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/users"
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "jsonBody": {
+          "id": 3,
+          "name": "Created"
+        }
+      }
+    }
+  ]
+}

@@ -14,8 +14,10 @@ import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 
+import com.performance.platform.engine.ExecutionEngine;
 import com.performance.platform.engine.ExecutionLifecycleDispatcher;
-import com.performance.platform.engine.local.LocalExecutionEngine;
+import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
+import com.performance.platform.engine.local.LocalStepDispatcher;
 import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.retry.DefaultRetryExecutor;
@@ -54,7 +56,7 @@ class ExecutionEngineE2ETest {
     private List<TaskResult> allTaskResults;
     private StubTaskExecutorLookup taskExecutorLookup;
     private Map<String, ExecutionPlan> planMap;
-    private LocalExecutionEngine engine;
+    private ExecutionEngine engine;
     private ExecutionPlanBuilder planBuilder;
     private StubExecutionRepository executionRepository;
     private final ExecutionLifecycleDispatcher lifecycleDispatcher = signal -> { /* no-op */ };
@@ -72,9 +74,11 @@ class ExecutionEngineE2ETest {
 
         ApplicationEventPublisher eventPublisher = event -> publishedEvents.add(event);
 
-        engine = new LocalExecutionEngine(
-                planBuilder, retryExecutor, executionRepository,
-                eventPublisher, lifecycleDispatcher, taskExecutorLookup);
+        engine = new ExecutionEngine(
+                planBuilder, executionRepository,
+                eventPublisher, lifecycleDispatcher,
+                new LocalStepDispatcher(taskExecutorLookup, retryExecutor),
+                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
     }
 
     // ========================================================================
@@ -685,25 +689,18 @@ class ExecutionEngineE2ETest {
 
     static class StubTaskExecutorLookup implements TaskExecutorLookup {
         private final Map<String, TaskExecutor> taskExecutors = new HashMap<>();
-        private final Map<String, AssertionExecutor> assertionExecutors = new HashMap<>();
 
         void registerTask(String taskName, TaskExecutor executor) {
             taskExecutors.put(taskName, executor);
         }
 
         void registerAssertion(String assertionName, AssertionExecutor executor) {
-            assertionExecutors.put(assertionName, executor);
             taskExecutors.put(assertionName, executor); // AssertionExecutor extends TaskExecutor
         }
 
         @Override
         public TaskExecutor findTaskExecutor(String taskName) {
             return taskExecutors.get(taskName);
-        }
-
-        @Override
-        public AssertionExecutor findAssertionExecutor(String assertionName) {
-            return assertionExecutors.get(assertionName);
         }
     }
 

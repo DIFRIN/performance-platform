@@ -97,22 +97,25 @@ public class ExecutionStateMapper {
 
 ---
 
-## Test de l'Architecture avec ArchUnit
+## Test de l'Architecture (ASM, pas ArchUnit)
+
+ArchUnit 1.3/1.4 importe silencieusement 0 classe sur du bytecode Java 25 : tout test
+`@AnalyzeClasses` est vacuous. Le projet vérifie donc les frontières avec un scan ASM.
 
 ```java
-@AnalyzeClasses(packages = "com.performance.platform")
-class HexagonalArchitectureTest {
-
-    @ArchTest
-    static final ArchRule domainHasNoDependencyOnSpring =
-        noClasses().that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage("org.springframework..");
-
-    @ArchTest
-    static final ArchRule applicationHasNoDependencyOnInfrastructure =
-        noClasses().that().resideInAPackage("..application..")
-            .should().dependOnClassesThat()
-            .resideInAPackage("..infrastructure..");
-}
+// platform-app/src/test/.../arch/ModuleDependencyTest.java
+// - lit les .class des modules via l'ASM de Spring 7 (Java 25 compatible)
+// - vérifie les arêtes interdites entre modules Maven
+// - échoue si un module ne fournit aucune classe (anti-vacuité)
 ```
+
+Règles couvertes : domaine sans Spring/JPA/Jackson, application sans infrastructure,
+engine ↛ assertion/agent, reporting ↛ injection, assertion ↛ injection/infrastructure
+(exception documentée pour `HttpMockAssertionExecutor`).
+
+```bash
+mvn -pl platform-app test -Dtest=ModuleDependencyTest
+```
+
+Pour le détail des frontières inter-modules, voir
+`.claude/knowledge/skills/spring-modulith.md` (le nom du fichier est historique).

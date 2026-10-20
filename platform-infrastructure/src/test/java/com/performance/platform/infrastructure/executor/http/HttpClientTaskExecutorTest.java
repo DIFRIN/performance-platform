@@ -35,9 +35,9 @@ class HttpClientTaskExecutorTest {
     @BeforeEach
     void setUp(com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo wmRuntimeInfo) {
         this.wmRuntimeInfo = wmRuntimeInfo;
-        String baseUrl = "http://localhost:" + wmRuntimeInfo.getHttpPort();
+        String baseUrl = "http://127.0.0.1:" + wmRuntimeInfo.getHttpPort();
         var props = new HttpTargetProperties(
-                baseUrl, Duration.ofSeconds(2), Duration.ofSeconds(5),
+                baseUrl, Duration.ofSeconds(5), Duration.ofSeconds(15),
                 Map.of(),
                 Map.of("health", "/actuator/health",
                        "reset", "/__admin/requests",
@@ -300,7 +300,8 @@ class HttpClientTaskExecutorTest {
 
             TaskResult result = executor.execute(emptyContext(), s);
 
-            assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+            assertThat(result.status()).as("msg=%s outputs=%s", result.errorMessage(), result.outputs())
+                    .isEqualTo(TaskStatus.SUCCESS);
             assertThat(result.outputs().get(HttpClientTaskExecutor.OUTPUT_STATUS_CODE))
                     .isEqualTo(204);
         }

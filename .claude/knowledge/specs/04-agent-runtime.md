@@ -1,53 +1,59 @@
 # Spec 04 — Agent Runtime
 
 **Module** : `platform-agent-runtime`
-**Dépend de** : `platform-domain`, `platform-application`, `platform-transport`
+**Dépend de** : `platform-domain`, `platform-application`, `platform-transport`,
+`platform-plugin-api`
 
 ---
 
 ## 1. Objectif
 
-Un Agent est une instance JVM qui :
-1. S'enregistre auprès de l'Orchestrator en déclarant ses spécialisations
-2. Reçoit des demandes d'exécution via le transport (broadcast)
-3. Filtre localement : exécute si spécialisé, ignore sinon
-4. Publie les events (claim, progress, résultat)
-5. Maintient un heartbeat
-6. Réagit aux signaux de restart orchestrateur (cleanup stateful)
+Un agent est une instance JVM qui :
+1. se connecte au transport ;
+2. en DISTRIBUTED, s'enregistre et envoie un heartbeat ;
+3. reçoit les `TaskExecutionRequest` en broadcast ;
+4. filtre localement selon ses `supportedTaskNames` ;
+5. exécute les tâches et publie claim, progression et résultat ;
+6. libère ses ressources stateful sur signal de restart ;
+7. draine ses tâches à l'arrêt.
 
-> **Aucune surface d'accès en mode AGENT (ADR-019).** Un nœud AGENT (DISTRIBUTED, `MODE=AGENT`)
-> n'expose ni API REST, ni IHM, ni mode CLI : la JVM démarre avec `WebApplicationType.NONE`, donc
-> sans aucun serveur web (pas de Tomcat). L'agent est un pur worker piloté par le transport — il ne
-> fait que des connexions **sortantes** pour s'enregistrer et recevoir les `TaskExecutionRequest`.
-> Seuls LOCAL et ORCHESTRATOR exposent les modes d'accès. Voir la matrice canonique dans
-> `specs/00-overview.md` et ADR-019/ADR-021.
->
-> Le récepteur de transport HTTP entrant (`agent.http.callbackUrl`, §8 ci-dessous, actif uniquement
-> si `transport.type=HTTP`) est un canal interne de réception des tâches du transport — il n'est PAS
-> une surface d'accès API/IHM/CLI et ne contredit pas la règle ci-dessus.
+Il existe **un seul runtime** (`TaskAgentRuntime`) pour LOCAL et DISTRIBUTED (ADR-037).
+La différence est portée par `AgentRegistrationPort` :
+- `registrationPort == null` → LOCAL : pas de REGISTERING, pas de heartbeat,
+  pas de deregister ;
+- `registrationPort != null` → DISTRIBUTED : enregistrement, heartbeat, deregister.
+
+> **Aucune surface d'accès en mode AGENT (ADR-019).** La JVM démarre avec
+> `WebApplicationType.NONE` : ni API REST, ni IHM, ni CLI, pas de Tomcat. L'agent est un
+> pur worker piloté par le transport. Le récepteur HTTP de callbacks
+> (`HttpEventCallbackController`, actif seulement si `transport.type=HTTP`) est un canal
+> interne du transport, pas une surface d'accès.
 
 ---
 
-## 2. Lifecycle de l'Agent
+## 2. Cycle de vie
 
+```mermaid
+stateDiagram-v2
+    [*] --> OFFLINE
+    OFFLINE --> REGISTERING: start() · DISTRIBUTED
+    OFFLINE --> IDLE: start() · LOCAL
+    REGISTERING --> IDLE: registered
+    REGISTERING --> OFFLINE: registration failed
+    IDLE --> EXECUTING: task claimed
+    EXECUTING --> IDLE: activeTasks == 0
+    IDLE --> DRAINING: stop()
+    EXECUTING --> DRAINING: stop()
+    DRAINING --> OFFLINE: drained
+    EXECUTING --> IDLE: ScenarioRestartSignal
 ```
-OFFLINE
-  │  démarrage
-  ▼
-REGISTERING ──── échec enregistrement (retry) ────▶ OFFLINE
-  │  enregistrement réussi
-  ▼
-IDLE ◀──────────────────────── task terminée ou ignorée
-  │  task reçue + spécialisation match
-  ▼
-EXECUTING
-  │  drain (graceful shutdown)
-  ▼
-DRAINING ──── toutes tâches terminées ────▶ OFFLINE
 
-  [depuis n'importe quel état]
-SCENARIO_RESTART signal reçu ──▶ cleanup() ──▶ IDLE
-```
+Règles :
+- `start()` est idempotent : deuxième appel ignoré avec WARN.
+- `stop()` est idempotent ; il passe en DRAINING, attend les tâches actives
+  (timeout = 2 × `taskExecutionTimeout`), annule le reste, arrête le heartbeat,
+  se désenregistre, se déconnecte puis passe OFFLINE.
+- Un agent OFFLINE ou DRAINING ignore les nouvelles tâches.
 
 ---
 
@@ -59,20 +65,9 @@ public interface AgentRuntime {
     void stop();
     AgentState getState();
     AgentDescriptor getDescriptor();
-
-    /**
-     * Retourne true si cet agent est spécialisé pour le nom de task donné.
-     * Utilisé par TaskSpecializationFilter avant d'accepter une TaskExecutionRequest.
-     */
     boolean canExecute(String taskName);
-
-    /**
-     * Déclenché par un ScenarioRestartSignal reçu via transport.
-     * Doit annuler toute exécution en cours et libérer les ressources stateful
-     * (connexions DB, sessions Gatling, WireMock, etc.).
-     * L'agent repasse à IDLE après cleanup.
-     */
     void onScenarioRestart(ScenarioRestartSignal signal);
+    void onLifecycleSignal(ExecutionLifecycleSignal signal);
 }
 
 public interface AgentRegistrationPort {
@@ -81,23 +76,29 @@ public interface AgentRegistrationPort {
     void sendHeartbeat(AgentId agentId, AgentHeartbeat heartbeat);
 }
 
-// Côté Orchestrator
-public interface AgentRegistry {
+// Côté orchestrateur
+public interface AgentRegistry extends AgentRegistryPort { }   // marqueur, impl. InMemoryAgentRegistry
+
+public interface AgentRegistryPort {
     void onAgentRegistered(AgentDescriptor descriptor);
     void onAgentHeartbeat(AgentId agentId, AgentHeartbeat heartbeat);
-    void onAgentExpired(AgentId agentId);      // TTL expiré sans heartbeat
+    void onAgentExpired(AgentId agentId);
     void onAgentDeregistered(AgentId agentId);
-
-    /**
-     * Retourne tous les agents déclarant supportedTaskNames contenant taskName.
-     * Pas de sélection — l'orchestrateur ne choisit pas, il vérifie la présence.
-     */
     List<AgentDescriptor> findByTaskName(String taskName);
     boolean hasAgentFor(String taskName);
     Optional<AgentDescriptor> findById(AgentId agentId);
     List<AgentDescriptor> findAll();
 }
 ```
+
+`TaskAgentRuntime` collabore avec :
+- `TaskChannel`, `SignalChannel`, `EventChannel`, `ConnectionLifecycle` (ports étroits,
+  ADR-028) ;
+- `TaskSpecializationFilter` ;
+- `TaskExecutionPipeline` ;
+- `ScenarioRestartHandler` ;
+- `DefaultLifecycleSignalHandler` ;
+- optionnellement `HeartbeatScheduler` + `AgentRegistrationPort`.
 
 ---
 
@@ -109,207 +110,214 @@ public record AgentDescriptor(
     String name,
     String host,
     int port,
-
-    /**
-     * Endpoint HTTP de l'agent pour le transport HTTP asynchrone.
-     * Nullable si transport non-HTTP.
-     */
-    String httpCallbackUrl,
-
-    /**
-     * Liste des noms de tasks que cet agent peut exécuter.
-     * Déclarée statiquement à la configuration — immuable après démarrage.
-     * Matchée par TaskSpecializationFilter sur le champ StepDefinition.taskName().
-     * Un agent "généraliste" déclare explicitement toutes les tasks supportées.
-     */
-    Set<String> supportedTaskNames,
-
+    String httpCallbackUrl,          // nullable si transport != HTTP
+    Set<String> supportedTaskNames,  // ADR-015 : depuis agent.supported-tasks (DISTRIBUTED)
     AgentCapabilities capabilities,
     AgentState state,
     Instant registeredAt,
     Instant lastHeartbeatAt,
-
-    /**
-     * Durée de validité de l'enregistrement sans heartbeat.
-     * Après expiration : l'AgentRegistry appelle onAgentExpired().
-     * Doit être > heartbeat.intervalSeconds pour éviter les faux positifs.
-     * Règle recommandée : ttl >= 3 * heartbeat.intervalSeconds
-     */
-    Duration registrationTtl
+    Duration registrationTtl        // >= 3 × heartbeat interval
 ) {}
 
-public record AgentCapabilities(
-    int maxConcurrentTasks,
-    String version                 // version de l'agent pour compatibilité/observabilité
-) {}
+public record AgentCapabilities(int maxConcurrentTasks, String version) {}
+public record AgentHeartbeat(AgentId agentId, AgentState state, int activeTasks, Instant sentAt) {}
 ```
+
+En LOCAL, le descripteur est construit avec **tous** les `TaskExecutor` du contexte et
+l'identité `local-agent`. En DISTRIBUTED, `supportedTaskNames` est dérivé
+exclusivement de `agent.supported-tasks` (surchargeable par `AGENT_SUPPORTED_TASKS`).
 
 ---
 
-## 5. TaskSpecializationFilter
-
-Composant central côté agent. Décide si l'agent traite ou ignore une `TaskExecutionRequest`.
+## 5. Spécialisation (`TaskSpecializationFilter`)
 
 ```java
 public interface TaskSpecializationFilter {
-
-    /**
-     * Retourne RESPONSIBLE si supportedTaskNames contient request.step().taskName().
-     * Retourne NOT_RESPONSIBLE sinon.
-     * Appelé pour chaque message reçu depuis le transport (broadcast).
-     */
     TaskFilterResult filter(TaskExecutionRequest request);
+    boolean canExecute(String taskName);
 }
 
 public sealed interface TaskFilterResult
         permits TaskFilterResult.Responsible, TaskFilterResult.NotResponsible {
-
     record Responsible(MessageId messageId, AgentId agentId) implements TaskFilterResult {}
     record NotResponsible(MessageId messageId, AgentId agentId) implements TaskFilterResult {}
 }
 ```
 
+`DefaultTaskSpecializationFilter` :
+- `Responsible` si `request.step().taskName()` ∈ `supportedTaskNames` ;
+- `NotResponsible` sinon (log DEBUG, aucun appel réseau) ;
+- décision purement locale, aucun agentTags, aucune coordination (ADR-015).
+
+Le runtime vérifie en plus l'idempotence via `MessageId` : un message déjà traité est
+ignoré. Le set `processedMessageIds` est purgé au-delà de 10 000 entrées.
+
 ---
 
-## 6. Gestion Multi-Claim (R2)
+## 6. Pipeline d'exécution
 
-Plusieurs agents peuvent être spécialisés pour la même task. L'orchestrateur
-**accepte tous les claims** et suit l'exécution de chacun indépendamment.
+`TaskExecutionPipeline.execute(request)` :
+1. planifie la publication périodique de `TaskWorkInProgress`
+   (intervalle = `taskExecutionTimeout / 3`, minimum 1 s) ;
+2. résout le `TaskExecutor` par `step.taskName()` ; absent → `TaskResult.failed`
+   publié immédiatement ;
+3. convertit le `PartialExecutionContext` en `ExecutionContext` local (les outputs
+   nommés sont exposés tels quels ; les anciens payloads bruts restent supportés) ;
+4. exécute `executor.execute(context, step)` sur un Virtual Thread ;
+5. publie `TASK_COMPLETED` (succès) ou `TASK_FAILED` (échec) avec payload :
+   `taskName`, `taskId`, `status`, `durationMs`, `outputs` (succès), `error` (échec) ;
+6. en `finally` : arrête la progression, retire la tâche active, décrémente le compteur
+   et repasse `EXECUTING → IDLE` si plus aucune tâche active.
 
-Comportement côté agent :
-- Chaque agent spécialisé publie `TaskClaimedByAgent` dès réception
-- Chaque agent exécute indépendamment
-- Chaque agent publie son propre `TaskCompletedEvent`
+Le claim `TASK_CLAIMED` est publié par le runtime **avant** la soumission du pipeline.
 
-Comportement côté orchestrateur :
-- `TaskCorrelationTracker.onClaimed()` est appelé pour chaque claim
-- Le résultat est stocké sous `context["taskId"]["agentId"]`
-- La task est considérée terminée quand **tous** les agents ayant claimé ont complété
-  (ou selon `completionPolicy` : FIRST_COMPLETE | ALL_COMPLETE)
+---
 
-```java
-public enum TaskCompletionPolicy {
-    /**
-     * La task est considérée complète dès que le premier agent publie TaskCompleted.
-     * Les autres résultats sont stockés s'ils arrivent mais ne bloquent pas l'avancement.
-     */
-    FIRST_COMPLETE,
+## 7. Enregistrement, heartbeat, TTL (DISTRIBUTED)
 
-    /**
-     * La task est considérée complète uniquement quand TOUS les agents ayants claimé
-     * ont publié TaskCompleted ou TaskFailed.
-     * Utile pour les tests de performance distribués multi-agents.
-     */
-    ALL_COMPLETE
-}
+Côté agent (`TransportAgentRegistration`, `LifecycleChannel`) :
+- `register` → `AgentLifecycleEvent(type=AGENT_REGISTERED, payload=AgentDescriptor)`
+  (codec typé `AgentLifecyclePayloadCodec`) ;
+- `sendHeartbeat` → `AGENT_HEARTBEAT` ;
+- `deregister` → `AGENT_DEREGISTERED`.
+
+`HeartbeatScheduler` :
+- premier heartbeat immédiat puis toutes les `intervalSeconds` (10 s dans le bean
+  distribué) ;
+- `registrationTtlSeconds = 3 × intervalSeconds` ;
+- l'état et le nombre de tâches actives sont fournis à chaque heartbeat.
+
+Côté orchestrateur (`AgentRegistryConfiguration`, actif DISTRIBUTED + ORCHESTRATOR) :
+- `InMemoryAgentRegistry` (bean unique satisfaisant `AgentRegistry` et
+  `AgentRegistryPort`) ;
+- `AgentLifecycleIngestion` s'abonne au `LifecycleChannel` et alimente le registre
+  (`registered`, `heartbeat`, `deregistered`, `lost`) ;
+- `AgentTtlMonitor` vérifie périodiquement les TTL expirés
+  (`agent.registry.ttl-check-interval-seconds`, défaut 10 s) et publie `AgentLost` ;
+- `AgentLost` déclenche le fast-fail des steps en cours (ADR-033).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant AG as TaskAgentRuntime
+    participant LC as LifecycleChannel
+    participant ING as AgentLifecycleIngestion
+    participant REG as InMemoryAgentRegistry
+    participant TTL as AgentTtlMonitor
+
+    AG->>LC: AGENT_REGISTERED(descriptor)
+    LC->>ING: onEvent
+    ING->>REG: onAgentRegistered
+    loop toutes les 10 s
+        AG->>LC: AGENT_HEARTBEAT
+        LC->>ING: onEvent
+        ING->>REG: onAgentHeartbeat
+    end
+    TTL->>REG: onAgentExpiredIfStillExpired
+    TTL-->>AG: AgentLost (Spring event)
+    AG->>LC: AGENT_DEREGISTERED
+    LC->>ING: onEvent
+    ING->>REG: onAgentDeregistered
 ```
 
+Sans `AgentLifecycleIngestion`, le registre resterait vide et l'orchestrateur ne pourrait
+dispatcher aucune tâche.
+
 ---
 
-## 7. ScenarioRestart Signal (R3)
+## 8. Multi-claim
 
-En cas de restart de l'orchestrateur, les exécutions en cours sont abandonnées.
-L'orchestrateur publie un `ScenarioRestartSignal` vers tous les agents via le transport.
+Plusieurs agents peuvent être spécialisés pour la même tâche. L'orchestrateur accepte
+tous les claims et suit chaque agent indépendamment (ADR-011) :
+
+- chaque agent publie `TaskClaimedByAgent` puis son propre `TaskCompleted`/`TaskFailed` ;
+- `TaskCorrelationTracker` enregistre claims, résultats, échecs et ordre de complétion ;
+- la tâche est terminée selon `TaskCompletionPolicy`
+  (`FIRST_COMPLETE` ou `ALL_COMPLETE`) ;
+- le résultat final est sélectionné de façon déterministe
+  (`ResultSelectionPolicy`, ADR-034).
+
+Le même `TaskId` peut donc avoir plusieurs `TaskResult` persistés, un par agent.
+
+---
+
+## 9. Restart (`ScenarioRestartSignal`)
 
 ```java
-/**
- * Signal de restart envoyé en broadcast à tous les agents.
- * Les agents doivent :
- * 1. Annuler toute task en cours pour cet executionId (ou tous si executionId=null)
- * 2. Libérer les ressources stateful (connexions, sessions, locks)
- * 3. Repasser à l'état IDLE
- * Note : il n'y a pas de reprise — le scénario repart de zéro après restart.
- */
 public record ScenarioRestartSignal(
     SignalId id,
-    ExecutionId executionId,       // nullable = tous les scénarios en cours
-    String reason,                 // ex: "ORCHESTRATOR_RESTART"
+    ExecutionId executionId,   // null = toutes les exécutions
+    String reason,             // ex. "ORCHESTRATOR_RESTART"
     Instant issuedAt
 ) {}
 ```
 
-**Ressources stateful à libérer par type de TaskExecutor** :
+`ScenarioRestartHandler` :
+1. appelle `StatefulResourceCleaner.cleanup(executionId)` sur chaque cleaner
+   (best-effort ; une erreur n'empêche pas les autres) ;
+2. annule les futures actifs correspondant à l'`executionId` (ou tous si null) ;
+3. repasse l'agent à IDLE si plus aucune tâche active.
 
-| TaskExecutor | Ressources à nettoyer |
+Ressources stateful typiques :
+
+| Exécuteur | Ressources |
 |---|---|
-| `GatlingTaskExecutor` | Arrêter la simulation en cours, fermer les connexions Gatling |
-| `MockServerTaskExecutor` | Arrêter WireMock embedded, réinitialiser les mappings |
-| `KafkaConsumerTaskExecutor` | Fermer le consumer, committer les offsets |
-| `KafkaProducerTaskExecutor` | Flush + fermer le producer |
-| `DatabaseTaskExecutor` | Rollback de toute transaction ouverte, fermer connexion |
-| `DockerTaskExecutor` | Arrêter les containers démarrés par cette exécution |
-| `ShellTaskExecutor` | Tuer le process fils si toujours en vie |
+| `gatling` | simulation en cours, connexions |
+| `mock-server` | WireMock embarqué, mappings |
+| `kafka-consumer` / `kafka-producer` | consumer/producer, offsets, flush |
+| `database` / `database-assertion` | connexions, transactions |
+| `docker` | containers démarrés par l'exécution |
+| `shell` | processus fils |
+
+Il n'y a **pas** de reprise : le scénario repart de zéro après restart.
 
 ---
 
-## 8. Configuration Agent
+## 10. Signaux de cycle de vie START/STOP
+
+`DefaultLifecycleSignalHandler` reçoit `ExecutionLifecycleSignal` :
+- START : prépare l'exécution ; pour une assertion `linkedTo`, démarre l'échantillonnage ;
+- STOP : termine l'exécution ; pour une assertion `linkedTo`, arrête l'échantillonnage
+  selon `stopBehavior`, produit l'`AssertionSummary` final et publie `TaskCompleted`.
+
+Les signaux concernant une tâche non supportée sont ignorés (log DEBUG).
+En LOCAL, le dispatcher appelle directement le runtime ; en DISTRIBUTED, le signal passe
+par le `SignalChannel` (broadcast).
+
+---
+
+## 11. Configuration
 
 ```yaml
 agent:
-  id: agent-perf-01                # auto-généré UUID si absent
-  name: "Performance Test Agent"
-
-  supportedTasks:                  # STATIQUE — immuable après démarrage, source EXCLUSIVE de supportedTaskNames (ADR-015)
-    - performance_test
-    - gatling-metric
-    - assertions
-    # NOTE (ADR-015) : supportedTaskNames est derive EXCLUSIVEMENT de cette config.
-    # Les annotations @Preparation/@Injection/@Assertion sont utilisees UNIQUEMENT
-    # par PluginLoader (task-name -> implementation) et NE contribuent PAS a supportedTaskNames.
-
-  capabilities:
-    maxConcurrentTasks: 3
-    version: "1.0.0"
-
-  task:
-    completionPolicy: ALL_COMPLETE  # FIRST_COMPLETE | ALL_COMPLETE
-
-  heartbeat:
-    intervalSeconds: 10
-    # NOTE R6 : ttlSeconds doit satisfaire ttlSeconds >= 3 * intervalSeconds.
-    # Si l'intervalle est trop court par rapport au TTL, des faux positifs d'expiration
-    # peuvent survenir sous charge. Ajuster en fonction de la latence réseau observée.
-    ttlSeconds: 30                  # orchestrator marque offline si dépassé
-
-  orchestrator:
-    url: http://orchestrator:8080
-    reconnect:
-      maxAttempts: -1               # -1 = infini
-      backoffSeconds: 5
-      maxBackoffSeconds: 60
-
-  http:
-    # Endpoint de callback pour le transport HTTP asynchrone.
-    # L'orchestrateur envoie la TaskExecutionRequest ici (POST).
-    # L'agent répond 202 Accepted puis publie les events via POST /api/v1/events.
-    callbackUrl: http://agent-perf-01:9090/callbacks
+  supported-tasks:            # DISTRIBUTED uniquement — source UNIQUE (ADR-015)
+    - database
+    - mock-server
+    - kafka-producer
+    - gatling
+    - wiremock
+  registry:
+    ttl-check-interval-seconds: 10   # orchestrateur
 ```
+
+| Propriété | Défaut | Portée |
+|---|---|---|
+| `agent.supported-tasks` | `[]` (agent idle avec WARN) | agent DISTRIBUTED |
+| `AGENT_SUPPORTED_TASKS` (env) | — | surcharge la liste (binding Spring) |
+| `agent.registry.ttl-check-interval-seconds` | 10 s | orchestrateur |
+| heartbeat interval | 10 s (bean distribué) | agent |
+| registration TTL | 3 × heartbeat | calculé |
+| `taskExecutionTimeout` | 5 min (bean distribué) | agent |
+
+En LOCAL, `agent.supported-tasks` est ignoré : tous les exécuteurs du contexte sont
+supportés. `AGENT_TAGS` n'existe plus (ADR-015).
 
 ---
 
-## 9. Comportement de Reconnexion
+## 12. Reconnexion et perte d'agent
 
-1. TTL expiré sans heartbeat → `AgentRegistry.onAgentExpired(agentId)` côté orchestrateur
-2. Orchestrateur publie `ScenarioRestartSignal` pour les exécutions impactées
-3. Les tasks en cours sur cet agent passent à FAILED (côté orchestrateur)
-4. Retry sur un autre agent spécialisé si disponible (configurable)
-5. Agent restart → re-enregistrement → IDLE
-
----
-
-## 10. LocalAgent (Mode LOCAL)
-
-En mode LOCAL, un unique `LocalAgent` déclare l'ensemble des spécialisations disponibles.
-Il utilise un transport in-memory. Le workflow est identique au mode DISTRIBUTED.
-
-```java
-@Service
-@ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
-public class LocalAgent implements AgentRuntime {
-
-    // supportedTaskNames = tous les noms déclarés dans TaskExecutorRegistry
-    // Transport = InMemoryExecutionTransport (queue en mémoire)
-    // Filter = toujours RESPONSIBLE (supporte tout)
-    // completionPolicy = FIRST_COMPLETE (un seul agent)
-}
-```
+1. TTL expiré sans heartbeat → `AgentTtlMonitor` → `AgentLost`.
+2. L'orchestrateur invalide les claims de l'agent (`tracker.onAgentLost`).
+3. Les steps en cours échouent immédiatement (fast-fail) au lieu d'attendre le timeout.
+4. L'agent peut se ré-enregistrer après redémarrage ; il repasse IDLE.
+5. Aucune reprise de l'exécution interrompue côté orchestrateur.

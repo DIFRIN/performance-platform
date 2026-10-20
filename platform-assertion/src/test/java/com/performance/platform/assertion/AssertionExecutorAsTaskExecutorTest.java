@@ -8,7 +8,6 @@ import com.performance.platform.assertion.kafka.KafkaAssertionExecutor;
 import com.performance.platform.assertion.wiremock.WireMockAssertionExecutor;
 import com.performance.platform.infrastructure.executor.DefaultTaskExecutorRegistry;
 import com.performance.platform.infrastructure.executor.TaskExecutorRegistry;
-import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
 import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
@@ -57,7 +55,7 @@ class AssertionExecutorAsTaskExecutorTest {
                 new KafkaAssertionExecutor(),
                 new WireMockAssertionExecutor(),
                 new HttpMockAssertionExecutor(
-                        new HttpTargetRegistry(Map.of(), RestClient.builder())),
+                        name -> null),
                 new FileAssertionExecutor());
 
         taskRegistry = new DefaultTaskExecutorRegistry(executors);
@@ -126,28 +124,26 @@ class AssertionExecutorAsTaskExecutorTest {
     }
 
     @Nested
-    @DisplayName("AssertionExecutorRegistry still resolves same executors")
-    class AssertionExecutorRegistryStillWorks {
+    @DisplayName("Unified registry resolves all assertion executors")
+    class UnifiedRegistryResolvesAll {
 
         @Test
-        @DisplayName("should resolve all 6 executors via AssertionExecutorRegistry")
-        void shouldResolveAllViaAssertionRegistry() {
+        @DisplayName("should resolve all 6 executors via DefaultTaskExecutorRegistry")
+        void shouldResolveAllViaTaskRegistry() {
             GenericApplicationContext dummyContext = new GenericApplicationContext();
 
-            // AssertionExecutorRegistry is deprecated but must still work
-            List<AssertionExecutor> executors = List.of(
+            List<TaskExecutor> executors = List.of(
                     new GatlingMetricAssertionExecutor(),
                     new DatabaseAssertionExecutor(dummyContext),
                     new KafkaAssertionExecutor(),
                     new WireMockAssertionExecutor(),
                     new HttpMockAssertionExecutor(
-                            new HttpTargetRegistry(Map.of(), RestClient.builder())),
+                            name -> null),
                     new FileAssertionExecutor());
 
-            DefaultAssertionExecutorRegistry assertionRegistry =
-                    new DefaultAssertionExecutorRegistry(executors);
+            var taskRegistry = new DefaultTaskExecutorRegistry(executors);
 
-            assertThat(assertionRegistry.getSupportedAssertionNames())
+            assertThat(taskRegistry.getSupportedTaskNames())
                     .containsExactlyInAnyOrder(
                             "gatling-metric", "database-assertion", "kafka",
                             "wiremock", "http-mock", "file");

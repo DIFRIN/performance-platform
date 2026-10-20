@@ -1,6 +1,6 @@
 package com.performance.platform.engine.lifecycle;
 
-import com.performance.platform.agent.local.LocalAgent;
+import com.performance.platform.application.ports.out.LifecycleSignalHandler;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.engine.ExecutionLifecycleDispatcher;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Implementation LOCAL du dispatcher de signaux de cycle de vie.
- * Appelle {@code LocalAgent.onLifecycleSignal()} directement (meme JVM, pas de transport).
+ * Appelle {@code TaskAgentRuntime.onLifecycleSignal()} directement (meme JVM, pas de transport).
  *
  * <p>Active uniquement quand {@code runtime.mode=LOCAL}.</p>
  */
@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
 public class LocalLifecycleDispatcher implements ExecutionLifecycleDispatcher {
 
-    private final LocalAgent localAgent;
+    private final LifecycleSignalHandler localAgent;
 
-    public LocalLifecycleDispatcher(LocalAgent localAgent) {
+    public LocalLifecycleDispatcher(LifecycleSignalHandler localAgent) {
         this.localAgent = localAgent;
     }
 

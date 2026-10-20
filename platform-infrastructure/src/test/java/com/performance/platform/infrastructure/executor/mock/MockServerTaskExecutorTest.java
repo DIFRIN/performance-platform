@@ -16,12 +16,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @DisplayName("MockServerTaskExecutor")
 class MockServerTaskExecutorTest {
@@ -32,6 +36,16 @@ class MockServerTaskExecutorTest {
     @AfterEach
     void tearDown() {
         executor.cleanup(null);
+    }
+
+    private static boolean portInUse(int port) {
+        try (var socket = new ServerSocket()) {
+            socket.setReuseAddress(false);
+            socket.bind(new InetSocketAddress("127.0.0.1", port));
+            return false;
+        } catch (IOException e) {
+            return true;
+        }
     }
 
     private static ExecutionContext emptyContext() {
@@ -57,7 +71,7 @@ class MockServerTaskExecutorTest {
         void shouldStartWireMockAndReturnPortAndUrl() {
             var step = new StepDefinition(
                     TaskId.of("step-001"), "mock-server", Phase.PREPARATION,
-                    Map.of("deployment", "EMBEDDED", "action", "START"),
+                    Map.of("deployment", "EMBEDDED", "action", "START", "port", 0),
                     null, null, Duration.ofSeconds(10), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
@@ -91,6 +105,9 @@ class MockServerTaskExecutorTest {
         @Test
         @DisplayName("should use default port 8090 when port parameter is omitted")
         void shouldUseDefaultPort() {
+            assumeFalse(portInUse(8090),
+                    "port 8090 is already in use (local WireMock stack) — "
+                    + "embedded default-port test skipped");
             var step = new StepDefinition(
                     TaskId.of("step-003"), "mock-server", Phase.PREPARATION,
                     Map.of("deployment", "EMBEDDED", "action", "START"),
@@ -107,7 +124,7 @@ class MockServerTaskExecutorTest {
         void shouldDefaultDeploymentToEmbedded() {
             var step = new StepDefinition(
                     TaskId.of("step-004"), "mock-server", Phase.PREPARATION,
-                    Map.of("action", "START"),
+                    Map.of("action", "START", "port", 0),
                     null, null, Duration.ofSeconds(10), null);
 
             TaskResult result = executor.execute(emptyContext(), step);
@@ -128,7 +145,7 @@ class MockServerTaskExecutorTest {
             // Start first
             var startStep = new StepDefinition(
                     TaskId.of("step-010"), "mock-server", Phase.PREPARATION,
-                    Map.of("deployment", "EMBEDDED", "action", "START"),
+                    Map.of("deployment", "EMBEDDED", "action", "START", "port", 0),
                     null, null, Duration.ofSeconds(10), null);
             executor.execute(emptyContext(), startStep);
 
@@ -167,7 +184,7 @@ class MockServerTaskExecutorTest {
             // Start first
             var startStep = new StepDefinition(
                     TaskId.of("step-020"), "mock-server", Phase.PREPARATION,
-                    Map.of("deployment", "EMBEDDED", "action", "START"),
+                    Map.of("deployment", "EMBEDDED", "action", "START", "port", 0),
                     null, null, Duration.ofSeconds(10), null);
             executor.execute(emptyContext(), startStep);
 
@@ -207,7 +224,7 @@ class MockServerTaskExecutorTest {
             // Start first
             var startStep = new StepDefinition(
                     TaskId.of("step-030"), "mock-server", Phase.PREPARATION,
-                    Map.of("deployment", "EMBEDDED", "action", "START"),
+                    Map.of("deployment", "EMBEDDED", "action", "START", "port", 0),
                     null, null, Duration.ofSeconds(10), null);
             executor.execute(emptyContext(), startStep);
 
@@ -444,13 +461,13 @@ class MockServerTaskExecutorTest {
             // Start two servers
             var step1 = new StepDefinition(
                     TaskId.of("step-060"), "mock-server", Phase.PREPARATION,
-                    Map.of("deployment", "EMBEDDED", "action", "START"),
+                    Map.of("deployment", "EMBEDDED", "action", "START", "port", 0),
                     null, null, Duration.ofSeconds(10), null);
             executor.execute(contextWithId("exec-cleanup-1"), step1);
 
             var step2 = new StepDefinition(
                     TaskId.of("step-061"), "mock-server", Phase.PREPARATION,
-                    Map.of("deployment", "EMBEDDED", "action", "START"),
+                    Map.of("deployment", "EMBEDDED", "action", "START", "port", 0),
                     null, null, Duration.ofSeconds(10), null);
             executor.execute(contextWithId("exec-cleanup-2"), step2);
 
@@ -464,7 +481,7 @@ class MockServerTaskExecutorTest {
             // Start a server
             var step = new StepDefinition(
                     TaskId.of("step-062"), "mock-server", Phase.PREPARATION,
-                    Map.of("deployment", "EMBEDDED", "action", "START"),
+                    Map.of("deployment", "EMBEDDED", "action", "START", "port", 0),
                     null, null, Duration.ofSeconds(10), null);
             executor.execute(contextWithId("exec-cleanup-3"), step);
 

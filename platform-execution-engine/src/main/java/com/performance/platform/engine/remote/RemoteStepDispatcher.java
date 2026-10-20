@@ -1,6 +1,7 @@
 package com.performance.platform.engine.remote;
 
 import com.performance.platform.application.config.ExecutionConfig;
+import com.performance.platform.application.config.ResultSelectionPolicy;
 import com.performance.platform.application.exception.NoAvailableAgentException;
 import com.performance.platform.domain.event.TaskDispatched;
 import com.performance.platform.domain.execution.ExecutionContext;
@@ -14,13 +15,18 @@ import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.engine.availability.AgentAvailabilityChecker;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
 import com.performance.platform.engine.shared.StepDispatcher;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.TaskChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Implémentation distribuée du {@link StepDispatcher}.
@@ -35,17 +41,14 @@ public class RemoteStepDispatcher implements StepDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(RemoteStepDispatcher.class);
 
-    /** Intervalle de polling pour les completions (ms). */
-    private static final long POLL_COMPLETION_MS = 500;
-
-    private final ExecutionTransport transport;
+    private final TaskChannel transport;
     private final AgentAvailabilityChecker availabilityChecker;
     private final TaskCorrelationTracker tracker;
     private final ExecutionConfig config;
     private final ApplicationEventPublisher eventPublisher;
 
     public RemoteStepDispatcher(
-            ExecutionTransport transport,
+            TaskChannel transport,
             AgentAvailabilityChecker availabilityChecker,
             TaskCorrelationTracker tracker,
             ExecutionConfig config,
@@ -78,19 +81,25 @@ public class RemoteStepDispatcher implements StepDispatcher {
             // 4. Track for correlation (before dispatch to avoid race)
             tracker.trackDispatched(messageId, stepDef.id(), context.executionId());
 
-            // 5. Dispatch via transport
-            transport.dispatchTask(request);
+            // Release the correlation state in all cases: without this, every
+            // dispatched message leaks a permanent entry in the tracker (C3).
+            try {
+                // 5. Dispatch via transport
+                transport.dispatchTask(request);
 
-            // 6. Publish TaskDispatched domain event
-            eventPublisher.publishEvent(new TaskDispatched(
-                    context.executionId(), stepDef.id(), stepDef.taskName(),
-                    messageId, Instant.now()));
+                // 6. Publish TaskDispatched domain event
+                eventPublisher.publishEvent(new TaskDispatched(
+                        context.executionId(), stepDef.id(), stepDef.taskName(),
+                        messageId, Instant.now()));
 
-            log.info("action=task_dispatched taskId={} taskName={} messageId={}",
-                    stepDef.id().value(), stepDef.taskName(), messageId.value());
+                log.info("action=task_dispatched taskId={} taskName={} messageId={}",
+                        stepDef.id().value(), stepDef.taskName(), messageId.value());
 
-            // 7. Await completion (blocking within Virtual Thread)
-            return awaitCompletion(messageId, stepDef.id(), config);
+                // 7. Await completion (blocking within Virtual Thread)
+                return awaitCompletion(messageId, stepDef.id(), config);
+            } finally {
+                tracker.release(messageId);
+            }
         } catch (NoAvailableAgentException e) {
             log.warn("action=no_agent_available taskName={} error={}", stepDef.taskName(), e.getMessage());
             return TaskResult.failed(stepDef.id(), stepDef.taskName(), Duration.ZERO, e.getMessage(), e);
@@ -98,43 +107,48 @@ public class RemoteStepDispatcher implements StepDispatcher {
     }
 
     /**
-     * Poll the tracker until completion policy is satisfied or timeout.
+     * Attend le signal de completion emis par le tracker, puis selectionne
+     * le resultat de facon deterministe. Aucun polling : le tracker complete
+     * le futur des qu'un evenement satisfait la politique.
      */
     private TaskResult awaitCompletion(MessageId messageId, TaskId taskId, ExecutionConfig config) {
-        long deadlineMs = System.currentTimeMillis() + config.taskExecutionTimeout().toMillis();
         TaskCompletionPolicy policy = config.completionPolicy();
+        CompletableFuture<Void> signal = tracker.completionSignal(messageId, policy);
 
-        while (System.currentTimeMillis() < deadlineMs) {
-            if (tracker.isComplete(messageId, policy)) {
-                var results = tracker.getResults(messageId);
-                if (results != null && !results.isEmpty()) {
-                    // Return first successful result, or first if none succeeded
-                    var successResult = results.values().stream()
-                            .filter(TaskResult::isSuccess)
-                            .findFirst();
-                    if (successResult.isPresent()) {
-                        log.debug("action=completion_satisfied messageId={} taskId={} policy={}",
-                                messageId.value(), taskId.value(), policy);
-                        return successResult.get();
-                    }
-                    return results.values().iterator().next();
-                }
-                return TaskResult.failed(taskId, taskId.value(),
-                        Duration.ZERO, "No results received", null);
-            }
-
-            try {
-                Thread.sleep(POLL_COMPLETION_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return TaskResult.failed(taskId, taskId.value(),
-                        Duration.ZERO, "Interrupted while awaiting completion", null);
-            }
+        try {
+            signal.get(config.taskExecutionTimeout().toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.warn("action=completion_timeout messageId={} taskId={} policy={}",
+                    messageId.value(), taskId.value(), policy);
+            return TaskResult.failed(taskId, taskId.value(),
+                    config.taskExecutionTimeout(), "Task execution timed out", null);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return TaskResult.failed(taskId, taskId.value(),
+                    Duration.ZERO, "Interrupted while awaiting completion", null);
+        } catch (ExecutionException e) {
+            return TaskResult.failed(taskId, taskId.value(),
+                    Duration.ZERO, "Completion signal failed: " + e.getMessage(), e);
         }
 
-        log.warn("action=completion_timeout messageId={} taskId={} policy={}",
-                messageId.value(), taskId.value(), policy);
-        return TaskResult.failed(taskId, taskId.value(),
-                config.taskExecutionTimeout(), "Task execution timed out", null);
+        List<TaskResult> ordered = tracker.resultsInCompletionOrder(messageId);
+        if (ordered.isEmpty()) {
+            return TaskResult.failed(taskId, taskId.value(),
+                    Duration.ZERO, "No results received", null);
+        }
+
+        // Selection deterministe par ordre de completion, avec preference
+        // pour un resultat reussi.
+        ResultSelectionPolicy selectionPolicy = config.resultSelectionPolicy();
+        List<TaskResult> candidates = selectionPolicy == ResultSelectionPolicy.LAST_COMPLETED
+                ? ordered.reversed()
+                : ordered;
+        TaskResult selected = candidates.stream()
+                .filter(TaskResult::isSuccess)
+                .findFirst()
+                .orElse(candidates.getFirst());
+        log.debug("action=completion_satisfied messageId={} taskId={} policy={} selection={}",
+                messageId.value(), taskId.value(), policy, selectionPolicy);
+        return selected;
     }
 }

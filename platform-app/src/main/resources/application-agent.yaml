@@ -78,6 +78,15 @@ platform:
   security:
     enabled: true
 
+  # Named HTTP targets used by http-client / http-mock on agents.
+  http-targets:
+    wiremock:
+      base-url: ${WIREMOCK_URL:http://wiremock:8080}
+      connection-timeout: 2s
+      read-timeout: 5s
+      paths:
+        count-requests: /__admin/requests/count
+
   # Agent — pas de datasource propre par defaut.
   # Les agents injectent la charge; la persistence est cote orchestrateur.
   datasources: {}
@@ -100,13 +109,11 @@ platform:
 
 
 # ---- Securite OAuth2/JWT ----
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:}
-          jwk-set-uri: ${OAUTH2_JWK_SET_URI:}
+# Si platform.security.enabled=true, fournir via env :
+#   SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+#   (ou SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI)
+# Ne pas declarer de placeholder vide : Spring Boot considere une jwk-set-uri
+# vide comme configuree et echoue au demarrage ("jwkSetUri cannot be empty").
 
 # ---- Reporting desactive cote agent ----
 # L'agent n'execute pas de reporting.

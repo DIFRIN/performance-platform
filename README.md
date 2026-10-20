@@ -1,126 +1,236 @@
 # Performance Engineering Platform
 
-A distributed performance engineering platform built on Java 25 and Spring Boot 4.
-Runs as a single artifact in standalone mode or as an orchestrator coordinating
-specialized agents across multiple VMs, clusters, and network zones.
+Distributed performance-testing platform built on **Java 25** and **Spring Boot 4**.
+The same fat JAR runs as a self-contained LOCAL runner or as a DISTRIBUTED
+orchestrator with specialized agents.
+
+A campaign is a YAML scenario executed in three ordered phases:
+
+```
+PREPARATION → INJECTION → ASSERTION
+```
+
+Within each phase, steps form a **DAG**: independent steps run in parallel on virtual
+threads, dependent steps wait for their prerequisites.
 
 ---
 
-## What It Does
+## Architecture at a glance
 
-The platform executes **performance campaigns** — sequences of preparation, load
-injection, and assertion steps defined in YAML. Each campaign produces an evidence
-report (HTML, PDF, JSON) and can publish it to Confluence, S3, SharePoint, Git, or Nexus.
+```mermaid
+flowchart TB
+    subgraph CORE["Framework-free core"]
+        DOMAIN["platform-domain"]
+        APP_PORTS["platform-application<br/>ports + use cases"]
+        PLUGIN_API["platform-plugin-api<br/>contracts + annotations"]
+        DSL["platform-scenario-dsl"]
+    end
 
-A campaign follows three mandatory phases in order:
+    subgraph RUNTIME["Execution"]
+        ENGINE["ExecutionEngine<br/>single engine"]
+        DISPATCH["StepDispatcher<br/>LOCAL | REMOTE"]
+        AGENT["TaskAgentRuntime<br/>single runtime"]
+        EXECUTORS["TaskExecutors"]
+        TRANSPORT["platform-transport<br/>5 channels"]
+    end
 
+    subgraph SUPPORT["Capabilities"]
+        INFRA["platform-infrastructure<br/>JPA · executors · plugins"]
+        GATLING["platform-injection-gatling"]
+        ASSERTIONS["platform-assertion"]
+        REPORTING["platform-reporting"]
+        OBS["platform-observability"]
+    end
+
+    DSL --> ENGINE
+    ENGINE --> DISPATCH
+    DISPATCH -->|LOCAL| EXECUTORS
+    DISPATCH -->|DISTRIBUTED| TRANSPORT
+    TRANSPORT --> AGENT
+    AGENT --> EXECUTORS
+    EXECUTORS --> GATLING
+    EXECUTORS --> ASSERTIONS
+    EXECUTORS --> INFRA
+    ENGINE -.->|ScenarioFinished| REPORTING
+    ENGINE -.->|domain events| OBS
+    APP_PORTS --- ENGINE
+    PLUGIN_API --- EXECUTORS
+    DOMAIN --- APP_PORTS
 ```
-PREPARATION  →  INJECTION  →  ASSERTION
-```
 
-Within each phase, steps are resolved as a **DAG**: independent steps run in parallel,
-dependent steps wait for their prerequisites. The orchestrator drives execution
-step-by-step — no bulk dispatch.
+| Module | Responsibility |
+|---|---|
+| `platform-domain` | Immutable records: scenario, plan, context, results, events (0 framework) |
+| `platform-application` | Ports and use cases (0 framework) |
+| `platform-plugin-api` | Public `TaskExecutor`/`AssertionExecutor` contracts and annotations |
+| `platform-scenario-dsl` | YAML parsing, strict validation, DAG checks, load models |
+| `platform-execution-engine` | One engine, DAG execution, dispatch strategies, retry, verdict |
+| `platform-agent-runtime` | One agent runtime, specialization filter, registration, TTL registry |
+| `platform-transport` | Five narrow channels and five implementations |
+| `platform-infrastructure` | Built-in executors, JPA persistence, plugin loading |
+| `platform-injection-gatling` | Gatling runner, load-model translation, result parsing |
+| `platform-assertion` | Assertion executors |
+| `platform-reporting` | Report model, verdict calculation, HTML/PDF/JSON renderers |
+| `platform-observability` | Micrometer metrics, MDC logging |
+| `platform-deployment` | Dockerfile, Compose stacks, Kubernetes manifests, demo scenarios |
+| `platform-app` | Spring Boot entry point, REST API, CLI, security, profiles |
+
+Detailed documentation: [architecture](.claude/knowledge/architecture.md),
+[component catalogue](.claude/knowledge/components.md),
+[specifications](.claude/knowledge/specs/00-overview.md).
 
 ---
 
-## Access Modes
+## Access modes
 
-The same JAR exposes three ways to run a campaign. The access mode is independent of
-the runtime mode (`LOCAL` / `DISTRIBUTED`) below.
+| Access | LOCAL | DISTRIBUTED / ORCHESTRATOR | DISTRIBUTED / AGENT |
+|---|:---:|:---:|:---:|
+| REST API `/api/v1/**` | ✓ | ✓ | ✗ |
+| Web UI | ✓ | ✓ | ✗ |
+| CLI `--scenario=` | ✓ | ✓ | ✗ |
+| Web server (Tomcat) | ✓ | ✓ | ✗ (`WebApplicationType.NONE`) |
+| Outbound transport only | — | — | ✓ |
 
-| Access mode | Invocation | Server | Use case |
-|---|---|---|---|
-| CLI (headless) | `java -jar platform-app.jar --scenario=path/to/scenario.yaml` | None | CI, pipelines, scripts |
-| API | `java -jar platform-app.jar`, then `POST /api/v1/scenarios` | Long-running | Programmatic integration |
-| IHM (web UI) | `java -jar platform-app.jar` with `web.ui.enabled=true`, then open `http://localhost:8080` | Long-running | Human operators |
+An agent is a pure worker: it registers over the transport and executes tasks; it never
+exposes an API, UI, or CLI.
 
 ### CLI (headless)
 
-Runs the scenario, prints a structured summary to stdout, and exits with a return code.
-No HTTP server, no web UI.
-
 ```bash
-java -jar platform-app/target/performance-platform.jar --scenario=scenarios/customer-api-perf.yaml
-echo $?   # 0 = success, 1 = failure, 2 = invalid args/scenario
+java -jar platform-app/target/performance-platform.jar \
+  --scenario=platform-deployment/examples/scenarios/device-api-local.yaml
+echo $?   # 0 success, 1 failed, 2 invalid arguments/scenario
 ```
 
-When `--scenario=` is present, the application starts with `WebApplicationType.NONE`
-(no Tomcat). When absent, it starts the long-running server (API + IHM). See ADR-021.
+When `--scenario=` is present the application runs once and exits
+(`WebApplicationType.NONE`, ADR-021).
 
-### API
+### REST API
 
 ```bash
 java -jar platform-app/target/performance-platform.jar
+
 curl -X POST http://localhost:8080/api/v1/scenarios \
   -H "Content-Type: application/yaml" --data-binary @scenario.yaml
+# 202 Accepted → {"executionId":"…","status":"ACCEPTED"}
+
+curl http://localhost:8080/api/v1/executions/{executionId}
+curl http://localhost:8080/api/v1/executions/{executionId}/tasks
+curl -X POST http://localhost:8080/api/v1/executions/{executionId}/cancel
 ```
 
-### IHM (web UI)
+Additional endpoints: `GET /api/v1/executions`, `DELETE /api/v1/executions/{id}`,
+`POST /api/v1/scenarios/upload` (multipart `file` or form field `yaml`),
+`GET /api/v1/agents`, `GET /api/v1/executions/{id}/report?format=html|pdf|json`.
+
+### Web UI
 
 ```bash
 java -jar platform-app/target/performance-platform.jar --web.ui.enabled=true
-# open http://localhost:8080
+# http://localhost:8080
 ```
 
 ---
 
-## Runtime Modes
+## Quick start
 
-A single JAR. The runtime mode is controlled by environment variables.
+### Prerequisites
 
-| `RUNTIME_MODE` | `MODE` | Description |
-|---|---|---|
-| `LOCAL` | — | Everything runs in one JVM: orchestrator + all executors |
-| `DISTRIBUTED` | `ORCHESTRATOR` | Drives the campaign, dispatches tasks to remote agents |
-| `DISTRIBUTED` | `AGENT` | Receives and executes tasks for its declared specializations |
+- Java 25
+- Maven 3.9+
+- Docker (optional, for PostgreSQL/Kafka/WireMock and the demo stack)
 
-Environment variables take priority over `application.yaml`.
-
-### Local mode
+### Build
 
 ```bash
-RUNTIME_MODE=LOCAL java -jar performance-platform.jar
+mvn clean install
 ```
 
-### Distributed mode
+### Run in LOCAL mode
 
 ```bash
-# Start the orchestrator
-RUNTIME_MODE=DISTRIBUTED MODE=ORCHESTRATOR java -jar performance-platform.jar
-
-# Start agents — each declares what it can execute
-RUNTIME_MODE=DISTRIBUTED MODE=AGENT java -jar performance-platform.jar
+java -jar platform-app/target/performance-platform.jar
+# or explicitly
+RUNTIME_MODE=LOCAL java -jar platform-app/target/performance-platform.jar
 ```
+
+LOCAL uses H2 in memory and the `IN_MEMORY` transport by default.
+
+### IDE profiles with Docker dependencies
+
+```bash
+docker compose -f platform-deployment/local-dev/docker-compose.yaml up -d
+```
+
+Then run one of the Spring profiles from the IDE:
+
+| Profile | Role |
+|---|---|
+| `ide-orchestrator` | DISTRIBUTED + ORCHESTRATOR, local PostgreSQL/Kafka/WireMock |
+| `agent-injector` | DISTRIBUTED + AGENT for preparation/injection tasks |
+| `agent-asserter` | DISTRIBUTED + AGENT for assertion tasks |
+
+### Operational demo stack
+
+```bash
+cd platform-deployment/examples/demo-stack
+./run-demo.sh
+```
+
+The stack runs:
+
+- `scenarios/remote-demo.yaml` — DISTRIBUTED, covering database, Kafka producer/consumer,
+  HTTP client, WireMock and assertions;
+- `scenarios/local-demo.yaml` — the same coverage through the headless CLI.
+
+---
+
+## Runtime configuration
+
+Priority: **environment variable > CLI argument > Spring property > default**
+(ADR-006 / ADR-032).
+
+| Concept | Env var | CLI | Property | Default |
+|---|---|---|---|---|
+| Mode | `RUNTIME_MODE` | `--runtime.mode=` | `runtime.mode` | `LOCAL` |
+| Role | `MODE` | `--runtime.role=` | `runtime.role` | `NONE` |
+| Transport | `TRANSPORT_TYPE` | `--transport.type=` | `transport.type` | `IN_MEMORY` |
+
+```bash
+# Orchestrator
+RUNTIME_MODE=DISTRIBUTED MODE=ORCHESTRATOR TRANSPORT_TYPE=KAFKA \
+  java -jar performance-platform.jar
+
+# Agent (no web server)
+RUNTIME_MODE=DISTRIBUTED MODE=AGENT TRANSPORT_TYPE=KAFKA \
+  AGENT_SUPPORTED_TASKS=mock-server,http-client,database \
+  java -jar performance-platform.jar
+```
+
+Provided Spring profiles: `local`, `orchestrator`, `agent`, `ide-orchestrator`,
+`agent-injector`, `agent-asserter`, `examples-local`. A profile whose name starts with
+`agent` forces `WebApplicationType.NONE`.
 
 ---
 
 ## Scenario DSL
-
-Campaigns are described in YAML.
 
 ```yaml
 scenario:
   id: customer-api-perf
   name: Customer API Campaign
   version: 1.0.0
-  tags:
-    - performance
-    - regression
+  tags: [performance, regression]
   metadata:
     owner: team-api
-    jira: PERF-123
-
   execution:
     mode: DISTRIBUTED
-    taskAvailabilityTimeoutSeconds: 120
+  taskAvailabilityTimeoutSeconds: 120
 
   steps:
     - id: purge-db
       task: database
       phase: PREPARATION
-      requiredContexts: []
-      dependsOn: []
       parameters:
         operation: PURGE
         datasource: customer-db
@@ -129,22 +239,17 @@ scenario:
     - id: start-mock
       task: mock-server
       phase: PREPARATION
-      requiredContexts: []
-      dependsOn: []
       parameters:
         deployment: EMBEDDED
+        action: START
         port: 8090
         mappingsPath: wiremock/mappings
 
     - id: inject
       task: gatling
       phase: INJECTION
-      requiredContexts:
-        - purge-db
-        - start-mock
-      dependsOn:
-        - purge-db
-        - start-mock
+      requiredContexts: [purge-db, start-mock]
+      dependsOn: [purge-db, start-mock]
       parameters:
         simulation: com.example.CustomerApiSimulation
         loadModel: api-load
@@ -153,291 +258,205 @@ scenario:
     - id: p95-check
       task: gatling-metric
       phase: ASSERTION
-      requiredContexts:
-        - inject
-      dependsOn:
-        - inject
+      requiredContexts: [inject]
+      dependsOn: [inject]
       parameters:
         metric: p95
         operator: LT
         value: 500
-
-    - id: error-rate
-      task: gatling-metric
-      phase: ASSERTION
-      requiredContexts:
-        - inject
-      dependsOn:
-        - inject
-      parameters:
-        metric: errorRate
-        operator: LT
-        value: 1.0
+        unit: ms
 
 loadModels:
   api-load:
     type: RAMP
     stages:
-      - duration: 2m
-        usersPerSecond: 10
-      - duration: 5m
-        usersPerSecond: 100
-      - duration: 5m
-        usersPerSecond: 300
-      - duration: 2m
-        usersPerSecond: 0
+      - {duration: 2m, usersPerSecond: 10}
+      - {duration: 5m, usersPerSecond: 100}
+      - {duration: 2m, usersPerSecond: 0}
 ```
 
-### Load model types
+Unknown YAML keys are rejected. Validation covers duplicate ids, phases, dependencies,
+DAG cycles, `requiredContexts`, `linkedTo` and load-model references.
 
-| Type | Description |
-|---|---|
-| `RAMP` | Linear ramp through stages, each with a target rate and duration |
-| `CONSTANT` | Fixed rate for a given duration |
-| `RAMP_UP_DOWN` | Ramp up → hold → ramp down |
-| `SPIKE` | Base rate with a sudden spike to a peak |
-| `STAIR` | Stepped increments at regular intervals |
-| `SOAK` | Long-duration constant load with a warm-up ramp |
-| `BURST` | Repeated bursts of high load separated by quiet periods |
-| `CUSTOM` | Arbitrary profile defined as time/rate points |
+Load-model types: `RAMP`, `RAMP_UP_DOWN`, `CONSTANT`, `SPIKE`, `STAIR`, `SOAK`, `BURST`,
+`CUSTOM`.
 
 ---
 
-## Built-in Task Types
+## Built-in tasks
 
 ### Preparation
 
-| Task name | Description |
+| Task | Operations |
 |---|---|
-| `database` | Purge, populate, migrate, backup, or restore a datasource |
-| `filesystem` | Create, delete, upload, or clean up files |
-| `shell` | Run an arbitrary shell command |
-| `docker` | Start, stop, or pull a Docker image |
-| `kafka-consumer` | Monitor, consume, or count messages on a Kafka topic |
-| `kafka-producer` | Pre-load messages onto a Kafka topic |
-| `mock-server` | Start or stop a WireMock instance (embedded or external) |
+| `database` | `PURGE`, `POPULATE`, `QUERY` |
+| `filesystem` | `CREATE`, `DELETE`, `UPLOAD`, `CLEANUP` |
+| `shell` | Command execution with timeout and allowed exit codes |
+| `docker` | `START`, `STOP`, `PULL` |
+| `http-client` | HTTP calls to named targets (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) |
+| `kafka-consumer` | `CONSUME`, `COUNT` |
+| `kafka-producer` | `PRODUCE`, `PRELOAD` |
+| `mock-server` | `START`, `STOP`, `RESET`, `VERIFY` on embedded/external WireMock |
 
 ### Injection
 
-| Task name | Description |
+| Task | Notes |
 |---|---|
-| `gatling` | Run a Gatling simulation. Supported protocols: HTTP/S, WebSocket, Kafka, JMS, gRPC |
+| `gatling` | Gatling 3.11 Java DSL. HTTP/HTTPS and WebSocket are bundled; JMS is optional; Kafka requires an external Gatling plugin. gRPC is out of scope. |
 
 ### Assertion
 
-| Task name | Description |
+| Task | Notes |
 |---|---|
-| `gatling-metric` | Assert on a Gatling metric: `p50`, `p95`, `p99`, `errorRate`, `throughput` |
-| `database` | Assert on a SQL query result |
-| `kafka` | Assert on produced count, consumed count, or consumer lag |
-| `http-mock` | Assert on WireMock received or matched call counts |
-| `file` | Assert on file existence or checksum |
+| `gatling-metric` | `p50`, `p75`, `p90`, `p95`, `p99`, `max`, `min`, `mean`, `errorRate`, `throughput`, `totalRequests`, `failedRequests` |
+| `database-assertion` | SQL `COUNT`/`EXISTS`/`SCALAR` comparisons |
+| `kafka` | `consumedCount`, `producedCount`, `lag` |
+| `wiremock` | Request count on a WireMock endpoint |
+| `http-mock` | Received/matched/unmatched calls |
+| `file` | `EXISTS`, `NOT_EXISTS`, `CHECKSUM`, `SIZE_GT`, `SIZE_LT` |
+
+Assertions can use `linkedTo` to sample during an injection step; the engine sends them
+`START` before the injection and `STOP` after it.
 
 ---
 
-## Distributed Agents
+## Distributed agents
 
-In `DISTRIBUTED` mode, each agent declares the tasks it can handle:
+Each agent declares its supported task names. The orchestrator broadcasts every task;
+each agent filters locally and executes only what it supports.
 
 ```yaml
 agent:
-  id: agent-perf-eu-01
-  name: "EU Performance Agent"
-  supportedTasks:
+  supported-tasks:
+    - database
+    - mock-server
     - gatling
-    - gatling-metric
-  capabilities:
-    maxConcurrentTasks: 3
-    version: "1.0.0"
-  heartbeat:
-    intervalSeconds: 10
-    ttlSeconds: 30
-  orchestrator:
-    url: http://orchestrator:8080
+    - wiremock
+  registry:
+    ttl-check-interval-seconds: 10
 ```
 
-The orchestrator broadcasts each task to all agents. Each agent decides locally
-whether it handles the task based on its `supportedTasks` list. Multiple agents
-can claim the same task — the orchestrator tracks all results independently.
+`AGENT_SUPPORTED_TASKS` (comma-separated) overrides the list. `AGENT_TAGS` no longer
+exists: routing is by `task` name only (ADR-015).
 
-### Transport options
+Multiple agents may claim the same task. The orchestrator tracks every claim and selects
+the result according to `execution.completion-policy` (`FIRST_COMPLETE`/`ALL_COMPLETE`)
+and `execution.result-selection-policy` (`FIRST_COMPLETED`/`LAST_COMPLETED`). A lost agent
+fast-fails its outstanding claims via heartbeat TTL detection.
 
-| Type | Config value | Mechanism |
-|---|---|---|
-| In-memory | `IN_MEMORY` | Used automatically in `LOCAL` mode |
-| TCP Socket | `SOCKET` | Direct TCP connections |
-| RabbitMQ | `RABBITMQ` | FANOUT exchange — all agents receive every task message |
-| Kafka | `KAFKA` | One consumer group per agent — each agent reads all messages |
-| gRPC | `GRPC` | Streaming-based, supports mTLS |
+### Transports
 
-Switch transport by changing one variable:
+| `transport.type` | Mechanism |
+|---|---|
+| `IN_MEMORY` | Synchronous, same JVM (LOCAL and tests) |
+| `KAFKA` | Tasks/signals/events topics; one consumer group per agent |
+| `RABBITMQ` | FANOUT exchanges; exclusive auto-delete queues; manual ack |
+| `HTTP` | POST to agent callback URLs; events posted to `/api/v1/events` |
+| `SOCKET` | Persistent TCP connections; best-effort |
 
-```bash
-TRANSPORT_TYPE=KAFKA  java -jar performance-platform.jar
-TRANSPORT_TYPE=GRPC   java -jar performance-platform.jar
-```
+gRPC is not supported. See the [transport spec](.claude/knowledge/specs/05-transport-layer.md)
+for current HTTP limitations.
 
 ---
 
-## Plugin System
+## Reporting
 
-Extend the platform without modifying its source. Drop a JAR into the `plugins/`
-directory and restart.
+The report engine listens to `ScenarioFinished`, classifies tasks by phase, computes the
+verdict (`SUCCESS`/`WARNING`/`FAILED`) and builds a `CampaignReport`. Renderers produce:
 
-```java
-// Declare the task type with one annotation
-@Preparation(name = "my-db-seeder", description = "Seeds the ACME legacy database")
-public class AcmeDbSeeder implements TaskExecutor {
+| Format | Renderer |
+|---|---|
+| HTML | `HtmlReportRenderer` |
+| PDF | `PdfReportRenderer` (OpenHTMLToPDF) |
+| JSON | `JsonReportRenderer` |
 
-    @Override
-    public String getSupportedTaskName() { return "my-db-seeder"; }
+Output configuration: `reporting.output-directory` (default `reports`) and
+`reporting.formats` (default HTML, PDF, JSON).
 
-    @Override
-    public TaskResult execute(ExecutionContext context, StepDefinition step) {
-        var connectionString = (String) step.parameters().get("connectionString");
-        // ...
-    }
-}
-```
-
-Use `@Preparation`, `@Injection`, or `@Assertion` to declare the task phase.
-The `name` attribute maps directly to the `task:` field in scenario YAML.
-
-Depend only on `platform-plugin-api`:
-
-```xml
-<dependency>
-    <groupId>com.performance</groupId>
-    <artifactId>platform-plugin-api</artifactId>
-    <version>${platform.version}</version>
-    <scope>provided</scope>
-</dependency>
-```
-
-If two plugins declare the same `name`, the external plugin takes precedence.
-Invalid JARs are skipped with a warning — they do not crash the platform.
-
----
-
-## Reports
-
-Every campaign produces a report aggregating preparation results, Gatling metrics,
-assertion verdicts, and a global `SUCCESS / WARNING / FAILED` outcome.
-
-### Formats
-
-| Format | File | Contents |
-|---|---|---|
-| HTML | `reports/<id>/campaign.html` | Full report with embedded Gatling graphs |
-| PDF | `reports/<id>/campaign.pdf` | Print-ready version generated from HTML |
-| JSON | `reports/<id>/campaign.json` | Machine-readable full report |
-
-### Publishers
-
-Configure one or more destinations:
-
-```yaml
-reporting:
-  formats: [HTML, PDF, JSON]
-  publishers:
-    - target: CONFLUENCE
-      properties:
-        url: https://company.atlassian.net
-        spaceKey: PERF
-        token: ${CONFLUENCE_TOKEN}
-    - target: S3
-      properties:
-        bucket: perf-reports
-        region: eu-west-1
-```
-
-Available targets: `CONFLUENCE`, `S3`, `SHAREPOINT`, `GIT`, `NEXUS`.
+> Automatic writing to disk is not wired yet: `ReportFileWriter` exists but no production
+> listener subscribes `ReportGenerated`. See “Current limitations”.
 
 ---
 
 ## Observability
 
-Every execution exposes:
-
-- **Metrics** via Micrometer: `execution_duration`, `task_duration`, `task_failures_total`
-- **Traces** via OpenTelemetry: one span per task and per phase
-- **Structured JSON logs** with `executionId`, `scenarioId`, `taskId`, `agentId`, `phase`
-
-Health endpoint: `GET /actuator/health`
+- Micrometer metrics: `execution_duration`, `task_duration`, `task_failures_total`,
+  `phase_duration`
+- MDC keys: `executionId`, `scenarioId`, `taskId`, `agentId`, `phase`
+- Actuator: `GET /actuator/health` (readiness/liveness probes enabled)
 
 ---
 
-## Quick Start
+## Plugin system
 
-### Prerequisites
+Implement `TaskExecutor` (or `AssertionExecutor`) and annotate the class with exactly one
+of `@Preparation`, `@Injection`, `@Assertion`. The annotation `name` is the `task:` key
+used in YAML.
 
-- Java 25
-- Docker (for local stack)
-- Maven 3.9+
-
-### Build
-
-```bash
-mvn clean install
+```java
+@Preparation(name = "acme-seeder", version = "1.0.0")
+public class AcmeSeeder implements TaskExecutor {
+    @Override public String getSupportedTaskName() { return "acme-seeder"; }
+    @Override public TaskResult execute(ExecutionContext context, StepDefinition step) {
+        // ...
+    }
+}
 ```
 
-### Run locally
+External plugins depend only on `platform-plugin-api` and are placed in
+`platform.plugins.dir` (default `./plugins`) with `platform.plugins.enabled=true`.
+Invalid JARs are reported as warnings and skipped.
 
-```bash
-RUNTIME_MODE=LOCAL java -jar platform-app/target/performance-platform.jar
-```
-
-Submit a scenario:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/scenarios/execute \
-  -H "Content-Type: application/yaml" \
-  --data-binary @scenario.yaml
-```
-
-### Run with Docker Compose
-
-```bash
-docker compose up
-```
-
-This starts an orchestrator, two agents, Kafka, and PostgreSQL.
+> JAR discovery and registration in `PluginRegistry` are implemented; execution wiring
+> from `PluginRegistry` to the engine/agent is still pending. See “Current limitations”.
 
 ---
 
-## Configuration Reference
+## Build and tests
 
-| Variable | Values | Default | Description |
-|---|---|---|---|
-| `RUNTIME_MODE` | `LOCAL`, `DISTRIBUTED` | `LOCAL` | Execution mode |
-| `MODE` | `ORCHESTRATOR`, `AGENT` | `LOCAL` | Role in distributed mode |
-| `TRANSPORT_TYPE` | `SOCKET`, `RABBITMQ`, `KAFKA`, `GRPC` | — | Message transport |
-| `DB_URL` | JDBC URL | — | PostgreSQL connection |
-| `DB_USER` | string | — | Database user |
-| `DB_PASSWORD` | string | — | Database password (use K8s Secret) |
+```bash
+mvn clean install                    # full build
+mvn test                             # unit + in-memory E2E tests
+mvn verify -P integration-tests      # Testcontainers integration tests (*IT)
+```
 
-All variables override their `application.yaml` equivalents.
+Test tiers:
+
+| Pattern | Tier | Runner |
+|---|---|---|
+| `*Test.java` | unit / in-memory E2E | surefire (`mvn test`) |
+| `*IT.java` | integration, Testcontainers | failsafe (`mvn verify -P integration-tests`) |
+
+Architecture boundaries are enforced by `ModuleDependencyTest` (ASM scan, Java 25
+compatible). ArchUnit tests are vacuous on Java 25 and must not be used for new rules.
+
+> On WSL, build the repository from an ext4 path: the `/mnt/c` 9p mount dominates test
+> time (class loading). A full suite measured ~1:40 on ext4 versus ~20 min on `/mnt/c`.
 
 ---
 
-## Architecture
+## Current limitations
 
-```
-platform-domain/           Pure domain — no framework dependency
-platform-application/      Use cases and ports (interfaces)
-platform-infrastructure/   Adapters: DB, transport, publishers
-platform-scenario-dsl/     YAML parser and scenario validation
-platform-execution-engine/ DAG orchestration, retry, phase management
-platform-agent-runtime/    Agent lifecycle, specialization filter
-platform-transport/        ExecutionTransport + 4 implementations
-platform-injection-gatling/ Gatling runner and load model translation
-platform-assertion/        Assertion executors
-platform-reporting/        Report engine and publishers
-platform-plugin-api/       Public API for external plugins
-platform-observability/    Micrometer and OpenTelemetry configuration
-platform-deployment/       Dockerfile and Kubernetes manifests
-platform-app/              Spring Boot entry point
-```
+- External plugin executors are discoverable but not yet executable by the engine/agent.
+- Distributed retry policy is carried in the request but not applied by the agent
+  pipeline.
+- `ReportFileWriter` is not subscribed to `ReportGenerated`; `GenerateReportUseCase` has
+  no implementation.
+- HTTP transport has no inbound task endpoint, and AGENT nodes do not start a web server
+  (ADR-019).
+
+---
+
+## Documentation
+
+| Topic | File |
+|---|---|
+| Architecture and mechanisms | `.claude/knowledge/architecture.md` |
+| Component catalogue | `.claude/knowledge/components.md` |
+| Specifications | `.claude/knowledge/specs/00-overview.md` |
+| Architecture decisions | `.claude/knowledge/adr/` |
+| Glossary | `.claude/knowledge/glossary.md` |
+| Constraints | `.claude/knowledge/constraints.md` |
 
 ---
 

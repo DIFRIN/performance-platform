@@ -1,5 +1,8 @@
 package com.performance.platform.agent.runtime;
 
+import com.performance.platform.agent.filter.TaskSpecializationFilter;
+import com.performance.platform.plugin.StatefulResourceCleaner;
+
 import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.filter.TaskFilterResult;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
@@ -15,6 +18,7 @@ import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.message.TaskExecutionRequest;
@@ -33,7 +37,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Verifie que le {@link DistributedAgentRuntime} utilise exclusivement
+ * Verifie que le {@link TaskAgentRuntime} utilise exclusivement
  * les {@code supportedTaskNames} de son {@link AgentDescriptor}
  * et non les annotations ou le registre des {@link TaskExecutor} (ADR-015).
  *
@@ -41,7 +45,7 @@ import static org.mockito.Mockito.when;
  * sont TOUS charges par le PluginLoader mais SEULS ceux listes dans la
  * configuration {@code agent.supported-tasks} sont actives.</p>
  */
-@DisplayName("DistributedAgentRuntime — config-driven supportedTaskNames")
+@DisplayName("TaskAgentRuntime — config-driven supportedTaskNames")
 class DistributedAgentConfigDrivenTest {
 
     @Test
@@ -65,7 +69,7 @@ class DistributedAgentConfigDrivenTest {
                 configuredNames, new AgentCapabilities(10, "1.0.0"),
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-        var agent = new DistributedAgentRuntime(
+        var agent = distributedRuntime(
                 transport, filter, registrationPort, descriptor,
                 Duration.ofSeconds(10), Duration.ofMinutes(5),
                 List.of(exec1, exec2, exec3), List.of());
@@ -128,7 +132,7 @@ class DistributedAgentConfigDrivenTest {
                 configuredNames, new AgentCapabilities(10, "1.0.0"),
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-        var agent = new DistributedAgentRuntime(
+        var agent = distributedRuntime(
                 transport, filter, registrationPort, descriptor,
                 Duration.ofSeconds(10), Duration.ofMinutes(5),
                 List.of(exec1, exec2, exec3), List.of());
@@ -154,7 +158,7 @@ class DistributedAgentConfigDrivenTest {
                 emptyNames, new AgentCapabilities(0, "1.0.0"),
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
 
-        var agent = new DistributedAgentRuntime(
+        var agent = distributedRuntime(
                 transport, filter, registrationPort, descriptor,
                 Duration.ofSeconds(10), Duration.ofMinutes(5),
                 List.of(), List.of());
@@ -165,4 +169,18 @@ class DistributedAgentConfigDrivenTest {
         assertThat(agent.canExecute("http-client")).isFalse();
         assertThat(agent.getDescriptor().supportedTaskNames()).isEmpty();
     }
+
+    private static TaskAgentRuntime distributedRuntime(
+            ExecutionTransport transport,
+            TaskSpecializationFilter filter,
+            AgentRegistrationPort registrationPort,
+            AgentDescriptor descriptor,
+            Duration heartbeatInterval,
+            Duration taskExecutionTimeout,
+            List<TaskExecutor> taskExecutors,
+            List<StatefulResourceCleaner> cleaners) {
+        return new TaskAgentRuntime(transport, transport, transport, transport, filter, descriptor, taskExecutionTimeout,
+                taskExecutors, cleaners, registrationPort, heartbeatInterval);
+    }
+
 }

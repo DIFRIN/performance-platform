@@ -138,7 +138,7 @@ public interface AssertionExecutor extends TaskExecutor {
                 getSupportedTaskName(),
                 taskStatus,
                 result.evaluationDuration(),
-                Map.of("assertion", summary),
+                Map.of(AssertionSummary.OUTPUT_KEY, summary),
                 taskStatus == TaskStatus.FAILED ? result.description() : null,
                 null,
                 result.evaluatedAt());

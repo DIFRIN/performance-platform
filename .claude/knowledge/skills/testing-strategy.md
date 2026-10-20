@@ -61,17 +61,16 @@ class DatabaseTaskExecutorIT {
 
 ---
 
-## Tests Spring Modulith
+## Tests d'architecture (ASM, Modulith retiré)
 
 ```java
-@ApplicationModuleTest
-class ExecutionModuleTest {
-    @Test
-    void shouldPublishScenarioStartedEvent() {
-        // Vérifie que le module publie bien l'event sans dépendance directe sur Reporting
-    }
-}
+// ModuleDependencyTest : scan ASM des target/classes (Java 25 compatible)
+// Vérifie les arêtes interdites entre modules Maven + non-vacuité du scan.
+// Ne PAS utiliser @ApplicationModuleTest (Spring Modulith retiré, ADR-035).
 ```
+
+Pour les interactions inter-modules, tester l'événement publié via un
+`ApplicationListener` de test ou un `@SpringBootTest` avec le contexte réel.
 
 ---
 

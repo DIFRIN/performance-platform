@@ -1,16 +1,36 @@
 # Spec 08 — Report Engine
 
-**Module** : `platform-reporting`  
-**Dépend de** : `platform-domain`
+**Module** : `platform-reporting`
+**Dépend de** : `platform-domain`, `platform-application`
 
 ---
 
 ## 1. Objectif
 
-Générer un rapport complet de campagne (HTML, PDF, JSON) et le publier
-vers les destinations configurées.
+Générer un rapport complet de campagne (HTML, PDF, JSON) à partir de l'état persisté
+d'une exécution, et l'écrire **localement** sur disque. Il n'y a pas de publication vers
+des systèmes externes (ADR-022) : les anciens publishers Confluence/S3/Git/SharePoint/
+Nexus sont hors périmètre.
+
+Le moteur est **event-driven** : `DefaultReportEngine` écoute `ScenarioFinished` et
+génère le rapport à la fin de chaque exécution. Il peut aussi être appelé directement via
+`generate(ExecutionState)`.
 
 ---
+
+```mermaid
+flowchart LR
+    SF["ScenarioFinished"] --> RE["DefaultReportEngine"]
+    RE --> VC["VerdictCalculator"]
+    VC --> CR["CampaignReport"]
+    CR --> H["HtmlReportRenderer"]
+    CR --> P["PdfReportRenderer"]
+    CR --> J["JsonReportRenderer"]
+    H --> FW["ReportFileWriter"]
+    P --> FW
+    J --> FW
+    FW --> OUT["outputDirectory / executionId"]
+```
 
 ## 2. Interfaces
 
@@ -19,20 +39,25 @@ public interface ReportEngine {
     CampaignReport generate(ExecutionState state) throws ReportGenerationException;
 }
 
-public interface ReportPublisher {
-    void publish(CampaignReport report, PublisherConfig config) throws PublicationException;
-    PublicationTarget getTarget();
-}
-
 public interface ReportRenderer {
+    ReportFormat getFormat();                      // HTML | PDF | JSON
     byte[] render(CampaignReport report) throws RenderException;
-    ReportFormat getFormat();          // HTML | PDF | JSON
 }
 ```
 
+`DefaultReportEngine` :
+- est conditionnel à la présence d'une datasource (`platform.datasources.default.url`) ;
+- relit `ExecutionState` depuis `ExecutionRepository` ;
+- classifie les résultats par phase grâce aux types présents dans le contexte
+  (`InjectionResult`, `AssertionSummary`, `TaskResult`) ;
+- calcule le verdict via `VerdictCalculator` ;
+- publie `ReportGenerated(executionId, reportId, timestamp)` après génération ;
+- une erreur de génération est loggée (`action=report_generation_failed`) et ne fait pas
+  échouer l'exécution.
+
 ---
 
-## 3. Structure du Rapport
+## 3. Structure du rapport
 
 ```java
 public record CampaignReport(
@@ -42,17 +67,13 @@ public record CampaignReport(
     String scenarioVersion,
     List<String> tags,
     Map<String, String> metadata,
-
     EnvironmentInfo environment,
     ExecutionSummary executionSummary,
-
     List<TaskReportEntry> preparationResults,
     List<InjectionReportEntry> injectionResults,
     List<AssertionReportEntry> assertionResults,
-
     Verdict verdict,
     String verdictReason,
-
     Instant generatedAt,
     Duration totalDuration
 ) {}
@@ -64,157 +85,124 @@ public record EnvironmentInfo(
 ) {}
 
 public record ExecutionSummary(
-    int totalTasks,
-    int successfulTasks,
-    int failedTasks,
-    int skippedTasks,
-    Duration preparationDuration,
-    Duration injectionDuration,
-    Duration assertionDuration
+    int totalTasks, int successfulTasks, int failedTasks, int skippedTasks,
+    Duration preparationDuration, Duration injectionDuration, Duration assertionDuration
+) {}
+
+public record TaskReportEntry(
+    TaskId taskId, String taskName, TaskStatus status,
+    Duration duration, Map<String, Object> outputs
 ) {}
 
 public record InjectionReportEntry(
-    TaskId taskId,
-    InjectionResult metrics,
-    Path gatlingReportDirectory    // embarqué dans le rapport HTML
+    TaskId taskId, InjectionResult metrics, Path gatlingReportDirectory
 ) {}
 
 public record AssertionReportEntry(
-    TaskId assertionId,
-    AssertionResult result,
-    Evidence evidence
+    TaskId assertionId, AssertionResult result, Evidence evidence
 ) {}
 ```
 
----
-
-## 4. Formats de Sortie
-
-### HTML
-Généré avec OpenHTMLToPDF ou Thymeleaf → HTML statique.  
-Structure :
-- En-tête : logo, metadata, verdict (badge coloré)
-- Résumé exécution : timeline, KPIs globaux
-- Section Préparation : tableau des tâches
-- Section Injection : KPIs Gatling, graphiques embarqués
-- Section Assertions : tableau PASSED/FAILED avec evidence
-- Footer : date, version
-
-### PDF
-Converti depuis le HTML avec OpenHTMLToPDF.
-
-```java
-@Component
-public class PdfReportRenderer implements ReportRenderer {
-    // Utiliser OpenHTMLToPDF
-    // com.openhtmltopdf:openhtmltopdf-pdfbox
-}
-```
-
-### JSON
-Sérialisation JSON de `CampaignReport` complet (Jackson).
+Classes de résultat (dans `platform-domain`) :
+- `InjectionResult` — KPIs Gatling (`totalRequests`, `successfulRequests`, ...),
+  `OUTPUT_KEY = "result"` ;
+- `AssertionResult` / `AssertionSummary` — statut, description, evidence,
+  `OUTPUT_KEY = "assertion"`.
 
 ---
 
-## 5. Output Directory
+## 4. Calcul du verdict
 
-```
-reports/
-  <executionId>/
-    campaign.html
-    campaign.pdf
-    campaign.json
-    gatling/
-      <simulationId>/      ← copié depuis le répertoire Gatling
-        index.html
-        ...
-```
+`VerdictCalculator.calculate(assertionEntries)` :
 
----
+| Condition | Verdict |
+|---|---|
+| aucune assertion | `SUCCESS` |
+| au moins une assertion `ERROR` | `FAILED` |
+| au moins une assertion `FAILED` | `WARNING` |
+| toutes `PASSED`/`SKIPPED` | `SUCCESS` |
 
-## 6. Publishers
-
-### Interface de Configuration
-
-```java
-public record PublisherConfig(
-    PublicationTarget target,
-    Map<String, String> properties     // paramètres spécifiques à la target
-) {}
-```
-
-### Confluence
-```yaml
-reporting:
-  publishers:
-    - target: CONFLUENCE
-      properties:
-        url: https://company.atlassian.net
-        spaceKey: PERF
-        parentPageId: "12345"
-        token: ${CONFLUENCE_TOKEN}
-```
-
-### S3
-```yaml
-reporting:
-  publishers:
-    - target: S3
-      properties:
-        bucket: perf-reports
-        prefix: campaigns/
-        region: eu-west-1
-```
-
-### Git
-```yaml
-reporting:
-  publishers:
-    - target: GIT
-      properties:
-        repoUrl: https://github.com/company/perf-reports
-        branch: main
-        path: reports/
-        commitMessage: "Add campaign report {executionId}"
-        token: ${GIT_TOKEN}
-```
-
-### SharePoint
-```yaml
-reporting:
-  publishers:
-    - target: SHAREPOINT
-      properties:
-        siteUrl: https://company.sharepoint.com/sites/perf
-        libraryName: "Performance Reports"
-        token: ${SHAREPOINT_TOKEN}
-```
-
-### Nexus
-```yaml
-reporting:
-  publishers:
-    - target: NEXUS
-      properties:
-        url: https://nexus.company.com
-        repository: perf-reports
-        groupId: com.company.perf
-        token: ${NEXUS_TOKEN}
-```
+`buildVerdictReason(...)` produit une explication lisible (compteurs / première cause).
+Le verdict du rapport peut différer du verdict d'exécution (`ExecutionEngine`) : ce
+dernier reflète les statuts de tâches, le rapport reflète les assertions.
 
 ---
 
-## 7. Configuration Multi-Publisher
+## 5. Formats de sortie
+
+| Format | Renderer | Mécanisme |
+|---|---|---|
+| HTML | `HtmlReportRenderer` | template `templates/campaign-report.html` + substitution de placeholders et sections générées |
+| PDF | `PdfReportRenderer` | rendu HTML puis conversion OpenHTMLToPDF (`openhtmltopdf-pdfbox`) |
+| JSON | `JsonReportRenderer` | sérialisation Jackson de `CampaignReport` |
+
+Le template HTML contient : badge de verdict, raison, résumé d'exécution, tableau de
+préparation, KPIs d'injection, tableau des assertions et informations d'environnement.
+Les renderers sont des beans Spring ; `ReportFileWriter` les indexe par `ReportFormat`.
+
+---
+
+## 6. Écriture sur disque
+
+`ReportFileWriter.write(executionId, report)` :
+
+```
+<reporting.output-directory>/<executionId>/
+  campaign.html
+  campaign.pdf
+  campaign.json
+  gatling/<simulationClass>/...     ← copié depuis les répertoires Gatling
+```
+
+- Seuls les formats listés dans `reporting.formats` sont produits.
+- Les répertoires Gatling sont copiés en parallèle sur Virtual Threads.
+- Les erreurs d'I/O sont remontées en `UncheckedIOException`.
+- Le répertoire de sortie est créé si nécessaire.
+
+> **État du câblage (2026-10-20)** : `ReportFileWriter` est un bean mais aucun composant
+> de production ne l'appelle. `DefaultReportEngine` génère le `CampaignReport` en
+> mémoire et publie `ReportGenerated` ; il n'écrit pas sur disque. `ReportController`
+> (`GET /api/v1/executions/{id}/report`) ne sert que des fichiers déjà présents.
+> Le port `GenerateReportUseCase` est défini mais n'a pas d'implémentation. L'écriture
+> automatique reste donc à raccorder (candidat : un `@EventListener(ReportGenerated)`).
+
+Configuration (`ReportProperties`, préfixe `reporting`) :
 
 ```yaml
 reporting:
-  outputDirectory: ./reports
-  formats: [HTML, PDF, JSON]
-  publishers:
-    - target: S3
-      properties: { ... }
-    - target: CONFLUENCE
-      properties: { ... }
+  output-directory: ${REPORTING_OUTPUT_DIR:reports}   # défaut : reports
+  formats:
+    - HTML
+    - PDF
+    - JSON
 ```
 
-Tous les publishers configurés reçoivent le rapport.
+Si `formats` est absent ou vide, les trois formats sont actifs.
+
+---
+
+## 7. Déclenchement et intégration
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant EE as ExecutionEngine
+    participant BUS as ApplicationEventPublisher
+    participant RE as DefaultReportEngine
+    participant R as ExecutionRepository
+    participant VC as VerdictCalculator
+    participant FW as ReportFileWriter
+
+    EE->>BUS: ScenarioFinished
+    BUS->>RE: onScenarioFinished
+    RE->>R: findById(executionId)
+    R-->>RE: ExecutionState
+    RE->>VC: calculate(assertions)
+    VC-->>RE: Verdict
+    RE->>BUS: ReportGenerated
+    Note over BUS,FW: ReportFileWriter non abonné — aucune écriture automatique
+```
+
+Note : `DefaultReportEngine` est désactivé en AGENT sans datasource ; le reporting est
+une responsabilité d'orchestrateur (ou de LOCAL). Aucun accès réseau n'est effectué pour
+produire ou écrire un rapport.

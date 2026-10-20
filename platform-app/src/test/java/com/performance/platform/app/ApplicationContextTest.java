@@ -4,7 +4,6 @@ import com.performance.platform.PerformancePlatformApplication;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.modulith.Modulith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,14 +22,6 @@ class ApplicationContextTest {
     void shouldHaveSpringBootApplicationAnnotation() {
         var annotation = PerformancePlatformApplication.class
                 .getAnnotation(SpringBootApplication.class);
-        assertThat(annotation).isNotNull();
-    }
-
-    @Test
-    @DisplayName("should have @Modulith annotation")
-    void shouldHaveModulithAnnotation() {
-        var annotation = PerformancePlatformApplication.class
-                .getAnnotation(Modulith.class);
         assertThat(annotation).isNotNull();
     }
 

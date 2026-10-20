@@ -1,3 +1,7 @@
+> **Note (2026-10-20)** : le mécanisme de plugin JAR reste valide. Les exemples
+> `ReportPublisher` de ce document sont historiques : la sortie des rapports est locale
+> uniquement (ADR-022).
+
 # ADR-007 — Système de Plugin JAR avec Annotations
 
 **Date** : 2026-06-08

@@ -6,7 +6,7 @@ import com.performance.platform.domain.execution.PartialExecutionContext;
 import com.performance.platform.domain.id.*;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.TaskExecutor;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.EventChannel;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * conversion {@link PartialExecutionContext} → {@link ExecutionContext},
  * exécution, publication du résultat, et nettoyage final.
  * <p>
- * Utilisé par {@link DistributedAgentRuntime} et {@code LocalAgent}.
+ * Utilisé par {@link TaskAgentRuntime}.
  */
 public class TaskExecutionPipeline {
 
@@ -38,7 +38,7 @@ public class TaskExecutionPipeline {
     /** TaskName utilisé pour les TaskResult wrappers dans le bridge PartialExecutionContext → ExecutionContext. */
     static final String PARTIAL_TASK_WRAPPER = "_partial_";
 
-    private final ExecutionTransport transport;
+    private final EventChannel transport;
     private final Map<String, TaskExecutor> taskExecutors;
     private final AgentId agentId;
     private final ScheduledExecutorService progressScheduler;
@@ -48,7 +48,7 @@ public class TaskExecutionPipeline {
     private final AtomicReference<AgentState> currentState;
 
     public TaskExecutionPipeline(
-            ExecutionTransport transport,
+            EventChannel transport,
             Map<String, TaskExecutor> taskExecutors,
             AgentId agentId,
             ScheduledExecutorService progressScheduler,
@@ -244,8 +244,8 @@ public class TaskExecutionPipeline {
      * {@link ExecutionContext} compatible avec {@link TaskExecutor#execute}.
      * <p>
      * Chaque entrée du store partiel (Object) est wrappée dans un {@link TaskResult}
-     * factice pour satisfaire le contrat de {@link ExecutionContext#get}
-     * et {@link ExecutionContext#getFirst}.
+     * factice dont les outputs sont les outputs nommes transmis par le
+     * {@link PartialExecutionContext} (cle contractuelle preservee).
      */
     static ExecutionContext toExecutionContext(PartialExecutionContext partial) {
         var store = new HashMap<String, Map<String, TaskResult>>();
@@ -254,11 +254,12 @@ public class TaskExecutionPipeline {
             var taskId = entry.getKey();
             var agentResults = new HashMap<String, TaskResult>();
             for (var agentEntry : entry.getValue().entrySet()) {
+                Map<String, Object> outputs = asOutputMap(agentEntry.getValue());
                 var wrapperResult = TaskResult.success(
                         TaskId.of(taskId),
                         PARTIAL_TASK_WRAPPER,
                         Duration.ZERO,
-                        Map.of("value", agentEntry.getValue())
+                        outputs
                 );
                 agentResults.put(agentEntry.getKey(), wrapperResult);
             }
@@ -270,5 +271,14 @@ public class TaskExecutionPipeline {
                 partial.scenarioId(),
                 Map.copyOf(store)
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> asOutputMap(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            return (Map<String, Object>) map;
+        }
+        // Compatibilite avec les anciens messages partiels (valeur brute).
+        return Map.of("value", value);
     }
 }

@@ -2,7 +2,7 @@ package com.performance.platform.engine.lifecycle;
 
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.engine.ExecutionLifecycleDispatcher;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.SignalChannel;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "runtime.mode", havingValue = "DISTRIBUTED")
 public class RemoteLifecycleDispatcher implements ExecutionLifecycleDispatcher {
 
-    private final ExecutionTransport transport;
+    private final SignalChannel transport;
 
-    public RemoteLifecycleDispatcher(ExecutionTransport transport) {
+    public RemoteLifecycleDispatcher(SignalChannel transport) {
         this.transport = transport;
     }
 

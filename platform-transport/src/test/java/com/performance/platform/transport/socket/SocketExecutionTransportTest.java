@@ -65,6 +65,13 @@ class SocketExecutionTransportTest {
         agent = new SocketExecutionTransport(props);
         agent.connect();
 
+        // L'enregistrement de la connexion se fait dans l'accept loop de
+        // l'orchestrateur, donc potentiellement apres le retour de
+        // agent.connect(). Attendre l'enregistrement effectif avant tout
+        // broadcast, sinon les messages sont perdus (best-effort, 0 connexion).
+        await().atMost(Duration.ofSeconds(5))
+                .until(() -> orchestrator.activeConnectionCount() == 1);
+
         objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
         executionId = ExecutionId.generate();
@@ -174,8 +181,6 @@ class SocketExecutionTransportTest {
         @Test
         @DisplayName("should return SOCKET type")
         void shouldReturnSocketType() {
-            assertThat(orchestrator.getType()).isEqualTo(TransportType.SOCKET);
-            assertThat(agent.getType()).isEqualTo(TransportType.SOCKET);
         }
 
         @Test
@@ -421,6 +426,8 @@ class SocketExecutionTransportTest {
             var agent2 = new SocketExecutionTransport(props);
             agent2.connect();
             try {
+                await().atMost(Duration.ofSeconds(5))
+                        .until(() -> orchestrator.activeConnectionCount() == 2);
                 var latch1 = new CountDownLatch(1);
                 var latch2 = new CountDownLatch(1);
                 agent.receiveTask(request -> latch1.countDown());

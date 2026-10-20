@@ -11,6 +11,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.ProducerFactory;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +46,16 @@ public class KafkaClusterRegistry {
     }
 
     public ProducerFactory<String, String> producerFactory(String clusterName) {
+        return producerFactory(clusterName, null);
+    }
+
+    /**
+     * Creates a producer factory whose blocking calls (metadata fetch, send,
+     * flush, close) are bounded by {@code operationTimeout}. Kafka's defaults
+     * ({@code max.block.ms}=60s, {@code delivery.timeout.ms}=120s) can otherwise
+     * block well past the step timeout.
+     */
+    public ProducerFactory<String, String> producerFactory(String clusterName, Duration operationTimeout) {
         KafkaClusterProperties cluster = clusters.get(clusterName);
         if (cluster == null) {
             throw new IllegalArgumentException("Unknown Kafka cluster: " + clusterName);
@@ -54,12 +65,40 @@ public class KafkaClusterRegistry {
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.ACKS_CONFIG, cluster.producerAcks());
+        applyOperationTimeout(config, operationTimeout);
         log.debug("action=producer_factory_created clusterName={} bootstrapServers={} acks={}",
                 clusterName, cluster.bootstrapServers(), cluster.producerAcks());
         return new DefaultKafkaProducerFactory<>(config);
     }
 
+    /**
+     * Bounds Kafka producer blocking calls by the step timeout. Kept
+     * package-private so the legacy inline-bootstrap path uses the same bounds.
+     */
+    static void applyOperationTimeout(Map<String, Object> config, Duration operationTimeout) {
+        if (operationTimeout == null || operationTimeout.isZero() || operationTimeout.isNegative()) {
+            return;
+        }
+        long timeoutMs = Math.max(1_000L, operationTimeout.toMillis());
+        int requestTimeoutMs = (int) Math.min(timeoutMs, 10_000L);
+        int deliveryTimeoutMs = (int) Math.min(Math.max(timeoutMs, requestTimeoutMs + 5L), Integer.MAX_VALUE);
+        config.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, timeoutMs);
+        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
+        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, deliveryTimeoutMs);
+        config.put(ProducerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MS_CONFIG, requestTimeoutMs);
+        config.put(ProducerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS_CONFIG, (long) requestTimeoutMs);
+    }
+
     public ConsumerFactory<String, String> consumerFactory(String clusterName, String groupId) {
+        return consumerFactory(clusterName, groupId, null);
+    }
+
+    /**
+     * Creates a consumer factory whose blocking calls (metadata fetch, poll,
+     * commit, close) are bounded by {@code operationTimeout}.
+     */
+    public ConsumerFactory<String, String> consumerFactory(String clusterName, String groupId,
+                                                           Duration operationTimeout) {
         KafkaClusterProperties cluster = clusters.get(clusterName);
         if (cluster == null) {
             throw new IllegalArgumentException("Unknown Kafka cluster: " + clusterName);
@@ -71,6 +110,12 @@ public class KafkaClusterRegistry {
         config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        if (operationTimeout != null && !operationTimeout.isZero() && !operationTimeout.isNegative()) {
+            int requestTimeoutMs = (int) Math.min(Math.max(1_000L, operationTimeout.toMillis()), 10_000L);
+            config.put(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
+            config.put(ConsumerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MS_CONFIG, requestTimeoutMs);
+            config.put(ConsumerConfig.SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS_CONFIG, (long) requestTimeoutMs);
+        }
         log.debug("action=consumer_factory_created clusterName={} groupId={} bootstrapServers={}",
                 clusterName, groupId, cluster.bootstrapServers());
         return new DefaultKafkaConsumerFactory<>(config);

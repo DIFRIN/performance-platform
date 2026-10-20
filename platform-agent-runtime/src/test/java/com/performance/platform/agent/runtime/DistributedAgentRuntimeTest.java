@@ -1,5 +1,7 @@
 package com.performance.platform.agent.runtime;
 
+import com.performance.platform.transport.ExecutionTransport;
+
 import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.filter.TaskSpecializationFilter;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
@@ -16,6 +18,7 @@ import com.performance.platform.domain.id.*;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 import com.performance.platform.transport.message.ExecutionEvent;
@@ -38,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
-@DisplayName("DistributedAgentRuntime")
+@DisplayName("TaskAgentRuntime")
 class DistributedAgentRuntimeTest {
 
     // === Shared fixtures ===
@@ -52,7 +55,7 @@ class DistributedAgentRuntimeTest {
     private Duration heartbeatInterval = Duration.ofSeconds(3);
     private Duration taskExecutionTimeout = Duration.ofSeconds(30);
 
-    private DistributedAgentRuntime runtime;
+    private TaskAgentRuntime runtime;
 
     @BeforeEach
     void setUp() {
@@ -85,13 +88,13 @@ class DistributedAgentRuntimeTest {
 
     // === Factory methods ===
 
-    private DistributedAgentRuntime createRuntime(List<TaskExecutor> taskExecutors) {
+    private TaskAgentRuntime createRuntime(List<TaskExecutor> taskExecutors) {
         return createRuntime(taskExecutors, List.of());
     }
 
-    private DistributedAgentRuntime createRuntime(List<TaskExecutor> taskExecutors,
+    private TaskAgentRuntime createRuntime(List<TaskExecutor> taskExecutors,
                                                   List<StatefulResourceCleaner> cleaners) {
-        return new DistributedAgentRuntime(
+        return distributedRuntime(
                 transport, filter, registrationPort, descriptor,
                 heartbeatInterval, taskExecutionTimeout,
                 taskExecutors != null ? taskExecutors : List.of(),
@@ -99,7 +102,7 @@ class DistributedAgentRuntimeTest {
         );
     }
 
-    private DistributedAgentRuntime createRuntime() {
+    private TaskAgentRuntime createRuntime() {
         return createRuntime(List.of(), List.of());
     }
 
@@ -207,7 +210,7 @@ class DistributedAgentRuntimeTest {
                 @Override
                 public void sendHeartbeat(AgentId id, AgentHeartbeat h) { /* no-op */ }
             };
-            runtime = new DistributedAgentRuntime(
+            runtime = distributedRuntime(
                     transport, filter, failingRegPort, descriptor,
                     heartbeatInterval, taskExecutionTimeout, List.of(), List.of()
             );
@@ -421,7 +424,7 @@ class DistributedAgentRuntimeTest {
                 }
             };
 
-            runtime = new DistributedAgentRuntime(
+            runtime = distributedRuntime(
                     transport, filter, registrationPort, descriptor,
                     heartbeatInterval, shortTimeout, List.of(slowExecutor), List.of());
             runtime.start();
@@ -643,7 +646,7 @@ class DistributedAgentRuntimeTest {
         @Test
         @DisplayName("should reject null transport")
         void shouldRejectNullTransport() {
-            assertThatThrownBy(() -> new DistributedAgentRuntime(
+            assertThatThrownBy(() -> distributedRuntime(
                     null, filter, registrationPort, descriptor,
                     heartbeatInterval, taskExecutionTimeout, List.of(), List.of()))
                     .isInstanceOf(NullPointerException.class)
@@ -653,7 +656,7 @@ class DistributedAgentRuntimeTest {
         @Test
         @DisplayName("should reject null filter")
         void shouldRejectNullFilter() {
-            assertThatThrownBy(() -> new DistributedAgentRuntime(
+            assertThatThrownBy(() -> distributedRuntime(
                     transport, null, registrationPort, descriptor,
                     heartbeatInterval, taskExecutionTimeout, List.of(), List.of()))
                     .isInstanceOf(NullPointerException.class)
@@ -661,19 +664,19 @@ class DistributedAgentRuntimeTest {
         }
 
         @Test
-        @DisplayName("should reject null registration port")
-        void shouldRejectNullRegistrationPort() {
-            assertThatThrownBy(() -> new DistributedAgentRuntime(
+        @DisplayName("should allow a null registration port (LOCAL mode)")
+        void shouldAllowNullRegistrationPort() {
+            // null = mode LOCAL : pas d'enregistrement, pas de heartbeat.
+            var runtime = distributedRuntime(
                     transport, filter, null, descriptor,
-                    heartbeatInterval, taskExecutionTimeout, List.of(), List.of()))
-                    .isInstanceOf(NullPointerException.class)
-                    .hasMessageContaining("registrationPort");
+                    heartbeatInterval, taskExecutionTimeout, List.of(), List.of());
+            assertThat(runtime).isNotNull();
         }
 
         @Test
         @DisplayName("should reject null descriptor")
         void shouldRejectNullDescriptor() {
-            assertThatThrownBy(() -> new DistributedAgentRuntime(
+            assertThatThrownBy(() -> distributedRuntime(
                     transport, filter, registrationPort, null,
                     heartbeatInterval, taskExecutionTimeout, List.of(), List.of()))
                     .isInstanceOf(NullPointerException.class)
@@ -683,7 +686,7 @@ class DistributedAgentRuntimeTest {
         @Test
         @DisplayName("should reject null task execution timeout")
         void shouldRejectNullTaskTimeout() {
-            assertThatThrownBy(() -> new DistributedAgentRuntime(
+            assertThatThrownBy(() -> distributedRuntime(
                     transport, filter, registrationPort, descriptor,
                     heartbeatInterval, null, List.of(), List.of()))
                     .isInstanceOf(NullPointerException.class)
@@ -693,7 +696,7 @@ class DistributedAgentRuntimeTest {
         @Test
         @DisplayName("should reject non-positive task execution timeout")
         void shouldRejectNonPositiveTimeout() {
-            assertThatThrownBy(() -> new DistributedAgentRuntime(
+            assertThatThrownBy(() -> distributedRuntime(
                     transport, filter, registrationPort, descriptor,
                     heartbeatInterval, Duration.ZERO, List.of(), List.of()))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -703,7 +706,7 @@ class DistributedAgentRuntimeTest {
         @Test
         @DisplayName("should reject heartbeat interval < 1s")
         void shouldRejectShortHeartbeatInterval() {
-            assertThatThrownBy(() -> new DistributedAgentRuntime(
+            assertThatThrownBy(() -> distributedRuntime(
                     transport, filter, registrationPort, descriptor,
                     Duration.ofMillis(500), taskExecutionTimeout, List.of(), List.of()))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -722,7 +725,7 @@ class DistributedAgentRuntimeTest {
                 @Override public String getSupportedTaskName() { return "dup"; }
             };
 
-            assertThatThrownBy(() -> new DistributedAgentRuntime(
+            assertThatThrownBy(() -> distributedRuntime(
                     transport, filter, registrationPort, descriptor,
                     heartbeatInterval, taskExecutionTimeout, List.of(exec1, exec2), List.of()))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -823,4 +826,18 @@ class DistributedAgentRuntimeTest {
             assertThat(runtime.getDescriptor().state()).isEqualTo(AgentState.OFFLINE);
         }
     }
+
+    private static TaskAgentRuntime distributedRuntime(
+            ExecutionTransport transport,
+            TaskSpecializationFilter filter,
+            AgentRegistrationPort registrationPort,
+            AgentDescriptor descriptor,
+            Duration heartbeatInterval,
+            Duration taskExecutionTimeout,
+            List<TaskExecutor> taskExecutors,
+            List<StatefulResourceCleaner> cleaners) {
+        return new TaskAgentRuntime(transport, transport, transport, transport, filter, descriptor, taskExecutionTimeout,
+                taskExecutors, cleaners, registrationPort, heartbeatInterval);
+    }
+
 }

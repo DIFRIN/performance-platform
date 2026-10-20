@@ -12,6 +12,9 @@ import com.performance.platform.domain.id.*;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
+import com.performance.platform.agent.runtime.TaskAgentRuntime;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
@@ -35,7 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 
-@DisplayName("LocalAgent")
+@DisplayName("TaskAgentRuntime")
 class LocalAgentTest {
 
     // === Shared fixtures ===
@@ -46,7 +49,7 @@ class LocalAgentTest {
     private Set<String> supportedTaskNames;
     private Duration taskExecutionTimeout = Duration.ofSeconds(30);
 
-    private LocalAgent agent;
+    private TaskAgentRuntime agent;
 
     @BeforeEach
     void setUp() {
@@ -77,20 +80,20 @@ class LocalAgentTest {
 
     // === Factory methods ===
 
-    private LocalAgent createAgent(List<TaskExecutor> taskExecutors) {
+    private TaskAgentRuntime createAgent(List<TaskExecutor> taskExecutors) {
         return createAgent(taskExecutors, List.of());
     }
 
-    private LocalAgent createAgent(List<TaskExecutor> taskExecutors,
+    private TaskAgentRuntime createAgent(List<TaskExecutor> taskExecutors,
                                     List<StatefulResourceCleaner> cleaners) {
-        return new LocalAgent(
+        return localRuntime(
                 transport, descriptor, taskExecutionTimeout,
                 taskExecutors != null ? taskExecutors : List.of(),
                 cleaners != null ? cleaners : List.of()
         );
     }
 
-    private LocalAgent createAgent() {
+    private TaskAgentRuntime createAgent() {
         return createAgent(List.of(), List.of());
     }
 
@@ -196,7 +199,7 @@ class LocalAgentTest {
                     throw new TransportException("forced failure");
                 }
             };
-            agent = new LocalAgent(
+            agent = localRuntime(
                     failingTransport, descriptor, taskExecutionTimeout, List.of(), List.of()
             );
 
@@ -425,7 +428,7 @@ class LocalAgentTest {
                 }
             };
 
-            agent = new LocalAgent(
+            agent = localRuntime(
                     transport, descriptor, shortTimeout, List.of(slowExecutor), List.of());
             agent.start();
 
@@ -667,7 +670,7 @@ class LocalAgentTest {
                 @Override public String getSupportedTaskName() { return "task-c"; }
             };
 
-            agent = new LocalAgent(
+            agent = localRuntime(
                     transport, customDescriptor, taskExecutionTimeout,
                     List.of(executor1, executor2, executor3), List.of());
             assertThat(agent.canExecute("task-a")).isTrue();
@@ -687,7 +690,7 @@ class LocalAgentTest {
         @Test
         @DisplayName("should reject null transport")
         void shouldRejectNullTransport() {
-            assertThatThrownBy(() -> new LocalAgent(
+            assertThatThrownBy(() -> localRuntime(
                     null, descriptor, taskExecutionTimeout, List.of(), List.of()))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("transport");
@@ -696,7 +699,7 @@ class LocalAgentTest {
         @Test
         @DisplayName("should reject null descriptor")
         void shouldRejectNullDescriptor() {
-            assertThatThrownBy(() -> new LocalAgent(
+            assertThatThrownBy(() -> localRuntime(
                     transport, null, taskExecutionTimeout, List.of(), List.of()))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("descriptor");
@@ -705,7 +708,7 @@ class LocalAgentTest {
         @Test
         @DisplayName("should reject null task execution timeout")
         void shouldRejectNullTaskTimeout() {
-            assertThatThrownBy(() -> new LocalAgent(
+            assertThatThrownBy(() -> localRuntime(
                     transport, descriptor, null, List.of(), List.of()))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("taskExecutionTimeout");
@@ -714,7 +717,7 @@ class LocalAgentTest {
         @Test
         @DisplayName("should reject non-positive task execution timeout")
         void shouldRejectNonPositiveTimeout() {
-            assertThatThrownBy(() -> new LocalAgent(
+            assertThatThrownBy(() -> localRuntime(
                     transport, descriptor, Duration.ZERO, List.of(), List.of()))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("taskExecutionTimeout");
@@ -723,7 +726,7 @@ class LocalAgentTest {
         @Test
         @DisplayName("should reject null task executors")
         void shouldRejectNullTaskExecutors() {
-            assertThatThrownBy(() -> new LocalAgent(
+            assertThatThrownBy(() -> localRuntime(
                     transport, descriptor, taskExecutionTimeout, null, List.of()))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("taskExecutors");
@@ -732,7 +735,7 @@ class LocalAgentTest {
         @Test
         @DisplayName("should reject null cleaners")
         void shouldRejectNullCleaners() {
-            assertThatThrownBy(() -> new LocalAgent(
+            assertThatThrownBy(() -> localRuntime(
                     transport, descriptor, taskExecutionTimeout, List.of(), null))
                     .isInstanceOf(NullPointerException.class)
                     .hasMessageContaining("cleaners");
@@ -750,7 +753,7 @@ class LocalAgentTest {
                 @Override public String getSupportedTaskName() { return "dup"; }
             };
 
-            assertThatThrownBy(() -> new LocalAgent(
+            assertThatThrownBy(() -> localRuntime(
                     transport, descriptor, taskExecutionTimeout, List.of(exec1, exec2), List.of()))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Duplicate TaskExecutor");
@@ -939,4 +942,18 @@ class LocalAgentTest {
             assertThat(failedEvent.payload()).containsKey("error");
         }
     }
+
+    private static TaskAgentRuntime localRuntime(InMemoryExecutionTransport transport,
+                                                  AgentDescriptor descriptor,
+                                                  Duration timeout,
+                                                  List<TaskExecutor> executors,
+                                                  List<StatefulResourceCleaner> cleaners) {
+        var filter = descriptor != null
+                ? new DefaultTaskSpecializationFilter(
+                        Set.copyOf(descriptor.supportedTaskNames()), descriptor.id())
+                : new DefaultTaskSpecializationFilter(Set.of(), AgentId.generate());
+        return new TaskAgentRuntime(transport, transport, transport, transport, filter, descriptor, timeout,
+                executors, cleaners, null, null);
+    }
+
 }

@@ -131,7 +131,7 @@ class DefaultReportEngineIntegrationTest {
             var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "Sim", Duration.ofSeconds(5));
             var taskResult = TaskResult.success(injId, "gatling",
-                    Duration.ofSeconds(5), Map.of("inj-data", injResult));
+                    Duration.ofSeconds(5), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injId.value(), "agent-1", taskResult);
@@ -201,7 +201,7 @@ class DefaultReportEngineIntegrationTest {
             var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "MySim", Duration.ofSeconds(5));
             var injTaskResult = TaskResult.success(injId, "gatling",
-                    Duration.ofSeconds(5), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(5), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             // Assertion: has AssertionResult in outputs
             var assertId = TaskId.of("assert-1");
@@ -247,7 +247,7 @@ class DefaultReportEngineIntegrationTest {
             var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "Sim", Duration.ofSeconds(10));
             var injTaskResult = TaskResult.success(injId, "gatling",
-                    Duration.ofSeconds(10), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(10), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             // Assertion: 0.5 sec
             var assertId = TaskId.of("assert-1");
@@ -281,7 +281,7 @@ class DefaultReportEngineIntegrationTest {
             var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "Sim", Duration.ofSeconds(3));
             var injTaskResult = TaskResult.success(injId, "gatling",
-                    Duration.ofSeconds(3), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(3), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
@@ -301,12 +301,12 @@ class DefaultReportEngineIntegrationTest {
             var injA = TaskId.of("inj-a");
             InjectionResult injResultA = createInjectionResult(injA, "SimA", Duration.ofSeconds(5));
             var taskResultA = TaskResult.success(injA, "gatling",
-                    Duration.ofSeconds(5), Map.of("injectionResult", injResultA));
+                    Duration.ofSeconds(5), Map.of(InjectionResult.OUTPUT_KEY, injResultA));
 
             var injB = TaskId.of("inj-b");
             InjectionResult injResultB = createInjectionResult(injB, "SimB", Duration.ofSeconds(8));
             var taskResultB = TaskResult.success(injB, "gatling",
-                    Duration.ofSeconds(8), Map.of("injectionResult", injResultB));
+                    Duration.ofSeconds(8), Map.of(InjectionResult.OUTPUT_KEY, injResultB));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injA.value(), "agent-1", taskResultA)
@@ -622,7 +622,7 @@ class DefaultReportEngineIntegrationTest {
             var injId = TaskId.of("inj-1");
             InjectionResult injResult = createInjectionResult(injId, "MySim", Duration.ofSeconds(3));
             var injTask = TaskResult.success(injId, "gatling-http-injection",
-                    Duration.ofSeconds(3), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(3), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             var assertId = TaskId.of("assert-1");
             var assertResult = new AssertionResult(

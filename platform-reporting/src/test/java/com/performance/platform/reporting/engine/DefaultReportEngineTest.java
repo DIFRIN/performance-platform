@@ -158,7 +158,7 @@ class DefaultReportEngineTest {
                     Path.of("/tmp/gatling"), Map.of()
             );
             var taskResult = TaskResult.success(injTaskId, "gatling-injection",
-                    Duration.ofSeconds(10), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(10), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injTaskId.value(), "agent-1", taskResult);
@@ -262,7 +262,7 @@ class DefaultReportEngineTest {
                     Path.of("/tmp/g"), Map.of()
             );
             var injTaskResult = TaskResult.success(injId, "gatling",
-                    Duration.ofSeconds(5), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(5), Map.of(InjectionResult.OUTPUT_KEY, injResult));
             var assertId = new TaskId("assert-1");
             var assertResult = new AssertionResult(
                     assertId, AssertionStatus.PASSED, "ok",

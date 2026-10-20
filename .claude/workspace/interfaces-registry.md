@@ -260,7 +260,7 @@
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
-| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` / `UnsupportedAssertionNameException` | ⬜ DEPRECATED (PDR-036) | PDR-014 | ISSUE-059 — ISSUE-152 will deprecate |
+| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` / `UnsupportedAssertionNameException` | ❌ REMOVED (ADR-030) | PDR-036 | ISSUE-182 |
 | `GatlingMetricAssertionExecutor` / `MetricExtractor` | ✅ STABLE | PDR-014 | ISSUE-060 |
 | `DatabaseAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-061 |
 | `KafkaAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-062 |
@@ -268,7 +268,7 @@
 | `FileAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-064 |
 | `WireMockAssertionExecutor` | ✅ STABLE | PDR-014 | ISSUE-063 |
 | `AssertionResultMapper` | ⬜ PLANNED | PDR-036 | ISSUE-151 |
-| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` | ⬜ DEPRECATED | PDR-036 | ISSUE-152 — deprecated since 2.0, forRemoval=true |
+| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` | ❌ REMOVED (ADR-030) | PDR-036 | ISSUE-182 |
 
 ## platform-domain — new assertion records (PDR-034)
 
@@ -339,7 +339,7 @@
 | `SecurityConfiguration` + config profiles | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `application.yaml` (common config) | ✅ STABLE | PDR-018 | ISSUE-081 |
 | `application-{local,orchestrator,agent}.yaml` | ✅ STABLE | PDR-018 | ISSUE-081 |
-| `LocalFlowE2ETest` + `e2e-local.yaml` | ✅ STABLE | PDR-018 | ISSUE-082 |
+| `LocalFlowIT` + `e2e-local.yaml` | ✅ STABLE (tier IT) | PDR-018 | ISSUE-082, ISSUE-169 |
 | `AgentProperties` | 🔄 IN PROGRESS | PDR-026 | ISSUE-111 |
 | `AgentRuntimeConfiguration` | ⬜ PLANNED | PDR-026 | ISSUE-112 |
 | `WebUiProperties` | 🔄 IN PROGRESS | PDR-028 | ISSUE-125 |
@@ -354,7 +354,7 @@
 | `views/agents.js` (agents dashboard view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-129 |
 | `views/upload.js` (upload scenario view) | 🔄 IN PROGRESS | PDR-029 | ISSUE-129 |
 | `views/report.js` (report poll view + iframe) | 🔄 IN PROGRESS | PDR-029 | ISSUE-130 |
-| `WebUiApiE2ETest.java` (E2E Testcontainers) | 🔄 IN PROGRESS | PDR-029 | ISSUE-130 |
+| `WebUiApiIT.java` (E2E Testcontainers) | ✅ STABLE (tier IT) | PDR-029 | ISSUE-130, ISSUE-169 |
 
 ## platform-infrastructure — `.executor.kafka` (PDR-020 — nouvelles classes)
 
@@ -447,3 +447,67 @@
 > ⚡ = Interface publique critique — toute modification requiert un ADR.
 > Les colonnes PDR et Issue sont remplies par le System Designer au moment de la création des PDRs.
 | ISSUE-088 | KafkaConsumerTaskExecutor | platform-infrastructure | @Preparation name=kafka-consumer v2.0.0, Consumer<String,String> via ConsumerFactory | IN PROGRESS |
+
+---
+
+## Programme de rémédiation architecturale (PDR-043..054) — PLANNED
+
+> Créé par le System Designer le 2026-10-19. Statuts PLANNED/BREAKING — rien n'est encore implémenté.
+
+### platform-domain
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `ExecutionContext.getOutput/getFirstOutput` (clés nommées) | ⚠️ BREAKING (ADR-031) | PDR-053 | ISSUE-194 |
+| `ExecutionContext.get(Class)/getFirst(Class)` | ⚠️ DEPRECATED → REMOVED (ADR-031) | PDR-053 | ISSUE-194, ISSUE-195 |
+
+### platform-execution-engine
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `TaskCorrelationTracker` (+`onAgentLost`, `release`, `resultsInCompletionOrder`, `selectResult`, `completionSignal`) | ✅ STABLE (additif) — `remove/size/onComplete` restent PLANNED | PDR-044, PDR-051 | ISSUE-171, ISSUE-189 |
+| `ResultSelectionPolicy` (enum) | ✅ STABLE | PDR-051 | ISSUE-189 |
+| `ExecutionEngine` (unifié) | ✅ STABLE | PDR-050 | ISSUE-184, ISSUE-185 |
+| `TransportExecutionEventHandler` | ✅ STABLE | PDR-050 | ISSUE-184 |
+| `LocalExecutionEngine` / `RemoteExecutionEngine` | ❌ REMOVED (ADR-037) | PDR-050 | ISSUE-185 |
+| `TaskExecutorLookup.findAssertionExecutor` | ❌ REMOVED (ADR-029) | PDR-037 | ISSUE-181 |
+
+### platform-agent-runtime
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `TaskAgentRuntime` (unifié, remplace Local/Distributed) | ⬜ PLANNED | PDR-050 | ISSUE-186, ISSUE-187 |
+| `AgentLifecycleIngestion` (InitializingBean/DisposableBean + AgentLifecycleEventHandler) | ✅ STABLE | PDR-045 | ISSUE-173 |
+| `AgentTtlMonitor` (bean, start/stop + onExpired → AgentLost) | ✅ STABLE | PDR-045 | ISSUE-173 |
+| `LocalAgent` / `DistributedAgentRuntime` | ❌ REMOVED (ADR-037) | PDR-050 | ISSUE-187 |
+
+### platform-transport
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `AgentLifecycleEvent.AGENT_LOST` (constante) | ✅ STABLE (ADR-033) | PDR-045 | ISSUE-172 |
+| `AgentLifecyclePayloadCodec` | ✅ STABLE | PDR-045 | ISSUE-172 |
+| `TaskChannel` / `SignalChannel` / `EventChannel` / `LifecycleChannel` / `ConnectionLifecycle` | ✅ STABLE | PDR-052 | ISSUE-191 |
+| `ExecutionTransport` (façade composite de migration, `getType()` retiré) | ✅ STABLE (temporaire) | PDR-052 | ISSUE-191, ISSUE-193 |
+
+### platform-application
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `LifecycleSignalHandler` (port sortant) | ✅ STABLE | PDR-048 | ISSUE-177 |
+| `HttpTargetResolver` + `HttpTarget` (ports sortants) | ✅ STABLE | PDR-048 | ISSUE-178 |
+
+### platform-assertion
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` | ⚠️ BREAKING → REMOVED (ADR-030) | PDR-036 | ISSUE-182 |
+
+### platform-app (runtime)
+
+| Classe / Interface | Statut | PDR | Issue |
+|---|---|---|---|
+| `RuntimeConfig` (record) / `RuntimeConfigResolver` | ⬜ PLANNED (ADR-032) | PDR-046 | ISSUE-175 |
+| `LocalLifecycleDispatcher` (déplacé engine → app) | ⬜ PLANNED | PDR-048 | ISSUE-177 |
+
+- `LocalDistributedEquivalenceIT` (T2) — test de garde LOCAL ≡ DISTRIBUTED (ISSUE-170).

@@ -29,6 +29,8 @@ public record AgentLifecycleEvent(
     public static final String AGENT_HEARTBEAT    = "AgentHeartbeat";
     /** L'agent s'est explicitement désenregistré. */
     public static final String AGENT_DEREGISTERED = "AgentDeregistered";
+    /** L'agent est considere comme perdu (heartbeat expire, TTL depasse). */
+    public static final String AGENT_LOST = "AgentLost";
 
     public AgentLifecycleEvent {
         Objects.requireNonNull(id, "id must not be null");
