@@ -62,7 +62,7 @@ public final class AssertionResultMapper {
                 assertionResult.evaluatedAt()
         );
 
-        Map<String, Object> outputs = Map.of("assertion", summary);
+        Map<String, Object> outputs = Map.of(AssertionSummary.OUTPUT_KEY, summary);
 
         String errorMessage = (taskStatus == TaskStatus.FAILED) ? assertionResult.description() : null;
 

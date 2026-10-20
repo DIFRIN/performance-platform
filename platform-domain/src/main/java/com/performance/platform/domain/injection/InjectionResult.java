@@ -33,6 +33,13 @@ public record InjectionResult(
     Path gatlingReportDirectory,
     Map<String, Object> rawStats
 ) {
+
+    /**
+     * Cle contractuelle de l'output contenant l'InjectionResult dans un
+     * {@code TaskResult}. Utilisee par les executors et les assertions.
+     */
+    public static final String OUTPUT_KEY = "result";
+
     public InjectionResult {
         Objects.requireNonNull(taskId, "taskId required");
         Objects.requireNonNull(simulationClass, "simulationClass required");

@@ -206,8 +206,8 @@
 | ISSUE-191 | Define Segregated Transport Ports | DONE | PDR-052 | - |
 | ISSUE-192 | Migrate 5 Transport Implementations | DONE | PDR-052 | ISSUE-191 |
 | ISSUE-193 | Migrate Transport Consumers | DONE | PDR-052 | ISSUE-192 |
-| ISSUE-194 | ExecutionContext Named Outputs + Persistent Store | WAITING | PDR-053 | - |
-| ISSUE-195 | Migrate Context Consumers | WAITING | PDR-053 | ISSUE-194 |
+| ISSUE-194 | ExecutionContext Named Outputs + Persistent Store | DONE | PDR-053 | - |
+| ISSUE-195 | Migrate Context Consumers | DONE | PDR-053 | ISSUE-194 |
 | ISSUE-196 | Security Posture Decision | DONE | PDR-054 | - |
 
 ## PDRs
@@ -265,7 +265,7 @@
 | PDR-050 | Engine & Agent Consolidation | platform-execution-engine, platform-agent-runtime, platform-app | DONE | ISSUE-184,185,186,187,188 | PDR-043, PDR-048, PDR-039, PDR-045 |
 | PDR-051 | Distributed Completion Semantics | platform-execution-engine | DONE | ISSUE-189,190 | PDR-044, PDR-050 |
 | PDR-052 | Transport Interface Segregation | platform-transport | DONE | ISSUE-191,192,193 | PDR-007, PDR-008 |
-| PDR-053 | ExecutionContext Named Outputs | platform-domain | WAITING | ISSUE-194,195 | PDR-001 |
+| PDR-053 | ExecutionContext Named Outputs | platform-domain | DONE | ISSUE-194,195 | PDR-001 |
 | PDR-054 | Security Posture | platform-app | DONE | ISSUE-196 | PDR-018 |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
@@ -1030,3 +1030,5 @@
 | 2026-10-20 | ISSUE-184..188 | WAITING → DONE | Fusion engine/agent : ExecutionEngine + TaskAgentRuntime uniques, 4 classes supprimées, T2/T1/ITs verts (ADR-037). |
 
 | 2026-10-20 | ISSUE-191..193 | WAITING → DONE | 5 ports étroits, façade composite, getType() supprimé, consommateurs migrés (ADR-028). |
+
+| 2026-10-20 | ISSUE-194,195 | WAITING → DONE | Outputs nommés + store persistant O(path), suppression des getters type-erasés, consommateurs migrés (ADR-031). |

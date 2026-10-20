@@ -2,7 +2,7 @@
 
 **PDR** : PDR-053
 **Module** : `platform-domain`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : —
 **Estime** : L (3-6h)

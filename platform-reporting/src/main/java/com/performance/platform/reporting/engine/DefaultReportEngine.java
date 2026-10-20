@@ -3,6 +3,7 @@ package com.performance.platform.reporting.engine;
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.event.ReportGenerated;
 import com.performance.platform.domain.event.ScenarioFinished;
@@ -187,13 +188,13 @@ public class DefaultReportEngine implements ReportEngine {
             allAgentIds.addAll(agentResults.keySet());
 
             // Essayer de classer via le type de résultat stocké
-            Optional<InjectionResult> injOpt = state.context().getFirst(taskId, InjectionResult.class);
+            Optional<InjectionResult> injOpt = state.context().getFirstOutput(taskId, InjectionResult.OUTPUT_KEY, InjectionResult.class);
             if (injOpt.isPresent()) {
                 injTaskIds.add(taskId);
                 continue;
             }
 
-            Optional<AssertionResult> assertOpt = state.context().getFirst(taskId, AssertionResult.class);
+            Optional<AssertionResult> assertOpt = resolveAssertionResult(state.context(), taskId);
             if (assertOpt.isPresent()) {
                 assertTaskIds.add(taskId);
                 continue;
@@ -202,6 +203,26 @@ public class DefaultReportEngine implements ReportEngine {
             // Par défaut : préparation
             prepTaskIds.add(taskId);
         }
+    }
+
+    /**
+     * Resout un resultat d'assertion : d'abord la cle contractuelle
+     * {@code "assertion"} ({@link AssertionSummary}), puis l'ancien lookup
+     * type-erasé pour les producteurs historiques/fixtures.
+     */
+    private static Optional<AssertionResult> resolveAssertionResult(
+            com.performance.platform.domain.execution.ExecutionContext context,
+            String taskId) {
+        Optional<AssertionSummary> summary = context
+                .getFirstOutput(taskId, AssertionSummary.OUTPUT_KEY, AssertionSummary.class);
+        if (summary.isPresent()) {
+            var s = summary.get();
+            return Optional.of(new AssertionResult(
+                    s.assertionId(), s.verdict(), s.description(),
+                    null, s.evaluationDuration(), s.evaluatedAt()));
+        }
+        // Producteurs historiques / fixtures : cle legacy "assertionResult".
+        return context.getFirstOutput(taskId, "assertionResult", AssertionResult.class);
     }
 
     // ──────────────────────────────────────────────
@@ -227,7 +248,7 @@ public class DefaultReportEngine implements ReportEngine {
                                                                List<String> taskIds) {
         List<InjectionReportEntry> entries = new ArrayList<>();
         for (String taskIdStr : taskIds) {
-            Optional<InjectionResult> injOpt = state.context().getFirst(taskIdStr, InjectionResult.class);
+            Optional<InjectionResult> injOpt = state.context().getFirstOutput(taskIdStr, InjectionResult.OUTPUT_KEY, InjectionResult.class);
             injOpt.ifPresent(inj -> {
                 var taskId = new TaskId(taskIdStr);
                 entries.add(new InjectionReportEntry(taskId, inj, inj.gatlingReportDirectory()));
@@ -240,7 +261,7 @@ public class DefaultReportEngine implements ReportEngine {
                                                                List<String> taskIds) {
         List<AssertionReportEntry> entries = new ArrayList<>();
         for (String taskIdStr : taskIds) {
-            Optional<AssertionResult> assertOpt = state.context().getFirst(taskIdStr, AssertionResult.class);
+            Optional<AssertionResult> assertOpt = resolveAssertionResult(state.context(), taskIdStr);
             assertOpt.ifPresent(ar -> {
                 var taskId = new TaskId(taskIdStr);
                 entries.add(new AssertionReportEntry(taskId, ar, ar.evidence()));

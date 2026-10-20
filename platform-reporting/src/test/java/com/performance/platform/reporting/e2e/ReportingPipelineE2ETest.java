@@ -272,7 +272,7 @@ class ReportingPipelineE2ETest {
                     20, 35, 50, 60, 80, 200, 5, 45.0,
                     tempDir.resolve("gatling-src"), Map.of("scenario", "api-test"));
             var injTaskResult = TaskResult.success(injId, "gatling",
-                    Duration.ofSeconds(15), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(15), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             var assertA = TaskId.of("assert-a");
             var assertResultA = new AssertionResult(
@@ -461,7 +461,7 @@ class ReportingPipelineE2ETest {
                     5, 10, 15, 20, 25, 30, 3, 8.0,
                     tempDir.resolve("gatling-multi"), Map.of());
             var injTaskResult = TaskResult.success(injId, "gatling",
-                    Duration.ofSeconds(5), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(5), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             // Same task executed by 2 different agents (multi-claim scenario)
             var context = ExecutionContext.initial(executionId, scenarioId)
@@ -679,7 +679,7 @@ class ReportingPipelineE2ETest {
                     5, 10, 15, 20, 25, 30, 3, 8.0,
                     gatlingSource, Map.of());
             var injTaskResult = TaskResult.success(injId, "gatling",
-                    Duration.ofSeconds(10), Map.of("injectionResult", injResult));
+                    Duration.ofSeconds(10), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injId.value(), "agent-1", injTaskResult);

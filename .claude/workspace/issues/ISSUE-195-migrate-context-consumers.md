@@ -2,7 +2,7 @@
 
 **PDR** : PDR-053
 **Module** : `platform-execution-engine`, `platform-reporting`, `platform-assertion`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-194
 **Estime** : M (1-3h)

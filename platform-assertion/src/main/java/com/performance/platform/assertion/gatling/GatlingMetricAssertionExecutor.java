@@ -148,9 +148,10 @@ public class GatlingMetricAssertionExecutor implements AssertionExecutor {
                                                     Map<String, Object> params) {
         Object refTaskIdObj = params.get(PARAM_REF_TASK_ID);
         if (refTaskIdObj instanceof String refTaskId && !refTaskId.isEmpty()) {
-            return context.getFirst(refTaskId, InjectionResult.class).orElse(null);
+            return context.getFirstOutput(refTaskId, InjectionResult.OUTPUT_KEY,
+                    InjectionResult.class).orElse(null);
         }
-        // Fallback : chercher le premier InjectionResult disponible
+        // Fallback : chercher le premier InjectionResult disponible via la cle contractuelle
         for (var taskEntry : context.store().entrySet()) {
             for (var agentEntry : taskEntry.getValue().entrySet()) {
                 for (var output : agentEntry.getValue().outputs().values()) {

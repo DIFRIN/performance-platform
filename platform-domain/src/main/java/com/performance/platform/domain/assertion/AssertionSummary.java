@@ -27,6 +27,10 @@ public record AssertionSummary(
     Duration evaluationDuration,
     Instant evaluatedAt
 ) {
+
+    /** Cle contractuelle de l'output contenant l'{@link AssertionSummary}. */
+    public static final String OUTPUT_KEY = "assertion";
+
     public AssertionSummary {
         Objects.requireNonNull(assertionId, "assertionId required");
         Objects.requireNonNull(verdict, "verdict required");
