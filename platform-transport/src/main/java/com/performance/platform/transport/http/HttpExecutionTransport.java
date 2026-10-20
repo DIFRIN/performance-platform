@@ -14,7 +14,6 @@ import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.Subscription;
 import com.performance.platform.transport.TaskRequestHandler;
 import com.performance.platform.transport.TransportException;
-import com.performance.platform.transport.TransportType;
 import com.performance.platform.transport.config.HttpTransportProperties;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
@@ -136,10 +135,6 @@ public class HttpExecutionTransport implements ExecutionTransport {
         return connected.get();
     }
 
-    @Override
-    public TransportType getType() {
-        return TransportType.HTTP;
-    }
 
     /**
      * Dispatche une tache vers les agents capables.

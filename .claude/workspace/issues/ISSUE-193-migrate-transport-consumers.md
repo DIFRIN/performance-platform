@@ -2,7 +2,7 @@
 
 **PDR** : PDR-052
 **Module** : `platform-execution-engine`, `platform-agent-runtime`, `platform-app`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-192
 **Estime** : L (3-6h)

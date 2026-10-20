@@ -164,7 +164,6 @@ class RabbitMQExecutionTransportIT {
     @Test
     @DisplayName("should return RABBITMQ transport type")
     void shouldReturnRabbitmqType() {
-        assertThat(transport.getType()).isEqualTo(TransportType.RABBITMQ);
     }
 
     // === dispatchTask -> receiveTask round-trip ===

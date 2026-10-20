@@ -179,7 +179,7 @@ class DistributedAgentConfigDrivenTest {
             Duration taskExecutionTimeout,
             List<TaskExecutor> taskExecutors,
             List<StatefulResourceCleaner> cleaners) {
-        return new TaskAgentRuntime(transport, filter, descriptor, taskExecutionTimeout,
+        return new TaskAgentRuntime(transport, transport, transport, transport, filter, descriptor, taskExecutionTimeout,
                 taskExecutors, cleaners, registrationPort, heartbeatInterval);
     }
 

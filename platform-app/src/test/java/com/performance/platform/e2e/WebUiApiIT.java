@@ -315,7 +315,7 @@ class WebUiApiIT {
 
         var agentFilter = new DefaultTaskSpecializationFilter(
                 agentDesc.supportedTaskNames(), agentDesc.id());
-        localAgent = new TaskAgentRuntime(transport, agentFilter, agentDesc,
+        localAgent = new TaskAgentRuntime(transport, transport, transport, transport, agentFilter, agentDesc,
                 Duration.ofMinutes(5), taskExecutorList, List.of(), null, null);
     }
 

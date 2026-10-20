@@ -952,7 +952,7 @@ class LocalAgentTest {
                 ? new DefaultTaskSpecializationFilter(
                         Set.copyOf(descriptor.supportedTaskNames()), descriptor.id())
                 : new DefaultTaskSpecializationFilter(Set.of(), AgentId.generate());
-        return new TaskAgentRuntime(transport, filter, descriptor, timeout,
+        return new TaskAgentRuntime(transport, transport, transport, transport, filter, descriptor, timeout,
                 executors, cleaners, null, null);
     }
 

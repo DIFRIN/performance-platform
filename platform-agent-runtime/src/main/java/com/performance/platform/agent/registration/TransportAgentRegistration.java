@@ -5,7 +5,7 @@ import com.performance.platform.domain.agent.AgentHeartbeat;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.EventId;
 import com.performance.platform.transport.AgentLifecycleEvent;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.LifecycleChannel;
 import com.performance.platform.transport.TransportException;
 
 import org.slf4j.Logger;
@@ -26,9 +26,9 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
 
     private static final Logger log = LoggerFactory.getLogger(TransportAgentRegistration.class);
 
-    private final ExecutionTransport transport;
+    private final LifecycleChannel transport;
 
-    public TransportAgentRegistration(ExecutionTransport transport) {
+    public TransportAgentRegistration(LifecycleChannel transport) {
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
     }
 

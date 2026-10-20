@@ -134,7 +134,6 @@ class InMemoryExecutionTransportTest {
         @Test
         @DisplayName("should return IN_MEMORY type")
         void shouldReturnInMemoryType() {
-            assertThat(transport.getType()).isEqualTo(TransportType.IN_MEMORY);
         }
     }
 

@@ -603,7 +603,6 @@ class RemoteExecutionEngineTest {
         @Override public void connect() {}
         @Override public void disconnect() {}
         @Override public boolean isConnected() { return true; }
-        @Override public TransportType getType() { return TransportType.IN_MEMORY; }
         @Override public void publishAgentEvent(AgentLifecycleEvent event) {}
         @Override public Subscription subscribeAgentEvents(AgentLifecycleEventHandler handler) {
             return new Subscription() {

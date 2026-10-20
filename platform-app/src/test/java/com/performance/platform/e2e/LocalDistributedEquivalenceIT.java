@@ -96,7 +96,7 @@ class LocalDistributedEquivalenceIT {
                 AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(1));
 
         var agent = new TaskAgentRuntime(
-                transport,
+                transport, transport, transport, transport,
                 new DefaultTaskSpecializationFilter(Set.copyOf(TASK_NAMES), agentId),
                 descriptor,
                 Duration.ofSeconds(30),

@@ -4,7 +4,7 @@ import com.performance.platform.application.ports.out.AgentRegistryPort;
 import com.performance.platform.domain.event.AgentLost;
 import com.performance.platform.transport.AgentLifecycleEvent;
 import com.performance.platform.transport.AgentLifecycleEventHandler;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.LifecycleChannel;
 import com.performance.platform.transport.Subscription;
 
 import org.slf4j.Logger;
@@ -32,13 +32,13 @@ public class AgentLifecycleIngestion
 
     private static final Logger log = LoggerFactory.getLogger(AgentLifecycleIngestion.class);
 
-    private final ExecutionTransport transport;
+    private final LifecycleChannel transport;
     private final AgentRegistryPort registry;
     private final ApplicationEventPublisher eventPublisher;
 
     private volatile Subscription subscription;
 
-    public AgentLifecycleIngestion(ExecutionTransport transport,
+    public AgentLifecycleIngestion(LifecycleChannel transport,
                                    AgentRegistryPort registry,
                                    ApplicationEventPublisher eventPublisher) {
         this.transport = Objects.requireNonNull(transport, "transport must not be null");

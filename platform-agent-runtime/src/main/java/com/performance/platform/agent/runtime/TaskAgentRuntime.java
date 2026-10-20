@@ -16,7 +16,10 @@ import com.performance.platform.domain.event.ScenarioRestartSignal;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.ConnectionLifecycle;
+import com.performance.platform.transport.EventChannel;
+import com.performance.platform.transport.SignalChannel;
+import com.performance.platform.transport.TaskChannel;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 
@@ -62,7 +65,10 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
 
     // === Dependances ===
 
-    private final ExecutionTransport transport;
+    private final TaskChannel taskChannel;
+    private final SignalChannel signalChannel;
+    private final EventChannel eventChannel;
+    private final ConnectionLifecycle connection;
     private final TaskSpecializationFilter filter;
     private final AgentRegistrationPort registrationPort; // nullable
     private final HeartbeatScheduler heartbeatScheduler;  // nullable
@@ -97,7 +103,10 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
     private volatile boolean stopped = false;
 
     public TaskAgentRuntime(
-            ExecutionTransport transport,
+            TaskChannel taskChannel,
+            SignalChannel signalChannel,
+            EventChannel eventChannel,
+            ConnectionLifecycle connection,
             TaskSpecializationFilter filter,
             AgentDescriptor descriptor,
             Duration taskExecutionTimeout,
@@ -105,7 +114,10 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
             List<StatefulResourceCleaner> cleaners,
             AgentRegistrationPort registrationPort,
             Duration heartbeatInterval) {
-        this.transport = Objects.requireNonNull(transport, "transport must not be null");
+        this.taskChannel = Objects.requireNonNull(taskChannel, "transport must not be null");
+        this.signalChannel = Objects.requireNonNull(signalChannel, "signalChannel must not be null");
+        this.eventChannel = Objects.requireNonNull(eventChannel, "eventChannel must not be null");
+        this.connection = Objects.requireNonNull(connection, "connection must not be null");
         this.filter = Objects.requireNonNull(filter, "filter must not be null");
         this.staticDescriptor = Objects.requireNonNull(descriptor, "descriptor must not be null");
         this.taskExecutionTimeout = Objects.requireNonNull(taskExecutionTimeout,
@@ -141,7 +153,7 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
                 ));
 
         this.taskPipeline = new TaskExecutionPipeline(
-                transport, executorMap, descriptor.id(),
+                eventChannel, executorMap, descriptor.id(),
                 progressScheduler, taskExecutionTimeout,
                 activeTasks, activeTaskCount, currentState);
 
@@ -171,7 +183,7 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
                 staticDescriptor.supportedTaskNames(), distributed);
 
         try {
-            transport.connect();
+            connection.connect();
             log.info("action=transport_connected agentId={}", staticDescriptor.id().value());
 
             if (distributed) {
@@ -182,8 +194,8 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
                         staticDescriptor.id().value(), staticDescriptor.name());
             }
 
-            transport.receiveTask(this::onTaskReceived);
-            transport.receiveSignal(this::onSignalReceived);
+            taskChannel.receiveTask(this::onTaskReceived);
+            signalChannel.receiveSignal(this::onSignalReceived);
 
             long cleanupIntervalSeconds = Math.max(60, taskExecutionTimeout.toSeconds() * 2);
             cleanupFuture = cleanupScheduler.scheduleAtFixedRate(
@@ -246,7 +258,7 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
         }
 
         try {
-            transport.disconnect();
+            connection.disconnect();
         } catch (Exception e) {
             log.warn("action=disconnect_failed agentId={} (continuing stop)",
                     staticDescriptor.id().value(), e);

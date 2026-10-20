@@ -109,7 +109,8 @@ public class AgentRuntimeConfiguration {
 
         var filter = new DefaultTaskSpecializationFilter(allTaskNames, agentId);
         var cleaners = cleanersProvider.stream().toList();
-        return new TaskAgentRuntime(transport, filter, descriptor, Duration.ofMinutes(5),
+        return new TaskAgentRuntime(transport, transport, transport, transport,
+                filter, descriptor, Duration.ofMinutes(5),
                 taskExecutors, cleaners, null, null);
     }
 
@@ -161,7 +162,7 @@ public class AgentRuntimeConfiguration {
         var cleaners = cleanersProvider.stream().toList();
 
         return new TaskAgentRuntime(
-                transport,
+                transport, transport, transport, transport,
                 filter,
                 descriptor,
                 Duration.ofMinutes(5),          // task execution timeout

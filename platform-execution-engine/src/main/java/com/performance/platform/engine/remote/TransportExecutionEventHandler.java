@@ -8,7 +8,7 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.EventChannel;
 import com.performance.platform.transport.message.ExecutionEvent;
 
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ public class TransportExecutionEventHandler {
     private final ExecutionRepository executionRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    public TransportExecutionEventHandler(ExecutionTransport transport,
+    public TransportExecutionEventHandler(EventChannel transport,
                                           TaskCorrelationTracker tracker,
                                           ExecutionRepository executionRepository,
                                           ApplicationEventPublisher eventPublisher) {

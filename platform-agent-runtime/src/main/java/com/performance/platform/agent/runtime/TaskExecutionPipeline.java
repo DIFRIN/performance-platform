@@ -6,7 +6,7 @@ import com.performance.platform.domain.execution.PartialExecutionContext;
 import com.performance.platform.domain.id.*;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.TaskExecutor;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.EventChannel;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
@@ -38,7 +38,7 @@ public class TaskExecutionPipeline {
     /** TaskName utilisé pour les TaskResult wrappers dans le bridge PartialExecutionContext → ExecutionContext. */
     static final String PARTIAL_TASK_WRAPPER = "_partial_";
 
-    private final ExecutionTransport transport;
+    private final EventChannel transport;
     private final Map<String, TaskExecutor> taskExecutors;
     private final AgentId agentId;
     private final ScheduledExecutorService progressScheduler;
@@ -48,7 +48,7 @@ public class TaskExecutionPipeline {
     private final AtomicReference<AgentState> currentState;
 
     public TaskExecutionPipeline(
-            ExecutionTransport transport,
+            EventChannel transport,
             Map<String, TaskExecutor> taskExecutors,
             AgentId agentId,
             ScheduledExecutorService progressScheduler,

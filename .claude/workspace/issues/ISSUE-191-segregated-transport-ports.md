@@ -2,7 +2,7 @@
 
 **PDR** : PDR-052
 **Module** : `platform-transport`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : —
 **Estime** : M (1-3h)

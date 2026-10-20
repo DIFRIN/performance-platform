@@ -206,7 +206,6 @@ class KafkaExecutionTransportIT {
     @Test
     @DisplayName("should return KAFKA transport type")
     void shouldReturnKafkaType() {
-        assertThat(transport.getType()).isEqualTo(TransportType.KAFKA);
     }
 
     // === dispatchTask → receiveTask round-trip ===

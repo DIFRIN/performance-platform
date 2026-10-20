@@ -487,8 +487,8 @@
 |---|---|---|---|
 | `AgentLifecycleEvent.AGENT_LOST` (constante) | ✅ STABLE (ADR-033) | PDR-045 | ISSUE-172 |
 | `AgentLifecyclePayloadCodec` | ✅ STABLE | PDR-045 | ISSUE-172 |
-| `TaskChannel` / `SignalChannel` / `EventChannel` / `LifecycleChannel` / `ConnectionLifecycle` | ⚠️ BREAKING (ADR-028) | PDR-052 | ISSUE-191 |
-| `ExecutionTransport` (façade composite → retirée) | ⚠️ BREAKING (ADR-028) | PDR-052 | ISSUE-191, ISSUE-193 |
+| `TaskChannel` / `SignalChannel` / `EventChannel` / `LifecycleChannel` / `ConnectionLifecycle` | ✅ STABLE | PDR-052 | ISSUE-191 |
+| `ExecutionTransport` (façade composite de migration, `getType()` retiré) | ✅ STABLE (temporaire) | PDR-052 | ISSUE-191, ISSUE-193 |
 
 ### platform-application
 

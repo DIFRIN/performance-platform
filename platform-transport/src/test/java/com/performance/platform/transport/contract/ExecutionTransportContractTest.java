@@ -91,12 +91,6 @@ class ExecutionTransportContractTest {
         }
 
         @Test
-        @DisplayName("TC-CONTRACT-04: getType() returns non-null type")
-        void getTypeReturnsNonNull() {
-            assertThat(transport.getType()).isNotNull();
-        }
-
-        @Test
         @DisplayName("TC-CONTRACT-05: double disconnect is safe (idempotent)")
         void doubleDisconnectIsIdempotent() {
             transport.connect();

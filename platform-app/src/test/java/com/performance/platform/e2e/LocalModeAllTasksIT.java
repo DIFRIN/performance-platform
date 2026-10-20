@@ -246,7 +246,7 @@ class LocalModeAllTasksIT {
 
         var agentFilter = new DefaultTaskSpecializationFilter(
                 descriptor.supportedTaskNames(), descriptor.id());
-        localAgent = new TaskAgentRuntime(transport, agentFilter, descriptor,
+        localAgent = new TaskAgentRuntime(transport, transport, transport, transport, agentFilter, descriptor,
                 Duration.ofMinutes(5), executorList, List.of(), null, null);
     }
 
@@ -364,9 +364,9 @@ class LocalModeAllTasksIT {
         assertThat(transport.isConnected())
                 .as("Transport should be connected")
                 .isTrue();
-        assertThat(transport.getType().name())
-                .as("Transport type should be IN_MEMORY")
-                .isEqualTo("IN_MEMORY");
+        assertThat(transport)
+                .as("Transport should be the in-memory implementation")
+                .isInstanceOf(InMemoryExecutionTransport.class);
         // Pas de bean Kafka actif — en câblage manuel, aucun Kafka n'est instancié
     }
 

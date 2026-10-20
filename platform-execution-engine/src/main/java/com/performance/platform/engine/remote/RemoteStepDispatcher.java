@@ -15,7 +15,7 @@ import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.engine.availability.AgentAvailabilityChecker;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
 import com.performance.platform.engine.shared.StepDispatcher;
-import com.performance.platform.transport.ExecutionTransport;
+import com.performance.platform.transport.TaskChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,14 +41,14 @@ public class RemoteStepDispatcher implements StepDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(RemoteStepDispatcher.class);
 
-    private final ExecutionTransport transport;
+    private final TaskChannel transport;
     private final AgentAvailabilityChecker availabilityChecker;
     private final TaskCorrelationTracker tracker;
     private final ExecutionConfig config;
     private final ApplicationEventPublisher eventPublisher;
 
     public RemoteStepDispatcher(
-            ExecutionTransport transport,
+            TaskChannel transport,
             AgentAvailabilityChecker availabilityChecker,
             TaskCorrelationTracker tracker,
             ExecutionConfig config,

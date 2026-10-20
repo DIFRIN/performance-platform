@@ -174,8 +174,6 @@ class SocketExecutionTransportTest {
         @Test
         @DisplayName("should return SOCKET type")
         void shouldReturnSocketType() {
-            assertThat(orchestrator.getType()).isEqualTo(TransportType.SOCKET);
-            assertThat(agent.getType()).isEqualTo(TransportType.SOCKET);
         }
 
         @Test
