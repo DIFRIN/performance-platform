@@ -163,9 +163,15 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
         try {
             return applicationContext.getBean(datasourceName, DataSource.class);
         } catch (Exception e) {
-            log.warn("action=db_datasource_not_found datasource={} error={}",
-                     datasourceName, e.getMessage());
-            return null;
+            // Les noms logiques (ex: "default") ne correspondent pas toujours au
+            // nom du bean Spring : fallback sur la DataSource primaire.
+            try {
+                return applicationContext.getBean(DataSource.class);
+            } catch (Exception primaryMissing) {
+                log.warn("action=db_datasource_not_found datasource={} error={}",
+                        datasourceName, e.getMessage());
+                return null;
+            }
         }
     }
 

@@ -173,7 +173,8 @@ public class WireMockAssertionExecutor implements AssertionExecutor {
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
-                .GET()
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{}"))
                 .build();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {

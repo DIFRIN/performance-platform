@@ -15,6 +15,7 @@ import com.performance.platform.plugin.AssertionExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -278,8 +279,12 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     double fetchRequestCountViaRestClient(RestClient restClient) {
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             Future<Double> future = executor.submit(() -> {
-                String json = restClient.get()
+                // WireMock 3 exposes POST /__admin/requests/count with a criteria
+                // body; a GET is interpreted as /__admin/requests/{id}.
+                String json = restClient.post()
                         .uri(ADMIN_REQUESTS_COUNT_PATH)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{}")
                         .retrieve()
                         .body(String.class);
                 return extractCount(json);
@@ -319,7 +324,8 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
-                .GET()
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{}"))
                 .build();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
