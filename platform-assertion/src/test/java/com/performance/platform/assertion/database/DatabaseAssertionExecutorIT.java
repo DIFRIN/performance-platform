@@ -222,6 +222,21 @@ class DatabaseAssertionExecutorIT {
         }
     }
 
+    @Test
+    @DisplayName("should resolve logical name 'default' to the primary datasource")
+    void shouldResolveDefaultAliasToPrimaryDatasource() {
+        StepDefinition step = step(Map.of(
+                "datasource", "default",
+                "query", "SELECT COUNT(*) FROM metrics",
+                "operator", "EQ",
+                "value", 5));
+
+        AssertionResult result = executor.evaluate(emptyContext(), step);
+
+        assertThat(result.status()).isEqualTo(AssertionStatus.PASSED);
+        assertThat(result.evidence().details()).containsEntry("datasource", "default");
+    }
+
     // --- Error cases ---
 
     @Nested

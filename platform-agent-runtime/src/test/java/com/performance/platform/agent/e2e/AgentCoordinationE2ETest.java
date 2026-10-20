@@ -93,7 +93,11 @@ class AgentCoordinationE2ETest {
             await().atMost(15, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_COMPLETED.equals(e.eventType())));
 
-            assertThat(runtime.getState()).isEqualTo(AgentState.IDLE);
+            // Le resultat est publie avant le nettoyage (decrement du compteur
+            // de taches actives puis transition EXECUTING -> IDLE) : l'etat
+            // peut donc encore etre EXECUTING au moment ou l'evenement est vu.
+            await().atMost(5, TimeUnit.SECONDS).until(() ->
+                    runtime.getState() == AgentState.IDLE);
             runtime.stop();
         }
 

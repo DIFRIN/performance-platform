@@ -4,6 +4,7 @@ import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
+import com.performance.platform.scenario.TestPaths;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,14 +15,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("IoT Scenario Parse Verification")
 class IotScenarioParseTest {
 
-    private static final String BASE = "/mnt/c/Dev/wsl-shared/performance-platform/platform-deployment/examples/scenarios/";
+    private static final Path SCENARIOS = TestPaths.exampleScenarios();
 
     private final YamlScenarioParser parser = new YamlScenarioParser();
 
     @Test
     @DisplayName("iot-dispatcher-local.yaml is parseable")
     void parseLocalScenario() throws Exception {
-        var file = Path.of(BASE, "iot-dispatcher-local.yaml");
+        var file = SCENARIOS.resolve("iot-dispatcher-local.yaml");
         ScenarioDefinition scenario = parser.parseFile(file);
 
         assertEquals("iot-dispatcher-local", scenario.id().value());
@@ -34,7 +35,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("iot-dispatcher-distributed.yaml is parseable")
     void parseDistributedScenario() throws Exception {
-        var file = Path.of(BASE, "iot-dispatcher-distributed.yaml");
+        var file = SCENARIOS.resolve("iot-dispatcher-distributed.yaml");
         try {
             ScenarioDefinition scenario = parser.parseFile(file);
             assertEquals("iot-dispatcher-distributed", scenario.id().value());
@@ -51,7 +52,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("device-api-local.yaml is parseable")
     void parseDeviceApiLocalScenario() throws Exception {
-        var file = Path.of(BASE, "device-api-local.yaml");
+        var file = SCENARIOS.resolve("device-api-local.yaml");
         ScenarioDefinition scenario = parser.parseFile(file);
 
         assertEquals("device-api-local", scenario.id().value());
@@ -68,7 +69,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("device-api-distributed.yaml is parseable")
     void parseDeviceApiDistributedScenario() throws Exception {
-        var file = Path.of(BASE, "device-api-distributed.yaml");
+        var file = SCENARIOS.resolve("device-api-distributed.yaml");
         try {
             ScenarioDefinition scenario = parser.parseFile(file);
             assertEquals("device-api-distributed", scenario.id().value());
@@ -86,7 +87,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("http-api-mock-agent-local.yaml is parseable — WireMock as Agent (LOCAL)")
     void parseHttpApiMockAgentLocalScenario() throws Exception {
-        var file = Path.of(BASE, "http-api-mock-agent-local.yaml");
+        var file = SCENARIOS.resolve("http-api-mock-agent-local.yaml");
         ScenarioDefinition scenario = parser.parseFile(file);
 
         assertEquals("http-api-mock-agent-local", scenario.id().value());
@@ -130,7 +131,7 @@ class IotScenarioParseTest {
     @Test
     @DisplayName("http-api-mock-agent-distributed.yaml is parseable — WireMock as Agent (DISTRIBUTED)")
     void parseHttpApiMockAgentDistributedScenario() throws Exception {
-        var file = Path.of(BASE, "http-api-mock-agent-distributed.yaml");
+        var file = SCENARIOS.resolve("http-api-mock-agent-distributed.yaml");
         try {
             ScenarioDefinition scenario = parser.parseFile(file);
 

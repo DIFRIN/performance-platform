@@ -364,6 +364,19 @@ public class SocketExecutionTransport implements ExecutionTransport {
         signalHandlers.add(handler);
     }
 
+    /**
+     * Nombre de connexions agent actuellement enregistrees cote orchestrateur.
+     * <p>
+     * L'enregistrement se produit dans l'accept loop, donc apres le retour de
+     * {@code connect()} cote agent. Visibilite package pour permettre aux
+     * tests de se synchroniser sur l'etablissement effectif de la connexion.
+     *
+     * @return le nombre de connexions agent enregistrees
+     */
+    int activeConnectionCount() {
+        return connectionRegistry.getActiveCount();
+    }
+
     // === Internal: Accept loop (orchestrator) ===
 
     /**

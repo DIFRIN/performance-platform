@@ -164,6 +164,16 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <!--
+                      Par defaut, failsafe met le JAR du projet sur le classpath des
+                      IT. Ici ce JAR est le fat jar Spring Boot (repackage au phase
+                      package) : les classes sont sous BOOT-INF/classes et ne sont
+                      donc pas visibles des ITs (NoClassDefFoundError). Forcer le
+                      repertoire des classes compilees evite cette substitution.
+                    -->
+                    <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+                </configuration>
             </plugin>
         </plugins>
     </build>

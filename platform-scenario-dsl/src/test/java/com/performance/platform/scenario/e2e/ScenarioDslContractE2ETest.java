@@ -6,6 +6,7 @@ import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
+import com.performance.platform.scenario.TestPaths;
 import com.performance.platform.scenario.parser.YamlScenarioParser;
 import com.performance.platform.scenario.usecase.DefaultScenarioParsingService;
 import com.performance.platform.scenario.usecase.ScenarioValidationException;
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,8 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("Scenario DSL Contract E2E")
 class ScenarioDslContractE2ETest {
 
-    private static final Path SCENARIOS_DIR = Path.of(
-            "src/test/resources/scenarios");
+    private static final Path SCENARIOS_DIR = TestPaths.classpathDirectory("scenarios");
 
     private YamlScenarioParser parser;
     private ScenarioValidator validator;

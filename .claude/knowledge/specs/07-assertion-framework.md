@@ -115,7 +115,7 @@ premier résultat d'injection disponible.
   task: database-assertion
   phase: ASSERTION
   parameters:
-    datasource: customer-db    # datasource nommée ; fallback datasource primaire
+    datasource: customer-db    # nom du bean DataSource ; "default" → datasource primaire ; sinon ERROR si introuvable
     query: "SELECT COUNT(*) FROM orders WHERE status = 'CREATED'"
     operator: GT
     value: 1000
