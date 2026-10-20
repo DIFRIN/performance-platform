@@ -172,7 +172,7 @@ class LocalModeAllTasksIT {
         var engine = new ExecutionEngine(
                 planBuilder, executionRepository, eventPublisher, signal -> { },
                 new LocalStepDispatcher(lookup, retryExecutor),
-                new LocalOutcomeEventPublisher(eventPublisher));
+                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();

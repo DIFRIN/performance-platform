@@ -81,7 +81,7 @@ class LocalDistributedEquivalenceIT {
                 localEvents::add,
                 signal -> { },
                 new LocalStepDispatcher(localLookup, new DefaultRetryExecutor()),
-                new LocalOutcomeEventPublisher(localEvents::add));
+                new LocalOutcomeEventPublisher(localEvents::add, localRepository));
 
         ExecutionId localId = localEngine.execute(scenario);
 

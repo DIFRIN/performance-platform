@@ -72,8 +72,9 @@ public class ExecutionEngineConfiguration {
     @Bean
     @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
     public OutcomeEventPublisher localOutcomeEventPublisher(
-            ApplicationEventPublisher eventPublisher) {
-        return new LocalOutcomeEventPublisher(eventPublisher);
+            ApplicationEventPublisher eventPublisher,
+            ExecutionRepository executionRepository) {
+        return new LocalOutcomeEventPublisher(eventPublisher, executionRepository);
     }
 
     // ------------------------------------------------------------------

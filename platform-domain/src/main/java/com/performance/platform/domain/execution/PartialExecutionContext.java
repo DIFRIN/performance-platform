@@ -11,7 +11,9 @@ import java.util.Optional;
 /**
  * Sous-ensemble immuable de l'{@link ExecutionContext} transmis aux agents.
  * Contient uniquement les entrées déclarées dans {@code StepDefinition.requiredContexts}.
- * Le store suit la structure {@code taskId → agentId → Object} (outputs bruts).
+ * Le store suit la structure {@code taskId → agentId → Map<String,Object>}
+ * (outputs nommes du TaskResult). Les anciens messages (valeur brute) restent
+ * acceptes par les accesseurs historiques.
  *
  * <p>Expose les mêmes accesseurs que {@code ExecutionContext} pour compatibilité
  * avec les {@code TaskExecutor} existants. Pas de {@code getAll()} —
@@ -65,12 +67,51 @@ public record PartialExecutionContext(
         Objects.requireNonNull(type, "type required");
         var agentResults = store.get(taskId);
         if (agentResults == null) return Optional.empty();
-        var value = agentResults.get(agentId);
-        if (value == null) return Optional.empty();
-        if (type.isInstance(value)) {
-            return Optional.of((T) value);
-        }
-        return Optional.empty();
+        return firstMatching(agentResults.get(agentId), type);
+    }
+
+    /**
+     * Recupere un output nomme pour une combinaison taskId + agentId.
+     * <p>
+     * Les messages recents transportent la map complete des outputs ; les
+     * anciens messages (valeur brute) ne peuvent pas etre resolus par nom.
+     *
+     * @param taskId     identifiant de la task
+     * @param agentId    identifiant de l'agent
+     * @param outputName nom contractuel de l'output
+     * @param type       type attendu
+     * @return la valeur si presente et du bon type
+     */
+    public <T> Optional<T> getOutput(String taskId, String agentId,
+                                     String outputName, Class<T> type) {
+        Objects.requireNonNull(taskId, "taskId required");
+        Objects.requireNonNull(agentId, "agentId required");
+        Objects.requireNonNull(outputName, "outputName required");
+        Objects.requireNonNull(type, "type required");
+        var agentResults = store.get(taskId);
+        if (agentResults == null) return Optional.empty();
+        return namedMatching(agentResults.get(agentId), outputName, type);
+    }
+
+    /**
+     * Recupere un output nomme du premier agent (ordre deterministe par agentId).
+     *
+     * @param taskId     identifiant de la task
+     * @param outputName nom contractuel de l'output
+     * @param type       type attendu
+     * @return la premiere valeur trouvee, ou vide
+     */
+    public <T> Optional<T> getFirstOutput(String taskId, String outputName, Class<T> type) {
+        Objects.requireNonNull(taskId, "taskId required");
+        Objects.requireNonNull(outputName, "outputName required");
+        Objects.requireNonNull(type, "type required");
+        var agentResults = store.get(taskId);
+        if (agentResults == null) return Optional.empty();
+        return agentResults.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> namedMatching(entry.getValue(), outputName, type))
+                .flatMap(Optional::stream)
+                .findFirst();
     }
 
     /**
@@ -88,11 +129,32 @@ public record PartialExecutionContext(
         Objects.requireNonNull(type, "type required");
         var agentResults = store.get(taskId);
         if (agentResults == null) return Optional.empty();
-        for (var value : agentResults.values()) {
-            if (type.isInstance(value)) {
-                return Optional.of((T) value);
+        return agentResults.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> firstMatching(entry.getValue(), type))
+                .flatMap(Optional::stream)
+                .findFirst();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> Optional<T> firstMatching(Object raw, Class<T> type) {
+        if (raw instanceof Map<?, ?> outputs) {
+            for (Object value : outputs.values()) {
+                if (type.isInstance(value)) {
+                    return Optional.of((T) value);
+                }
             }
+            return Optional.empty();
         }
+        return type.isInstance(raw) ? Optional.of((T) raw) : Optional.empty();
+    }
+
+    private static <T> Optional<T> namedMatching(Object raw, String outputName, Class<T> type) {
+        if (raw instanceof Map<?, ?> outputs) {
+            Object value = outputs.get(outputName);
+            return type.isInstance(value) ? Optional.of(type.cast(value)) : Optional.empty();
+        }
+        // Ancien format (valeur brute) : pas de nom d'output disponible.
         return Optional.empty();
     }
 }

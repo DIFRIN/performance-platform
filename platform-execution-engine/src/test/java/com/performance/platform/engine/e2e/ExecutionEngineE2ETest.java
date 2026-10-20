@@ -78,7 +78,7 @@ class ExecutionEngineE2ETest {
                 planBuilder, executionRepository,
                 eventPublisher, lifecycleDispatcher,
                 new LocalStepDispatcher(taskExecutorLookup, retryExecutor),
-                new LocalOutcomeEventPublisher(eventPublisher));
+                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
     }
 
     // ========================================================================

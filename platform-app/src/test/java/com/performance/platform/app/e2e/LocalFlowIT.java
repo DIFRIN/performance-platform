@@ -158,7 +158,7 @@ class LocalFlowIT {
         var engine = new ExecutionEngine(
                 planBuilder, executionRepository, eventPublisher, signal -> { },
                 new LocalStepDispatcher(lookup, retryExecutor),
-                new LocalOutcomeEventPublisher(eventPublisher));
+                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
 
         // 8. Scenario parsing
         var parser = new YamlScenarioParser();

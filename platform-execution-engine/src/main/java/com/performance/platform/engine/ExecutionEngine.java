@@ -185,6 +185,9 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
                 executionId.value(), scenarioId.value(), scenario.name());
 
         ExecutionState state = createInitialState(executionId, scenarioId, plan.initialContext());
+        // Persist the initial row before any updatePhase: the JPA repository
+        // requires the execution to exist (and the CLI/API poll it).
+        executionRepository.save(state);
         activeExecutions.put(executionId.value(), new ActiveExecution(state));
 
         eventPublisher.publishEvent(new ScenarioStarted(executionId, scenarioId, Instant.now()));
