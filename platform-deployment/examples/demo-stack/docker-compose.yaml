@@ -1,0 +1,196 @@
+# =============================================================================
+# Performance Engineering Platform — Operational Demo Stack
+# =============================================================================
+# One image, three roles:
+#   - orchestrator  : DISTRIBUTED + ORCHESTRATOR (REST API, Kafka transport)
+#   - agent-1       : DISTRIBUTED + AGENT (DB + Kafka + HTTP executors)
+#   - local-runner  : LOCAL headless CLI (--scenario=...)
+#
+# Dependencies: PostgreSQL, Kafka (KRaft), WireMock.
+#
+# Usage:
+#   ./run-demo.sh          # build, start, run remote + local scenarios
+#   ./run-demo.sh --down   # same, then tear down
+#   docker compose -f docker-compose.yaml down -v
+# =============================================================================
+
+x-platform-image: &platform-image
+  image: performance-platform:demo
+  build:
+    context: ../../..
+    dockerfile: platform-deployment/docker/Dockerfile
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: perf-demo-postgres
+    environment:
+      POSTGRES_DB: performance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - demo_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d performance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - perf-demo-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: perf-demo-kafka
+    environment:
+      CLUSTER_ID: "perf-platform-demo"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+    networks:
+      - perf-demo-net
+
+  wiremock:
+    image: wiremock/wiremock:3.12.1
+    container_name: perf-demo-wiremock
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./wiremock:/home/wiremock
+    command: --port 8080 --verbose
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/__admin/mappings > /dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - perf-demo-net
+
+  orchestrator:
+    <<: *platform-image
+    container_name: perf-demo-orchestrator
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: ORCHESTRATOR
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: orchestrator
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      DB_URL: "jdbc:postgresql://postgres:5432/performance"
+      DB_USERNAME: "postgres"
+      DB_PASSWORD: "changeme"
+      PLATFORM_SECURITY_ENABLED: "false"
+      WIREMOCK_URL: "http://wiremock:8080"
+      REPORTING_OUTPUT_DIR: "/var/lib/performance-platform/reports"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      wiremock:
+        condition: service_healthy
+    networks:
+      - perf-demo-net
+
+  agent-1:
+    <<: *platform-image
+    container_name: perf-demo-agent-1
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: AGENT
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: agent
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      AGENT_ID: "agent-1"
+      AGENT_NAME: "demo-agent-1"
+      AGENT_SUPPORTED_TASKS: "database,database-assertion,kafka-producer,kafka,http-client,http-mock"
+      PLATFORM_SECURITY_ENABLED: "false"
+      # The agent owns the datasource used by the `database` and
+      # `database-assertion` tasks.
+      PLATFORM_DATASOURCES_DEFAULT_URL: "jdbc:postgresql://postgres:5432/performance"
+      PLATFORM_DATASOURCES_DEFAULT_USERNAME: "postgres"
+      PLATFORM_DATASOURCES_DEFAULT_PASSWORD: "changeme"
+      PLATFORM_DATASOURCES_DEFAULT_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+      # Flyway is owned by the orchestrator; avoid concurrent migrations.
+      SPRING_FLYWAY_ENABLED: "false"
+      # HTTP targets used by http-client / http-mock.
+      WIREMOCK_URL: "http://wiremock:8080"
+      PLATFORM_HTTP_TARGETS_WIREMOCK_BASE_URL: "http://wiremock:8080"
+      PLATFORM_HTTP_TARGETS_WIREMOCK_CONNECTION_TIMEOUT: "2s"
+      PLATFORM_HTTP_TARGETS_WIREMOCK_READ_TIMEOUT: "5s"
+    healthcheck:
+      # AGENT exposes no web server (ADR-019): the image-level HTTP probe is disabled.
+      disable: true
+    depends_on:
+      kafka:
+        condition: service_healthy
+      wiremock:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - perf-demo-net
+
+  local-runner:
+    <<: *platform-image
+    container_name: perf-demo-local-runner
+    profiles: ["runner"]
+    # file: prefix is required by Spring's ResourceLoader for a mounted path.
+    command: ["--scenario=file:/scenarios/local-demo.yaml"]
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      PLATFORM_SECURITY_ENABLED: "false"
+      WIREMOCK_URL: "http://wiremock:8080"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      # LOCAL profile has no kafka-clusters block: provide the demo cluster.
+      PLATFORM_KAFKA_CLUSTERS_DEFAULT_BOOTSTRAP_SERVERS: "kafka:29092"
+      PLATFORM_KAFKA_CLUSTERS_DEFAULT_PRODUCER_ACKS: "all"
+      # LOCAL profile defaults to H2; the demo uses the shared PostgreSQL
+      # (the platform schema is created by the orchestrator's Flyway).
+      PLATFORM_DATASOURCES_DEFAULT_URL: "jdbc:postgresql://postgres:5432/performance"
+      PLATFORM_DATASOURCES_DEFAULT_USERNAME: "postgres"
+      PLATFORM_DATASOURCES_DEFAULT_PASSWORD: "changeme"
+      PLATFORM_DATASOURCES_DEFAULT_DRIVER_CLASS_NAME: "org.postgresql.Driver"
+    volumes:
+      - ./scenarios:/scenarios:ro
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      wiremock:
+        condition: service_healthy
+    networks:
+      - perf-demo-net
+
+networks:
+  perf-demo-net:
+    driver: bridge
+
+volumes:
+  demo_postgres_data:

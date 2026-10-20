@@ -1,0 +1,97 @@
+# =============================================================================
+# Local demo — LOCAL execution (single JVM, in-memory transport)
+# =============================================================================
+# Same coverage as the remote scenario, executed by the headless CLI:
+#   java -jar app.jar --scenario=file:/scenarios/local-demo.yaml
+#
+# The local-runner service overrides the H2 datasource with the shared
+# PostgreSQL and provides the demo Kafka cluster through env vars.
+# =============================================================================
+scenario:
+  id: demo-local-db-kafka-http
+  name: "Local demo — DB + Kafka + WireMock"
+  version: "1.0.0"
+  tags: [demo, local, database, kafka, http]
+  metadata:
+    owner: perf-team
+    objective: "Demonstrate LOCAL execution across DB, Kafka and mock HTTP"
+  execution:
+    mode: LOCAL
+  steps:
+
+    - id: db-schema
+      task: database
+      phase: PREPARATION
+      parameters:
+        operation: QUERY
+        datasource: default
+        query: "CREATE TABLE IF NOT EXISTS perf_events_local (id SERIAL PRIMARY KEY, payload VARCHAR(255))"
+      timeout: 30s
+
+    - id: db-seed
+      task: database
+      phase: PREPARATION
+      dependsOn: [db-schema]
+      parameters:
+        operation: QUERY
+        datasource: default
+        query: "INSERT INTO perf_events_local(payload) VALUES ('local-1'),('local-2')"
+      timeout: 30s
+
+    - id: http-call
+      task: http-client
+      phase: INJECTION
+      dependsOn: [db-seed]
+      parameters:
+        target: wiremock
+        method: GET
+        path: /api/users
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: kafka-produce
+      task: kafka-producer
+      phase: INJECTION
+      dependsOn: [db-seed]
+      parameters:
+        cluster: default
+        topic: perf-demo-local
+        operation: PRODUCE
+        messageCount: 25
+        messageTemplate: "local-demo-{index}"
+      timeout: 60s
+
+    - id: assert-db
+      task: database-assertion
+      phase: ASSERTION
+      dependsOn: [db-seed]
+      parameters:
+        datasource: default
+        query: "SELECT COUNT(*) FROM perf_events_local"
+        operator: GTE
+        value: 2
+        unit: rows
+      timeout: 30s
+
+    - id: assert-http
+      task: http-mock
+      phase: ASSERTION
+      dependsOn: [http-call]
+      parameters:
+        target: wiremock
+        metric: receivedCalls
+        operator: GTE
+        value: 1
+      timeout: 30s
+
+    - id: assert-kafka
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [kafka-produce]
+      requiredContexts: [kafka-produce]
+      parameters:
+        metric: producedCount
+        refTaskId: kafka-produce
+        operator: GTE
+        value: 25
+      timeout: 30s
