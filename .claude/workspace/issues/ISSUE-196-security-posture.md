@@ -2,7 +2,7 @@
 
 **PDR** : PDR-054
 **Module** : `platform-app`
-**Statut** : WAITING
+**Statut** : DONE
 **Priorité** : P3
 **Bloquée par** : —
 **Estime** : S (< 1h)

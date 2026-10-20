@@ -208,7 +208,7 @@
 | ISSUE-193 | Migrate Transport Consumers | WAITING | PDR-052 | ISSUE-192 |
 | ISSUE-194 | ExecutionContext Named Outputs + Persistent Store | WAITING | PDR-053 | - |
 | ISSUE-195 | Migrate Context Consumers | WAITING | PDR-053 | ISSUE-194 |
-| ISSUE-196 | Security Posture Decision | WAITING | PDR-054 | - |
+| ISSUE-196 | Security Posture Decision | DONE | PDR-054 | - |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -255,18 +255,18 @@
 | PDR-040 | Event Package Formalization | platform-domain | WAITING | ISSUE-163,164 | PDR-002 |
 | PDR-041 | Task Executor Audit & Doctrine | platform-infrastructure | WAITING | ISSUE-165 | PDR-010 |
 | PDR-042 | DatabaseTaskExecutor Refinement | platform-infrastructure | WAITING | ISSUE-166,167 | PDR-010 |
-| PDR-043 | Safety Net: CI + Test Tiers + Equivalence | IN_PROGRESS | WAITING | ISSUE-168,169,170 | — |
-| PDR-044 | Task Correlation Tracker Lifecycle | IN_PROGRESS | WAITING | ISSUE-171 | PDR-006 |
-| PDR-045 | Agent Lifecycle Ingestion & Loss Fast-Fail | DONE | WAITING | ISSUE-172,173,174 | PDR-044, PDR-009, PDR-007 |
-| PDR-046 | Single Runtime Resolution | IN_PROGRESS | WAITING | ISSUE-175 | PDR-018 |
-| PDR-047 | DSL Strictness & Version | IN_PROGRESS | WAITING | ISSUE-176 | PDR-005 |
-| PDR-048 | Cross-Module Boundary Enforcement | IN_PROGRESS | WAITING | ISSUE-177,178,179,180 | PDR-004, PDR-010, PDR-014, PDR-022, PDR-037 |
-| PDR-049 | Spring Modulith Decision | DONE | WAITING | ISSUE-183 | PDR-048 |
+| PDR-043 | Safety Net: CI + Test Tiers + Equivalence | root, platform-app, all | DONE | ISSUE-168,169,170 | — |
+| PDR-044 | Task Correlation Tracker Lifecycle | platform-execution-engine | DONE | ISSUE-171 | PDR-006 |
+| PDR-045 | Agent Lifecycle Ingestion & Loss Fast-Fail | platform-agent-runtime, platform-transport, platform-execution-engine | DONE | ISSUE-172,173,174 | PDR-044, PDR-009, PDR-007 |
+| PDR-046 | Single Runtime Resolution | platform-app | DONE | ISSUE-175 | PDR-018 |
+| PDR-047 | DSL Strictness & Version | platform-scenario-dsl | DONE | ISSUE-176 | PDR-005 |
+| PDR-048 | Cross-Module Boundary Enforcement | platform-app, engine, assertion, infrastructure, reporting, application | DONE | ISSUE-177,178,179,180 | PDR-004, PDR-010, PDR-014, PDR-022, PDR-037 |
+| PDR-049 | Spring Modulith Decision | platform-app | DONE | ISSUE-183 | PDR-048 |
 | PDR-050 | Engine & Agent Consolidation | platform-execution-engine, platform-agent-runtime, platform-app | WAITING | ISSUE-184,185,186,187,188 | PDR-043, PDR-048, PDR-039, PDR-045 |
 | PDR-051 | Distributed Completion Semantics | platform-execution-engine | DONE | ISSUE-189,190 | PDR-044, PDR-050 |
 | PDR-052 | Transport Interface Segregation | platform-transport | WAITING | ISSUE-191,192,193 | PDR-007, PDR-008 |
 | PDR-053 | ExecutionContext Named Outputs | platform-domain | WAITING | ISSUE-194,195 | PDR-001 |
-| PDR-054 | Security Posture | platform-app | WAITING | ISSUE-196 | PDR-018 |
+| PDR-054 | Security Posture | platform-app | DONE | ISSUE-196 | PDR-018 |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
 | — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
