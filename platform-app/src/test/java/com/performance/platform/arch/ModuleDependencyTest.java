@@ -101,7 +101,7 @@ class ModuleDependencyTest {
     @DisplayName("assertion ne depend pas de infrastructure")
     void assertionMustNotDependOnInfrastructure() {
         assertNoDependency(ASSERTION, INFRASTRUCTURE, Set.of(),
-                "les cibles HTTP passent par le port application.ports.out.HttpTargetResolver");
+                "les cibles HTTP passent par le port application.ports.out.EndpointResolver");
     }
 
     // ------------------------------------------------------------------

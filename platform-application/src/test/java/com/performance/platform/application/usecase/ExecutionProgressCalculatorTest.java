@@ -52,6 +52,35 @@ class ExecutionProgressCalculatorTest {
     // --- Cas nominal
 
     @Test
+    void includesInjectionAndAssertionsBeforeTheirResultsExist() {
+        state = new ExecutionState(EXEC_ID, SCENARIO_ID, ExecutionStatus.RUNNING, Map.of(),
+                state.context(), state.startedAt(), state.updatedAt(), 7);
+        Map<TaskId, Map<AgentId, TaskResult>> results = new HashMap<>();
+        for (int i = 1; i <= 4; i++) {
+            var taskId = TaskId.of("prep-" + i);
+            results.put(taskId, Map.of(AGENT_A,
+                    TaskResult.success(taskId, "preparation", Duration.ZERO, Map.of())));
+        }
+
+        assertEquals(new ExecutionProgress(7, 4, 0, 3), calculator.calculate(state, results));
+        assertEquals(new ExecutionProgress(7, 0, 0, 7), calculator.calculate(state, Map.of()));
+
+        for (String id : new String[] {"injection", "assertion-1", "assertion-2"}) {
+            var taskId = TaskId.of(id);
+            results.put(taskId, Map.of(AGENT_A,
+                    TaskResult.success(taskId, "task", Duration.ZERO, Map.of())));
+        }
+        assertEquals(new ExecutionProgress(7, 7, 0, 0), calculator.calculate(state, results));
+    }
+
+    @Test
+    void rejectsNegativePlannedTaskCount() {
+        assertThrows(IllegalArgumentException.class, () -> new ExecutionState(
+                EXEC_ID, SCENARIO_ID, ExecutionStatus.RUNNING, Map.of(), state.context(),
+                state.startedAt(), state.updatedAt(), -1));
+    }
+
+    @Test
     @DisplayName("map vide => progress 0/0/0/0")
     void emptyMapReturnsZeroProgress() {
         var progress = calculator.calculate(state, Map.of());

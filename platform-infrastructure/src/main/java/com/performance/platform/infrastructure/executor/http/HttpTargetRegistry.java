@@ -1,7 +1,7 @@
 package com.performance.platform.infrastructure.executor.http;
 
-import com.performance.platform.application.ports.out.HttpTarget;
-import com.performance.platform.application.ports.out.HttpTargetResolver;
+import com.performance.platform.application.ports.out.Endpoint;
+import com.performance.platform.application.ports.out.EndpointResolver;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class HttpTargetRegistry implements HttpTargetResolver {
+public class HttpTargetRegistry implements EndpointResolver {
 
     private static final Logger log = LoggerFactory.getLogger(HttpTargetRegistry.class);
 
@@ -37,12 +37,12 @@ public class HttpTargetRegistry implements HttpTargetResolver {
      * Resolution framework-free pour les modules fournisseurs (assertions).
      */
     @Override
-    public HttpTarget resolve(String targetName) {
+    public Endpoint resolve(String targetName) {
         HttpTargetProperties properties = targets.get(targetName);
         if (properties == null) {
             return null;
         }
-        return new HttpTarget(
+        return new Endpoint(
                 properties.baseUrl(),
                 properties.connectionTimeout(),
                 properties.readTimeout(),

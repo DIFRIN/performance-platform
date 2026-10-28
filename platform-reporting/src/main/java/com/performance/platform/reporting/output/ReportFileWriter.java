@@ -143,7 +143,8 @@ public class ReportFileWriter {
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var futures = new ArrayList<Future<Void>>();
 
-            for (InjectionReportEntry entry : entries) {
+            for (int index = 0; index < entries.size(); index++) {
+                InjectionReportEntry entry = entries.get(index);
                 Path sourceDir = entry.gatlingReportDirectory();
                 if (sourceDir == null || !Files.exists(sourceDir)) {
                     log.warn("action=gatling_dir_missing executionId={} simClass={}",
@@ -151,7 +152,11 @@ public class ReportFileWriter {
                     continue;
                 }
                 String simName = sanitizeFilename(entry.metrics().simulationClass());
-                Path destDir = gatlingBase.resolve(simName);
+                boolean sharedName = entries.stream().filter(other ->
+                        sanitizeFilename(other.metrics().simulationClass()).equals(simName)).count() > 1;
+                Path destDir = sharedName
+                        ? gatlingBase.resolve(simName).resolve("run-" + index + "-" + sanitizeFilename(entry.taskId().value()))
+                        : gatlingBase.resolve(simName);
 
                 String execId = executionId;
                 futures.add(executor.submit(() -> {

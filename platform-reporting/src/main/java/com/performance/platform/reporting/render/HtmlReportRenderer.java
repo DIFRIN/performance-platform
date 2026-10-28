@@ -62,7 +62,7 @@ public class HtmlReportRenderer implements ReportRenderer {
                     .replace("${verdictReason}", report.verdictReason() != null
                             ? " — " + escapeHtml(report.verdictReason()) : "")
                     .replace("${jvmVersion}", escapeHtml(report.environment().jvmVersion()))
-                    .replace("${agentIds}", String.join(", ", report.environment().agentIds()))
+                    .replace("${agentIds}", escapeHtml(String.join(", ", report.environment().agentIds())))
                     .replace("${totalTasks}", String.valueOf(report.executionSummary().totalTasks()))
                     .replace("${successfulTasks}", String.valueOf(report.executionSummary().successfulTasks()))
                     .replace("${failedTasks}", String.valueOf(report.executionSummary().failedTasks()))
@@ -72,7 +72,13 @@ public class HtmlReportRenderer implements ReportRenderer {
                     .replace("${assertionDuration}", report.executionSummary().assertionDuration().toString())
                     .replace("${preparationTable}", buildPreparationTable(report.preparationResults()))
                     .replace("${injectionKPIs}", buildInjectionKPIs(report.injectionResults()))
-                    .replace("${assertionTable}", buildAssertionTable(report.assertionResults()));
+                    .replace("${assertionTable}", buildAssertionTable(report.assertionResults()))
+                    .replace("${contextSection}", PerformanceSections.context(report.performance()))
+                    .replace("${loadSection}", PerformanceSections.load(report.performance()))
+                    .replace("${sliSection}", PerformanceSections.sli(report.performance()))
+                    .replace("${technicalSection}", PerformanceSections.technical(report.performance()))
+                    .replace("${analysisSection}", PerformanceSections.analysis(report.performance()))
+                    .replace("${validationSection}", PerformanceSections.validation(report.performance()));
 
             return html.getBytes(StandardCharsets.UTF_8);
         } catch (Exception e) {
@@ -130,13 +136,16 @@ public class HtmlReportRenderer implements ReportRenderer {
         var sb = new StringBuilder();
         for (InjectionReportEntry e : entries) {
             var m = e.metrics();
-            sb.append("<h3>").append(escapeHtml(e.metrics().simulationClass())).append("</h3>\n");
+            sb.append("<h3>").append(escapeHtml(e.taskId().value())).append(" - ")
+                    .append(escapeHtml(e.metrics().simulationClass())).append(" - ")
+                    .append(escapeHtml(e.agentId() == null ? "Agent not provided" : e.agentId())).append("</h3>\n");
             sb.append("<div>\n");
             kpi(sb, "Requests", m.totalRequests());
             kpi(sb, "Throughput", String.format("%.1f/s", m.throughput()));
             kpi(sb, "Error Rate", String.format("%.2f%%", m.errorRate()));
             kpi(sb, "p50", m.p50Ms() + " ms");
             kpi(sb, "p90", m.p90Ms() + " ms");
+            kpi(sb, "p95", m.p95Ms() + " ms");
             kpi(sb, "p99", m.p99Ms() + " ms");
             kpi(sb, "Max", m.maxMs() + " ms");
             kpi(sb, "Mean", String.format("%.1f ms", m.meanMs()));

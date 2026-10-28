@@ -9,6 +9,8 @@ package com.performance.platform.injection.gatling.runner;
  */
 public class GatlingExecutionException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public GatlingExecutionException(String message, Throwable cause) {
         super(message, cause);
     }

@@ -1,10 +1,10 @@
-# ADR-036 — Port `HttpTargetResolver` pour couper assertion → infrastructure
+# ADR-036 — Port `EndpointResolver` pour couper assertion → infrastructure
 
 **Date** : 2026-10-19
 **Statut** : ACCEPTED
 **Décideurs** : Architect + implémentation (Claude Code), sur constat de l'audit `improvements.md` (A3)
 **Raffine** : PDR-048, PDR-022 (named HTTP targets)
-**Impacte interfaces publiques** : OUI (additif) — `HttpTarget`, `HttpTargetResolver`
+**Impacte interfaces publiques** : OUI (additif) — `Endpoint`, `EndpointResolver`
 
 ---
 
@@ -18,12 +18,12 @@ d'assertions dépendait d'un adapter. C'était la seule arête
 ## Décision
 
 - Ajouter dans `platform-application.ports.out` :
-  - `HttpTarget` — record framework-free (baseUrl, timeouts, headers, paths) ;
-  - `HttpTargetResolver` — port `HttpTarget resolve(String targetName)`.
+  - `Endpoint` — record framework-free (baseUrl, timeouts, headers, paths) ;
+  - `EndpointResolver` — port `Endpoint resolve(String targetName)`.
 - `HttpTargetRegistry` implémente le port (`resolve` mappe
-  `HttpTargetProperties` → `HttpTarget`).
-- `HttpMockAssertionExecutor` dépend de `HttpTargetResolver` et construit son
-  propre `RestClient` à partir de `HttpTarget`.
+  `HttpTargetProperties` → `Endpoint`).
+- `HttpMockAssertionExecutor` dépend de `EndpointResolver` et construit son
+  propre `RestClient` à partir de `Endpoint`.
 - Retirer `platform-infrastructure` du scope **compile** de
   `platform-assertion`. Le scope **test** est conservé pour les tests qui
   vérifient l'intégration avec `DefaultTaskExecutorRegistry`.

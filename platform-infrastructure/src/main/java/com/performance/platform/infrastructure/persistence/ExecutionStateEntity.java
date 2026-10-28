@@ -1,6 +1,7 @@
 package com.performance.platform.infrastructure.persistence;
 
 import com.performance.platform.domain.execution.ExecutionStatus;
+import com.performance.platform.domain.execution.ScenarioDetails;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,12 +13,13 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
 /**
  * JPA entity mapping the {@code execution_state} table.
  * Stores the global status, per-phase statuses (JSONB), and
- * execution context snapshot (JSONB).
+ * execution context snapshot and planned task dispatch state (JSONB).
  *
  * <p>Technically public to allow access from the {@code .persistence.mapper}
  * subpackage, but conceptually confined to the {@code .persistence} package
@@ -56,12 +58,54 @@ public class ExecutionStateEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "planned_task_count", nullable = false)
+    private int plannedTaskCount;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "tasks", nullable = false, columnDefinition = "jsonb")
+    private List<Map<String, Object>> tasks = List.of();
+
+    @Column(name = "scenario_yaml", columnDefinition = "text")
+    private String scenarioYaml;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "scenario_details", columnDefinition = "jsonb")
+    private ScenarioDetails scenarioDetails;
+
     /** JPA-only constructor. */
     public ExecutionStateEntity() {}
 
     public ExecutionStateEntity(String id, String scenarioId, ExecutionStatus status,
                                 Map<String, String> phases, Map<String, Object> context,
                                 Instant startedAt, Instant updatedAt) {
+        this(id, scenarioId, status, phases, context, startedAt, updatedAt, 0);
+    }
+
+    public ExecutionStateEntity(String id, String scenarioId, ExecutionStatus status,
+                                Map<String, String> phases, Map<String, Object> context,
+                                Instant startedAt, Instant updatedAt, int plannedTaskCount) {
+        this(id, scenarioId, status, phases, context, startedAt, updatedAt, plannedTaskCount, List.of());
+    }
+
+    public ExecutionStateEntity(String id, String scenarioId, ExecutionStatus status,
+                                Map<String, String> phases, Map<String, Object> context,
+                                Instant startedAt, Instant updatedAt, int plannedTaskCount,
+                                List<Map<String, Object>> tasks) {
+        this(id, scenarioId, status, phases, context, startedAt, updatedAt, plannedTaskCount, tasks, null);
+    }
+
+    public ExecutionStateEntity(String id, String scenarioId, ExecutionStatus status,
+                                Map<String, String> phases, Map<String, Object> context,
+                                Instant startedAt, Instant updatedAt, int plannedTaskCount,
+                                List<Map<String, Object>> tasks, String scenarioYaml) {
+        this(id, scenarioId, status, phases, context, startedAt, updatedAt,
+                plannedTaskCount, tasks, scenarioYaml, null);
+    }
+
+    public ExecutionStateEntity(String id, String scenarioId, ExecutionStatus status,
+                                Map<String, String> phases, Map<String, Object> context,
+                                Instant startedAt, Instant updatedAt, int plannedTaskCount,
+                                List<Map<String, Object>> tasks, String scenarioYaml, ScenarioDetails scenarioDetails) {
         this.id = Objects.requireNonNull(id, "id required");
         this.scenarioId = Objects.requireNonNull(scenarioId, "scenarioId required");
         this.status = Objects.requireNonNull(status, "status required");
@@ -69,6 +113,13 @@ public class ExecutionStateEntity {
         this.context = context == null ? Map.of() : Map.copyOf(context);
         this.startedAt = Objects.requireNonNull(startedAt, "startedAt required");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt required");
+        if (plannedTaskCount < 0) {
+            throw new IllegalArgumentException("plannedTaskCount must not be negative");
+        }
+        this.plannedTaskCount = plannedTaskCount;
+        this.tasks = tasks.stream().map(Map::copyOf).toList();
+        this.scenarioYaml = scenarioYaml;
+        this.scenarioDetails = scenarioDetails;
     }
 
     public String id() { return id; }
@@ -78,6 +129,10 @@ public class ExecutionStateEntity {
     public Map<String, Object> context() { return context; }
     public Instant startedAt() { return startedAt; }
     public Instant updatedAt() { return updatedAt; }
+    public int plannedTaskCount() { return plannedTaskCount; }
+    public List<Map<String, Object>> tasks() { return tasks; }
+    public String scenarioYaml() { return scenarioYaml; }
+    public ScenarioDetails scenarioDetails() { return scenarioDetails; }
 
     @Override
     public String toString() {

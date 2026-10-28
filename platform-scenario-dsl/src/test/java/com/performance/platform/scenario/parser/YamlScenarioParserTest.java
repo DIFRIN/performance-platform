@@ -24,6 +24,40 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("YamlScenarioParser")
 class YamlScenarioParserTest {
 
+    @Test
+    void parsesReportContextCriteriaMeasurementsAndGraphLinks() {
+        var source = """
+                scenario:
+                  id: report-example
+                  report:
+                    components: {api: "2.4.1", worker: "3.2"}
+                    environment: PERF
+                    objective: Validate release
+                    testType: LOAD
+                    loadDescription: Constant users
+                    assumptions: [Isolated dataset]
+                    criteria:
+                      - {name: p95, metric: p95Ms, taskId: load, operator: "<=", threshold: 500}
+                    observations:
+                      - {name: CPU, taskId: monitor, output: cpu.max, unit: "%", required: true}
+                    graphs:
+                      - {title: CPU timeline, url: "https://monitor.example/d/cpu?from=1&to=2", source: Grafana}
+                """;
+        var scenario = new YamlScenarioParser().parse(source);
+        assertEquals("2.4.1", scenario.report().components().get("api"));
+        assertTrue(scenario.report().criteria().getFirst().critical());
+        assertEquals("cpu.max", scenario.report().observations().getFirst().output());
+        assertEquals(source, scenario.sourceYaml());
+        assertThrows(ScenarioParsingException.class, () -> new YamlScenarioParser().parse(
+                source.replace("threshold: 500", "threshold: bad")));
+        assertThrows(ScenarioParsingException.class, () -> new YamlScenarioParser().parse(
+                source.replace("threshold: 500", "unknownThreshold: 500")));
+        assertThrows(ScenarioParsingException.class, () -> new YamlScenarioParser().parse(
+                source.replace("https://monitor.example/d/cpu?from=1&to=2", "javascript:alert(1)")));
+        assertThrows(ScenarioParsingException.class, () -> new YamlScenarioParser().parse(
+                source.replace("threshold: 500", "threshold: null")));
+    }
+
     private YamlScenarioParser parser;
 
     @BeforeEach
@@ -77,6 +111,7 @@ class YamlScenarioParserTest {
             assertEquals("Customer API Campaign", scenario.name());
             assertEquals("1.0.0", scenario.version());
             assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
+            assertEquals(REFERENCE_YAML, scenario.sourceYaml());
         }
 
         @Test
@@ -87,6 +122,7 @@ class YamlScenarioParserTest {
 
             assertNotNull(scenario);
             assertEquals("customer-api-perf", scenario.id().value());
+            assertEquals(REFERENCE_YAML, scenario.sourceYaml());
         }
 
         @Test

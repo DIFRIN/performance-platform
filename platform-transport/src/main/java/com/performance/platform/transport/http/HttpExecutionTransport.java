@@ -182,7 +182,7 @@ public class HttpExecutionTransport implements ExecutionTransport {
 
         // Wait for all POSTs to complete (Virtual Threads — blocking is fine)
         try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            CompletableFuture.allOf(futures.toArray(CompletableFuture<?>[]::new)).join();
         } catch (Exception e) {
             throw new TransportException("Failed to dispatch task to agents: " + e.getMessage(), e);
         }
@@ -235,7 +235,7 @@ public class HttpExecutionTransport implements ExecutionTransport {
         }
 
         try {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            CompletableFuture.allOf(futures.toArray(CompletableFuture<?>[]::new)).join();
         } catch (Exception e) {
             throw new TransportException("Failed to broadcast signal: " + e.getMessage(), e);
         }

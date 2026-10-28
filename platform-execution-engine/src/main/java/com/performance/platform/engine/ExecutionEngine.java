@@ -4,6 +4,7 @@ import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.NoAvailableAgentException;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
 import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.PhaseCompleted;
@@ -16,13 +17,17 @@ import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.ExecutionStep;
+import com.performance.platform.domain.execution.ExecutionTask;
+import com.performance.platform.domain.execution.ScenarioDetails;
 import com.performance.platform.domain.execution.PhaseStatus;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.SignalId;
+import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
+import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.engine.plan.ExecutionPlanBuilder;
 import com.performance.platform.engine.shared.DagPhaseExecutor;
@@ -64,7 +69,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @ConditionalOnExpression(
     "'${runtime.mode:LOCAL}'.equals('LOCAL') || ('${runtime.mode:LOCAL}'.equals('DISTRIBUTED')"
     + " && '${runtime.role:NONE}'.equals('ORCHESTRATOR'))")
-public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionUseCase {
+public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUseCase, CancelExecutionUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(ExecutionEngine.class);
 
@@ -90,13 +95,38 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
         this.eventPublisher = eventPublisher;
         this.lifecycleDispatcher = lifecycleDispatcher;
         this.outcomeEventPublisher = outcomeEventPublisher;
-        this.dagPhaseExecutor = new DagPhaseExecutor(stepDispatcher, lifecycleDispatcher);
+        this.dagPhaseExecutor = new DagPhaseExecutor((step, context) -> {
+            markTaskStarted(context.executionId(), step.step().id());
+            var result = stepDispatcher.dispatch(step, context);
+            if (result.status() != TaskStatus.SKIPPED) {
+                outcomeEventPublisher.publish(context.executionId(), List.of(new DagPhaseExecutor.StepOutcome(
+                        step.step().id(), step.step().taskName(), result, result.status())), step.step().phase());
+            }
+            return result;
+        }, lifecycleDispatcher);
     }
 
     // ==================== UseCase API ====================
 
     @Override
     public ExecutionId execute(ScenarioDefinition scenario) throws ExecutionException {
+        return runExecution(prepareExecution(scenario));
+    }
+
+    @Override
+    public ExecutionId submit(ScenarioDefinition scenario) {
+        ExecutionPlan plan = prepareExecution(scenario);
+        try {
+            Thread.ofVirtual().name("execution-" + plan.id().value()).start(() -> runExecution(plan));
+        } catch (RuntimeException e) {
+            applyVerdict(plan.id(), plan.scenarioId(), plan.initialContext(), Verdict.FAILED, false);
+            finalizeExecution(plan.id(), plan.scenarioId(), Verdict.FAILED, Instant.now());
+            throw e;
+        }
+        return plan.id();
+    }
+
+    private ExecutionPlan prepareExecution(ScenarioDefinition scenario) {
         if (scenario == null) {
             throw new ExecutionException("ScenarioDefinition must not be null");
         }
@@ -104,7 +134,10 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
             throw new ExecutionException("ScenarioDefinition.id must not be null");
         }
 
-        ExecutionPlan plan = initializeExecution(scenario);
+        return initializeExecution(scenario);
+    }
+
+    private ExecutionId runExecution(ExecutionPlan plan) {
         ExecutionId executionId = plan.id();
         AtomicBoolean cancelled = cancelFlags(executionId);
         ExecutionContext ctx = plan.initialContext();
@@ -154,6 +187,19 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
         return executionId;
     }
 
+    private void markTaskStarted(ExecutionId executionId, TaskId taskId) {
+        ActiveExecution exec = activeExecutions.get(executionId.value());
+        synchronized (exec) {
+            ExecutionState current = exec.state;
+            exec.state = new ExecutionState(current.id(), current.scenarioId(), current.status(),
+                    current.phaseStatuses(), current.context(), current.startedAt(), Instant.now(),
+                    current.plannedTaskCount(), current.tasks().stream()
+                            .map(task -> task.id().equals(taskId) ? task.start() : task).toList(),
+                    current.scenarioYaml(), current.scenarioDetails());
+            executionRepository.save(exec.state);
+        }
+    }
+
     public ExecutionStatus getStatus(ExecutionId id) {
         ActiveExecution exec = activeExecutions.get(id.value());
         if (exec != null) {
@@ -184,7 +230,8 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
         log.info("action=execute_start executionId={} scenarioId={} scenarioName={}",
                 executionId.value(), scenarioId.value(), scenario.name());
 
-        ExecutionState state = createInitialState(executionId, scenarioId, plan.initialContext());
+        ExecutionState state = createInitialState(
+                executionId, scenarioId, plan.initialContext(), scenario);
         // Persist the initial row before any updatePhase: the JPA repository
         // requires the execution to exist (and the CLI/API poll it).
         executionRepository.save(state);
@@ -211,17 +258,22 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
         }
 
         eventPublisher.publishEvent(new PhaseStarted(executionId, phase, Instant.now()));
-        executionRepository.updatePhase(executionId, phase, PhaseStatus.RUNNING);
+        ActiveExecution active = activeExecutions.get(executionId.value());
+        synchronized (active) {
+            active.state = updatePhaseInState(active.state, phase, PhaseStatus.RUNNING, context);
+            executionRepository.save(active.state);
+        }
         log.info("action=phase_started phase={} executionId={}", phase, executionId.value());
 
         DagPhaseExecutor.PhaseResult result = dagPhaseExecutor.executePhase(
                 steps, context, phase, cancelled);
 
-        // LOCAL publie les events de tache ici ; DISTRIBUTED les publie deja
-        // via TransportExecutionEventHandler (implementation no-op).
-        outcomeEventPublisher.publish(executionId, result.outcomes(), phase);
+        // Dispatched results are published immediately; dependency-skipped steps never enter the dispatcher.
+        outcomeEventPublisher.publish(executionId, result.outcomes().stream()
+                .filter(outcome -> outcome.status() == TaskStatus.SKIPPED).toList(), phase);
 
-        boolean anyFailedInPhase = checkFailedInPhase(result.updatedContext(), steps);
+        boolean missingOutcomes = !cancelled.get() && result.outcomes().size() != steps.size();
+        boolean anyFailedInPhase = missingOutcomes || checkFailedInPhase(result.updatedContext(), steps);
         PhaseStatus phaseStatus = anyFailedInPhase ? PhaseStatus.FAILED : PhaseStatus.COMPLETED;
 
         eventPublisher.publishEvent(new PhaseCompleted(executionId, phase, phaseStatus, Instant.now()));
@@ -231,10 +283,15 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
 
         ActiveExecution exec = activeExecutions.get(executionId.value());
         if (exec != null) {
-            exec.state = updatePhaseInState(exec.state, phase, phaseStatus, result.updatedContext());
-            executionRepository.save(exec.state);
+            synchronized (exec) {
+                exec.state = updatePhaseInState(exec.state, phase, phaseStatus, result.updatedContext());
+                executionRepository.save(exec.state);
+            }
         }
 
+        if (missingOutcomes) {
+            throw new ExecutionException("Phase " + phase + " ended without results for all dispatched steps");
+        }
         return result.updatedContext();
     }
 
@@ -348,13 +405,41 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
     }
 
     private ExecutionState createInitialState(ExecutionId id, ScenarioId scenarioId,
-                                              ExecutionContext context) {
+                                              ExecutionContext context, ScenarioDefinition scenario) {
         var now = Instant.now();
         Map<Phase, PhaseStatus> phases = new EnumMap<>(Phase.class);
         phases.put(Phase.PREPARATION, PhaseStatus.PENDING);
         phases.put(Phase.INJECTION, PhaseStatus.PENDING);
         phases.put(Phase.ASSERTION, PhaseStatus.PENDING);
-        return new ExecutionState(id, scenarioId, ExecutionStatus.RUNNING, phases, context, now, now);
+        return new ExecutionState(
+                id, scenarioId, ExecutionStatus.RUNNING, phases, context, now, now, scenario.steps().size(),
+                scenario.steps().stream().map(step ->
+                        new ExecutionTask(step.id(), step.taskName(), step.phase(), false,
+                                taskConfiguration(step, scenario))).toList(), scenario.sourceYaml(),
+                new ScenarioDetails(scenario.name(), scenario.version(), scenario.tags(), scenario.metadata(), scenario.report()));
+    }
+
+    private Map<String, Object> taskConfiguration(StepDefinition step, ScenarioDefinition scenario) {
+        var configuration = new java.util.LinkedHashMap<String, Object>();
+        configuration.put("parameters", step.parameters());
+        configuration.put("dependsOn", step.dependsOn().stream().map(TaskId::value).toList());
+        configuration.put("requiredContexts", step.requiredContexts());
+        if (step.timeout() != null) {
+            configuration.put("timeout", step.timeout().toString());
+        }
+        if (step.retryPolicy() != null) {
+            var retry = step.retryPolicy();
+            configuration.put("retryPolicy", Map.of(
+                    "maxAttempts", retry.maxAttempts(), "initialDelay", retry.initialDelay().toString(),
+                    "multiplier", retry.multiplier(), "maxDelay", retry.maxDelay().toString(),
+                    "retryableExceptions", retry.retryableExceptions().stream().map(Class::getName).sorted().toList()));
+        }
+        Object reference = step.parameters().get("loadModel");
+        if (reference instanceof String name && scenario.loadModels().containsKey(name)) {
+            var load = scenario.loadModels().get(name);
+            configuration.put("resolvedLoadModel", Map.of("type", load.type().name(), "parameters", load.parameters()));
+        }
+        return configuration;
     }
 
     private ExecutionState updateState(ExecutionState current, ExecutionStatus newStatus,
@@ -362,7 +447,8 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
         return new ExecutionState(
                 current.id(), current.scenarioId(), newStatus,
                 current.phaseStatuses(), newContext,
-                current.startedAt(), Instant.now());
+                current.startedAt(), Instant.now(), current.plannedTaskCount(), current.tasks(),
+                current.scenarioYaml(), current.scenarioDetails());
     }
 
     private ExecutionState updatePhaseInState(ExecutionState current, Phase phase,
@@ -372,7 +458,8 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
         return new ExecutionState(
                 current.id(), current.scenarioId(), current.status(),
                 updatedPhases, newContext,
-                current.startedAt(), Instant.now());
+                current.startedAt(), Instant.now(), current.plannedTaskCount(), current.tasks(),
+                current.scenarioYaml(), current.scenarioDetails());
     }
 
     /** Etat partage entre le thread d'execution et les handlers. */

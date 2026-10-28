@@ -19,6 +19,7 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.reporting.engine.DefaultReportEngine;
+import com.performance.platform.domain.event.ScenarioFinished;
 import com.performance.platform.reporting.model.CampaignReport;
 import com.performance.platform.reporting.output.ReportFileWriter;
 import com.performance.platform.reporting.output.ReportProperties;
@@ -135,7 +136,9 @@ class ReportingPipelineE2ETest {
     void setUp() {
         repository = new StubExecutionRepository();
         eventPublisher = new StubEventPublisher();
-        engine = new DefaultReportEngine(repository, eventPublisher);
+        engine = new DefaultReportEngine(repository, eventPublisher,
+                new ReportFileWriter(List.of(new HtmlReportRenderer(), new JsonReportRenderer()),
+                        new ReportProperties(tempDir.toString(), List.of(ReportFormat.HTML, ReportFormat.JSON))));
         htmlRenderer = new HtmlReportRenderer();
         jsonRenderer = new JsonReportRenderer();
         pdfRenderer = new PdfReportRenderer(htmlRenderer);
@@ -150,6 +153,24 @@ class ReportingPipelineE2ETest {
         var defaultReports = Path.of("reports");
         if (Files.exists(defaultReports)) {
             deleteRecursively(defaultReports);
+        }
+    }
+
+    @Test
+    void scenarioFinishedWritesConfiguredReports() throws IOException {
+        var writer = new ReportFileWriter(List.of(htmlRenderer, jsonRenderer, pdfRenderer),
+                new ReportProperties(tempDir.toString(),
+                        List.of(ReportFormat.HTML, ReportFormat.JSON, ReportFormat.PDF)));
+        var reporting = new DefaultReportEngine(repository, eventPublisher, writer);
+        repository.put(new ExecutionState(executionId, scenarioId, ExecutionStatus.COMPLETED,
+                Map.of(), ExecutionContext.initial(executionId, scenarioId), now, now));
+
+        reporting.onScenarioFinished(new ScenarioFinished(
+                executionId, scenarioId, Verdict.SUCCESS, Duration.ZERO, now));
+
+        var directory = tempDir.resolve(executionId.value());
+        for (String extension : List.of("html", "json", "pdf")) {
+            assertTrue(Files.size(directory.resolve("campaign." + extension)) > 0);
         }
     }
 
@@ -180,7 +201,7 @@ class ReportingPipelineE2ETest {
             // Then: report is correct
             assertNotNull(report);
             assertEquals(scenarioId, report.scenarioId());
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            assertEquals(Verdict.WARNING, report.verdict());
             assertEquals(1, report.preparationResults().size());
             assertEquals("database-purge", report.preparationResults().get(0).taskName());
             assertEquals(1, report.executionSummary().totalTasks());
@@ -228,8 +249,8 @@ class ReportingPipelineE2ETest {
         }
 
         @Test
-        @DisplayName("should generate SUCCESS verdict when no assertions present")
-        void shouldGenerateSuccessWhenNoAssertions() {
+        @DisplayName("should generate WARNING when no validation criteria are present")
+        void shouldGenerateWarningWhenNoAssertions() {
             var taskId = TaskId.of("prep-1");
             var result = TaskResult.success(taskId, "setup", Duration.ofSeconds(1), Map.of());
             var context = ExecutionContext.initial(executionId, scenarioId)
@@ -240,8 +261,8 @@ class ReportingPipelineE2ETest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.SUCCESS, report.verdict());
-            assertEquals("0 passed, 0 failed, 0 error, 0 skipped", report.verdictReason());
+            assertEquals(Verdict.WARNING, report.verdict());
+            assertTrue(report.verdictReason().startsWith("0 passed, 0 failed, 0 error, 0 skipped"));
         }
     }
 
@@ -317,8 +338,8 @@ class ReportingPipelineE2ETest {
             assertFalse(summary.injectionDuration().isNegative());
             assertFalse(summary.assertionDuration().isNegative());
 
-            // Then: Verdict is SUCCESS (all assertions passed)
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            // Passing assertions do not establish the missing validation criteria.
+            assertEquals(Verdict.WARNING, report.verdict());
 
             // Then: Render to all formats
             byte[] html = htmlRenderer.render(report);
@@ -341,8 +362,8 @@ class ReportingPipelineE2ETest {
         }
 
         @Test
-        @DisplayName("should produce WARNING verdict when any assertion FAILED")
-        void shouldProduceWarningVerdict() {
+        @DisplayName("should produce FAILED verdict when a critical assertion fails")
+        void shouldProduceFailedVerdictForCriticalAssertion() {
             var assertId = TaskId.of("assert-1");
             var assertResult = new AssertionResult(
                     assertId, AssertionStatus.FAILED, "p99 > threshold",
@@ -358,7 +379,7 @@ class ReportingPipelineE2ETest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.WARNING, report.verdict());
+            assertEquals(Verdict.FAILED, report.verdict());
             assertTrue(report.verdictReason().contains("failed"));
             assertTrue(report.verdictReason().contains("1 failed"));
 
@@ -518,7 +539,7 @@ class ReportingPipelineE2ETest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            assertEquals(Verdict.WARNING, report.verdict());
             assertEquals(0, report.executionSummary().totalTasks());
             assertTrue(report.preparationResults().isEmpty());
             assertTrue(report.injectionResults().isEmpty());
@@ -571,8 +592,7 @@ class ReportingPipelineE2ETest {
             assertEquals(1, summary.failedTasks());
             assertEquals(1, summary.skippedTasks());
 
-            // Verdict SUCCESS because no assertions present
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            assertEquals(Verdict.FAILED, report.verdict());
 
             // HTML must contain all statuses
             byte[] html = htmlRenderer.render(report);

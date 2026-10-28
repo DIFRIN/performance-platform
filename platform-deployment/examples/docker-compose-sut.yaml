@@ -66,6 +66,8 @@ services:
     build:
       context: ../../platform-examples/iot-dispatcher
       dockerfile: Dockerfile
+      args:
+        MAVEN_OPTS: "${MAVEN_OPTS}"
     container_name: sut-iot-dispatcher
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka-sut:29092"
@@ -87,6 +89,8 @@ services:
     build:
       context: ../../platform-examples/device-api
       dockerfile: Dockerfile
+      args:
+        MAVEN_OPTS: "${MAVEN_OPTS}"
     container_name: sut-device-api
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka-sut:29092"

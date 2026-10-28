@@ -137,7 +137,7 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
             }
             this.heartbeatScheduler = new HeartbeatScheduler(
                     registrationPort, descriptor.id(), heartbeatSeconds,
-                    this::getState, activeTaskCount::get);
+                    currentState::get, activeTaskCount::get);
         } else {
             this.heartbeatScheduler = null;
         }

@@ -18,6 +18,7 @@ import static org.mockito.Mockito.*;
 
 @DisplayName("DynamicKafkaListenerRegistry")
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("rawtypes") // Mockito construction mocking requires an unparameterized Class token.
 class DynamicKafkaListenerRegistryTest {
 
     @Mock private ConsumerFactory<String, byte[]> consumerFactory;

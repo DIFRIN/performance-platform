@@ -5,6 +5,8 @@ package com.performance.platform.application.exception;
  */
 public class NoAvailableAgentException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public NoAvailableAgentException(String taskName) {
         super("No available agent for task: " + taskName);
     }

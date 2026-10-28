@@ -1,6 +1,8 @@
 # ---- Builder Stage ----
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
+ARG MAVEN_OPTS
+ENV MAVEN_OPTS="${MAVEN_OPTS}"
 COPY pom.xml .
 RUN mvn dependency:go-offline -B -q
 COPY src/ src/

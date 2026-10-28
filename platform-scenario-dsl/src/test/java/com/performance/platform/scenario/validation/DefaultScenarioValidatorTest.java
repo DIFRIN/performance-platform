@@ -605,6 +605,42 @@ class DefaultScenarioValidatorTest {
     class LoadModelReferences {
 
         @Test
+        void gatlingWithInlineLoadModel() {
+            for (Object model : List.of(
+                    Map.of("type", "RAMP", "parameters",
+                        Map.of("from", 1, "to", 1000, "durationSeconds", 60)),
+                    new LoadModel(LoadModelType.CONSTANT, Map.of()))) {
+                var scenario = new ScenarioDefinition(
+                    ScenarioId.of("test"), "Test", "1.0.0",
+                    List.of(), Map.of(), ExecutionMode.LOCAL,
+                    List.of(stepWithParams("A", "gatling", Phase.INJECTION, Map.of("loadModel", model))),
+                    Map.of());
+
+                var result = validator.validate(scenario);
+                assertTrue(result.valid(), "Errors: " + result.errorMessages());
+            }
+        }
+
+        @Test
+        void gatlingWithInvalidInlineLoadModel() {
+            for (Object model : List.of(
+                    Map.of("parameters", Map.of()),
+                    Map.of("type", "UNKNOWN"),
+                    Map.of("type", "RAMP", "parameters", "invalid"),
+                    42)) {
+                var scenario = new ScenarioDefinition(
+                    ScenarioId.of("test"), "Test", "1.0.0",
+                    List.of(), Map.of(), ExecutionMode.LOCAL,
+                    List.of(stepWithParams("A", "gatling", Phase.INJECTION, Map.of("loadModel", model))),
+                    Map.of());
+
+                var result = validator.validate(scenario);
+                assertFalse(result.valid(), "Should reject loadModel: " + model);
+                assertTrue(result.errors().stream().anyMatch(error -> error.field().startsWith("step.loadModel")));
+            }
+        }
+
+        @Test
         @DisplayName("gatling step with existing loadModel passes")
         void gatlingWithExistingLoadModel() {
             var scenario = new ScenarioDefinition(

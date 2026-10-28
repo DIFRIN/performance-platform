@@ -4,6 +4,7 @@ import com.performance.platform.app.api.dto.ExecutionSummaryResponse;
 import com.performance.platform.app.api.dto.ProgressResponse;
 import com.performance.platform.app.api.dto.TaskListResponse;
 import com.performance.platform.app.api.dto.TaskSummaryResponse;
+import com.performance.platform.app.api.dto.ScenarioSourceResponse;
 import com.performance.platform.application.ports.in.DeleteExecutionUseCase;
 import com.performance.platform.application.ports.in.ListExecutionsUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
@@ -29,6 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * REST controller exposing execution list, task summaries, and deletion.
@@ -114,18 +117,42 @@ public class ExecutionController {
         Map<TaskId, Map<AgentId, TaskResult>> allResults =
                 executionRepository.findAllTaskResults(executionId);
 
-        var taskSummaries = allResults.entrySet().stream()
+        var state = executionRepository.findById(executionId);
+        var taskSummaries = new ArrayList<TaskSummaryResponse>();
+        var plannedIds = new HashSet<TaskId>();
+        state.ifPresent(execution -> execution.tasks().forEach(task -> {
+            plannedIds.add(task.id());
+            var results = allResults.getOrDefault(task.id(), Map.of());
+            if (results.isEmpty()) {
+                taskSummaries.add(new TaskSummaryResponse(task.id().value(), task.taskName(), task.phase().name(),
+                        task.started() ? "RUNNING" : "PENDING", null,
+                        null, null, null, task.configuration(), Map.of()));
+            } else {
+                results.forEach((agentId, result) -> taskSummaries.add(
+                        toTaskSummary(task.id(), agentId, result, task.phase().name(), task.configuration())));
+            }
+        }));
+        allResults.entrySet().stream()
+                .filter(entry -> !plannedIds.contains(entry.getKey()))
                 .flatMap(entry -> {
                     var taskId = entry.getKey();
                     var agentResults = entry.getValue();
-                    return agentResults.values().stream()
-                            .map(result -> toTaskSummary(taskId, result));
+                    return agentResults.entrySet().stream()
+                            .map(result -> toTaskSummary(taskId, result.getKey(), result.getValue(), null, Map.of()));
                 })
-                .toList();
+                .forEach(taskSummaries::add);
 
         var response = new TaskListResponse(id, taskSummaries.size(), taskSummaries);
         log.info("action=list_tasks_done executionId={} count={}", id, taskSummaries.size());
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/executions/{id}/scenario")
+    public ResponseEntity<ScenarioSourceResponse> scenarioSource(@PathVariable("id") String id) {
+        log.info("action=get_scenario_source executionId={}", id);
+        return executionRepository.findById(ExecutionId.of(id))
+                .map(state -> ResponseEntity.ok(new ScenarioSourceResponse(state.scenarioYaml())))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
@@ -146,14 +173,16 @@ public class ExecutionController {
 
     // ---- Helpers ----
 
-    private static TaskSummaryResponse toTaskSummary(TaskId taskId, TaskResult result) {
+    private static TaskSummaryResponse toTaskSummary(TaskId taskId, AgentId agentId, TaskResult result,
+                                                     String phase, Map<String, Object> configuration) {
         String errorMessage = isKo(result.status()) ? result.errorMessage() : null;
         return new TaskSummaryResponse(
                 taskId.value(),
                 result.taskName(),
-                null,   // phase not stored in persisted task results
+                phase,
                 result.status().name(),
-                errorMessage);
+                errorMessage, agentId.value(), result.duration().toMillis(), result.completedAt().toString(),
+                configuration, result.outputs());
     }
 
     private static boolean isKo(TaskStatus status) {

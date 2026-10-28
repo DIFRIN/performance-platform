@@ -1,6 +1,6 @@
 package com.performance.platform.app.api;
 
-import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.application.exception.InvalidScenarioException;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ScenarioUploadControllerTest {
 
     private final ScenarioParsingUseCase parsingUseCase = mock(ScenarioParsingUseCase.class);
-    private final ExecuteScenarioUseCase executeUseCase = mock(ExecuteScenarioUseCase.class);
+    private final SubmitScenarioUseCase executeUseCase = mock(SubmitScenarioUseCase.class);
 
     private MockMvc mockMvc;
 
@@ -70,7 +70,7 @@ class ScenarioUploadControllerTest {
             var executionId = ExecutionId.of("exec-001");
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(VALID_YAML)).thenReturn(scenario);
-            when(executeUseCase.execute(scenario)).thenReturn(executionId);
+            when(executeUseCase.submit(scenario)).thenReturn(executionId);
 
             var file = new MockMultipartFile("file", "scenario.yaml",
                     MediaType.TEXT_PLAIN_VALUE, VALID_YAML.getBytes());
@@ -131,7 +131,7 @@ class ScenarioUploadControllerTest {
             var executionId = ExecutionId.of("exec-002");
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(VALID_YAML)).thenReturn(scenario);
-            when(executeUseCase.execute(scenario)).thenReturn(executionId);
+            when(executeUseCase.submit(scenario)).thenReturn(executionId);
 
             mockMvc.perform(post("/api/v1/scenarios/upload")
                             .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -210,7 +210,7 @@ class ScenarioUploadControllerTest {
         void shouldReturn500OnExecutionFailure() throws Exception {
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(any())).thenReturn(scenario);
-            when(executeUseCase.execute(scenario))
+            when(executeUseCase.submit(scenario))
                     .thenThrow(new ExecutionException("Engine not available"));
 
             mockMvc.perform(post("/api/v1/scenarios/upload")
@@ -225,7 +225,7 @@ class ScenarioUploadControllerTest {
         void shouldReturn503OnNoAgent() throws Exception {
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(any())).thenReturn(scenario);
-            when(executeUseCase.execute(scenario))
+            when(executeUseCase.submit(scenario))
                     .thenThrow(new NoAvailableAgentException("gatling"));
 
             mockMvc.perform(post("/api/v1/scenarios/upload")
@@ -240,7 +240,7 @@ class ScenarioUploadControllerTest {
         void shouldReturn400OnInvalidScenario() throws Exception {
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(any())).thenReturn(scenario);
-            when(executeUseCase.execute(scenario))
+            when(executeUseCase.submit(scenario))
                     .thenThrow(new InvalidScenarioException("Missing required field"));
 
             mockMvc.perform(post("/api/v1/scenarios/upload")

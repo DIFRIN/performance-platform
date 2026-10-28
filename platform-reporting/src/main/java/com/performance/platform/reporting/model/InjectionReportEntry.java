@@ -14,8 +14,12 @@ import java.util.Objects;
 public record InjectionReportEntry(
     TaskId taskId,
     InjectionResult metrics,
-    Path gatlingReportDirectory
+    Path gatlingReportDirectory,
+    String agentId
 ) {
+    public InjectionReportEntry(TaskId taskId, InjectionResult metrics, Path gatlingReportDirectory) {
+        this(taskId, metrics, gatlingReportDirectory, null);
+    }
     public InjectionReportEntry {
         Objects.requireNonNull(taskId, "taskId required");
         Objects.requireNonNull(metrics, "metrics required");

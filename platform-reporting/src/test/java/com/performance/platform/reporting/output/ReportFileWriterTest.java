@@ -253,6 +253,27 @@ class ReportFileWriterTest {
     }
 
     @Test
+    void preservesBothAgentsArtifactsWhenSimulationNamesAreTheSame() throws IOException {
+        var left = Files.createDirectory(tempDir.resolve("agent-a"));
+        var right = Files.createDirectory(tempDir.resolve("agent-b"));
+        Files.writeString(left.resolve("simulation.log"), "agent-a");
+        Files.writeString(right.resolve("simulation.log"), "agent-b");
+        var first = createReportWithGatlingDir(TaskId.of("load"), "GenericSimulation", left);
+        var second = createReportWithGatlingDir(TaskId.of("load"), "GenericSimulation", right);
+        var combined = new CampaignReport(first.id(), first.scenarioId(), first.scenarioName(),
+                first.scenarioVersion(), first.tags(), first.metadata(), first.environment(), first.executionSummary(),
+                first.preparationResults(), List.of(first.injectionResults().getFirst(), second.injectionResults().getFirst()),
+                first.assertionResults(), first.verdict(), first.verdictReason(), first.generatedAt(), first.totalDuration());
+        var writer = new ReportFileWriter(List.of(stubRenderer(ReportFormat.HTML, "ok".getBytes(StandardCharsets.UTF_8))),
+                new ReportProperties(tempDir.resolve("reports").toString(), List.of(ReportFormat.HTML)));
+
+        var directory = writer.write(executionId, combined).resolve("gatling").resolve("GenericSimulation");
+
+        assertEquals("agent-a", Files.readString(directory.resolve("run-0-load").resolve("simulation.log")));
+        assertEquals("agent-b", Files.readString(directory.resolve("run-1-load").resolve("simulation.log")));
+    }
+
+    @Test
     @DisplayName("should handle report with no injection entries")
     void shouldHandleNoInjectionEntries() throws IOException {
         var reportWithoutInjections = new CampaignReport(

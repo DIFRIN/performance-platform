@@ -6,8 +6,8 @@ import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.assertion.Evidence;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.scenario.StepDefinition;
-import com.performance.platform.application.ports.out.HttpTarget;
-import com.performance.platform.application.ports.out.HttpTargetResolver;
+import com.performance.platform.application.ports.out.Endpoint;
+import com.performance.platform.application.ports.out.EndpointResolver;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.Assertion;
 import com.performance.platform.plugin.AssertionExecutor;
@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  * {@code /__admin/requests/count}.
  * <p>
  * <b>v2.0.0 :</b> Supporte la resolution de la cible WireMock via
- * {@link HttpTargetResolver} (parametre {@code target}) en plus du flux
+ * {@link EndpointResolver} (parametre {@code target}) en plus du flux
  * legacy {@code refTaskId} (URL depuis ExecutionContext) et
  * {@code wiremockUrl} direct.
  * <p>
@@ -78,6 +78,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     static final String PARAM_REF_TASK_ID = "refTaskId";
     static final String PARAM_TARGET = "target";
     static final String PARAM_WIREMOCK_URL = "wiremockUrl";
+    static final String PARAM_QUERY_PARAMS = "queryParams";
 
     // --- Noms de metriques supportes ---
 
@@ -98,11 +99,11 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     private static final Pattern COUNT_PATTERN =
             Pattern.compile("\"count\"\\s*:\\s*(\\d+)");
 
-    private final HttpTargetResolver targetResolver;
+    private final EndpointResolver targetResolver;
     private final HttpClient httpClient;
 
     @Autowired
-    public HttpMockAssertionExecutor(HttpTargetResolver targetResolver) {
+    public HttpMockAssertionExecutor(EndpointResolver targetResolver) {
         this.targetResolver = Objects.requireNonNull(targetResolver,
                 "targetResolver must not be null");
         this.httpClient = HttpClient.newBuilder()
@@ -111,7 +112,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     }
 
     // Package-private pour tests
-    HttpMockAssertionExecutor(HttpTargetResolver targetResolver, HttpClient httpClient) {
+    HttpMockAssertionExecutor(EndpointResolver targetResolver, HttpClient httpClient) {
         this.targetResolver = Objects.requireNonNull(targetResolver,
                 "targetResolver must not be null");
         this.httpClient = Objects.requireNonNull(httpClient,
@@ -125,9 +126,9 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
 
     /**
      * Construit un client HTTP a partir de la description framework-free
-     * resolue par le port {@link HttpTargetResolver}.
+     * resolue par le port {@link EndpointResolver}.
      */
-    private static RestClient buildClient(HttpTarget target) {
+    private static RestClient buildClient(Endpoint target) {
         var client = HttpClient.newBuilder()
                 .connectTimeout(target.connectionTimeout())
                 .build();
@@ -181,6 +182,8 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
 
             // 3. Resoudre l'operateur
             AssertionOperator operator = resolveOperator(operatorStr);
+            String criteria = WireMockQueryCriteria.build(params.get(PARAM_QUERY_PARAMS),
+                    context.executionId().value(), step.id().value());
 
             // 4. Resoudre la source HTTP (v2 target, legacy wiremockUrl, ou refTaskId)
             String targetName = getStringParam(params, PARAM_TARGET, null);
@@ -189,7 +192,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
             String mockUrl;
 
             if (targetName != null && !targetName.isBlank()) {
-                HttpTarget target = targetResolver.resolve(targetName);
+                Endpoint target = targetResolver.resolve(targetName);
                 if (target == null) {
                     log.warn("action=http_mock_assertion_target_not_found executionId={} "
                              + "assertionId={} target={}",
@@ -199,13 +202,18 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
                             + "Check platform.http-targets configuration.",
                             params);
                 }
-                actualValue = fetchRequestCountViaRestClient(buildClient(target));
+                var client = buildClient(target);
+                actualValue = WireMockQueryCriteria.EMPTY.equals(criteria)
+                        ? fetchRequestCountViaRestClient(client)
+                        : fetchRequestCountViaRestClient(client, criteria);
                 mockUrl = target.baseUrl();
             } else if (wiremockUrl != null && !wiremockUrl.isBlank()) {
                 log.warn("action=deprecated_param param=wiremockUrl executionId={} "
                          + "assertionId={} — use 'target:' instead",
                          context.executionId().value(), step.id().value());
-                actualValue = fetchRequestCount(wiremockUrl);
+                actualValue = WireMockQueryCriteria.EMPTY.equals(criteria)
+                        ? fetchRequestCount(wiremockUrl)
+                        : fetchRequestCount(wiremockUrl, criteria);
                 mockUrl = wiremockUrl;
             } else {
                 if (refTaskId == null || refTaskId.isBlank()) {
@@ -228,7 +236,9 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
                             + "or ensure MockServerTaskExecutor produced 'url' output.",
                             params);
                 }
-                actualValue = fetchRequestCount(mockUrl);
+                actualValue = WireMockQueryCriteria.EMPTY.equals(criteria)
+                        ? fetchRequestCount(mockUrl)
+                        : fetchRequestCount(mockUrl, criteria);
             }
 
             boolean passed = operator.evaluate(actualValue, expectedValue);
@@ -239,6 +249,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
             if (refTaskId != null && !refTaskId.isBlank()) details.put("refTaskId", refTaskId);
             if (targetName != null && !targetName.isBlank()) details.put("target", targetName);
             if (endpoint != null) details.put("endpoint", endpoint);
+            if (!WireMockQueryCriteria.EMPTY.equals(criteria)) details.put("criteria", criteria);
 
             var evidence = new Evidence(
                     actualValue,
@@ -277,6 +288,10 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     // --- Requete WireMock via RestClient (v2) ---
 
     double fetchRequestCountViaRestClient(RestClient restClient) {
+        return fetchRequestCountViaRestClient(restClient, WireMockQueryCriteria.EMPTY);
+    }
+
+    double fetchRequestCountViaRestClient(RestClient restClient, String criteria) {
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             Future<Double> future = executor.submit(() -> {
                 // WireMock 3 exposes POST /__admin/requests/count with a criteria
@@ -284,7 +299,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
                 String json = restClient.post()
                         .uri(ADMIN_REQUESTS_COUNT_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body("{}")
+                        .body(criteria)
                         .retrieve()
                         .body(String.class);
                 return extractCount(json);
@@ -320,12 +335,16 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
     // --- Appel HTTP WireMock Admin ---
 
     double fetchRequestCount(String baseUrl) {
+        return fetchRequestCount(baseUrl, WireMockQueryCriteria.EMPTY);
+    }
+
+    double fetchRequestCount(String baseUrl, String criteria) {
         String url = baseUrl.replaceAll("/+$", "") + ADMIN_REQUESTS_COUNT_PATH;
         var request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("{}"))
+                .POST(HttpRequest.BodyPublishers.ofString(criteria))
                 .build();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {

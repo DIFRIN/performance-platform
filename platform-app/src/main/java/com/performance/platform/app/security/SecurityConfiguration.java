@@ -68,6 +68,11 @@ public class SecurityConfiguration {
 
         // CSRF toujours desactive (API REST)
         http.csrf(AbstractHttpConfigurer::disable);
+        // Only generated reports may be framed, and only by this application.
+        http.headers(headers -> headers.frameOptions(options -> options.disable())
+                .addHeaderWriter((request, response) -> response.setHeader("X-Frame-Options",
+                        request.getServletPath().matches("/api/v1/executions/[^/]+/report")
+                                ? "SAMEORIGIN" : "DENY")));
 
         if (!securityEnabled) {
             // Mode LOCAL — tout est autorise, mais la posture doit etre visible.

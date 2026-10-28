@@ -101,6 +101,42 @@ class DatabaseTaskExecutorIT {
                 ScenarioId.of("scenario-001"));
     }
 
+    @Test
+    void bothDeviceSeedsCreateExactlyTenThousandUniqueActiveDevices() throws Exception {
+        Path root = Path.of("").toAbsolutePath();
+        while (!Files.isDirectory(root.resolve("platform-app"))) {
+            root = root.getParent();
+            if (root == null) throw new IllegalStateException("Repository root not found");
+        }
+        try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
+            statement.execute("DROP TABLE IF EXISTS devices");
+            try {
+                statement.execute(Files.readString(root.resolve(
+                        "platform-examples/sut-db/sql/V1__devices_schema.sql")));
+                for (String script : new String[] {
+                        "platform-app/src/main/resources/sql/seed-sut-devices.sql",
+                        "platform-examples/sut-db/sql/V2__seed_10k_devices.sql"}) {
+                    statement.execute("TRUNCATE devices");
+                    String seed = Files.readString(root.resolve(script));
+                    statement.execute(seed);
+                    statement.execute(seed);
+                    try (var rows = statement.executeQuery("""
+                            SELECT COUNT(*), COUNT(DISTINCT device_id),
+                                   COUNT(*) FILTER (WHERE device_id IN ('device-0001', 'device-1000', 'device-10000'))
+                            FROM devices WHERE is_active = TRUE
+                            """)) {
+                        assertThat(rows.next()).isTrue();
+                        assertThat(rows.getLong(1)).as(script).isEqualTo(10000);
+                        assertThat(rows.getLong(2)).as(script).isEqualTo(10000);
+                        assertThat(rows.getLong(3)).as(script).isEqualTo(3);
+                    }
+                }
+            } finally {
+                statement.execute("DROP TABLE devices");
+            }
+        }
+    }
+
     @Nested
     @DisplayName("PURGE operation")
     class PurgeOperation {

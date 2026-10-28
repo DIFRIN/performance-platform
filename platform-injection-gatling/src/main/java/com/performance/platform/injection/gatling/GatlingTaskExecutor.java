@@ -7,6 +7,9 @@ import com.performance.platform.domain.injection.LoadModelType;
 import com.performance.platform.domain.injection.InjectionResult;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.injection.gatling.http.HttpInjectionProtocol;
+import com.performance.platform.injection.gatling.protocol.InjectionProtocol;
+import com.performance.platform.injection.gatling.protocol.PreparedInjection;
 import com.performance.platform.injection.gatling.result.GatlingResultParser;
 import com.performance.platform.injection.gatling.result.ResultParsingException;
 import com.performance.platform.injection.gatling.runner.GatlingExecutionException;
@@ -18,10 +21,14 @@ import com.performance.platform.plugin.TaskExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,12 +43,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>
  * <strong>Parametres de step :</strong>
  * <ul>
- *   <li>{@code simulation} — obligatoire : la classe de simulation Gatling</li>
+ *   <li>{@code simulation} — optionnel : classe de simulation Gatling custom. Absent =
+ *       injection HTTP generique construite depuis le scenario (voir ci-dessous)</li>
+ *   <li>{@code protocol} — optionnel (sans {@code simulation}) : {@code http} (defaut) ou {@code kafka}</li>
  *   <li>{@code loadModel} — obligatoire : map contenant {@code type} (String)
  *       et {@code parameters} (Map) definissant le modele de charge</li>
  *   <li>{@code timeout} — optionnel : timeout en secondes (defaut 300)</li>
  *   <li>{@code systemProperties} — optionnel : proprietes systeme passees a Gatling</li>
  * </ul>
+ * <p>
+ * <strong>Injection generee (sans {@code simulation}) :</strong> le param {@code protocol}
+ * (defaut {@code http}) designe un {@link InjectionProtocol} (bean Spring, auto-decouvert) qui
+ * construit la simulation depuis le step et la configuration de l'application :
+ * {@code http} (target/baseUrl, method, path, pathParams, queryParams, headers, body, expectedStatus)
+ * ou {@code kafka} (cluster, topic, key, headers, payload). Chaque valeur accepte les
+ * placeholders dynamiques ({@code DynamicValues}) resolus a chaque requete/message.
  * <p>
  * <strong>StatefulResourceCleaner :</strong> maintient une trace des simulations
  * actives par executionId. Le {@code cleanup()} est best-effort (la simulation
@@ -70,6 +86,8 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
     static final String PARAM_SIMULATION = "simulation";
     static final String PARAM_LOAD_MODEL = "loadModel";
+    static final String PARAM_PROTOCOL = "protocol";
+    static final String DEFAULT_PROTOCOL = "http";
     static final String PARAM_TIMEOUT = "timeout";
     static final String PARAM_SYSTEM_PROPERTIES = "systemProperties";
 
@@ -90,10 +108,26 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
     private final GatlingRunner runner;
     private final GatlingResultParser parser;
+    private final Map<String, InjectionProtocol> protocols;
 
+    /** Protocols are Spring beans discovered by name: adding one needs no change here. */
+    @Autowired
+    public GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser,
+                               ObjectProvider<InjectionProtocol> protocols) {
+        this(runner, parser, protocols.orderedStream().toList());
+    }
+
+    /** HTTP-only executor (no target resolver), for custom simulations and standalone use. */
     public GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser) {
+        this(runner, parser, List.of(new HttpInjectionProtocol((com.performance.platform.application.ports.out.EndpointResolver) null)));
+    }
+
+    GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser, List<InjectionProtocol> protocols) {
         this.runner = Objects.requireNonNull(runner, "runner must not be null");
         this.parser = Objects.requireNonNull(parser, "parser must not be null");
+        var byName = new LinkedHashMap<String, InjectionProtocol>();
+        protocols.forEach(p -> byName.put(p.name(), p));
+        this.protocols = Map.copyOf(byName);
     }
 
     // ── TaskExecutor contract ─────────────────────────────────────────────────
@@ -119,9 +153,21 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
         // 1. Extraire les parametres obligatoires
         String simulation = paramString(step, PARAM_SIMULATION);
-        if (simulation == null || simulation.isBlank()) {
-            return fail(step, startNanos,
-                    "Required parameter '" + PARAM_SIMULATION + "' is missing or blank");
+        boolean customSimulation = simulation != null && !simulation.isBlank();
+        String executionKey = context.executionId() != null
+                ? context.executionId().value() : FALLBACK_EXECUTION_KEY;
+
+        InjectionProtocol protocol = null;
+        if (customSimulation) {
+            log.info("action=gatling_custom_simulation simulation={} stepId={}", simulation, step.id().value());
+        } else {
+            String protocolName = Objects.requireNonNullElse(paramString(step, PARAM_PROTOCOL), DEFAULT_PROTOCOL)
+                    .trim().toLowerCase();
+            protocol = protocols.get(protocolName);
+            if (protocol == null) {
+                return fail(step, startNanos, "Unsupported injection protocol '" + protocolName
+                        + "' (available: " + protocols.keySet() + ")");
+            }
         }
 
         LoadModel loadModel = extractLoadModel(step);
@@ -141,10 +187,16 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
         Path resultsDir = buildResultsDir(step);
 
-        String executionKey = context.executionId() != null
-                ? context.executionId().value() : FALLBACK_EXECUTION_KEY;
-
-        // 2. Construire la configuration Gatling
+        // 2. Preparer l'injection du protocole (simulation generee) puis construire la configuration Gatling
+        PreparedInjection prepared = null;
+        if (protocol != null) {
+            try {
+                prepared = protocol.prepare(executionKey, step.id().value(), step.parameters());
+            } catch (IllegalArgumentException e) {
+                return fail(step, startNanos, e.getMessage());
+            }
+            simulation = prepared.simulationClass();
+        }
         var config = new GatlingRunConfig(
                 simulation,
                 loadModel,
@@ -196,6 +248,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed,
                     "Unexpected error: " + e.getMessage(), e);
         } finally {
+            if (prepared != null) prepared.close();
             activeExecutions.remove(executionKey);
         }
     }

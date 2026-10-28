@@ -115,7 +115,7 @@ premier résultat d'injection disponible.
   task: database-assertion
   phase: ASSERTION
   parameters:
-    datasource: customer-db    # nom du bean DataSource ; "default" → datasource primaire ; sinon ERROR si introuvable
+    datasource: customer-db    # nom logique platform.datasources ; compatible nom de bean ; "default" → primaire
     query: "SELECT COUNT(*) FROM orders WHERE status = 'CREATED'"
     operator: GT
     value: 1000
@@ -165,6 +165,8 @@ Interroge l'API d'administration WireMock (`POST /__admin/requests/count`).
     value: 1000
     target: wiremock           # ou wiremockUrl
     refTaskId: start-mock
+    queryParams:               # optionnel — ne compte que les appels portant ces request params
+      device_id: "device-{index}"   # tout placeholder DynamicValues → regex ; sinon equalTo (spec 03, ADR-039)
 ```
 
 ### `file`

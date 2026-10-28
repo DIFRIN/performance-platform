@@ -8,6 +8,8 @@ package com.performance.platform.infrastructure.executor.docker;
  */
 class DockerException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     DockerException(String message) {
         super(message);
     }

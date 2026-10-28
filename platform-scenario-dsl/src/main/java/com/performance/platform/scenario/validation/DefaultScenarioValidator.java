@@ -1,5 +1,7 @@
 package com.performance.platform.scenario.validation;
 
+import com.performance.platform.domain.injection.LoadModel;
+import com.performance.platform.domain.injection.LoadModelType;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
@@ -349,15 +351,38 @@ public class DefaultScenarioValidator implements ScenarioValidator {
             if (!GATLING_TASK_NAME.equals(step.taskName())) continue;
 
             Object loadModelRef = step.parameters().get("loadModel");
-            if (loadModelRef != null) {
-                String ref = loadModelRef.toString();
+            if (loadModelRef == null || loadModelRef instanceof LoadModel) continue;
+            if (loadModelRef instanceof Map<?, ?> inline) {
+                validateInlineLoadModel(inline, step, errors);
+            } else if (loadModelRef instanceof String ref) {
                 if (scenario.loadModels() == null || !scenario.loadModels().containsKey(ref)) {
                     errors.add(new ValidationError("step.loadModel",
                         "Step '" + step.id().value() + "' references loadModel '" + ref
                             + "' which is not defined in loadModels",
                         "steps"));
                 }
+            } else {
+                errors.add(new ValidationError("step.loadModel",
+                    "Step '" + step.id().value() + "' loadModel must be a name or an inline mapping",
+                    "steps"));
             }
+        }
+    }
+
+    private void validateInlineLoadModel(Map<?, ?> inline, StepDefinition step, List<ValidationError> errors) {
+        Object type = inline.get("type");
+        boolean validType = type instanceof LoadModelType
+            || type instanceof String name
+                && java.util.Arrays.stream(LoadModelType.values())
+                    .anyMatch(value -> value.name().equalsIgnoreCase(name));
+        if (!validType) {
+            errors.add(new ValidationError("step.loadModel.type",
+                "Step '" + step.id().value() + "' inline loadModel requires a valid type", "steps"));
+        }
+        Object parameters = inline.get("parameters");
+        if (parameters != null && !(parameters instanceof Map<?, ?>)) {
+            errors.add(new ValidationError("step.loadModel.parameters",
+                "Step '" + step.id().value() + "' inline loadModel parameters must be a mapping", "steps"));
         }
     }
 }

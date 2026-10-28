@@ -58,7 +58,16 @@ class ExecutionStateMapperTest {
                        Phase.INJECTION, PhaseStatus.RUNNING),
                 ctx,
                 Instant.parse("2026-06-19T10:00:00Z"),
-                Instant.parse("2026-06-19T10:05:00Z")
+                Instant.parse("2026-06-19T10:05:00Z"),
+                7,
+                java.util.List.of(new com.performance.platform.domain.execution.ExecutionTask(
+                        taskId, "db-prep", Phase.PREPARATION, true),
+                        new com.performance.platform.domain.execution.ExecutionTask(
+                                TaskId.of("inject"), "gatling", Phase.INJECTION, false,
+                                Map.of("parameters", Map.of("protocol", "http", "users", 100)))),
+                "# original source\nscenario:\n  id: sc-roundtrip\n",
+                new com.performance.platform.domain.execution.ScenarioDetails(
+                        "Real campaign", "2.4.1", java.util.List.of("perf"), Map.of("team", "test"), null)
         );
 
         ExecutionStateEntity entity = mapper.toEntity(original);
@@ -70,6 +79,11 @@ class ExecutionStateMapperTest {
         assertThat(restored.phaseStatuses()).isEqualTo(original.phaseStatuses());
         assertThat(restored.startedAt()).isEqualTo(original.startedAt());
         assertThat(restored.updatedAt()).isEqualTo(original.updatedAt());
+        assertThat(entity.plannedTaskCount()).isEqualTo(7);
+        assertThat(restored.plannedTaskCount()).isEqualTo(7);
+        assertThat(restored.tasks()).isEqualTo(original.tasks());
+        assertThat(restored.scenarioYaml()).isEqualTo(original.scenarioYaml());
+        assertThat(restored.scenarioDetails()).isEqualTo(original.scenarioDetails());
 
         // Context round-trip
         ExecutionContext restoredCtx = restored.context();

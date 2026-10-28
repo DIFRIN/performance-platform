@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -91,6 +92,8 @@ class DefaultGatlingRunnerTest {
         assertThat(resultPath).isNotNull();
         assertThat(Files.exists(resultPath)).isTrue();
         assertThat(Files.isDirectory(resultPath)).isTrue();
+        assertThat(resultPath.getParent()).isEqualTo(resultsDir.toAbsolutePath().normalize());
+        assertThat(resultPath.resolve("simulation.log")).isRegularFile();
     }
 
     @Test
@@ -103,9 +106,32 @@ class DefaultGatlingRunnerTest {
 
         assertThat(Files.exists(resultPath)).isTrue();
         assertThat(Files.isDirectory(resultPath)).isTrue();
-        // Avec -nr, Gatling produit js/stats.json et des logs
-        long fileCount = Files.list(resultPath).count();
-        assertThat(fileCount).as("results directory should not be empty").isPositive();
+        // -nr disables reports: only simulation.log is required.
+        assertThat(resultPath.resolve("simulation.log")).isRegularFile();
+        assertThat(resultPath.resolve("js").resolve("stats.json")).doesNotExist();
+    }
+
+    @Test
+    void shouldSelectNewLowercaseDirectoryAndIgnoreStaleResults() throws IOException {
+        Path old = Files.createDirectory(resultsDir.resolve("minimalsimulation-old"));
+        Files.writeString(old.resolve("simulation.log"), "old");
+        Path current = Files.createDirectory(resultsDir.resolve("minimalsimulation-new"));
+        Files.writeString(current.resolve("simulation.log"), "current");
+        Files.createDirectory(resultsDir.resolve("unrelated"));
+
+        assertThat(runner.findResultsDirectory(resultsDir, Set.of(old.toAbsolutePath().normalize())))
+                .isEqualTo(current.toAbsolutePath().normalize());
+    }
+
+    @Test
+    void shouldRejectMissingOrAmbiguousResultsRatherThanReturnBaseDirectory() throws IOException {
+        assertThatThrownBy(() -> runner.findResultsDirectory(resultsDir, Set.of()))
+                .isInstanceOf(GatlingExecutionException.class).hasMessageContaining("found 0");
+        for (String name : Set.of("run-one", "run-two")) {
+            Files.writeString(Files.createDirectory(resultsDir.resolve(name)).resolve("simulation.log"), "");
+        }
+        assertThatThrownBy(() -> runner.findResultsDirectory(resultsDir, Set.of()))
+                .isInstanceOf(GatlingExecutionException.class).hasMessageContaining("found 2");
     }
 
     @Test

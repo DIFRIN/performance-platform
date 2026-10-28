@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -28,11 +30,13 @@ import java.util.concurrent.TimeoutException;
  * via le {@code LoadModelTranslator} et rendues disponibles a la
  * simulation via {@link SimulationInjectionHolder}.
  * <p>
- * <strong>Lancement Gatling</strong> : utilise la methode
- * {@code Gatling$.MODULE$.fromArgs(String[])} — l'API stable de
- * lancement programmatique de Gatling 3.x (pas de {@code System.exit()}).
+ * <strong>Lancement Gatling</strong> : utilise {@link EmbeddedGatlingLauncher},
+ * equivalent embarque de {@code Gatling$.MODULE$.fromArgs(String[])} (memes
+ * arguments CLI, pas de {@code System.exit()}) qui, contrairement a
+ * {@code fromArgs}, n'arrete pas le {@code LoggerContext} Logback de
+ * l'application hote en fin de run.
  * <p>
- * <strong>Virtual Threads</strong> : {@code fromArgs()} est un appel
+ * <strong>Virtual Threads</strong> : le lancement Gatling est un appel
  * bloquant (demarre Akka, Netty). L'execution est soumise a un
  * {@code Executors.newVirtualThreadPerTaskExecutor()} avec timeout.
  */
@@ -154,9 +158,19 @@ public class DefaultGatlingRunner implements GatlingRunner {
                                      GatlingRunConfig config)
             throws TimeoutException, InterruptedException, ExecutionException {
 
+        Set<Path> previousDirectories;
+        try {
+            Files.createDirectories(config.resultsDirectory());
+            try (var entries = Files.list(config.resultsDirectory())) {
+                previousDirectories = entries.filter(Files::isDirectory)
+                        .map(p -> p.toAbsolutePath().normalize()).collect(Collectors.toSet());
+            }
+        } catch (IOException e) {
+            throw new GatlingExecutionException("Cannot prepare results directory " + config.resultsDirectory(), e);
+        }
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             Future<Integer> future = executor.submit(() ->
-                    io.gatling.app.Gatling$.MODULE$.fromArgs(gatlingArgs));
+                    EmbeddedGatlingLauncher.launch(gatlingArgs));
 
             int exitCode;
             long timeoutMs = config.timeout().toMillis();
@@ -170,32 +184,30 @@ public class DefaultGatlingRunner implements GatlingRunner {
                     config.simulationId(), exitCode);
 
             return findResultsDirectory(config.resultsDirectory(),
-                    config.simulationClass());
+                    previousDirectories);
         }
     }
 
     /**
      * Trouve le repertoire de resultats Gatling genere.
-     * Gatling cree un sous-repertoire nomme d'apres la classe de simulation.
+     * Selects only the new child containing this run's log, never a stale run or the base directory.
      */
-    private Path findResultsDirectory(Path baseDir, String simulationClass) {
-        String simpleClassName = simulationClass.contains(".")
-                ? simulationClass.substring(simulationClass.lastIndexOf('.') + 1)
-                : simulationClass;
-
+    Path findResultsDirectory(Path baseDir, Set<Path> previousDirectories) {
         try (var entries = Files.list(baseDir)) {
-            return entries
+            List<Path> candidates = entries
                     .filter(Files::isDirectory)
-                    .filter(d -> {
-                        String name = d.getFileName().toString();
-                        return name.contains(simpleClassName);
-                    })
-                    .findFirst()
-                    .orElse(baseDir);
+                    .map(p -> p.toAbsolutePath().normalize())
+                    .filter(p -> !previousDirectories.contains(p))
+                    .filter(p -> Files.isRegularFile(p.resolve("simulation.log")))
+                    .toList();
+            if (candidates.size() != 1) {
+                throw new GatlingExecutionException(
+                        "Expected one new Gatling results directory in " + baseDir
+                                + ", found " + candidates.size());
+            }
+            return candidates.getFirst();
         } catch (IOException e) {
-            log.warn("action=find_results_dir_failed baseDir={} error={}",
-                    baseDir, e.getMessage());
-            return baseDir;
+            throw new GatlingExecutionException("Cannot read results directory " + baseDir, e);
         }
     }
 }

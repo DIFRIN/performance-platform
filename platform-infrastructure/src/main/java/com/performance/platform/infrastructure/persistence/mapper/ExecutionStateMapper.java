@@ -2,6 +2,7 @@ package com.performance.platform.infrastructure.persistence.mapper;
 
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionState;
+import com.performance.platform.domain.execution.ExecutionTask;
 import com.performance.platform.domain.execution.PhaseStatus;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
@@ -60,7 +61,13 @@ public class ExecutionStateMapper {
                 phases,
                 context,
                 state.startedAt(),
-                state.updatedAt()
+                state.updatedAt(),
+                state.plannedTaskCount(),
+                state.tasks().stream().map(task -> Map.<String, Object>of(
+                        "id", task.id().value(), "taskName", task.taskName(),
+                        "phase", task.phase().name(), "started", task.started(),
+                        "configuration", task.configuration())).toList(),
+                state.scenarioYaml(), state.scenarioDetails()
         );
     }
 
@@ -90,8 +97,19 @@ public class ExecutionStateMapper {
                 phaseStatuses,
                 context,
                 entity.startedAt(),
-                entity.updatedAt()
+                entity.updatedAt(),
+                entity.plannedTaskCount(),
+                entity.tasks().stream().map(task -> new ExecutionTask(
+                        TaskId.of((String) task.get("id")), (String) task.get("taskName"),
+                        Phase.valueOf((String) task.get("phase")), (Boolean) task.get("started"),
+                        configurationFromMap(task))).toList(),
+                entity.scenarioYaml(), entity.scenarioDetails()
         );
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> configurationFromMap(Map<String, Object> task) {
+        return (Map<String, Object>) task.getOrDefault("configuration", Map.of());
     }
 
     /**

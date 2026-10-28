@@ -51,9 +51,13 @@ scenario:
       requiredContexts: [spawn-mock]
       parameters:
         target: mock-api
-        simulation: HttpApiSimulation
         path: /api/users
         method: GET
+        queryParams:
+          page: "{index%5}"
+        loadModel:
+          type: RAMP
+          parameters: { from: 1, to: 100, durationSeconds: 60 }
       timeout: 5m
 
     # Step 3 — Assertion : Verifier le taux d'erreur Gatling < 1%

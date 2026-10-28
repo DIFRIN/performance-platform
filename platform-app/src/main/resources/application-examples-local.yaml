@@ -46,7 +46,7 @@ platform:
   # Chaque target definit son URL de base, timeouts, et mapping de chemins logiques.
   http-targets:
     wiremock:
-      base-url: ${WIREMOCK_URL:http://localhost:8090}
+      base-url: ${WIREMOCK_URL:http://localhost:8084}
       connection-timeout: 2s
       read-timeout: 5s
       paths:

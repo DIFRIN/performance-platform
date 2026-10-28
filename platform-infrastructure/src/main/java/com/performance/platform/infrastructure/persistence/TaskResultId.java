@@ -17,6 +17,8 @@ import java.util.Objects;
 @Embeddable
 public class TaskResultId implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     @Column(name = "execution_id", nullable = false, length = 255)
     private String executionId;
 

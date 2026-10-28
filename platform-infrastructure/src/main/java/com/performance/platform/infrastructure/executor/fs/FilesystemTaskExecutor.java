@@ -345,6 +345,8 @@ public class FilesystemTaskExecutor implements TaskExecutor, StatefulResourceCle
 
     /** Wraps an IOException so it can propagate through a lambda. */
     private static class UncheckedIoException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
         UncheckedIoException(IOException cause) {
             super(cause);
         }

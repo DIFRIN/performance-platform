@@ -75,13 +75,13 @@ class JpaExecutionRepositoryIT {
         // 2. Start Spring context with datasource activated via properties (ADR-025)
         //    No duplicate @Bean DataSource — DatasourceConfiguration creates it conditionally.
         context = new AnnotationConfigApplicationContext();
-        var dsProps = Map.of(
+        var dsProps = Map.<String, Object>of(
                 "platform.datasources.default.url", postgres.getJdbcUrl(),
                 "platform.datasources.default.username", postgres.getUsername(),
                 "platform.datasources.default.password", postgres.getPassword()
         );
         context.getEnvironment().getPropertySources()
-                .addFirst(new MapPropertySource("testcontainers", (Map) dsProps));
+                .addFirst(new MapPropertySource("testcontainers", dsProps));
         context.register(IntegrationConfig.class);
         context.refresh();
     }
@@ -96,6 +96,41 @@ class JpaExecutionRepositoryIT {
     @BeforeEach
     void init() {
         repository = context.getBean(JpaExecutionRepository.class);
+    }
+
+    @Test
+    void preservesPlannedTaskCountAcrossPhaseUpdatesAndReloads() {
+        var id = ExecutionId.generate();
+        var scenarioId = ScenarioId.of("progress");
+        var now = Instant.now();
+        var tasks = List.of(new com.performance.platform.domain.execution.ExecutionTask(
+                TaskId.of("load"), "gatling", Phase.INJECTION, true,
+                Map.of("parameters", Map.of("protocol", "http", "users", 100),
+                        "timeout", "PT1M")));
+        var yaml = "# original comment\nscenario:\n  id: progress\n";
+        var details = new com.performance.platform.domain.execution.ScenarioDetails(
+                "Campaign", "scenario-v2", List.of("perf"), Map.of("owner", "team"),
+                new com.performance.platform.domain.report.ReportDefinition(Map.of("api", "2.4.1"),
+                        "PERF", "Release", "LOAD", "Ramp", null, null, null, null, null, null));
+        repository.save(new ExecutionState(id, scenarioId, ExecutionStatus.RUNNING,
+                Map.of(Phase.INJECTION, PhaseStatus.PENDING),
+                ExecutionContext.initial(id, scenarioId), now, now, 7, tasks, yaml, details));
+
+        repository.updatePhase(id, Phase.INJECTION, PhaseStatus.RUNNING);
+
+        var restored = repository.findById(id).orElseThrow();
+        assertThat(restored.plannedTaskCount()).isEqualTo(7);
+        assertThat(restored.tasks()).isEqualTo(tasks);
+        assertThat(restored.scenarioYaml()).isEqualTo(yaml);
+        assertThat(restored.scenarioDetails()).isEqualTo(details);
+        assertThat(restored.phaseStatuses()).containsEntry(Phase.INJECTION, PhaseStatus.RUNNING);
+        assertThat(repository.findAll(10)).anySatisfy(state -> {
+            assertThat(state.id()).isEqualTo(id);
+            assertThat(state.plannedTaskCount()).isEqualTo(7);
+            assertThat(state.tasks()).isEqualTo(tasks);
+            assertThat(state.scenarioYaml()).isEqualTo(yaml);
+            assertThat(state.scenarioDetails()).isEqualTo(details);
+        });
     }
 
     @AfterEach

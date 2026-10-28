@@ -1,5 +1,6 @@
 package com.performance.platform.infrastructure.executor.database;
 
+import com.performance.platform.application.ports.out.NamedResourceResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Ce n'est <strong>plus</strong> un {@code @Component} — il est instancié par
  * {@link DatasourceConfiguration} (ADR-014).
  */
-public class DatasourceProvider {
+public class DatasourceProvider implements NamedResourceResolver<DataSource> {
 
     private static final Logger log = LoggerFactory.getLogger(DatasourceProvider.class);
 
@@ -55,6 +56,11 @@ public class DatasourceProvider {
      */
     public DataSource get(String name) {
         return datasources.get(name);
+    }
+
+    @Override
+    public DataSource resolve(String name) {
+        return get(name);
     }
 
     /**

@@ -3,12 +3,14 @@
  * PDR-029 — ISSUE-128
  *
  * Mounts the detail view for a single execution:
- * - Polling every 3 seconds (setInterval / clearInterval)
+ * - Polling every 3 seconds (setInterval / clearInterval); stops once the execution is
+ *   terminal, DOM is only rebuilt when data changes and expanded rows survive refreshes
  * - Progress bar fed by server-computed {@code progress {total, ok, ko, running}}
  * - Tasks grouped by phase with visual status (ok/ko/running)
  * - errorMessage displayed for KO tasks
  * - Summary view by default; full detail (errorMessage long, timings) via row expansion
- * - Back link to /#/executions; link to report /#/executions/{id}/report
+ * - Report navigation stays disabled until execution is terminal
+ * - Back link to /#/executions; report route /#/executions/{id}/report
  *
  * Public API:
  *   mount(el, executionId) → { cleanup: Function }
@@ -17,13 +19,16 @@
  * when the router switches to another view.
  */
 
-import { getExecutionStatus, listExecutionTasks } from "/assets/js/api.js";
+import { getExecutionStatus, listExecutionTasks, getExecutionScenario } from "/assets/js/api.js";
 
 /** Polling interval in milliseconds. */
 const POLL_INTERVAL_MS = 3000;
 
 /** Statuses considered "running" for visual treatment. */
 const RUNNING_STATUSES = new Set(["STARTED", "RUNNING"]);
+
+/** Execution statuses after which polling stops (nothing will change anymore). */
+const TERMINAL_STATUSES = new Set(["COMPLETED", "FAILED", "CANCELLED"]);
 
 /**
  * Mount the execution detail view inside the given element.
@@ -38,6 +43,10 @@ export function mount(el, executionId) {
     let detail = null;       // ExecutionStatusResponse from getExecutionStatus
     let tasksData = null;    // TaskListResponse from listExecutionTasks
     let error = null;
+    let lastSnapshot = null; // serialized last rendered state — skip DOM rebuild when unchanged
+    let inFlight = false;
+    let disposed = false;
+    const expandedTaskIds = new Set(); // survives re-renders so polling never collapses open rows
 
     /* ---- Skeleton ---- */
     el.innerHTML = buildSkeleton(executionId);
@@ -45,6 +54,30 @@ export function mount(el, executionId) {
     const bodyEl = el.querySelector("#exec-detail-body");
     const backLink = el.querySelector("[data-exec-back]");
     const reportLink = el.querySelector("[data-exec-report]");
+    const scenarioPanel = el.querySelector("[data-scenario-source]");
+    const scenarioCode = el.querySelector("[data-scenario-code]");
+    let sourceLoaded = false;
+    let sourceLoading = false;
+
+    scenarioPanel.addEventListener("toggle", async function () {
+        if (!scenarioPanel.open || sourceLoaded || sourceLoading) return;
+        sourceLoading = true;
+        scenarioCode.textContent = "Loading...";
+        try {
+            const source = await getExecutionScenario(executionId);
+            if (disposed) return;
+            scenarioCode.textContent = source.yaml == null
+                ? "Original YAML is unavailable for this execution."
+                : source.yaml;
+            sourceLoaded = true;
+        } catch (e) {
+            console.error("execution-detail: scenario source fetch failed", e);
+            if (!disposed) scenarioCode.textContent = "Failed to load YAML: " + e.message +
+                ". Close and reopen this panel to retry.";
+        } finally {
+            sourceLoading = false;
+        }
+    });
 
     /* ---- Event handlers ---- */
 
@@ -60,6 +93,7 @@ export function mount(el, executionId) {
     if (reportLink) {
         reportLink.addEventListener("click", function (e) {
             e.preventDefault();
+            if (reportLink.disabled) return;
             window.location.hash = "#/executions/" + encodeURIComponent(executionId) + "/report";
         });
     }
@@ -70,7 +104,12 @@ export function mount(el, executionId) {
         if (toggleBtn) {
             e.stopPropagation();
             var taskId = toggleBtn.dataset.taskToggle;
-            toggleTaskDetail(bodyEl, taskId);
+            toggleTaskDetail(bodyEl, taskId, expandedTaskIds);
+            return;
+        }
+
+        // Don't collapse the row when the user is selecting text inside it
+        if (window.getSelection && String(window.getSelection()).length > 0) {
             return;
         }
 
@@ -78,22 +117,51 @@ export function mount(el, executionId) {
         var rowHeader = e.target.closest("[data-task-row]");
         if (rowHeader) {
             var tid = rowHeader.dataset.taskRow;
-            toggleTaskDetail(bodyEl, tid);
+            toggleTaskDetail(bodyEl, tid, expandedTaskIds);
         }
     });
 
     /* ---- Fetch & Render loop ---- */
 
-    async function fetchAndRender() {
-        try {
-            detail = await getExecutionStatus(executionId);
-            tasksData = await listExecutionTasks(executionId);
-            error = null;
-        } catch (e) {
-            console.error("execution-detail: fetch failed", e);
-            error = e.message || "Failed to load execution detail";
+    function stopPolling() {
+        if (intervalId !== null) {
+            clearInterval(intervalId);
+            intervalId = null;
         }
-        renderBody(bodyEl, detail, tasksData, error);
+    }
+
+    async function fetchAndRender() {
+        if (inFlight || disposed) return;
+        inFlight = true;
+        try {
+            try {
+                detail = await getExecutionStatus(executionId);
+                tasksData = await listExecutionTasks(executionId);
+                error = null;
+            } catch (e) {
+                console.error("execution-detail: fetch failed", e);
+                error = e.message || "Failed to load execution detail";
+            }
+            if (disposed) return;
+
+            reportLink.disabled = !detail || !TERMINAL_STATUSES.has(detail.status);
+            reportLink.title = reportLink.disabled
+                ? "Available when execution has finished"
+                : "View execution report";
+
+            var snapshot = JSON.stringify([detail, tasksData, error]);
+            if (snapshot !== lastSnapshot) {
+                lastSnapshot = snapshot;
+                renderBody(bodyEl, detail, tasksData, error);
+                restoreExpandedRows(bodyEl, expandedTaskIds, tasksData ? tasksData.tasks : []);
+            }
+
+            if (!error && detail && TERMINAL_STATUSES.has(detail.status)) {
+                stopPolling();
+            }
+        } finally {
+            inFlight = false;
+        }
     }
 
     // Initial fetch
@@ -105,10 +173,8 @@ export function mount(el, executionId) {
     /* ---- Cleanup ---- */
     return {
         cleanup: function () {
-            if (intervalId !== null) {
-                clearInterval(intervalId);
-                intervalId = null;
-            }
+            disposed = true;
+            stopPolling();
         }
     };
 }
@@ -131,12 +197,16 @@ function buildSkeleton(executionId) {
         '      <h1 class="detail-header__title">Execution <span class="text-mono">' + escapeHtml(executionId) + '</span></h1>' +
         '    </div>' +
         '    <div class="detail-header__right">' +
-        '      <a href="#/executions/' + escapeAttr(executionId) + '/report" class="btn btn--primary" data-exec-report>View Report</a>' +
+        '      <button type="button" class="btn btn--primary" data-exec-report disabled title="Available when execution has finished">View Report</button>' +
         '    </div>' +
         '  </div>' +
         '  <div id="exec-detail-body">' +
         '    <div class="detail-loading">Loading...</div>' +
         '  </div>' +
+        '  <details class="card detail-scenario-source" data-scenario-source>' +
+        '    <summary class="card__title">Scenario YAML (original source)</summary>' +
+        '    <pre class="detail-technical-value"><code data-scenario-code></code></pre>' +
+        '  </details>' +
         '</div>';
 }
 
@@ -340,6 +410,7 @@ function renderPhaseGroup(phase, tasks) {
     var runningCount = tasks.filter(function (t) {
         return t.status === "RUNNING" || t.status === "STARTED";
     }).length;
+    var pendingCount = tasks.filter(function (t) { return t.status === "PENDING"; }).length;
 
     return '' +
         '<div class="detail-phase">' +
@@ -349,6 +420,7 @@ function renderPhaseGroup(phase, tasks) {
         '      <span class="detail-phase__stat detail-phase__stat--ok">' + okCount + ' ok</span>' +
         '      <span class="detail-phase__stat detail-phase__stat--ko">' + koCount + ' ko</span>' +
         '      <span class="detail-phase__stat detail-phase__stat--running">' + runningCount + ' running</span>' +
+        '      <span class="detail-phase__stat">' + pendingCount + ' pending</span>' +
         '    </span>' +
         '  </div>' +
         renderTasksTable(tasks) +
@@ -369,6 +441,7 @@ function renderTasksTable(tasks) {
         '    <tr>' +
         '      <th class="detail-tasks-table__expand"></th>' +
         '      <th>Task Name</th>' +
+        '      <th>Task Type</th>' +
         '      <th>Status</th>' +
         '      <th>Message</th>' +
         '    </tr>' +
@@ -385,32 +458,34 @@ function renderTasksTable(tasks) {
  * @returns {string} HTML
  */
 function renderTaskRow(task) {
+    var rowKey = taskRowKey(task);
     var statusClass = taskStatusBadgeClass(task.status);
     var shortMessage = task.errorMessage
         ? truncate(task.errorMessage, 80)
         : (task.status === "SUCCESS" ? "OK" : "—");
 
     return '' +
-        '<tr class="detail-task-row" data-task-row="' + escapeAttr(task.taskId) + '">' +
+        '<tr class="detail-task-row" data-task-row="' + escapeAttr(rowKey) + '">' +
         '  <td class="detail-tasks-table__expand">' +
-        '    <button class="btn btn--sm detail-task-toggle" data-task-toggle="' + escapeAttr(task.taskId) + '" title="Show details">' +
+        '    <button class="btn btn--sm detail-task-toggle" data-task-toggle="' + escapeAttr(rowKey) + '" title="Show details" aria-expanded="false">' +
         '      <span class="detail-task-toggle__icon">+</span>' +
         '    </button>' +
         '  </td>' +
-        '  <td><span class="text-mono detail-task-name">' + escapeHtml(task.taskName) + '</span></td>' +
+        '  <td><span class="text-mono detail-task-name">' + escapeHtml(task.taskId) + '</span></td>' +
+        '  <td>' + escapeHtml(task.taskName) + '</td>' +
         '  <td><span class="status ' + statusClass + '">' + escapeHtml(task.status) + '</span></td>' +
         '  <td class="detail-task-message">' + escapeHtml(shortMessage) + '</td>' +
         '</tr>' +
-        '<tr class="detail-task-expanded" id="task-detail-' + escapeAttr(task.taskId) + '" style="display:none">' +
+        '<tr class="detail-task-expanded" id="task-detail-' + escapeAttr(rowKey) + '" style="display:none">' +
         '  <td></td>' +
-        '  <td colspan="3">' +
+        '  <td colspan="4">' +
         '    <div class="detail-task-expanded__content">' +
         '      <div class="detail-task-expanded__field">' +
-        '        <span class="detail-task-expanded__label">Task ID</span>' +
+        '        <span class="detail-task-expanded__label">Task Name</span>' +
         '        <span class="text-mono">' + escapeHtml(task.taskId) + '</span>' +
         '      </div>' +
         '      <div class="detail-task-expanded__field">' +
-        '        <span class="detail-task-expanded__label">Task Name</span>' +
+        '        <span class="detail-task-expanded__label">Task Type</span>' +
         '        <span>' + escapeHtml(task.taskName) + '</span>' +
         '      </div>' +
         (task.phase ?
@@ -422,6 +497,11 @@ function renderTaskRow(task) {
         '        <span class="detail-task-expanded__label">Status</span>' +
         '        <span class="status ' + statusClass + '">' + escapeHtml(task.status) + '</span>' +
         '      </div>' +
+        renderTechnicalField("Agent", task.agentId) +
+        renderTechnicalField("Duration (ms)", task.durationMillis) +
+        renderTechnicalField("Completed at", task.completedAt ? formatTimestamp(task.completedAt) : null) +
+        renderTechnicalSection("Step configuration", task.configuration) +
+        renderTechnicalSection("Execution outputs / injection metrics", task.outputs) +
         (task.errorMessage ?
         '      <div class="detail-task-expanded__field">' +
         '        <span class="detail-task-expanded__label">Error Message</span>' +
@@ -432,27 +512,76 @@ function renderTaskRow(task) {
         '</tr>';
 }
 
+function renderTechnicalField(label, value) {
+    if (value === null || value === undefined) return "";
+    var text = typeof value === "object" ? JSON.stringify(value, null, 2) : String(value);
+    return '<div class="detail-task-expanded__field">' +
+        '<span class="detail-task-expanded__label">' + escapeHtml(label) + '</span>' +
+        '<pre class="detail-technical-value">' + escapeHtml(text) + '</pre></div>';
+}
+
+function renderTechnicalSection(title, values) {
+    if (!values || Object.keys(values).length === 0) return "";
+    return '<section class="detail-technical-section"><h3>' + escapeHtml(title) + '</h3>' +
+        Object.entries(values).map(function ([key, value]) {
+            return renderTechnicalField(key, value);
+        }).join("") + '</section>';
+}
+
+function taskRowKey(task) {
+    return JSON.stringify([task.taskId, task.agentId || null]);
+}
+
 /**
- * Toggle expansion of a task detail row.
+ * Toggle expansion of a task detail row and remember the choice.
  * @param {HTMLElement} bodyEl — the detail body element
  * @param {string} taskId
+ * @param {Set<string>} expandedTaskIds — persistent expansion state
  */
-function toggleTaskDetail(bodyEl, taskId) {
+function toggleTaskDetail(bodyEl, taskId, expandedTaskIds) {
+    var expand = !expandedTaskIds.has(taskId);
+    if (expand) {
+        expandedTaskIds.add(taskId);
+    } else {
+        expandedTaskIds.delete(taskId);
+    }
+    setTaskExpanded(bodyEl, taskId, expand);
+}
+
+/**
+ * Re-apply expansion state after the body has been re-rendered.
+ * @param {HTMLElement} bodyEl
+ * @param {Set<string>} expandedTaskIds
+ */
+function restoreExpandedRows(bodyEl, expandedTaskIds, tasks) {
+    const assignedTasks = new Set();
+    (tasks || []).forEach(function (task) {
+        const plannedKey = taskRowKey({ taskId: task.taskId });
+        if (task.agentId && expandedTaskIds.has(plannedKey)) {
+            expandedTaskIds.add(taskRowKey(task));
+            assignedTasks.add(plannedKey);
+        }
+    });
+    assignedTasks.forEach(function (key) { expandedTaskIds.delete(key); });
+    expandedTaskIds.forEach(function (taskId) {
+        setTaskExpanded(bodyEl, taskId, true);
+    });
+}
+
+/**
+ * @param {HTMLElement} bodyEl
+ * @param {string} taskId
+ * @param {boolean} expanded
+ */
+function setTaskExpanded(bodyEl, taskId, expanded) {
     var detailRow = bodyEl.querySelector("#task-detail-" + CSS.escape(taskId));
     var toggleBtn = bodyEl.querySelector("[data-task-toggle=\"" + CSS.escape(taskId) + "\"]");
     if (!detailRow) return;
 
-    var isVisible = detailRow.style.display !== "none";
-    if (isVisible) {
-        detailRow.style.display = "none";
-        if (toggleBtn) {
-            toggleBtn.querySelector(".detail-task-toggle__icon").textContent = "+";
-        }
-    } else {
-        detailRow.style.display = "";
-        if (toggleBtn) {
-            toggleBtn.querySelector(".detail-task-toggle__icon").textContent = "−";
-        }
+    detailRow.style.display = expanded ? "" : "none";
+    if (toggleBtn) {
+        toggleBtn.setAttribute("aria-expanded", String(expanded));
+        toggleBtn.querySelector(".detail-task-toggle__icon").textContent = expanded ? "−" : "+";
     }
 }
 

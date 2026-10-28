@@ -38,11 +38,15 @@ class GatlingTaskExecutorTest {
     private static final class StubRunner implements GatlingRunner {
         private Path resultDir = Path.of("/tmp/gatling-stub");
         private RuntimeException exception;
+        private GatlingRunConfig lastConfig;
+        private java.util.function.Consumer<GatlingRunConfig> onRun = c -> { };
 
         StubRunner returnsDir(Path dir) { this.resultDir = dir; return this; }
         StubRunner throwsException(RuntimeException e) { this.exception = e; return this; }
 
         @Override public Path run(GatlingRunConfig config) {
+            lastConfig = config;
+            onRun.accept(config);
             if (exception != null) throw exception;
             return resultDir;
         }
@@ -106,6 +110,80 @@ class GatlingTaskExecutorTest {
         stubRunner = new StubRunner();
         stubParser = new StubParser();
         executor = new GatlingTaskExecutor(stubRunner, stubParser);
+    }
+
+    // ── Generic HTTP injection (no simulation) ───────────────────────────────
+
+    private GatlingTaskExecutor httpExecutor() {
+        var target = new com.performance.platform.application.ports.out.Endpoint(
+                "http://localhost:9999", null, null,
+                Map.of("X-Env", "perf"), Map.of("devices", "/api/devices/{deviceId}"));
+        com.performance.platform.application.ports.out.EndpointResolver resolver =
+                name -> "api".equals(name) ? target : null;
+        return new GatlingTaskExecutor(stubRunner, stubParser, java.util.List.of(
+                new com.performance.platform.injection.gatling.http.HttpInjectionProtocol(resolver)));
+    }
+
+    private static Map<String, Object> httpParams(Map<String, Object> extra) {
+        var params = new java.util.HashMap<String, Object>(extra);
+        params.put(GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
+                "type", "CONSTANT", "parameters", Map.of("users", 10, "duration", "60s")));
+        return params;
+    }
+
+    @Test
+    @DisplayName("should run the built-in HTTP simulation and publish the request spec when simulation is absent")
+    void shouldRunBuiltInHttpSimulation() {
+        stubParser.returns(SUCCESS_RESULT);
+        var seen = new java.util.concurrent.atomic.AtomicReference<
+                com.performance.platform.injection.gatling.http.HttpRequestSpec>();
+        stubRunner.onRun = config -> seen.set(
+                com.performance.platform.injection.gatling.http.HttpRequestSpecHolder.get(config.simulationId()));
+
+        TaskResult result = httpExecutor().execute(CONTEXT, createStep(httpParams(Map.of(
+                "target", "api", "method", "post", "path", "devices",
+                "pathParams", Map.of("deviceId", "device-{index:4}"),
+                "queryParams", Map.of("run", "{executionId}"),
+                "headers", Map.of("X-Request-Id", "{uuid}"),
+                "body", Map.of("id", "{index}")))));
+
+        assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+        assertThat(stubRunner.lastConfig.simulationClass()).endsWith("HttpScenarioSimulation");
+        var spec = seen.get();
+        assertThat(spec.method()).isEqualTo("POST");
+        assertThat(spec.baseUrl()).isEqualTo("http://localhost:9999");
+        assertThat(spec.path()).isEqualTo("/api/devices/{deviceId}");
+        assertThat(spec.headers()).containsEntry("X-Env", "perf").containsKey("Content-Type");
+        assertThat(spec.body()).isEqualTo("{\"id\":\"{index}\"}");
+        assertThat(com.performance.platform.injection.gatling.http.HttpRequestSpecHolder
+                .get(stubRunner.lastConfig.simulationId())).isNull();
+    }
+
+    @Test
+    @DisplayName("should fail when HTTP injection has neither target nor baseUrl")
+    void shouldFailWithoutTarget() {
+        TaskResult result = executor.execute(CONTEXT, createStep(httpParams(Map.of("path", "/x"))));
+
+        assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+        assertThat(result.errorMessage()).contains("target");
+    }
+
+    @Test
+    @DisplayName("should fail when queryParams is not a map")
+    void shouldFailWhenQueryParamsNotMap() {
+        TaskResult result = executor.execute(CONTEXT, createStep(httpParams(Map.of(
+                "baseUrl", "http://localhost:9", "path", "/x", "queryParams", "device_id=x"))));
+
+        assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+        assertThat(result.errorMessage()).contains("queryParams");
+    }
+    @Test
+    @DisplayName("should fail with the available protocols when protocol is unknown")
+    void shouldFailOnUnknownProtocol() {
+        TaskResult result = executor.execute(CONTEXT, createStep(httpParams(Map.of("protocol", "amqp"))));
+
+        assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+        assertThat(result.errorMessage()).contains("amqp").contains("http");
     }
 
     // ── Contract ──────────────────────────────────────────────────────────────

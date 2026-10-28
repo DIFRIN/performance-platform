@@ -50,6 +50,9 @@ scenario:
         target: wiremock
         method: GET
         path: /api/users
+        queryParams:
+          requestId: "{uuid}"
+          source: "remote-demo-{executionId}"
         expectedStatus: 200
       timeout: 30s
 
@@ -84,6 +87,8 @@ scenario:
       parameters:
         target: wiremock
         metric: receivedCalls
+        queryParams:
+          source: "remote-demo-{executionId}"
         operator: GTE
         value: 1
       timeout: 30s

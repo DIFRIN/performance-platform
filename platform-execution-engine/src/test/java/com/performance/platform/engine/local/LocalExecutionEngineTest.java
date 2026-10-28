@@ -71,9 +71,9 @@ class LocalExecutionEngineTest {
 
     private RetryExecutor retryExecutor;
     private List<Object> publishedEvents = new CopyOnWriteArrayList<>();
-    private List<TaskResult> savedTaskResults = new ArrayList<>();
+    private List<TaskResult> savedTaskResults = new CopyOnWriteArrayList<>();
     private ExecutionState lastSavedState;
-    private Map<String, ExecutionState> persistedStates = new HashMap<>();
+    private Map<String, ExecutionState> persistedStates = new java.util.concurrent.ConcurrentHashMap<>();
 
     // Stub: ExecutionRepository
     private final ExecutionRepository executionRepository = new StubExecutionRepository();
@@ -97,9 +97,9 @@ class LocalExecutionEngineTest {
     void setUp() {
         retryExecutor = new DefaultRetryExecutor();
         publishedEvents.clear();
-        savedTaskResults = new ArrayList<>();
+        savedTaskResults = new CopyOnWriteArrayList<>();
         lastSavedState = null;
-        persistedStates = new HashMap<>();
+        persistedStates = new java.util.concurrent.ConcurrentHashMap<>();
         planMap.clear();
         taskExecutorLookup.reset();
 
@@ -122,6 +122,7 @@ class LocalExecutionEngineTest {
     class StubExecutionRepository implements ExecutionRepository {
         @Override
         public void save(ExecutionState state) {
+            assertEquals(planMap.get(state.scenarioId().value()).totalSteps(), state.plannedTaskCount());
             lastSavedState = state;
             persistedStates.put(state.id().value(), state);
         }
@@ -139,7 +140,8 @@ class LocalExecutionEngineTest {
                 updated.put(phase, status);
                 var newState = new ExecutionState(
                         state.id(), state.scenarioId(), state.status(),
-                        updated, state.context(), state.startedAt(), Instant.now());
+                        updated, state.context(), state.startedAt(), Instant.now(), state.plannedTaskCount(),
+                        state.tasks(), state.scenarioYaml(), state.scenarioDetails());
                 persistedStates.put(id.value(), newState);
                 lastSavedState = newState;
             }
@@ -173,7 +175,7 @@ class LocalExecutionEngineTest {
 
     static class StubTaskExecutorLookup implements TaskExecutorLookup {
         private final Map<String, TaskExecutor> taskExecutors = new HashMap<>();
-        private final List<String> taskLookups = new ArrayList<>();
+        private final List<String> taskLookups = new CopyOnWriteArrayList<>();
 
         void registerTask(String taskName, TaskExecutor executor) {
             taskExecutors.put(taskName, executor);
@@ -503,6 +505,84 @@ class LocalExecutionEngineTest {
     // Nested: Parallel execution
     // -------------------------------------------------------------------------
 
+    @Test
+    @Timeout(value = 10, unit = TimeUnit.SECONDS)
+    void submitReturnsBeforeInjectionCompletesAndPersistsAllPlannedTasks() throws Exception {
+        var injectionStarted = new CountDownLatch(1);
+        var releaseInjection = new CountDownLatch(1);
+        var finished = new CountDownLatch(1);
+        engine = new ExecutionEngine(planBuilder, executionRepository, event -> {
+            publishedEvents.add(event);
+            if (event instanceof ScenarioFinished) finished.countDown();
+        }, lifecycleDispatcher, new LocalStepDispatcher(taskExecutorLookup, retryExecutor),
+                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
+        var prep = step("prep", "prepare", Phase.PREPARATION);
+        var injection = new StepDefinition(t("load"), "inject", Phase.INJECTION,
+                Map.of("protocol", "http", "loadModel", "campaign"), List.of(), List.of(),
+                Duration.ofSeconds(30), com.performance.platform.domain.execution.RetryPolicy.defaults());
+        var assertion = step("verify", "assert", Phase.ASSERTION);
+        var base = scenario("sc-async", List.of(prep, injection, assertion));
+        var scenario = new ScenarioDefinition(base.id(), base.name(), base.version(), base.tags(), base.metadata(),
+                base.executionMode(), base.steps(),
+                Map.of("campaign", new com.performance.platform.domain.injection.LoadModel(
+                        com.performance.platform.domain.injection.LoadModelType.RAMP, Map.of("to", 100))),
+                "# submitted YAML\nscenario:\n  id: sc-async\n");
+        setUpPlan(scenario, List.of(execStep(prep, List.of(), 0)),
+                List.of(execStep(injection, List.of(), 0)), List.of(execStep(assertion, List.of(), 0)));
+        taskExecutorLookup.registerTask("prepare", new StubTaskExecutor("prepare",
+                TaskResult.success(t("prep"), "prepare", Duration.ZERO, Map.of())));
+        taskExecutorLookup.registerTask("inject", new StubTaskExecutor("inject",
+                TaskResult.success(t("load"), "inject", Duration.ZERO, Map.of()),
+                injectionStarted, releaseInjection));
+        taskExecutorLookup.registerTask("assert", new StubTaskExecutor("assert",
+                TaskResult.success(t("verify"), "assert", Duration.ZERO, Map.of())));
+
+        try {
+            var executionId = engine.submit(scenario);
+            assertTrue(injectionStarted.await(5, TimeUnit.SECONDS));
+            var persisted = executionRepository.findById(executionId).orElseThrow();
+            assertEquals(3, persisted.tasks().size());
+            assertEquals(scenario.sourceYaml(), persisted.scenarioYaml());
+            assertEquals(scenario.name(), persisted.scenarioDetails().name());
+            assertEquals(injection.parameters(), persisted.tasks().get(1).configuration().get("parameters"));
+            assertEquals(Map.of("type", "RAMP", "parameters", Map.of("to", 100)),
+                    persisted.tasks().get(1).configuration().get("resolvedLoadModel"));
+            assertEquals("PT30S", persisted.tasks().get(1).configuration().get("timeout"));
+            assertTrue(persisted.tasks().get(1).configuration().containsKey("retryPolicy"));
+            assertEquals(List.of(true, true, false), persisted.tasks().stream()
+                    .map(com.performance.platform.domain.execution.ExecutionTask::started).toList());
+            assertEquals(PhaseStatus.RUNNING, persisted.phaseStatuses().get(Phase.INJECTION));
+            assertEquals(PhaseStatus.PENDING, persisted.phaseStatuses().get(Phase.ASSERTION));
+            assertEquals(List.of("prep"), savedTaskResults.stream().map(result -> result.taskId().value()).toList());
+            assertEquals(1L, finished.getCount());
+        } finally {
+            releaseInjection.countDown();
+            assertTrue(finished.await(5, TimeUnit.SECONDS));
+        }
+        assertEquals(3, savedTaskResults.size());
+        var completed = executionRepository.findById(lastSavedState.id()).orElseThrow();
+        assertEquals(scenario.sourceYaml(), completed.scenarioYaml());
+        assertEquals(scenario.name(), completed.scenarioDetails().name());
+    }
+
+    @Test
+    void failureToPublishAnImmediateResultCannotCompleteExecutionSuccessfully() {
+        var prep = step("prep", "prepare", Phase.PREPARATION);
+        var scenario = scenario("sc-publish-failure", List.of(prep));
+        setUpPlan(scenario, List.of(execStep(prep, List.of(), 0)), List.of(), List.of());
+        taskExecutorLookup.registerTask("prepare", new StubTaskExecutor("prepare",
+                TaskResult.success(t("prep"), "prepare", Duration.ZERO, Map.of())));
+        engine = new ExecutionEngine(planBuilder, executionRepository, eventPublisher, lifecycleDispatcher,
+                new LocalStepDispatcher(taskExecutorLookup, retryExecutor), (id, outcomes, phase) -> {
+                    if (!outcomes.isEmpty()) throw new IllegalStateException("Result persistence unavailable");
+                });
+
+        var id = engine.execute(scenario);
+
+        assertEquals(ExecutionStatus.FAILED, executionRepository.findById(id).orElseThrow().status());
+        assertEquals(Verdict.FAILED, findEvent(ScenarioFinished.class).verdict());
+    }
+
     @Nested
     @DisplayName("Parallel execution (Virtual Threads)")
     class ParallelExecution {
@@ -523,8 +603,11 @@ class LocalExecutionEngineTest {
                 public TaskResult execute(ExecutionContext context, StepDefinition step) {
                     executionOrder.add("A-start");
                     latch.countDown();
-                    try { latch.await(2, TimeUnit.SECONDS); } catch (InterruptedException e) {
+                    try {
+                        assertTrue(latch.await(5, TimeUnit.SECONDS), "Both steps must start concurrently");
+                    } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
+                        throw new AssertionError("Interrupted while waiting for both steps to start", e);
                     }
                     executionOrder.add("A-end");
                     return super.execute(context, step);
@@ -537,8 +620,11 @@ class LocalExecutionEngineTest {
                 public TaskResult execute(ExecutionContext context, StepDefinition step) {
                     executionOrder.add("B-start");
                     latch.countDown();
-                    try { latch.await(2, TimeUnit.SECONDS); } catch (InterruptedException e) {
+                    try {
+                        assertTrue(latch.await(5, TimeUnit.SECONDS), "Both steps must start concurrently");
+                    } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
+                        throw new AssertionError("Interrupted while waiting for both steps to start", e);
                     }
                     executionOrder.add("B-end");
                     return super.execute(context, step);
@@ -561,9 +647,11 @@ class LocalExecutionEngineTest {
             assertTrue(bStart >= 0);
 
             int lastStart = Math.max(aStart, bStart);
-            int firstEnd = Math.min(
-                    executionOrder.indexOf("A-end") >= 0 ? executionOrder.indexOf("A-end") : 999,
-                    executionOrder.indexOf("B-end") >= 0 ? executionOrder.indexOf("B-end") : 999);
+            int aEnd = executionOrder.indexOf("A-end");
+            int bEnd = executionOrder.indexOf("B-end");
+            assertTrue(aEnd >= 0, "Step A must complete");
+            assertTrue(bEnd >= 0, "Step B must complete");
+            int firstEnd = Math.min(aEnd, bEnd);
             assertTrue(lastStart < firstEnd, "Both starts should happen before any end");
         }
 

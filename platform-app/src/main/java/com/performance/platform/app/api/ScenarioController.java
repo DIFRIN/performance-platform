@@ -4,7 +4,7 @@ import com.performance.platform.app.api.dto.ExecutionStatusResponse;
 import com.performance.platform.app.api.dto.ProgressResponse;
 import com.performance.platform.app.api.dto.SubmitResponse;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
-import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
@@ -47,7 +47,7 @@ public class ScenarioController {
     private static final String STATUS_ACCEPTED = "ACCEPTED";
 
     private final ScenarioParsingUseCase parsingUseCase;
-    private final ExecuteScenarioUseCase executeUseCase;
+    private final SubmitScenarioUseCase executeUseCase;
     private final GetExecutionStatusUseCase statusUseCase;
     private final CancelExecutionUseCase cancelUseCase;
     private final ExecutionRepository executionRepository;
@@ -55,7 +55,7 @@ public class ScenarioController {
 
     public ScenarioController(
             ScenarioParsingUseCase parsingUseCase,
-            ExecuteScenarioUseCase executeUseCase,
+            SubmitScenarioUseCase executeUseCase,
             GetExecutionStatusUseCase statusUseCase,
             CancelExecutionUseCase cancelUseCase,
             ExecutionRepository executionRepository,
@@ -80,7 +80,7 @@ public class ScenarioController {
         log.info("action=submit_scenario");
         var scenario = parsingUseCase.parse(yaml);
         log.info("action=scenario_parsed scenarioId={}", scenario.id().value());
-        var executionId = executeUseCase.execute(scenario);
+        var executionId = executeUseCase.submit(scenario);
         log.info("action=scenario_accepted executionId={}", executionId.value());
         return ResponseEntity.accepted()
                 .body(new SubmitResponse(executionId.value(), STATUS_ACCEPTED));

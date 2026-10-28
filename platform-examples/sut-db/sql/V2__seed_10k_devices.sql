@@ -5,7 +5,7 @@
 
 INSERT INTO devices (device_id, device_dns, is_active)
 SELECT
-    'device-' || LPAD(gs::text, 4, '0'),
+    'device-' || LPAD(gs::text, GREATEST(4, LENGTH(gs::text)), '0'),
     'wiremock:8080',
     true
 FROM generate_series(1, 10000) gs

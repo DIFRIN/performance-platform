@@ -31,8 +31,19 @@ public record CampaignReport(
     Verdict verdict,
     String verdictReason,
     Instant generatedAt,
-    Duration totalDuration
+    Duration totalDuration,
+    PerformanceAssessment performance
 ) {
+    public CampaignReport(ReportId id, ScenarioId scenarioId, String scenarioName, String scenarioVersion,
+                          List<String> tags, Map<String, String> metadata, EnvironmentInfo environment,
+                          ExecutionSummary executionSummary, List<TaskReportEntry> preparationResults,
+                          List<InjectionReportEntry> injectionResults, List<AssertionReportEntry> assertionResults,
+                          Verdict verdict, String verdictReason, Instant generatedAt, Duration totalDuration) {
+        this(id, scenarioId, scenarioName, scenarioVersion, tags, metadata, environment, executionSummary,
+                preparationResults, injectionResults, assertionResults, verdict, verdictReason,
+                generatedAt, totalDuration, null);
+    }
+
     public CampaignReport {
         Objects.requireNonNull(id, "id required");
         Objects.requireNonNull(scenarioId, "scenarioId required");

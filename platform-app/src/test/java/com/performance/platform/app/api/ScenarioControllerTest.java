@@ -3,7 +3,7 @@ package com.performance.platform.app.api;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
-import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ScenarioControllerTest {
 
     private final ScenarioParsingUseCase parsingUseCase = mock(ScenarioParsingUseCase.class);
-    private final ExecuteScenarioUseCase executeUseCase = mock(ExecuteScenarioUseCase.class);
+    private final SubmitScenarioUseCase executeUseCase = mock(SubmitScenarioUseCase.class);
     private final GetExecutionStatusUseCase statusUseCase = mock(GetExecutionStatusUseCase.class);
     private final CancelExecutionUseCase cancelUseCase = mock(CancelExecutionUseCase.class);
     private final ExecutionRepository executionRepository = mock(ExecutionRepository.class);
@@ -88,7 +88,7 @@ class ScenarioControllerTest {
             var executionId = ExecutionId.of("exec-001");
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(VALID_YAML)).thenReturn(scenario);
-            when(executeUseCase.execute(scenario)).thenReturn(executionId);
+            when(executeUseCase.submit(scenario)).thenReturn(executionId);
 
             mockMvc.perform(post("/api/v1/scenarios")
                             .contentType(MediaType.TEXT_PLAIN)
@@ -137,7 +137,7 @@ class ScenarioControllerTest {
         void shouldReturn500OnExecutionFailure() throws Exception {
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(any())).thenReturn(scenario);
-            when(executeUseCase.execute(scenario))
+            when(executeUseCase.submit(scenario))
                     .thenThrow(new ExecutionException("Engine not available"));
 
             mockMvc.perform(post("/api/v1/scenarios")
@@ -223,7 +223,7 @@ class ScenarioControllerTest {
         void shouldReturn503OnNoAgent() throws Exception {
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(any())).thenReturn(scenario);
-            when(executeUseCase.execute(scenario))
+            when(executeUseCase.submit(scenario))
                     .thenThrow(new com.performance.platform.application.exception
                             .NoAvailableAgentException("gatling"));
 
@@ -239,7 +239,7 @@ class ScenarioControllerTest {
         void shouldReturn400OnInvalidScenario() throws Exception {
             var scenario = createMinimalScenario();
             when(parsingUseCase.parse(any())).thenReturn(scenario);
-            when(executeUseCase.execute(scenario))
+            when(executeUseCase.submit(scenario))
                     .thenThrow(new com.performance.platform.application.exception
                             .InvalidScenarioException("Missing required field"));
 

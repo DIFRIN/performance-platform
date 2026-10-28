@@ -20,14 +20,20 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.reporting.model.CampaignReport;
+import com.performance.platform.domain.report.ReportFormat;
+import com.performance.platform.reporting.output.ReportFileWriter;
+import com.performance.platform.reporting.output.ReportProperties;
+import com.performance.platform.reporting.render.HtmlReportRenderer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -98,6 +104,8 @@ class DefaultReportEngineTest {
 
     private StubExecutionRepository repository;
     private StubEventPublisher eventPublisher;
+    @TempDir
+    Path reportDirectory;
     private DefaultReportEngine engine;
     private ExecutionId executionId;
     private ScenarioId scenarioId;
@@ -107,7 +115,9 @@ class DefaultReportEngineTest {
     void setUp() {
         repository = new StubExecutionRepository();
         eventPublisher = new StubEventPublisher();
-        engine = new DefaultReportEngine(repository, eventPublisher);
+        engine = new DefaultReportEngine(repository, eventPublisher,
+                new ReportFileWriter(List.of(new HtmlReportRenderer()),
+                        new ReportProperties(reportDirectory.toString(), List.of(ReportFormat.HTML))));
         executionId = new ExecutionId("exec-1");
         scenarioId = new ScenarioId("scenario-1");
         now = Instant.now();
@@ -137,7 +147,7 @@ class DefaultReportEngineTest {
 
             assertNotNull(report.id());
             assertEquals(scenarioId, report.scenarioId());
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            assertEquals(Verdict.WARNING, report.verdict());
             assertEquals(1, report.preparationResults().size());
             assertEquals("database-setup", report.preparationResults().get(0).taskName());
             assertTrue(report.injectionResults().isEmpty());
@@ -202,8 +212,8 @@ class DefaultReportEngineTest {
         }
 
         @Test
-        @DisplayName("should compute correct WARNING verdict when assertion FAILED")
-        void shouldComputeWarningVerdict() {
+        @DisplayName("should fail when an assertion fails without explicit minor severity")
+        void shouldComputeFailedVerdictForCriticalAssertion() {
             var assertTaskId = new TaskId("assert-1");
             var assertResult = new AssertionResult(
                     assertTaskId, AssertionStatus.FAILED, "threshold exceeded",
@@ -221,7 +231,7 @@ class DefaultReportEngineTest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.WARNING, report.verdict());
+            assertEquals(Verdict.FAILED, report.verdict());
             assertTrue(report.verdictReason().contains("failed"));
         }
 
@@ -306,7 +316,7 @@ class DefaultReportEngineTest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            assertEquals(Verdict.WARNING, report.verdict());
             assertTrue(report.preparationResults().isEmpty());
             assertTrue(report.injectionResults().isEmpty());
             assertTrue(report.assertionResults().isEmpty());
@@ -410,6 +420,24 @@ class DefaultReportEngineTest {
             assertEquals(executionId, rg.executionId());
             assertNotNull(rg.reportId());
             assertNotNull(rg.timestamp());
+            assertTrue(Files.isRegularFile(
+                    reportDirectory.resolve(executionId.value()).resolve("campaign.html")));
+        }
+
+        @Test
+        void doesNotPublishReportGeneratedWhenWritingFails() throws Exception {
+            var blocked = reportDirectory.resolve("not-a-directory");
+            Files.writeString(blocked, "file");
+            var writer = new ReportFileWriter(List.of(new HtmlReportRenderer()),
+                    new ReportProperties(blocked.toString(), List.of(ReportFormat.HTML)));
+            var reporting = new DefaultReportEngine(repository, eventPublisher, writer);
+            repository.put(new ExecutionState(executionId, scenarioId, ExecutionStatus.COMPLETED,
+                    Map.of(), ExecutionContext.initial(executionId, scenarioId), now, now));
+
+            reporting.onScenarioFinished(new ScenarioFinished(
+                    executionId, scenarioId, Verdict.SUCCESS, Duration.ZERO, now));
+
+            assertTrue(eventPublisher.publishedEvents.isEmpty());
         }
 
         @Test

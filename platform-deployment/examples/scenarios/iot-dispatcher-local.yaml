@@ -4,7 +4,7 @@
 scenario:
   id: iot-dispatcher-local
   name: "Test de performance SUT-A"
-  version: "1.0"
+  version: "1.0.0"
   tags: [iot, dispatcher, sut-a]
   metadata:
     owner: perf-team
@@ -47,26 +47,48 @@ scenario:
       timeout: 35s
 
     - id: inject-load
-      task: kafka-producer
+      task: gatling
       phase: INJECTION
       dependsOn: [wait-for-dispatch]
       requiredContexts: [wait-for-dispatch]
       parameters:
         cluster: iot-sut
         topic: iot-commands
-        messageCount: 1000
-        messageTemplate: '{"device_id":"device-{index}","command":"load-test"}'
+        protocol: kafka
+        key: 'device-{index:5}'
+        headers:
+          x-correlation-id: '{uuid}'
+          x-execution: '{executionId}'
+        payload:
+          device_id: 'device-{index:5}'
+          command: load-test
+          value: '{random:1-100}'
+        loadModel:
+          type: CONSTANT
+          parameters: { usersPerSec: 200, durationSeconds: 30 }
       timeout: 2m
 
-    - id: assert-kafka-lag
-      task: kafka
+    - id: count-iot-commands
+      task: kafka-consumer
       phase: ASSERTION
       dependsOn: [inject-load]
       requiredContexts: [inject-load]
       parameters:
         cluster: iot-sut
         topic: iot-commands
-        expectedLag: 0
+        operation: COUNT
+      timeout: 1m
+
+    - id: assert-iot-commands-count
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [count-iot-commands]
+      requiredContexts: [count-iot-commands]
+      parameters:
+        metric: consumedCount
+        refTaskId: count-iot-commands
+        operator: GTE
+        value: 7000
       timeout: 1m
 
     - id: assert-http-dispatched
@@ -76,7 +98,7 @@ scenario:
       requiredContexts: [inject-load]
       parameters:
         target: wiremock
-        urlPattern: "/command"
-        expectedRequestCount: 1000
-        operator: GREATER_THAN_OR_EQUAL
+        metric: receivedCalls
+        value: 7000
+        operator: GTE
       timeout: 1m

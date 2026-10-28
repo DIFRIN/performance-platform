@@ -36,6 +36,16 @@ public class GatlingTaskExecutor implements TaskExecutor {
 }
 ```
 
+### 2.1 Injection HTTP générique (sans `simulation`)
+
+Quand `simulation` est absent, l'executor détecte une injection HTTP et crée la simulation dynamiquement (aucune classe utilisateur à déclarer) :
+
+1. `HttpRequestSpecFactory` construit un `HttpRequestSpec` depuis les paramètres du step (`target` via le port `EndpointResolver`, ou `baseUrl` ; `method`, `path` logique, `pathParams`, `queryParams`, `headers` fusionnés avec `defaultHeaders` de la cible, `body`, `contentType`, `expectedStatus`) et le valide par un rendu à blanc.
+2. Le spec est publié dans `HttpRequestSpecHolder` (clé = `simulationId`), retiré en `finally`.
+3. `GatlingRunConfig.simulationClass` = `HttpScenarioSimulation` (instanciée par Gatling) : protocole `baseUrl`, un `exec` qui rend la requête via `HttpRequestRenderer` (`{index}` = compteur global 1-based, identique pour path/query/headers/body d'une même requête), puis la requête HTTP, injectée avec les `OpenInjectionStep` du `LoadModel`.
+
+`simulation: <classe>` reste supporté pour une simulation personnalisée ; les paramètres HTTP sont alors ignorés. Placeholders : voir spec 03 (ADR-039).
+
 ---
 
 ## 3. GatlingRunner
@@ -95,7 +105,7 @@ flowchart TB
     subgraph EXEC["Exécution et résultat"]
         direction LR
         HOLDER --> RUN["DefaultGatlingRunner"]
-        RUN --> GAT["Gatling.fromArgs()"]
+        RUN --> GAT["EmbeddedGatlingLauncher"]
         GAT --> DIR["répertoire de résultats"]
         DIR --> PARSE["DefaultGatlingResultParser"]
         PARSE --> IR["InjectionResult"]
@@ -153,14 +163,13 @@ return TaskResult.success(
 |---|---|---|
 | HTTP/HTTPS | oui (`HttpProtocolBuilder`) | `gatling-http` |
 | WebSocket | oui (`HttpProtocolBuilder`, ws) | `gatling-http` |
-| Kafka | déclaré dans `ProtocolSupportInfo`, **dépendance non fournie** (pas de `io.gatling:gatling-kafka` en 3.11.x) — plugin externe requis | — |
+| Kafka | oui, natif : action Gatling `KafkaPublishAction` (`protocol: kafka`) via ports `MessageChannel`/`MessageChannelFactory` (adapter infra) | aucune nouvelle (pas de `gatling-kafka` en 3.11.x) |
 | JMS | oui (`JmsProtocolBuilder`) | `gatling-jms` (optionnel) |
 | gRPC | **exclu du périmètre** — aucune dépendance, aucun `TransportType.GRPC` | — |
 
 La liste canonique est exposée par `ProtocolSupportInfo.SUPPORTED_PROTOCOLS`
 (HTTP, HTTPS, WebSocket, Kafka, JMS) ; `gRPC` figure dans `EXCLUDED_PROTOCOLS`.
-Attention : « supporté » signifie que le protocole est déclaré côté DSL ; pour Kafka,
-l'artefact Gatling n'est pas empaqueté et doit être fourni par l'utilisateur.
+Sans `simulation`, le param `protocol` (`http` défaut | `kafka`) sélectionne un `InjectionProtocol` (SPI, beans Spring). Kafka : `cluster`, `topic` (logique, `platform.kafka-clusters.<c>.topics`), `key`, `headers`, `payload` dynamiques (ADR-039) ; cadence/durée via `loadModel`. Gatling ne dépend jamais de infra.
 
 ---
 
@@ -198,8 +207,40 @@ public class CustomerApiSimulation extends Simulation {
 Les résultats Gatling sont dans `simulation.log` (format interne) et dans le
 répertoire `results/<simId>/`. Parser :
 
-1. `stats.json` (généré par Gatling) → métriques globales
-2. `simulation.log` → stats par requête si nécessaire
+`DefaultGatlingRunner` utilise `-nr` : Gatling 3.11.2 écrit `simulation.log`,
+**pas** `stats.json` ni rapport HTML. Le runner retourne l'unique nouveau
+sous-répertoire contenant ce log (indépendamment de la casse du nom de classe),
+en excluant les résultats déjà présents ; absence ou ambiguïté = erreur.
+
+**Lancement embarqué / logging hôte** : `Gatling$.fromArgs` (3.11.2) est conçu
+pour un process dédié — son `finally` invoque `stop()` sur l'`ILoggerFactory`
+SLF4J, donc `LoggerContext.stop()`/`reset()` Logback : appenders de l'hôte
+détachés, plus aucun log applicatif après la simulation (dernier log visible :
+`CoordinatedShutdown ... ActorSystemTerminateReason`). Le runner utilise donc
+`EmbeddedGatlingLauncher`, qui reproduit `Gatling.start` (mêmes args CLI,
+`Runner`, terminaison ActorSystem/EventLoopGroup bornée par
+`gatling.core.shutdownTimeout`, `RunResultProcessor`) sans arrêter le logging.
+Ces classes `gatling-app` sont internes (comme `fromArgs`) : à revalider à
+chaque montée de version Gatling (`DefaultGatlingRunnerLoggingTest`).
+
+`DefaultGatlingResultParser` conserve la priorité et le comportement existants
+de `js/stats.json`, puis `stats.json`. Sans JSON, il lit le log en streaming :
+
+- `RUN` fournit la classe de simulation ; chaque `REQUEST` compte une fois,
+  HTTP comme Kafka, avec statut OK/KO et latence `endTimestamp - startTimestamp`.
+  Les enregistrements `GROUP`/`ERROR` ne sont pas des requêtes supplémentaires.
+- Durée mesurée : du premier au dernier timestamp `USER`/`REQUEST` ;
+  throughput = nombre total de requêtes / durée en secondes.
+- Min/max/moyenne incluent OK et KO. p50/p75/p90/p95/p99 utilisent le rang
+  supérieur (`ceil(N * percentile)`), calculé sur un histogramme de latences
+  en millisecondes ; p90 est mesuré, pas interpolé dans ce mode.
+- `rawStats` expose les compteurs, throughput et latences avec les mêmes clés
+  globales que le JSON. Les enregistrements mesurés malformés, métadonnées RUN
+  absentes, absence de requêtes ou durée non positive échouent explicitement :
+  aucune métrique zéro de remplacement. Un JSON existant invalide reste une erreur.
+
+La lecture s'appuie sur le format de `LogFileDataWriter` du Gatling déjà fourni,
+sans dépendance supplémentaire ni génération de rapports via SPI.
 
 ```java
 public interface GatlingResultParser {

@@ -148,13 +148,19 @@ curl http://localhost:8080/actuator/health
 
 > En mode DISTRIBUTED, la plateforme utilise `host.docker.internal:9093` pour accéder au SUT.
 > Modifier `application-orchestrator.yaml` : `IOT_KAFKA_SERVERS=host.docker.internal:9093`
+>
+> Les scénarios vérifient les nombres de messages conservés dans les topics Kafka.
+> `kafka-consumer` en `COUNT` interroge les offsets du topic (ce n'est pas le `kafka`
+> assertion, qui compare uniquement un output référencé via `refTaskId`). Utiliser des
+> topics `device-events` et `iot-commands` vides avant chaque exécution : COUNT renvoie
+> le total du topic et ne calcule pas le delta de l'exécution courante.
 
 ### Lancer les Scénarios
 
 #### SUT-A : IoT Dispatcher
 
 ```bash
-# Mode LOCAL (1 000 commandes)
+# Mode LOCAL (1 000 préchargées + 6 000 injectées = 7 000 commandes)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
   --data-binary @platform-deployment/examples/scenarios/iot-dispatcher-local.yaml
@@ -168,12 +174,12 @@ curl -X POST http://localhost:8080/scenarios/run \
 #### SUT-B : Device API
 
 ```bash
-# Mode LOCAL (1 000 users, ramp 60s)
+# Mode LOCAL (ramp 1→1 000 users/s sur 60s, environ 30 000 événements)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
   --data-binary @platform-deployment/examples/scenarios/device-api-local.yaml
 
-# Mode DISTRIBUTED (10 000 users, ramp 120s)
+# Mode DISTRIBUTED (ramp 1→10 000 users/s sur 120s, environ 600 000 événements)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
   --data-binary @platform-deployment/examples/scenarios/device-api-distributed.yaml
@@ -287,9 +293,26 @@ curl -X POST http://localhost:8080/scenarios/run \
 ### Rapports
 
 Les rapports sont générés dans le volume `./reports/` (monté sur l'orchestrateur) :
-- `./reports/{executionId}/report.html` — rapport HTML
-- `./reports/{executionId}/report.json` — rapport JSON
-- `./reports/{executionId}/report.pdf` — rapport PDF
+- `./reports/{executionId}/campaign.html` — rapport HTML
+- `./reports/{executionId}/campaign.json` — rapport JSON
+- `./reports/{executionId}/campaign.pdf` — rapport PDF
+
+Les trois formats partagent six sections : contexte, modele de charge, SLI/SLO,
+indicateurs techniques, analyse/recommandations, validation. Le bloc
+`scenario.report` des exemples Device API declare le contexte et les seuils.
+Les seuils sont des objectifs de demonstration a adapter a votre application.
+Une mesure absente est indiquee, jamais remplacee par une valeur inventee.
+
+Sans preuve de non-saturation, les exemples restent WARNING meme si leurs seuils
+fonctionnels et de latence passent. On peut ajouter des observations issues
+d'outputs de collecteurs existants/personnalises, des valeurs mesurees avec leur
+source, des liens de graphes Grafana bornes au tir ou des exports PNG integres.
+Aucun collecteur CPU/RAM/DB ni exporteur Grafana n'est cree implicitement.
+Contrat complet : [Spec 08](../../.claude/knowledge/specs/08-report-engine.md#8-configuration-des-preuves-et-criteres).
+
+Apres mise a jour du code, recompiler et relancer un scenario : les fichiers deja
+generes ne sont pas reecrits. L'environnement jetable doit recreer sa base
+plateforme si le schema initial a deja ete applique (`scenario_details` JSONB).
 
 ### Diffusion des rapports (CI/CD)
 

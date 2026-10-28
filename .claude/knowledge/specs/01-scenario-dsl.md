@@ -15,6 +15,10 @@ immuable utilisable par le moteur d'exécution.
 
 ## 2. Structure YAML d'un Scénario
 
+La section optionnelle `scenario.report` definit le contexte du rapport et ses
+preuves/criteres ; elle ne configure pas Spring ni un collecteur. Contrat et
+exemple : [Spec 08 - report evidence](08-report-engine.md#8-configuration-des-preuves-et-criteres).
+
 ```yaml
 scenario:
   id: customer-api-perf                # REQUIRED - unique

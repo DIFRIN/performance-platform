@@ -10,7 +10,9 @@ import com.performance.platform.domain.id.ExecutionId;
  */
 public class ExecutionNotDeletableException extends RuntimeException {
 
-    private final ExecutionId executionId;
+    private static final long serialVersionUID = 1L;
+
+    private final transient ExecutionId executionId;
     private final ExecutionStatus currentStatus;
 
     public ExecutionNotDeletableException(ExecutionId executionId, ExecutionStatus currentStatus) {

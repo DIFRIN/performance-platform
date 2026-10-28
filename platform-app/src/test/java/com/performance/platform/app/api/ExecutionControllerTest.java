@@ -39,6 +39,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.Optional;
+import com.performance.platform.domain.execution.ExecutionTask;
+import com.performance.platform.domain.scenario.Phase;
 
 @DisplayName("ExecutionController")
 class ExecutionControllerTest {
@@ -134,6 +137,54 @@ class ExecutionControllerTest {
     @Nested
     @DisplayName("GET /executions/{id}/tasks")
     class ListTasks {
+
+        @Test
+        void includesConfigurationForPendingStepsAndPerAgentMetricsForCompletedSteps() throws Exception {
+            var executionId = ExecutionId.of(EXEC_ID);
+            var completed = TaskId.of("load");
+            var pending = TaskId.of("assert");
+            var configuration = Map.<String, Object>of("parameters",
+                    Map.of("protocol", "http", "loadModel", Map.of("type", "AT_ONCE", "users", 100)));
+            var state = new ExecutionState(executionId, ScenarioId.of(SCENARIO_ID), ExecutionStatus.RUNNING,
+                    Map.of(), ExecutionContext.initial(executionId, ScenarioId.of(SCENARIO_ID)), NOW, NOW, 2,
+                    List.of(new ExecutionTask(completed, "gatling", Phase.INJECTION, true, configuration),
+                            new ExecutionTask(pending, "assertion", Phase.ASSERTION, false, configuration)),
+                    "# exact source\nscenario:\n  id: sc-001\n");
+            when(executionRepository.findById(executionId)).thenReturn(Optional.of(state));
+            when(executionRepository.findAllTaskResults(executionId)).thenReturn(Map.of(completed,
+                    Map.of(AgentId.of("agent-1"), TaskResult.success(completed, "gatling",
+                            Duration.ofMillis(1200), Map.of("result", Map.of("totalRequests", 1000))),
+                           AgentId.of("agent-2"), TaskResult.success(completed, "gatling",
+                            Duration.ofMillis(1300), Map.of("result", Map.of("totalRequests", 2000))))));
+
+            mockMvc.perform(get("/api/v1/executions/{id}/tasks", EXEC_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.total").value(3))
+                    .andExpect(jsonPath("$.tasks[0].agentId").isNotEmpty())
+                    .andExpect(jsonPath("$.tasks[0].durationMillis").isNumber())
+                    .andExpect(jsonPath("$.tasks[0].completedAt").isNotEmpty())
+                    .andExpect(jsonPath("$.tasks[0].outputs.result.totalRequests").isNumber())
+                    .andExpect(jsonPath("$.tasks[0].configuration.parameters.protocol").value("http"))
+                    .andExpect(jsonPath("$.tasks[2].status").value("PENDING"))
+                    .andExpect(jsonPath("$.tasks[2].configuration.parameters.loadModel.users").value(100));
+
+            mockMvc.perform(get("/api/v1/executions/{id}/scenario", EXEC_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.yaml").value(state.scenarioYaml()));
+        }
+
+        @Test
+        void scenarioSourceDistinguishesMissingExecutionFromUnavailableSource() throws Exception {
+            when(executionRepository.findById(ExecutionId.of(EXEC_ID))).thenReturn(Optional.empty());
+            mockMvc.perform(get("/api/v1/executions/{id}/scenario", EXEC_ID))
+                    .andExpect(status().isNotFound());
+
+            when(executionRepository.findById(ExecutionId.of(EXEC_ID)))
+                    .thenReturn(Optional.of(buildState(ExecutionId.of(EXEC_ID), ExecutionStatus.COMPLETED)));
+            mockMvc.perform(get("/api/v1/executions/{id}/scenario", EXEC_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.yaml").doesNotExist());
+        }
 
         @Test
         @DisplayName("should return 200 with task summaries when tasks exist")

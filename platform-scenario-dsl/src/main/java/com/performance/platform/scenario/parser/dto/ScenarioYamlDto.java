@@ -2,6 +2,7 @@ package com.performance.platform.scenario.parser.dto;
 
 import java.util.List;
 import java.util.Map;
+import com.performance.platform.domain.report.ReportDefinition;
 
 /**
  * DTO pour la section "scenario" du YAML.
@@ -15,5 +16,6 @@ public record ScenarioYamlDto(
     Map<String, String> metadata,
     ExecutionYamlDto execution,
     Integer taskAvailabilityTimeoutSeconds,
-    List<StepYamlDto> steps
+    List<StepYamlDto> steps,
+    ReportDefinition report
 ) {}

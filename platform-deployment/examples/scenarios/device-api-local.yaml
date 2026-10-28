@@ -21,6 +21,24 @@ scenario:
     sut: device-api
   execution: { mode: LOCAL }
 
+  report:
+    components: { device-api: "1.0.0-SNAPSHOT" }
+    environment: LOCAL-DOCKER
+    objective: "Validate the Device API release with a 60-second ramp"
+    testType: LOAD
+    loadDescription: "Ramp from 1 to 1000 users per second over 60 seconds"
+    assumptions:
+      - "10000 active devices seeded before injection"
+      - "Dedicated Kafka topic; one HTTP request per virtual user"
+    criteria:
+      - { name: Maximum duration, metric: durationSeconds, taskId: load-test, operator: "<=", threshold: 75 }
+      - { name: Target volume, metric: totalRequests, taskId: load-test, operator: ">=", threshold: 30000 }
+      - { name: No technical errors, metric: errorRate, taskId: load-test, operator: "==", threshold: 0 }
+      - { name: p95 objective, metric: p95Ms, taskId: load-test, operator: "<=", threshold: 500 }
+      - { name: p99 objective, metric: p99Ms, taskId: load-test, operator: "<=", threshold: 1000 }
+    # No saturation evidence configured: report remains WARNING even if checks pass.
+    # Add sourced observations + saturation criteria, or bounded graph exports, when available.
+
   steps:
     - id: reset-devices
       task: database
@@ -52,7 +70,9 @@ scenario:
         target: device-api
         method: POST
         path: submit-event
-        body: '{"device_id":"device-0001"}'
+        # Le SUT exige device_id dans la query string, pas dans un body JSON.
+        queryParams:
+          device_id: device-0001
         expectedStatus: 200
       timeout: 10s
 
@@ -75,24 +95,41 @@ scenario:
       requiredContexts: [check-health]
       parameters:
         target: device-api
-        simulation: DeviceApiSimulation
         path: submit-event
         method: POST
+        # Pas de `simulation` : l'injection HTTP est construite depuis ces parametres.
+        # Placeholders resolus a chaque requete ({index} global, {uuid}, {random:a-b}, {choice:..}, ...)
         queryParams:
-          device_id: "device-{index}"
-        contentType: application/json
+          device_id: "device-{index:4}"
+        headers:
+          X-Request-Id: "{uuid}"
+        expectedStatus: 200
+        loadModel:
+          type: RAMP
+          parameters: { from: 1, to: 1000, durationSeconds: 60 }
       timeout: 5m
 
-    - id: assert-kafka-produced
-      task: kafka
+    - id: count-device-events
+      task: kafka-consumer
       phase: ASSERTION
       dependsOn: [load-test]
       requiredContexts: [load-test]
       parameters:
         cluster: iot-sut
         topic: device-events
-        expectedMinCount: 50000
-        operator: GREATER_THAN_OR_EQUAL
+        operation: COUNT
+      timeout: 1m
+
+    - id: assert-kafka-produced
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [count-device-events]
+      requiredContexts: [count-device-events]
+      parameters:
+        metric: consumedCount
+        refTaskId: count-device-events
+        operator: GTE
+        value: 30000
       timeout: 2m
 
     - id: assert-db-intact
@@ -103,8 +140,8 @@ scenario:
       parameters:
         datasource: sut-db
         query: "SELECT COUNT(*) FROM devices WHERE is_active = true"
-        expectedValue: 10000
-        operator: EQUAL
+        value: 10000
+        operator: EQ
       timeout: 1m
 
 loadModels:

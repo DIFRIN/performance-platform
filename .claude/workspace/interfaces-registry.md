@@ -51,7 +51,7 @@
 | `ReportFormat` | ✅ STABLE | PDR-001 | ISSUE-002 |
 | `PublicationTarget` | ❌ REMOVED | PDR-001 | — (noms d'outils → déplacé dans platform-reporting, ISSUE-065) |
 | `TransportType` | ❌ REMOVED | PDR-001 | — (noms de protocoles → déplacé dans platform-transport, ISSUE-028) |
-| `ScenarioDefinition` | ✅ STABLE | PDR-001 | ISSUE-003 |
+| `ScenarioDefinition` | ✅ STABLE | PDR-001 | ISSUE-003 ; ADR-043 (+sourceYaml provenance), ADR-044 (+ReportDefinition) |
 | `StepDefinition` | ✅ STABLE | PDR-001 | ISSUE-003 |
 | `LoadModel` | ✅ STABLE | PDR-001 | ISSUE-003 |
 | `RetryPolicy` | ✅ STABLE | PDR-001 | ISSUE-003 |
@@ -60,7 +60,9 @@
 | `PartialExecutionContext` | ✅ STABLE | PDR-001 | ISSUE-005 |
 | `ExecutionPlan` | ✅ STABLE | PDR-001 | ISSUE-006 |
 | `ExecutionStep` | ✅ STABLE | PDR-001 | ISSUE-006 |
-| `ExecutionState` | ✅ STABLE | PDR-001 | ISSUE-006 |
+| `ExecutionState` | ✅ STABLE | PDR-001 | ISSUE-006 ; ADR-040 (+plannedTaskCount), ADR-041 (+tasks), ADR-043 (+scenarioYaml), ADR-044 (+ScenarioDetails) |
+| `ExecutionTask` / `SubmitScenarioUseCase` | ✅ STABLE | — | ADR-041 (planned task metadata / asynchronous web submission), ADR-043 (+generic task configuration snapshot) |
+| `NamedResourceResolver<T>` | ✅ STABLE | — | ADR-042 (neutral logical resource lookup) |
 | `InjectionResult` | ✅ STABLE | PDR-001 | ISSUE-006 |
 | `AssertionResult` | ✅ STABLE | PDR-001 | ISSUE-006 |
 | `Evidence` | ✅ STABLE | PDR-001 | ISSUE-006 |
@@ -255,6 +257,8 @@
 | `GatlingResultParser` / `DefaultGatlingResultParser` / `ResultParsingException` | ✅ STABLE | PDR-013 | ISSUE-056 |
 | `GatlingTaskExecutor` | ✅ STABLE | PDR-013 | ISSUE-057 |
 | `ProtocolSupportInfo` | ✅ STABLE | PDR-013 | ISSUE-058 |
+| `HttpRequestSpec` / `HttpRequestSpecFactory` / `HttpRequestSpecHolder` / `HttpRequestRenderer` / `HttpScenarioSimulation` | ✅ STABLE | — | ADR-039 (injection HTTP générique, `simulation` optionnel) |
+| `DynamicValues` (`platform-plugin-api`, package `plugin.template`) | ✅ STABLE (additif) | — | ADR-039 |
 
 ## platform-assertion
 
@@ -297,9 +301,9 @@
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
 | `PublicationTarget` | ❌ REMOVED (ADR-022) | PDR-015 | ISSUE-065 → suppr. ISSUE-137 |
-| `ReportEngine` / `ReportRenderer` / `CampaignReport` (CONSERVÉS) ; ~~`ReportPublisher`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 |
+| `ReportEngine` / `ReportRenderer` / `CampaignReport` (CONSERVÉS) ; ~~`ReportPublisher`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 ; ADR-044 (+PerformanceAssessment, six sections) |
 | `EnvironmentInfo` / `ExecutionSummary` / `TaskReportEntry` | ✅ STABLE | PDR-015 | ISSUE-065 |
-| `InjectionReportEntry` / `AssertionReportEntry` (CONSERVÉS) ; ~~`PublisherConfig`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 |
+| `InjectionReportEntry` / `AssertionReportEntry` (CONSERVÉS) ; ~~`PublisherConfig`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 ; ADR-044 (+agentId sur injection) |
 | `RenderException` (CONSERVÉ) ; ~~`PublicationException`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 |
 | `DefaultReportEngine` / `VerdictCalculator` | ✅ STABLE | PDR-015 | ISSUE-066 |
 | `HtmlReportRenderer` / `JsonReportRenderer` | ✅ STABLE | PDR-015 | ISSUE-067 |
@@ -328,7 +332,7 @@
 | `ExecutionController` | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `ExecutionSummaryResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `ProgressResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
-| `TaskSummaryResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
+| `TaskSummaryResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 ; ADR-043 (+configuration, outputs, agent, timings) |
 | `TaskListResponse` (DTO) | ✅ STABLE | PDR-027 | ISSUE-121 |
 | `ApiExceptionHandler` | ✅ STABLE | PDR-018 | ISSUE-079, ISSUE-121 (+409 Conflict ADR-020), ISSUE-124 (+ValidationErrorResponse DTO) |
 | `AgentController` | ✅ STABLE | PDR-027 | ISSUE-122 |

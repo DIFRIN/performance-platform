@@ -6,6 +6,8 @@ package com.performance.platform.transport;
  */
 public class TransportException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public TransportException(String message) {
         super(message);
     }

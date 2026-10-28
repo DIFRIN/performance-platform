@@ -15,11 +15,11 @@ import java.util.Objects;
  * <p>
  * Regles (ADR-020) :
  * <ul>
- *   <li>{@code total}   — nombre de taches uniques dans la map {@code taskResults}</li>
+ *   <li>{@code total}   — nombre de taches planifiees, au moins celui des resultats connus</li>
  *   <li>{@code ok}      — taches ayant au moins un resultat {@link TaskStatus#SUCCESS}</li>
  *   <li>{@code ko}      — taches sans aucun SUCCESS et ayant au moins un resultat terminal
  *                         (FAILED, TIMEOUT ou SKIPPED)</li>
- *   <li>{@code running} — taches sans aucun resultat encore (map interne vide)</li>
+ *   <li>{@code running} — taches sans aucun resultat encore, en cours ou en attente</li>
  * </ul>
  * Les taches en {@code running} ne contribuent ni a {@code ok} ni a {@code ko}.
  */
@@ -40,10 +40,10 @@ public class ExecutionProgressCalculator {
         Objects.requireNonNull(state, "state required");
         Objects.requireNonNull(taskResults, "taskResults required");
 
-        int total = taskResults.size();
+        int total = Math.max(state.plannedTaskCount(), taskResults.size());
         int ok = 0;
         int ko = 0;
-        int running = 0;
+        int running = total - taskResults.size();
 
         for (Map<AgentId, TaskResult> agentResults : taskResults.values()) {
             if (agentResults == null || agentResults.isEmpty()) {

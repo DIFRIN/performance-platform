@@ -15,12 +15,17 @@ import com.performance.platform.domain.injection.InjectionResult;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.reporting.ReportEngine;
+import com.performance.platform.reporting.output.ReportFileWriter;
 import com.performance.platform.reporting.model.AssertionReportEntry;
 import com.performance.platform.reporting.model.CampaignReport;
 import com.performance.platform.reporting.model.EnvironmentInfo;
 import com.performance.platform.reporting.model.ExecutionSummary;
 import com.performance.platform.reporting.model.InjectionReportEntry;
 import com.performance.platform.reporting.model.TaskReportEntry;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.performance.platform.domain.execution.ExecutionContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,40 +42,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implémentation par défaut du {@link ReportEngine}.
  * <p>
- * CC-02 : le pipeline de génération est un ensemble cohésif insécable —
- * {@code classifyTasks()} → {@code buildPreparationEntries()} →
- * {@code buildInjectionEntries()} → {@code buildAssertionEntries()} →
- * {@link VerdictCalculator} → {@code buildExecutionSummary()} →
- * {@code buildEnvironmentInfo()} → {@code buildVerdictReason()} —
- * formant une chaîne unique de transformation de l'{@link ExecutionState}
- * vers le {@link CampaignReport}. Les helpers de construction sont
- * indivisibles de l'orchestration.
- * <p>
  * Écoute l'événement {@link ScenarioFinished} pour déclencher la génération
  * du rapport. Construit le {@link CampaignReport} à partir de l'{@link ExecutionState}
- * en classifiant les tâches par phase (préparation / injection / assertion)
- * via les types de résultats présents dans le contexte d'exécution.
+ * avec contexte du scenario, mesures, criteres et limites de validation.
+ * Les sorties typees sont restaurees apres lecture JSONB.
  * <p>
- * Délégue le calcul du verdict à {@link VerdictCalculator}.
+ * Le cycle evenementiel ecrit les formats avant de publier {@link ReportGenerated}.
  */
 @Service
 @ConditionalOnProperty(prefix = "platform.datasources.default", name = "url")
 public class DefaultReportEngine implements ReportEngine {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultReportEngine.class);
+    private static final ObjectMapper RESULT_MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
+            .addMixIn(AssertionSummary.class, DerivedAssertionProperties.class)
+            .addMixIn(AssertionResult.class, DerivedAssertionProperties.class);
+
+    // isPassed() is serialized by Jackson but is derived from verdict/status on reload.
+    @JsonIgnoreProperties(value = "passed", allowGetters = true)
+    private abstract static class DerivedAssertionProperties {}
 
     private final ExecutionRepository repository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ReportFileWriter fileWriter;
 
-    public DefaultReportEngine(ExecutionRepository repository, ApplicationEventPublisher eventPublisher) {
+    public DefaultReportEngine(ExecutionRepository repository, ApplicationEventPublisher eventPublisher,
+                               ReportFileWriter fileWriter) {
         this.repository = repository;
         this.eventPublisher = eventPublisher;
+        this.fileWriter = fileWriter;
     }
 
     /**
@@ -91,6 +95,7 @@ public class DefaultReportEngine implements ReportEngine {
 
         try {
             CampaignReport report = generate(stateOpt.get());
+            fileWriter.write(executionId, report);
             log.info("action=report_generated executionId={} reportId={} verdict={}",
                     executionId.value(), report.id().value(), report.verdict());
             eventPublisher.publishEvent(new ReportGenerated(executionId, report.id(), Instant.now()));
@@ -102,11 +107,7 @@ public class DefaultReportEngine implements ReportEngine {
     /**
      * Génère le CampaignReport complet à partir d'un ExecutionState.
      * <p>
-     * CC-02 : pipeline cohésif d'assemblage — classification par phase →
-     * construction des entrées (preparation/injection/assertion) →
-     * calcul du verdict → résumé d'exécution → environnement →
-     * assemblage du rapport final. Chaque étape dépend de la précédente
-     * et ne peut être extraite sans rompre la cohérence des données.
+     * Assemblage uniquement : l'ecriture est geree par le cycle evenementiel.
      *
      * @param state l'état complet de l'exécution
      * @return le rapport de campagne agrégé
@@ -115,6 +116,7 @@ public class DefaultReportEngine implements ReportEngine {
     @Override
     public CampaignReport generate(ExecutionState state) throws ReportGenerationException {
         try {
+            state = restoreTypedOutputs(state);
             var reportId = ReportId.generate();
             ScenarioId scenarioId = state.scenarioId();
             var generatedAt = Instant.now();
@@ -133,29 +135,32 @@ public class DefaultReportEngine implements ReportEngine {
             List<AssertionReportEntry> assertionResults = buildAssertionEntries(state, assertTaskIds);
 
             // Calculer le verdict
-            var verdict = VerdictCalculator.calculate(assertionResults);
+            var performance = PerformanceAssessmentBuilder.build(state, injectionResults, assertionResults);
+            var verdict = performance.validation().status();
 
             // Construire le résumé d'exécution
             ExecutionSummary executionSummary = buildExecutionSummary(
-                    preparationResults, injectionResults, assertionResults);
+                    state, prepTaskIds, injTaskIds);
 
             // Construire les infos d'environnement
             EnvironmentInfo environment = buildEnvironmentInfo(allAgentIds);
 
             // Déterminer la durée totale
-            Duration totalDuration = computeTotalDuration(state, preparationResults,
-                    injectionResults, assertionResults);
+            Duration totalDuration = Duration.between(state.startedAt(), state.updatedAt());
 
             // Construire les tags depuis le contexte
             List<String> tags = extractTags(state);
 
+            var details = state.scenarioDetails();
             return new CampaignReport(
-                    reportId, scenarioId, scenarioId.value(), "1.0",
-                    tags, Map.of(),
+                    reportId, scenarioId, details != null && details.name() != null ? details.name() : scenarioId.value(),
+                    details != null && details.version() != null ? details.version() : "Not provided",
+                    details != null ? details.tags() : tags, details != null ? details.metadata() : Map.of(),
                     environment, executionSummary,
                     preparationResults, injectionResults, assertionResults,
-                    verdict, buildVerdictReason(assertionResults),
-                    generatedAt, totalDuration
+                    verdict, buildVerdictReason(assertionResults) + "; Performance validation: " + verdict + "; "
+                            + performance.validation().limitations().size() + " missing requirements",
+                    generatedAt, totalDuration, performance
             );
         } catch (ReportGenerationException e) {
             throw e;
@@ -163,6 +168,32 @@ public class DefaultReportEngine implements ReportEngine {
             throw new ReportGenerationException("Failed to generate report for execution " +
                     state.id().value(), e);
         }
+    }
+
+    private ExecutionState restoreTypedOutputs(ExecutionState state) {
+        var context = ExecutionContext.initial(state.id(), state.scenarioId());
+        for (var task : state.context().store().entrySet()) {
+            for (var agent : task.getValue().entrySet()) {
+                var result = agent.getValue();
+                var outputs = new java.util.LinkedHashMap<>(result.outputs());
+                Object injection = outputs.get(InjectionResult.OUTPUT_KEY);
+                if (injection instanceof Map<?, ?> map && map.containsKey("totalRequests")) {
+                    outputs.put(InjectionResult.OUTPUT_KEY, RESULT_MAPPER.convertValue(injection, InjectionResult.class));
+                }
+                Object assertion = outputs.get(AssertionSummary.OUTPUT_KEY);
+                if (assertion instanceof Map<?, ?>) {
+                    outputs.put(AssertionSummary.OUTPUT_KEY, RESULT_MAPPER.convertValue(assertion, AssertionSummary.class));
+                }
+                Object legacy = outputs.get("assertionResult");
+                if (legacy instanceof Map<?, ?>) {
+                    outputs.put("assertionResult", RESULT_MAPPER.convertValue(legacy, AssertionResult.class));
+                }
+                context = context.with(task.getKey(), agent.getKey(), new TaskResult(result.taskId(), result.taskName(),
+                        result.status(), result.duration(), outputs, result.errorMessage(), result.cause(), result.completedAt()));
+            }
+        }
+        return new ExecutionState(state.id(), state.scenarioId(), state.status(), state.phaseStatuses(), context,
+                state.startedAt(), state.updatedAt(), state.plannedTaskCount(), state.tasks(), state.scenarioYaml(), state.scenarioDetails());
     }
 
     // ──────────────────────────────────────────────
@@ -186,6 +217,15 @@ public class DefaultReportEngine implements ReportEngine {
             String taskId = entry.getKey();
             Map<String, TaskResult> agentResults = entry.getValue();
             allAgentIds.addAll(agentResults.keySet());
+            var planned = state.tasks().stream().filter(task -> task.id().value().equals(taskId)).findFirst();
+            if (planned.isPresent()) {
+                switch (planned.get().phase()) {
+                    case INJECTION -> injTaskIds.add(taskId);
+                    case ASSERTION -> assertTaskIds.add(taskId);
+                    case PREPARATION -> prepTaskIds.add(taskId);
+                }
+                continue;
+            }
 
             // Essayer de classer via le type de résultat stocké
             Optional<InjectionResult> injOpt = state.context().getFirstOutput(taskId, InjectionResult.OUTPUT_KEY, InjectionResult.class);
@@ -248,10 +288,11 @@ public class DefaultReportEngine implements ReportEngine {
                                                                List<String> taskIds) {
         List<InjectionReportEntry> entries = new ArrayList<>();
         for (String taskIdStr : taskIds) {
-            Optional<InjectionResult> injOpt = state.context().getFirstOutput(taskIdStr, InjectionResult.OUTPUT_KEY, InjectionResult.class);
-            injOpt.ifPresent(inj -> {
-                var taskId = new TaskId(taskIdStr);
-                entries.add(new InjectionReportEntry(taskId, inj, inj.gatlingReportDirectory()));
+            state.context().getAll(taskIdStr).entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(agent -> {
+                Object output = agent.getValue().outputs().get(InjectionResult.OUTPUT_KEY);
+                if (output instanceof InjectionResult inj) {
+                    entries.add(new InjectionReportEntry(new TaskId(taskIdStr), inj, inj.gatlingReportDirectory(), agent.getKey()));
+                }
             });
         }
         return entries;
@@ -261,10 +302,10 @@ public class DefaultReportEngine implements ReportEngine {
                                                                List<String> taskIds) {
         List<AssertionReportEntry> entries = new ArrayList<>();
         for (String taskIdStr : taskIds) {
-            Optional<AssertionResult> assertOpt = resolveAssertionResult(state.context(), taskIdStr);
-            assertOpt.ifPresent(ar -> {
-                var taskId = new TaskId(taskIdStr);
-                entries.add(new AssertionReportEntry(taskId, ar, ar.evidence()));
+            state.context().getAll(taskIdStr).forEach((agent, result) -> {
+                var context = ExecutionContext.initial(state.id(), state.scenarioId()).with(taskIdStr, agent, result);
+                resolveAssertionResult(context, taskIdStr).ifPresent(ar ->
+                        entries.add(new AssertionReportEntry(new TaskId(taskIdStr), ar, ar.evidence())));
             });
         }
         return entries;
@@ -281,49 +322,35 @@ public class DefaultReportEngine implements ReportEngine {
      * prep → injection → assertion partagent la même structure (incrémentation
      * compteurs + cumul durées) et forment un bloc de synthèse indivisible.
      */
-    private ExecutionSummary buildExecutionSummary(List<TaskReportEntry> prep,
-                                                    List<InjectionReportEntry> inj,
-                                                    List<AssertionReportEntry> assert_) {
-        var total = new AtomicInteger();
-        var successful = new AtomicInteger();
-        var failed = new AtomicInteger();
-        var skipped = new AtomicInteger();
-
-        AtomicReference<Duration> prepDuration = new AtomicReference<>(Duration.ZERO);
-        AtomicReference<Duration> injDuration = new AtomicReference<>(Duration.ZERO);
-        AtomicReference<Duration> assertDuration = new AtomicReference<>(Duration.ZERO);
-
-        // Préparation
-        for (TaskReportEntry entry : prep) {
-            total.incrementAndGet();
-            switch (entry.status()) {
-                case SUCCESS -> successful.incrementAndGet();
-                case FAILED, TIMEOUT -> failed.incrementAndGet();
-                case SKIPPED -> skipped.incrementAndGet();
+    private ExecutionSummary buildExecutionSummary(ExecutionState state, List<String> prep, List<String> inj) {
+        int total = 0, successful = 0, failed = 0, skipped = 0;
+        Duration preparation = Duration.ZERO, injection = Duration.ZERO, assertion = Duration.ZERO;
+        for (var task : state.context().store().entrySet()) {
+            for (var agent : task.getValue().entrySet()) {
+                total++;
+                var result = agent.getValue();
+                var context = ExecutionContext.initial(state.id(), state.scenarioId())
+                        .with(task.getKey(), agent.getKey(), result);
+                var assertionResult = resolveAssertionResult(context, task.getKey());
+                if (assertionResult.isPresent()) {
+                    switch (assertionResult.get().status()) {
+                        case PASSED -> successful++;
+                        case FAILED, ERROR -> failed++;
+                        case SKIPPED -> skipped++;
+                    }
+                } else {
+                    switch (result.status()) {
+                        case SUCCESS -> successful++;
+                        case FAILED, TIMEOUT -> failed++;
+                        case SKIPPED -> skipped++;
+                    }
+                }
+                if (prep.contains(task.getKey())) preparation = preparation.plus(result.duration());
+                else if (inj.contains(task.getKey())) injection = injection.plus(result.duration());
+                else assertion = assertion.plus(result.duration());
             }
-            prepDuration.set(prepDuration.get().plus(entry.duration()));
         }
-
-        // Injection
-        for (InjectionReportEntry entry : inj) {
-            total.incrementAndGet();
-            successful.incrementAndGet(); // Les résultats d'injection sont toujours SUCCESS si présents
-            injDuration.set(injDuration.get().plus(entry.metrics().duration()));
-        }
-
-        // Assertion
-        for (AssertionReportEntry entry : assert_) {
-            total.incrementAndGet();
-            switch (entry.result().status()) {
-                case PASSED -> successful.incrementAndGet();
-                case FAILED, ERROR -> failed.incrementAndGet();
-                case SKIPPED -> skipped.incrementAndGet();
-            }
-            assertDuration.set(assertDuration.get().plus(entry.result().evaluationDuration()));
-        }
-
-        return new ExecutionSummary(total.get(), successful.get(), failed.get(), skipped.get(),
-                prepDuration.get(), injDuration.get(), assertDuration.get());
+        return new ExecutionSummary(total, successful, failed, skipped, preparation, injection, assertion);
     }
 
     // ──────────────────────────────────────────────
@@ -336,17 +363,6 @@ public class DefaultReportEngine implements ReportEngine {
                 System.getProperty("java.version", "unknown"),
                 Map.of()
         );
-    }
-
-    private Duration computeTotalDuration(ExecutionState state,
-                                           List<TaskReportEntry> prep,
-                                           List<InjectionReportEntry> inj,
-                                           List<AssertionReportEntry> assert_) {
-        Duration d = Duration.ZERO;
-        for (TaskReportEntry e : prep) d = d.plus(e.duration());
-        for (InjectionReportEntry e : inj) d = d.plus(e.metrics().duration());
-        for (AssertionReportEntry e : assert_) d = d.plus(e.result().evaluationDuration());
-        return d;
     }
 
     private List<String> extractTags(ExecutionState state) {

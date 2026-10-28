@@ -5,6 +5,8 @@ package com.performance.platform.scenario.loadmodel;
  */
 public class LoadModelNotFoundException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     private final String name;
 
     public LoadModelNotFoundException(String name) {

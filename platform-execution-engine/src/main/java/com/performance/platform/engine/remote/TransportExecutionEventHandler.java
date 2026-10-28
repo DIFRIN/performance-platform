@@ -30,7 +30,7 @@ import java.util.Objects;
  * n'est pas (ou plus) suivi sont ignores, ce qui protege aussi contre les
  * evenements tardifs apres {@code tracker.release(...)}.
  */
-public class TransportExecutionEventHandler {
+public final class TransportExecutionEventHandler {
 
     private static final Logger log = LoggerFactory.getLogger(TransportExecutionEventHandler.class);
 

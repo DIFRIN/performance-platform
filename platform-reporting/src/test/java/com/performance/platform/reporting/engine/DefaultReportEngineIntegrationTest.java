@@ -20,11 +20,16 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.reporting.model.CampaignReport;
+import com.performance.platform.domain.report.ReportFormat;
+import com.performance.platform.reporting.output.ReportFileWriter;
+import com.performance.platform.reporting.output.ReportProperties;
+import com.performance.platform.reporting.render.HtmlReportRenderer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.nio.file.Path;
@@ -102,6 +107,8 @@ class DefaultReportEngineIntegrationTest {
 
     private StubExecutionRepository repository;
     private StubEventPublisher eventPublisher;
+    @TempDir
+    Path reportDirectory;
     private DefaultReportEngine engine;
     private ExecutionId executionId;
     private ScenarioId scenarioId;
@@ -111,7 +118,9 @@ class DefaultReportEngineIntegrationTest {
     void setUp() {
         repository = new StubExecutionRepository();
         eventPublisher = new StubEventPublisher();
-        engine = new DefaultReportEngine(repository, eventPublisher);
+        engine = new DefaultReportEngine(repository, eventPublisher,
+                new ReportFileWriter(List.of(new HtmlReportRenderer()),
+                        new ReportProperties(reportDirectory.toString(), List.of(ReportFormat.HTML))));
         executionId = ExecutionId.of("it-exec-001");
         scenarioId = ScenarioId.of("it-scenario");
         now = Instant.now();
@@ -223,7 +232,7 @@ class DefaultReportEngineIntegrationTest {
             assertEquals(1, report.injectionResults().size(), "Should have 1 injection entry");
             assertEquals(1, report.assertionResults().size(), "Should have 1 assertion entry");
             assertEquals(3, report.executionSummary().totalTasks());
-            assertEquals(Verdict.WARNING, report.verdict(), "WARNING because assertion FAILED");
+            assertEquals(Verdict.FAILED, report.verdict(), "Unspecified assertion severity is critical");
         }
     }
 
@@ -272,7 +281,7 @@ class DefaultReportEngineIntegrationTest {
         }
 
         @Test
-        @DisplayName("should compute total duration as sum of all phase durations")
+        @DisplayName("should compute wall-clock duration rather than sum parallel tasks")
         void shouldComputeTotalDuration() {
             var prepId = TaskId.of("prep-1");
             var prepResult = TaskResult.success(prepId, "setup",
@@ -290,8 +299,7 @@ class DefaultReportEngineIntegrationTest {
 
             CampaignReport report = engine.generate(state);
 
-            // totalDuration = sum of all task durations across all phases
-            var expectedTotal = Duration.ofSeconds(1).plus(Duration.ofSeconds(3));
+            var expectedTotal = Duration.between(state.startedAt(), state.updatedAt());
             assertEquals(expectedTotal, report.totalDuration());
         }
 
@@ -418,7 +426,7 @@ class DefaultReportEngineIntegrationTest {
     class VerdictIntegrationTests {
 
         @Test
-        @DisplayName("SUCCESS when all assertions PASSED or SKIPPED")
+        @DisplayName("WARNING when checks pass but required evidence is missing or skipped")
         void successWhenAllPassedOrSkipped() {
             var assertA = TaskId.of("assert-a");
             var passedResult = new AssertionResult(
@@ -441,13 +449,13 @@ class DefaultReportEngineIntegrationTest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            assertEquals(Verdict.WARNING, report.verdict());
             assertTrue(report.verdictReason().contains("passed"));
             assertTrue(report.verdictReason().contains("skipped"));
         }
 
         @Test
-        @DisplayName("WARNING when at least one FAILED and no ERROR")
+        @DisplayName("FAILED when an assertion fails without an explicit minor severity")
         void warningWhenFailedNoError() {
             var assertA = TaskId.of("assert-a");
             var passedResult = new AssertionResult(
@@ -470,7 +478,7 @@ class DefaultReportEngineIntegrationTest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.WARNING, report.verdict());
+            assertEquals(Verdict.FAILED, report.verdict());
             assertTrue(report.verdictReason().contains("1 passed"));
             assertTrue(report.verdictReason().contains("1 failed"));
         }
@@ -575,7 +583,7 @@ class DefaultReportEngineIntegrationTest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            assertEquals(Verdict.WARNING, report.verdict());
             assertEquals(2, report.executionSummary().skippedTasks());
             assertEquals(2, report.executionSummary().totalTasks());
             assertEquals(0, report.executionSummary().successfulTasks());
@@ -599,7 +607,7 @@ class DefaultReportEngineIntegrationTest {
 
             CampaignReport report = engine.generate(state);
 
-            assertEquals(Verdict.WARNING, report.verdict());
+            assertEquals(Verdict.FAILED, report.verdict());
             // Assertion status FAILED counts as failed in summary, not ERROR
             assertEquals(1, report.executionSummary().failedTasks());
             assertEquals(0, report.executionSummary().successfulTasks());
@@ -640,7 +648,7 @@ class DefaultReportEngineIntegrationTest {
 
             // Injection classification works: the injection result is found in injectionResults
             assertEquals("MySim", report.injectionResults().get(0).metrics().simulationClass());
-            assertEquals(Verdict.SUCCESS, report.verdict());
+            assertEquals(Verdict.WARNING, report.verdict());
             // Assertion entry is correctly classified as assertion (not preparation)
             assertEquals(1, report.assertionResults().size());
             assertEquals("throughput >= 100", report.assertionResults().get(0).result().description());

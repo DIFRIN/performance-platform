@@ -13,8 +13,9 @@ des systèmes externes (ADR-022) : les anciens publishers Confluence/S3/Git/Shar
 Nexus sont hors périmètre.
 
 Le moteur est **event-driven** : `DefaultReportEngine` écoute `ScenarioFinished` et
-génère le rapport à la fin de chaque exécution. Il peut aussi être appelé directement via
-`generate(ExecutionState)`.
+génère et écrit le rapport à la fin de chaque exécution via `ReportFileWriter`.
+Un appel direct à `generate(ExecutionState)` assemble uniquement le modèle en mémoire,
+sans écriture sur disque.
 
 ---
 
@@ -51,7 +52,8 @@ public interface ReportRenderer {
 - classifie les résultats par phase grâce aux types présents dans le contexte
   (`InjectionResult`, `AssertionSummary`, `TaskResult`) ;
 - calcule le verdict via `VerdictCalculator` ;
-- publie `ReportGenerated(executionId, reportId, timestamp)` après génération ;
+- écrit les formats configurés via `ReportFileWriter`, puis publie
+  `ReportGenerated(executionId, reportId, timestamp)` uniquement après une écriture réussie ;
 - une erreur de génération est loggée (`action=report_generation_failed`) et ne fait pas
   échouer l'exécution.
 
@@ -113,7 +115,25 @@ Classes de résultat (dans `platform-domain`) :
 
 ## 4. Calcul du verdict
 
-`VerdictCalculator.calculate(assertionEntries)` :
+Le verdict final est calcule par `PerformanceAssessmentBuilder` (ADR-044) :
+
+| Condition | Verdict |
+|---|---|
+| echec d'un critere critique, erreur d'assertion ou echec technique d'execution | `FAILED` |
+| seuil mineur depasse, verification ignoree, information requise absente | `WARNING` (PARTIAL) |
+| contexte complet, criteres requis mesures et respectes, aucun echec | `SUCCESS` |
+
+Les criteres requis couvrent `durationSeconds`, `totalRequests`, `errorRate` et
+`saturation`, plus au moins un SLO de latence ou throughput. Les informations de
+contexte requises sont versions des composants, environnement, objectif/type,
+description du modele et hypotheses. Une metrique technique optionnelle absente
+ne bloque pas SUCCESS ; une observation `required: true` absente produit WARNING.
+Une assertion sans criticite explicite est critique. Une assertion `ERROR` reste
+critique meme si son objectif est mineur. Un graphe seul ne prouve pas l'absence
+de saturation.
+
+`VerdictCalculator.calculate(assertionEntries)` reste un helper historique, pas le
+calcul du verdict final :
 
 | Condition | Verdict |
 |---|---|
@@ -123,8 +143,8 @@ Classes de résultat (dans `platform-domain`) :
 | toutes `PASSED`/`SKIPPED` | `SUCCESS` |
 
 `buildVerdictReason(...)` produit une explication lisible (compteurs / première cause).
-Le verdict du rapport peut différer du verdict d'exécution (`ExecutionEngine`) : ce
-dernier reflète les statuts de tâches, le rapport reflète les assertions.
+Le verdict du rapport peut differer du verdict d'execution (`ExecutionEngine`) :
+il inclut les limites de mesure et les criteres de validation.
 
 ---
 
@@ -136,9 +156,20 @@ dernier reflète les statuts de tâches, le rapport reflète les assertions.
 | PDF | `PdfReportRenderer` | rendu HTML puis conversion OpenHTMLToPDF (`openhtmltopdf-pdfbox`) |
 | JSON | `JsonReportRenderer` | sérialisation Jackson de `CampaignReport` |
 
-Le template HTML contient : badge de verdict, raison, résumé d'exécution, tableau de
-préparation, KPIs d'injection, tableau des assertions et informations d'environnement.
+Le template contient six sections partagees avec le modele JSON `performance` :
+contexte, modele de charge, SLI/SLO, indicateurs techniques, analyse/recommandations,
+validation/statut. Les KPI incluent p50/p95/p99, erreurs et throughput, par agent.
+Les seuils sont compares aux mesures : percentiles au pire agent, throughput au
+minimum des agents, erreurs ponderees par le nombre de requetes. Aucun percentile
+global n'est fabrique en moyennant ceux des agents.
+La duree totale d'execution est murale ; les durees par phase du resume sont des
+sommes de temps de taches (elles peuvent depasser la duree murale en parallele).
 Les renderers sont des beans Spring ; `ReportFileWriter` les indexe par `ReportFormat`.
+
+La restauration des sorties JSONB accepte la propriete derivee `passed` emise
+par Jackson pour `AssertionSummary.isPassed()` et `AssertionResult.isPassed()`.
+Seul `verdict` / `status` fait autorite ; les autres champs inconnus restent
+rejetes. Ce mapping est local au reporting, sans annotation Jackson dans le domaine.
 
 ---
 
@@ -152,6 +183,7 @@ Les renderers sont des beans Spring ; `ReportFileWriter` les indexe par `ReportF
   campaign.pdf
   campaign.json
   gatling/<simulationClass>/...     ← copié depuis les répertoires Gatling
+  gatling/<simulationClass>/run-N-<taskId>/...  # si plusieurs injections/agents partagent la simulation
 ```
 
 - Seuls les formats listés dans `reporting.formats` sont produits.
@@ -159,12 +191,9 @@ Les renderers sont des beans Spring ; `ReportFileWriter` les indexe par `ReportF
 - Les erreurs d'I/O sont remontées en `UncheckedIOException`.
 - Le répertoire de sortie est créé si nécessaire.
 
-> **État du câblage (2026-10-20)** : `ReportFileWriter` est un bean mais aucun composant
-> de production ne l'appelle. `DefaultReportEngine` génère le `CampaignReport` en
-> mémoire et publie `ReportGenerated` ; il n'écrit pas sur disque. `ReportController`
-> (`GET /api/v1/executions/{id}/report`) ne sert que des fichiers déjà présents.
-> Le port `GenerateReportUseCase` est défini mais n'a pas d'implémentation. L'écriture
-> automatique reste donc à raccorder (candidat : un `@EventListener(ReportGenerated)`).
+`DefaultReportEngine.onScenarioFinished` assemble le modele, appelle le writer,
+puis publie `ReportGenerated`. Le controller ne genere rien au telechargement.
+Les anciens fichiers ne sont pas regeneres automatiquement.
 
 Configuration (`ReportProperties`, préfixe `reporting`) :
 
@@ -199,9 +228,69 @@ sequenceDiagram
     R-->>RE: ExecutionState
     RE->>VC: calculate(assertions)
     VC-->>RE: Verdict
+    RE->>FW: write(executionId, report)
+    FW-->>RE: formats ecrits
     RE->>BUS: ReportGenerated
-    Note over BUS,FW: ReportFileWriter non abonné — aucune écriture automatique
 ```
+
+## 8. Configuration des preuves et criteres
+
+```yaml
+scenario:
+  # ... id, name, version, steps ...
+  report:
+    components: { api: "2.4.1", worker: "3.2" } # versions applicatives, pas version du scenario
+    environment: PERF
+    objective: Validate release under expected traffic
+    testType: LOAD
+    loadDescription: Ramp over 60 seconds
+    assumptions: [Dedicated dataset, No competing test]
+    criteria:
+      - {name: Max duration, metric: durationSeconds, taskId: load, operator: "<=", threshold: 75}
+      - {name: Target volume, metric: totalRequests, taskId: load, operator: ">=", threshold: 30000}
+      - {name: Technical errors, metric: errorRate, taskId: load, operator: "==", threshold: 0}
+      - {name: p95, metric: p95Ms, taskId: load, operator: "<=", threshold: 500}
+      - {name: Minor p99, metric: p99Ms, taskId: load, operator: "<=", threshold: 1000, critical: false}
+      - {name: No systemic saturation, metric: saturation, operator: "==", threshold: 0}
+      - {name: Minor assertion, metric: assertion, taskId: check-minor, operator: "==", threshold: 1, critical: false}
+    observations:
+      # References to actual outputs of existing/custom collector steps.
+      # "monitor" is not a built-in collector task name.
+      - {name: CPU, taskId: monitor, output: cpu.max, unit: "%", required: true}
+      - {name: RAM, taskId: monitor, output: memory.peak, unit: MB, required: false}
+      - {name: saturation, taskId: monitor, output: systemicSaturation, unit: flag, required: true}
+      - {name: "Slow query: SELECT ...", taskId: monitor, output: database.slowestQueryMs, unit: ms}
+      # Alternatively import an actual measurement with an explicit source:
+      # - {name: CPU, value: 72.5, unit: "%", source: "monitoring export at test end"}
+    graphs:
+      - title: CPU during test
+        url: "https://monitor.example/d/cpu?from=1793124000000&to=1793124060000"
+        source: Grafana
+      # An exported PNG can also be embedded, with or without a dashboard URL:
+      # - {title: CPU export, source: Grafana export, imageDataUri: "data:image/png;base64,..."}
+    incidents: []
+    recommendations: [Compare the result against the previous release]
+```
+
+Les metriques natives sont `p50Ms`, `p95Ms`, `p99Ms`, `throughput` (req/s),
+`totalRequests`, `durationSeconds`, `errorRate` (pourcentage 0..100), `assertion`
+(1=PASSED, 0=FAILED/ERROR), ou le `name` d'une observation numerique.
+Les noms d'observations sont uniques. `taskId` limite une mesure native a un step ;
+son absence couvre les injections du tir. Un chemin d'output est une succession
+de cles de map separees par des points. Avec plusieurs agents, une observation
+retient leur maximum ; les unites et seuils doivent etre coherents avec ce choix.
+
+Les dates de contexte utilisent les fins de taches d'injection et leurs durees
+pour reconstituer l'intervalle de tir ; aucun agent de mesure de temps n'est ajoute.
+Les erreurs techniques des requetes sont comparees au seuil explicite ; l'echec
+d'une tache de preparation/injection reste un echec du rapport.
+
+Les indicateurs CPU/RAM/GC/heap/IO/DB/reseau sans mesure restent `Not collected`.
+Une serie temporelle peut etre fournie comme graphe sans valeurs numeriques ;
+elle est une preuve visuelle mais ne remplace pas un critere valide.
+Les graphes distants ne sont **jamais telecharges** par le serveur de rapport.
+Les exports PNG (maximum 7 MB encodes / 16 megapixels) sont integres aux trois
+formats. Ne pas placer de tokens ou de credentials dans les URLs.
 
 Note : `DefaultReportEngine` est désactivé en AGENT sans datasource ; le reporting est
 une responsabilité d'orchestrateur (ou de LOCAL). Aucun accès réseau n'est effectué pour

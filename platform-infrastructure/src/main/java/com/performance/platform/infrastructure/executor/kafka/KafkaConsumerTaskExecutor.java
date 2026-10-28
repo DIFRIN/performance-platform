@@ -425,7 +425,8 @@ public class KafkaConsumerTaskExecutor implements TaskExecutor, StatefulResource
 
     private void closeConsumer(Consumer<String, String> consumer) {
         try {
-            consumer.close(java.time.Duration.ofSeconds(5));
+            consumer.close(org.apache.kafka.clients.consumer.CloseOptions.timeout(
+                    java.time.Duration.ofSeconds(5)));
         } catch (Exception e) {
             log.warn("action=close_consumer_failed", e);
         }

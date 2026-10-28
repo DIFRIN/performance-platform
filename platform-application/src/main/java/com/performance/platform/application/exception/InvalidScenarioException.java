@@ -5,6 +5,8 @@ package com.performance.platform.application.exception;
  */
 public class InvalidScenarioException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public InvalidScenarioException(String message) {
         super(message);
     }

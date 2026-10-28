@@ -8,6 +8,8 @@ import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.Preparation;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
+import com.performance.platform.domain.template.DynamicValues;
+import com.performance.platform.domain.template.MessageTemplate;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
@@ -29,8 +31,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * TaskExecutor for Kafka producer operations: PRODUCE, PRELOAD.
  * <p>
- * Sends messages to a Kafka topic. Supports message templating ({@code {index}},
- * {@code {timestamp}}) and configurable batch sizes. Uses Spring
+ * Sends messages to a Kafka topic. The record key, headers and payload are scenario-driven
+ * templates resolved per message with the {@code DynamicValues} placeholders (see
+ * {@link MessageTemplate}) and batch sizes are configurable. Uses Spring
  * {@link KafkaTemplate} via named cluster references or legacy inline bootstrap
  * servers.
  * <p>
@@ -39,15 +42,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li>{@code cluster} - named Kafka cluster in {@link KafkaClusterRegistry}
  *       (v2.0, preferred)</li>
  *   <li>{@code bootstrapServers} - broker addresses (legacy, log WARN)</li>
- *   <li>{@code topic} - Kafka topic name (required; resolved through
+ *   <li>{@code topic} - logical topic name defined by the scenario; the physical name comes from
+ *       the cluster configuration ({@code kafka-clusters.<cluster>.topics}) (required; resolved through
  *       {@code KafkaClusterRegistry.resolveTopic()} when {@code cluster}
  *       is present)</li>
  *   <li>{@code operation} - {@code PRODUCE} or {@code PRELOAD} (default:
  *       PRODUCE)</li>
  *   <li>{@code messageCount} - number of messages to produce (default: 1)</li>
- *   <li>{@code messageTemplate} - message body template with optional
- *       {@code {index}} and {@code {timestamp}} placeholders (default:
- *       {@code "perf-message-{index}"})</li>
+ *   <li>{@code payload} (alias {@code messageTemplate}) - message body: string or map/list
+ *       (serialized as JSON), dynamic placeholders (default: {@code "perf-message-{index}"})</li>
+ *   <li>{@code key} - record key template (default: {@code "msg-{index}"})</li>
+ *   <li>{@code headers} - record headers, name -> value templates</li>
+ * </ul>
+ * Preparation only (fixed {@code messageCount}); rate/duration based load belongs to the
+ * {@code gatling} step with {@code protocol: kafka}.
+ * <ul>
  *   <li>{@code batchSize} - flush after this many messages (default: 100)</li>
  * </ul>
  * <p>
@@ -100,7 +109,6 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
         String clusterName = (String) step.parameters().get("cluster");
         String bootstrapServers = (String) step.parameters().get("bootstrapServers");
         int messageCount = parseMessageCount(step);
-        var messageTemplate = Objects.toString(step.parameters().get("messageTemplate"), "perf-message-{index}");
         int batchSize = parseBatchSize(step);
         long timeoutMs = step.timeout() != null ? step.timeout().toMillis() : DEFAULT_TIMEOUT_MS;
 
@@ -111,12 +119,19 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
             return fail(step, startNanos, "Either 'cluster' or 'bootstrapServers' parameter is required");
         }
 
+        MessageTemplate records;
+        try {
+            records = MessageTemplate.of(executionId.value(), step.id().value(), step.parameters());
+        } catch (IllegalArgumentException e) {
+            return fail(step, startNanos, e.getMessage());
+        }
+
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var future = executor.submit(() -> {
                 try {
                     return switch (operation) {
                         case "PRODUCE", "PRELOAD" ->
-                                executeProduce(step, startNanos, clusterName, bootstrapServers, topic, messageCount, messageTemplate, batchSize, timeoutMs, executionId);
+                                executeProduce(step, startNanos, clusterName, bootstrapServers, topic, messageCount, records, batchSize, timeoutMs, executionId);
                         default -> fail(step, startNanos, "Unknown kafka-producer operation: " + operation);
                     };
                 } catch (Exception e) {
@@ -148,7 +163,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
      */
     private TaskResult executeProduce(StepDefinition step, long startNanos,
                                       String clusterName, String bootstrapServers,
-                                      String topic, int messageCount, String messageTemplate,
+                                      String topic, int messageCount, MessageTemplate records,
                                       int batchSize, long timeoutMs,
                                       ExecutionId executionId) {
         // Resolve topic name and create KafkaTemplate
@@ -182,7 +197,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
             var failed = new AtomicInteger(0);
             long deadline = System.currentTimeMillis() + timeoutMs;
 
-            sendMessages(kafkaTemplate, physicalTopic, messageCount, messageTemplate, batchSize,
+            sendMessages(kafkaTemplate, physicalTopic, messageCount, records, batchSize,
                     deadline, produced, failed, executionId, step.id());
 
             // Final flush to ensure all messages are sent
@@ -222,7 +237,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
      * atomic counters.
      */
     private void sendMessages(KafkaTemplate<String, String> kafkaTemplate, String topic,
-                              int messageCount, String messageTemplate, int batchSize,
+                              int messageCount, MessageTemplate records, int batchSize,
                               long deadline, AtomicInteger produced, AtomicInteger failed,
                               ExecutionId executionId, TaskId taskId) {
         for (int i = 1; i <= messageCount; i++) {
@@ -233,11 +248,10 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
             }
 
             final int index = i;
-            String message = resolveTemplate(messageTemplate, index);
-            String key = "msg-" + index;
-
             try {
-                kafkaTemplate.send(topic, key, message).get(SEND_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                var msg = records.render(index);
+                kafkaTemplate.send(KafkaClusterPublisherFactory.record(topic, msg.key(), msg.value(), msg.headers()))
+                        .get(SEND_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 produced.incrementAndGet();
             } catch (Exception e) {
                 failed.incrementAndGet();
@@ -254,17 +268,9 @@ public class KafkaProducerTaskExecutor implements TaskExecutor, StatefulResource
         }
     }
 
-    /**
-     * Resolves a message template. Supports two placeholders:
-     * <ul>
-     *   <li>{@code {index}} - replaced with the 1-based message index</li>
-     *   <li>{@code {timestamp}} - replaced with {@code System.currentTimeMillis()}</li>
-     * </ul>
-     */
+    /** Resolves a template with the {@code DynamicValues} placeholders for the given 1-based index. */
     static String resolveTemplate(String template, int index) {
-        return template
-                .replace("{index}", String.valueOf(index))
-                .replace("{timestamp}", String.valueOf(System.currentTimeMillis()));
+        return DynamicValues.resolve(template, new DynamicValues.Context("", "", () -> index));
     }
 
     /**

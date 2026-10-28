@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * jamais utiliser de if/switch sur un type.</p>
  */
 @Component
-public class DefaultTaskExecutorRegistry implements TaskExecutorRegistry {
+public final class DefaultTaskExecutorRegistry implements TaskExecutorRegistry {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultTaskExecutorRegistry.class);
 
@@ -33,7 +33,15 @@ public class DefaultTaskExecutorRegistry implements TaskExecutorRegistry {
      * @param executors la liste de tous les TaskExecutor beans Spring (peut etre vide)
      */
     public DefaultTaskExecutorRegistry(List<TaskExecutor> executors) {
-        executors.forEach(this::register);
+        for (TaskExecutor executor : executors) {
+            Objects.requireNonNull(executor, "executor must not be null");
+            String taskName = Objects.requireNonNull(executor.getSupportedTaskName(),
+                    "getSupportedTaskName() must not return null for executor "
+                            + executor.getClass().getName());
+            this.executors.put(taskName, executor);
+            log.info("action=executor_registered taskName={} executor={}",
+                    taskName, executor.getClass().getSimpleName());
+        }
         log.info("action=registry_initialized taskNames={} count={}",
                 getSupportedTaskNames(), getSupportedTaskNames().size());
     }

@@ -9,6 +9,8 @@ package com.performance.platform.injection.gatling.result;
  */
 public class ResultParsingException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     public ResultParsingException(String message, Throwable cause) {
         super(message, cause);
     }

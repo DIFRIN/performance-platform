@@ -12,7 +12,9 @@ import java.util.List;
  */
 public class ScenarioParsingException extends RuntimeException {
 
-    private final List<String> errors;
+    private static final long serialVersionUID = 1L;
+
+    private final transient List<String> errors;
 
     public ScenarioParsingException(String message, List<String> errors) {
         super(message);

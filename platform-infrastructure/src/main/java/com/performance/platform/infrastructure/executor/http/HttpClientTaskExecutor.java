@@ -5,6 +5,7 @@ import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.Preparation;
 import com.performance.platform.plugin.TaskExecutor;
+import com.performance.platform.domain.template.DynamicValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,7 @@ public class HttpClientTaskExecutor implements TaskExecutor {
     static final String PARAM_BODY = "body";
     static final String PARAM_EXPECTED_STATUS = "expectedStatus";
     static final String PARAM_CONTENT_TYPE = "contentType";
+    static final String PARAM_QUERY_PARAMS = "queryParams";
 
     static final String OUTPUT_STATUS_CODE = "statusCode";
     static final String OUTPUT_RESPONSE_BODY = "responseBody";
@@ -73,7 +75,6 @@ public class HttpClientTaskExecutor implements TaskExecutor {
         String targetName = paramString(step, PARAM_TARGET, null);
         String method = paramString(step, PARAM_METHOD, METHOD_GET).toUpperCase();
         String logicalPath = paramString(step, PARAM_PATH, null);
-        String body = paramString(step, PARAM_BODY, null);
         int expectedStatus = parseExpectedStatus(step);
         String contentType = paramString(step, PARAM_CONTENT_TYPE, DEFAULT_CONTENT_TYPE);
 
@@ -85,6 +86,19 @@ public class HttpClientTaskExecutor implements TaskExecutor {
         }
 
         String resolvedPath = targetRegistry.resolvePath(targetName, logicalPath);
+
+        var dynamicContext = DynamicValues.Context.of(
+                context.executionId().value(), step.id().value());
+        HttpRequestPreparer.Prepared prepared;
+        try {
+            prepared = HttpRequestPreparer.prepare(resolvedPath, step.parameters(), dynamicContext);
+        } catch (IllegalArgumentException e) {
+            return fail(step, startNanos, e.getMessage());
+        }
+        String uriTemplate = prepared.uriTemplate();
+        Map<String, Object> uriVariables = prepared.uriVariables();
+        String body = prepared.body();
+        Map<String, String> headers = prepared.headers();
 
         RestClient client;
         try {
@@ -98,7 +112,7 @@ public class HttpClientTaskExecutor implements TaskExecutor {
         long timeoutMs = step.timeout() != null ? step.timeout().toMillis() : DEFAULT_TIMEOUT_MS;
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var future = executor.submit(() -> executeRequest(
-                    step, startNanos, client, method, resolvedPath,
+                    step, startNanos, client, method, uriTemplate, uriVariables, headers,
                     body, contentType, expectedStatus, context.executionId().value()));
             return future.get(timeoutMs + 5_000, TimeUnit.MILLISECONDS);
         } catch (java.util.concurrent.TimeoutException e) {
@@ -120,28 +134,31 @@ public class HttpClientTaskExecutor implements TaskExecutor {
      */
     private TaskResult executeRequest(StepDefinition step, long startNanos,
                                       RestClient client, String method, String path,
+                                      Map<String, Object> uriVariables, Map<String, String> headers,
                                       String body, String contentType, int expectedStatus,
                                       String executionId) {
-        log.info("action=http_request method={} path={} target={} executionId={}",
-                method, path, step.parameters().get(PARAM_TARGET), executionId);
+        log.info("action=http_request method={} path={} headerCount={} target={} executionId={}",
+                method, path, headers.size(), step.parameters().get(PARAM_TARGET), executionId);
 
         ResponseEntity<String> entity;
+        java.util.function.Consumer<org.springframework.http.HttpHeaders> applyHeaders =
+                h -> headers.forEach(h::set);
 
         try {
             entity = switch (method) {
-                case METHOD_GET -> client.get().uri(path)
+                case METHOD_GET -> client.get().uri(path, uriVariables).headers(applyHeaders)
                         .retrieve().toEntity(String.class);
-                case METHOD_DELETE -> client.delete().uri(path)
+                case METHOD_DELETE -> client.delete().uri(path, uriVariables).headers(applyHeaders)
                         .retrieve().toEntity(String.class);
-                case METHOD_POST -> client.post().uri(path)
+                case METHOD_POST -> client.post().uri(path, uriVariables).headers(applyHeaders)
                         .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
                         .body(body != null ? body : "")
                         .retrieve().toEntity(String.class);
-                case METHOD_PUT -> client.put().uri(path)
+                case METHOD_PUT -> client.put().uri(path, uriVariables).headers(applyHeaders)
                         .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
                         .body(body != null ? body : "")
                         .retrieve().toEntity(String.class);
-                case METHOD_PATCH -> client.patch().uri(path)
+                case METHOD_PATCH -> client.patch().uri(path, uriVariables).headers(applyHeaders)
                         .contentType(org.springframework.http.MediaType.parseMediaType(contentType))
                         .body(body != null ? body : "")
                         .retrieve().toEntity(String.class);

@@ -30,6 +30,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 @DisplayName("WebSecurity")
 class WebSecurityTest {
 
+    @Test
+    void onlyReportsAllowSameOriginFramingInBothSecurityModes() throws Exception {
+        for (boolean securityEnabled : List.of(false, true)) {
+            try (var context = new org.springframework.web.context.support.AnnotationConfigWebApplicationContext()) {
+                context.setServletContext(new MockServletContext());
+                context.getEnvironment().getPropertySources().addFirst(
+                        new org.springframework.core.env.MapPropertySource("test",
+                                java.util.Map.of(SecurityConfiguration.PROP_SECURITY_ENABLED, securityEnabled)));
+                context.register(SecurityConfiguration.class);
+                context.refresh();
+                var security = context.getBean("springSecurityFilterChain", Filter.class);
+                for (String path : List.of("/api/v1/executions/exec-1/report", "/index.html",
+                        "/api/v1/executions/exec-1/tasks")) {
+                    var request = new MockHttpServletRequest("GET", path);
+                    request.setServletPath(path);
+                    var response = new MockHttpServletResponse();
+                    security.doFilter(request, response, new MockFilterChain());
+                    assertThat(response.getHeader("X-Frame-Options"))
+                            .isEqualTo(path.endsWith("/report") ? "SAMEORIGIN" : "DENY");
+                    if (securityEnabled && path.startsWith("/api/")) {
+                        assertThat(response.getStatus()).isIn(401, 403);
+                    }
+                }
+            }
+        }
+    }
+
     @Nested
     @DisplayName("SecurityConfiguration annotation")
     class SecurityConfigurationAnnotation {

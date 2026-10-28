@@ -10,8 +10,8 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 
-import com.performance.platform.application.ports.out.HttpTarget;
-import com.performance.platform.application.ports.out.HttpTargetResolver;
+import com.performance.platform.application.ports.out.Endpoint;
+import com.performance.platform.application.ports.out.EndpointResolver;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,7 +41,7 @@ class HttpMockAssertionExecutorTest {
             throw new IllegalArgumentException("No count configured");
         };
 
-        TestableHttpMockAssertionExecutor(HttpTargetResolver resolver) {
+        TestableHttpMockAssertionExecutor(EndpointResolver resolver) {
             super(resolver);
         }
 
@@ -73,8 +73,8 @@ class HttpMockAssertionExecutorTest {
     private static final ExecutionId EXEC_ID = new ExecutionId("exec-001");
     private static final ScenarioId SCENARIO_ID = new ScenarioId("scenario-001");
 
-    private static HttpTargetResolver defaultRegistry() {
-        var target = new HttpTarget(
+    private static EndpointResolver defaultRegistry() {
+        var target = new Endpoint(
                 "http://localhost:8090",
                 Duration.ofSeconds(1),
                 Duration.ofSeconds(5),

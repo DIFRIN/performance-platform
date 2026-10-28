@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,7 +67,7 @@ class ExecutionEngineE2ETest {
         retryExecutor = new DefaultRetryExecutor();
         publishedEvents = new CopyOnWriteArrayList<>();
 
-        allTaskResults = new ArrayList<>();
+        allTaskResults = new CopyOnWriteArrayList<>();
         taskExecutorLookup = new StubTaskExecutorLookup();
         planMap = new HashMap<>();
         executionRepository = new StubExecutionRepository();
@@ -425,6 +426,7 @@ class ExecutionEngineE2ETest {
     class ParallelExecution {
 
         @Test
+        @Timeout(value = 15, unit = TimeUnit.SECONDS)
         @DisplayName("E2E-30: Independent tasks at same level execute in parallel")
         void independentTasksExecuteInParallel() throws Exception {
             var latchA = new CountDownLatch(1);
@@ -446,13 +448,19 @@ class ExecutionEngineE2ETest {
                 public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
                     if (st.id().value().equals("task-a")) {
                         startedA.countDown();
-                        try { latchA.await(5, TimeUnit.SECONDS); } catch (InterruptedException e) {
+                        try {
+                            assertTrue(latchA.await(5, TimeUnit.SECONDS), "Task A was not released");
+                        } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
+                            throw new AssertionError("Task A interrupted", e);
                         }
                     } else {
                         startedB.countDown();
-                        try { latchB.await(5, TimeUnit.SECONDS); } catch (InterruptedException e) {
+                        try {
+                            assertTrue(latchB.await(5, TimeUnit.SECONDS), "Task B was not released");
+                        } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
+                            throw new AssertionError("Task B interrupted", e);
                         }
                     }
                     return TaskResult.success(st.id(), "shell", Duration.ofMillis(5), Map.of());
@@ -461,18 +469,26 @@ class ExecutionEngineE2ETest {
                 public String getSupportedTaskName() { return "shell"; }
             });
 
-            var execThread = new Thread(() -> engine.execute(scenario));
-            execThread.start();
+            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                var execution = executor.submit(() -> engine.execute(scenario));
+                try {
+                    assertTrue(startedA.await(2, TimeUnit.SECONDS), "Task A should start before release");
+                    assertTrue(startedB.await(2, TimeUnit.SECONDS), "Task B should start before release");
+                } finally {
+                    latchA.countDown();
+                    latchB.countDown();
+                }
+                var executionId = execution.get(5, TimeUnit.SECONDS);
+                assertEquals(ExecutionStatus.COMPLETED,
+                        executionRepository.findById(executionId).orElseThrow().status());
+            }
 
-            boolean bothStarted = startedA.await(2, TimeUnit.SECONDS)
-                    && startedB.await(2, TimeUnit.SECONDS);
-
-            latchA.countDown();
-            latchB.countDown();
-            execThread.join(5000);
-
-            assertTrue(bothStarted, "Both independent tasks should start in parallel");
             assertEquals(2, countEvents(TaskCompleted.class));
+            assertEquals(0, countEvents(TaskFailed.class));
+            assertEquals(Verdict.SUCCESS, getEvent(ScenarioFinished.class).verdict());
+            assertEquals(Set.of(t("task-a"), t("task-b")),
+                    allTaskResults.stream().map(TaskResult::taskId).collect(java.util.stream.Collectors.toSet()));
+            assertEquals(2, allTaskResults.size());
         }
     }
 
@@ -661,7 +677,8 @@ class ExecutionEngineE2ETest {
                 updated.put(phase, status);
                 states.put(id.value(), new ExecutionState(existing.id(), existing.scenarioId(),
                         existing.status(), updated, existing.context(),
-                        existing.startedAt(), Instant.now()));
+                        existing.startedAt(), Instant.now(), existing.plannedTaskCount(),
+                        existing.tasks(), existing.scenarioYaml(), existing.scenarioDetails()));
             }
         }
 

@@ -50,7 +50,7 @@ public class YamlScenarioParser implements ScenarioParser {
     private static final Set<String> ROOT_KEYS = Set.of("scenario", "loadModels");
     private static final Set<String> SCENARIO_KEYS = Set.of(
             "id", "name", "version", "tags", "metadata", "execution",
-            "taskAvailabilityTimeoutSeconds", "steps");
+            "taskAvailabilityTimeoutSeconds", "steps", "report");
     private static final Set<String> EXECUTION_KEYS = Set.of("mode");
     private static final Set<String> STEP_KEYS = Set.of(
             "id", "task", "phase", "requiredContexts", "dependsOn",
@@ -102,7 +102,10 @@ public class YamlScenarioParser implements ScenarioParser {
             );
         }
         validateStructure(yamlContent);
-        return parseInternal(loadYaml(yamlContent));
+        var scenario = parseInternal(loadYaml(yamlContent));
+        return new ScenarioDefinition(scenario.id(), scenario.name(), scenario.version(), scenario.tags(),
+                scenario.metadata(), scenario.executionMode(), scenario.steps(), scenario.loadModels(), yamlContent,
+                scenario.report());
     }
 
     @Override
@@ -288,7 +291,7 @@ public class YamlScenarioParser implements ScenarioParser {
             dto.metadata() != null ? dto.metadata() : Map.of(),
             executionMode,
             steps,
-            loadModels
+            loadModels, null, dto.report()
         );
     }
 

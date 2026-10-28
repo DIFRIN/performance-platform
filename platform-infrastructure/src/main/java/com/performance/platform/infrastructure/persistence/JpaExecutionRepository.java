@@ -119,7 +119,8 @@ public class JpaExecutionRepository implements ExecutionRepository {
         var updated = new ExecutionStateEntity(
                 entity.id(), entity.scenarioId(), entity.status(),
                 phases, entity.context(),
-                entity.startedAt(), Instant.now());
+                entity.startedAt(), Instant.now(), entity.plannedTaskCount(), entity.tasks(),
+                entity.scenarioYaml(), entity.scenarioDetails());
 
         stateRepo.save(updated);
         log.info("action=phase_updated executionId={} phase={} status={}",

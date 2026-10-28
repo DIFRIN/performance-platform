@@ -132,7 +132,7 @@ application/
 ├── ports/in/   ExecuteScenarioUseCase, CancelExecutionUseCase, GetExecutionStatusUseCase,
 │               ListExecutionsUseCase, DeleteExecutionUseCase, ScenarioParsingUseCase,
 │               GenerateReportUseCase
-├── ports/out/  ExecutionRepository, AgentRegistryPort, HttpTargetResolver, HttpTarget,
+├── ports/out/  ExecutionRepository, AgentRegistryPort, EndpointResolver, Endpoint,
 │               LifecycleSignalHandler
 └── usecase/    GetExecutionStatusService, ListExecutionsService, DeleteExecutionService,
                 ExecutionProgressCalculator
@@ -840,7 +840,7 @@ Variables d'environnement prioritaires : `RUNTIME_MODE`, `MODE`,
 | **Ingestion lifecycle agent + perte de claim** | **ADR-033** |
 | Sélection déterministe multi-claim | ADR-034 |
 | **Retrait de Spring Modulith + test ASM** | **ADR-035** |
-| Port `HttpTargetResolver` | ADR-036 |
+| Port `EndpointResolver` | ADR-036 |
 | **Consolidation moteur + agent** | **ADR-037** |
 | **Posture de sécurité** | **ADR-038** |
 

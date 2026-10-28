@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,9 +28,23 @@ class IotScenarioParseTest {
 
         assertEquals("iot-dispatcher-local", scenario.id().value());
         assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
-        assertEquals(6, scenario.steps().size());
+        assertEquals(7, scenario.steps().size());
         assertEquals("reset-wiremock", scenario.steps().get(0).id().value());
         assertEquals("http-client", scenario.steps().get(0).taskName());
+        assertKafkaCountContract(scenario, "count-iot-commands",
+                "assert-iot-commands-count", "inject-load", "iot-commands", 7000);
+        assertEquals(1000, step(scenario, "preload-iot-commands")
+                .parameters().get("messageCount"));
+        assertEquals(Map.of(
+                "type", "CONSTANT",
+                "parameters", Map.of("usersPerSec", 200, "durationSeconds", 30)),
+                step(scenario, "inject-load").parameters().get("loadModel"));
+        assertEquals(Map.of(
+                "target", "wiremock",
+                "metric", "receivedCalls",
+                "value", 7000,
+                "operator", "GTE"),
+                step(scenario, "assert-http-dispatched").parameters());
     }
 
     @Test
@@ -40,8 +55,18 @@ class IotScenarioParseTest {
             ScenarioDefinition scenario = parser.parseFile(file);
             assertEquals("iot-dispatcher-distributed", scenario.id().value());
             assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
-            assertEquals(5, scenario.steps().size());
+            assertEquals(6, scenario.steps().size());
             assertEquals("reset-wiremock", scenario.steps().get(0).id().value());
+            assertKafkaCountContract(scenario, "count-iot-commands",
+                    "assert-iot-commands-count", "inject-load", "iot-commands", 10000);
+            assertEquals(10000, step(scenario, "preload-iot-commands")
+                    .parameters().get("messageCount"));
+            assertEquals(Map.of(
+                    "target", "wiremock",
+                    "metric", "receivedCalls",
+                    "value", 10000,
+                    "operator", "GTE"),
+                    step(scenario, "assert-http-dispatched").parameters());
         } catch (ScenarioParsingException e) {
             // Print the actual parsing errors for debugging
             System.err.println("PARSE ERRORS: " + e.getMessage() + " — errors: " + e.getErrors());
@@ -57,13 +82,17 @@ class IotScenarioParseTest {
 
         assertEquals("device-api-local", scenario.id().value());
         assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
-        assertEquals(7, scenario.steps().size());
+        assertEquals(8, scenario.steps().size());
         assertEquals("reset-devices", scenario.steps().get(0).id().value());
         assertEquals("database", scenario.steps().get(0).taskName());
         assertEquals("load-test", scenario.steps().get(4).id().value());
         assertEquals("gatling", scenario.steps().get(4).taskName());
-        assertEquals("assert-db-intact", scenario.steps().get(6).id().value());
+        assertEquals("assert-db-intact", scenario.steps().get(7).id().value());
         assertTrue(scenario.loadModels().containsKey("device-api-ramp"));
+        var warmup = scenario.steps().get(2).parameters();
+        assertEquals(Map.of("device_id", "device-0001"), warmup.get("queryParams"));
+        assertFalse(warmup.containsKey("body"));
+        assertDeviceApiInjection(scenario, 30000);
     }
 
     @Test
@@ -74,14 +103,80 @@ class IotScenarioParseTest {
             ScenarioDefinition scenario = parser.parseFile(file);
             assertEquals("device-api-distributed", scenario.id().value());
             assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
-            assertEquals(6, scenario.steps().size());
+            assertEquals(7, scenario.steps().size());
             assertEquals("reset-devices", scenario.steps().get(0).id().value());
-            assertEquals("assert-db-intact", scenario.steps().get(5).id().value());
+            assertEquals("assert-db-intact", scenario.steps().get(6).id().value());
             assertTrue(scenario.loadModels().containsKey("device-api-high-ramp"));
+            assertDeviceApiInjection(scenario, 600000);
         } catch (ScenarioParsingException e) {
             System.err.println("PARSE ERRORS: " + e.getMessage() + " — errors: " + e.getErrors());
             throw e;
         }
+    }
+
+    private static void assertDeviceApiInjection(ScenarioDefinition scenario, int expectedEvents) {
+        var validation = new com.performance.platform.scenario.validation.DefaultScenarioValidator()
+                .validate(scenario);
+        assertTrue(validation.errors().stream().noneMatch(error -> error.field().startsWith("step.loadModel")),
+                "Inline loadModel must pass validation: " + validation.errorMessages());
+        var parameters = step(scenario, "load-test").parameters();
+        assertEquals("POST", parameters.get("method"));
+        assertEquals("submit-event", parameters.get("path"));
+        assertEquals(Map.of("device_id", "device-{index:4}"), parameters.get("queryParams"));
+        assertFalse(parameters.containsKey("body"));
+        int targetRate = expectedEvents == 30000 ? 1000 : 10000;
+        int durationSeconds = expectedEvents == 30000 ? 60 : 120;
+        assertEquals(Map.of(
+                "type", "RAMP",
+                "parameters", Map.of(
+                        "from", 1,
+                        "to", targetRate,
+                        "durationSeconds", durationSeconds)),
+                parameters.get("loadModel"));
+
+        assertKafkaCountContract(scenario, "count-device-events", "assert-kafka-produced",
+                "load-test", "device-events", expectedEvents);
+        assertDatabaseAssertionContract(scenario);
+    }
+
+    private static void assertKafkaCountContract(ScenarioDefinition scenario, String countId,
+                                                 String assertionId, String workloadId,
+                                                 String topic, int expectedCount) {
+        var count = step(scenario, countId);
+        assertEquals("kafka-consumer", count.taskName());
+        assertEquals(Phase.ASSERTION, count.phase());
+        assertEquals(Map.of("cluster", "iot-sut", "topic", topic, "operation", "COUNT"),
+                count.parameters());
+        assertTrue(count.dependsOn().stream().anyMatch(id -> id.value().equals(workloadId)));
+
+        var assertion = step(scenario, assertionId);
+        assertEquals("kafka", assertion.taskName());
+        assertEquals(Phase.ASSERTION, assertion.phase());
+        assertEquals(Map.of(
+                "metric", "consumedCount",
+                "refTaskId", countId,
+                "operator", "GTE",
+                "value", expectedCount),
+                assertion.parameters());
+        assertTrue(assertion.dependsOn().stream().anyMatch(id -> id.value().equals(countId)));
+    }
+
+    private static void assertDatabaseAssertionContract(ScenarioDefinition scenario) {
+        var assertion = step(scenario, "assert-db-intact");
+        assertEquals("database-assertion", assertion.taskName());
+        assertEquals(Map.of(
+                "datasource", "sut-db",
+                "query", "SELECT COUNT(*) FROM devices WHERE is_active = true",
+                "value", 10000,
+                "operator", "EQ"),
+                assertion.parameters());
+    }
+
+    private static com.performance.platform.domain.scenario.StepDefinition step(
+            ScenarioDefinition scenario, String id) {
+        return scenario.steps().stream()
+                .filter(candidate -> candidate.id().value().equals(id))
+                .findFirst().orElseThrow();
     }
 
     @Test

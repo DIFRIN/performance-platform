@@ -85,7 +85,7 @@ Contrôleurs REST (tous `@ConditionalOnWebApplication(SERVLET)`) :
 | `GenerateReportUseCase` | Port défini, **sans implémentation** actuellement |
 | `ExecutionRepository` | Persistance des états et résultats de tâches |
 | `AgentRegistryPort` | Suivi du cycle de vie des agents (implémenté côté agent-runtime) |
-| `HttpTargetResolver` / `HttpTarget` | Résolution framework-free des cibles HTTP (ADR-036) |
+| `EndpointResolver` / `Endpoint` | Résolution framework-free des cibles HTTP (ADR-036) |
 | `LifecycleSignalHandler` | Réception START/STOP (implémenté par `TaskAgentRuntime`) |
 | `ExecutionConfig` | Timeouts et politiques (créé depuis `ExecutionEngineProperties`) |
 | `ExecutionProgressCalculator` | Calcul de progression à partir de `ExecutionState` |

@@ -95,6 +95,11 @@ export async function listExecutionTasks(id) {
     return request(BASE + "/executions/" + encodeURIComponent(id) + "/tasks");
 }
 
+/** Get the exact submitted YAML, or null when source was not retained. */
+export async function getExecutionScenario(id) {
+    return request(BASE + "/executions/" + encodeURIComponent(id) + "/scenario");
+}
+
 /**
  * Alias for {@link listExecutionTasks} — canonical name per ISSUE-128.
  * @param {string} id — execution identifier
@@ -225,13 +230,11 @@ export function reportUrl(id, format) {
  * @returns {Promise<boolean>} true if the report is available, false otherwise
  */
 export async function isReportAvailable(id) {
-    try {
-        var res = await fetch(reportUrl(id, "html"), {
-            method: "GET",
-            headers: { "Accept": "text/html" },
-        });
-        return res.ok;
-    } catch (e) {
-        return false;
-    }
+    const res = await fetch(reportUrl(id, "html"), {
+        method: "GET",
+        headers: { "Accept": "text/html" },
+    });
+    if (res.status === 404) return false;
+    if (!res.ok) throw new Error("Report API " + res.status + ": " + res.statusText);
+    return true;
 }

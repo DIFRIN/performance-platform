@@ -20,7 +20,8 @@ import java.util.Map;
 /**
  * Implementation par defaut de {@link GatlingResultParser}.
  * <p>
- * Lit le fichier {@code stats.json} genere par Gatling 3.x et extrait
+ * Lit {@code simulation.log} pour les runs sans rapports, ou le fichier
+ * {@code stats.json} existant, et extrait
  * les metriques globales : compteurs de requetes, latences (p50/p75/p95/p99),
  * throughput, taux d'erreur.
  * <p>
@@ -69,6 +70,13 @@ public class DefaultGatlingResultParser implements GatlingResultParser {
 
         log.info("action=parse_results taskId={} directory={}",
                 taskId.value(), gatlingResultDirectory);
+
+        // Preserve the existing JSON contract when reports have been supplied.
+        if (!Files.exists(gatlingResultDirectory.resolve(JS_STATS_JSON))
+                && !Files.exists(gatlingResultDirectory.resolve(STATS_JSON))
+                && Files.isRegularFile(gatlingResultDirectory.resolve("simulation.log"))) {
+            return new SimulationLogResultParser().parse(gatlingResultDirectory, taskId);
+        }
 
         // 1. Trouver stats.json
         Path statsFile = findStatsFile(gatlingResultDirectory);
@@ -180,7 +188,7 @@ public class DefaultGatlingResultParser implements GatlingResultParser {
                 global = contents.get("Global Information");
                 if (global != null) return global;
                 // Prendre le premier noeud
-                var fields = contents.fields();
+                var fields = contents.properties().iterator();
                 if (fields.hasNext()) {
                     return fields.next().getValue();
                 }

@@ -2,6 +2,9 @@
 
 > Patterns Gatling Java DSL à suivre dans ce projet.
 > DSL Scala interdit.
+> Pour une injection HTTP simple, ne pas écrire de simulation : omettre `simulation:` dans le step
+> `gatling` — `HttpScenarioSimulation` est créée dynamiquement depuis `target/path/queryParams/headers/body`
+> avec placeholders dynamiques (spec 03, ADR-039). Les patterns ci-dessous servent aux simulations personnalisées.
 
 ---
 

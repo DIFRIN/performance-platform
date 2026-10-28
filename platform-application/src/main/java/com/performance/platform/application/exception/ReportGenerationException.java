@@ -9,7 +9,9 @@ import java.util.Optional;
  */
 public class ReportGenerationException extends RuntimeException {
 
-    private final ExecutionId executionId;
+    private static final long serialVersionUID = 1L;
+
+    private final transient ExecutionId executionId;
 
     public ReportGenerationException(String message, Throwable cause) {
         super(message, cause);

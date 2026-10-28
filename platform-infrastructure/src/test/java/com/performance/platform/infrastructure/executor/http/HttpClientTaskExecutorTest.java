@@ -335,6 +335,174 @@ class HttpClientTaskExecutorTest {
     }
 
     // ========================================================================
+    // queryParams
+    // ========================================================================
+
+    @Nested
+    @DisplayName("queryParams")
+    class QueryParamsTests {
+
+        @Test
+        @DisplayName("sends queryParams as request params on POST (not in body)")
+        void shouldSendQueryParamsOnPost() {
+            stubFor(post(urlPathEqualTo("/api/events"))
+                    .withQueryParam("device_id", equalTo("device-0001"))
+                    .willReturn(aResponse().withStatus(200)));
+
+            var s = step("http-client", Map.of(
+                    "target", "test-target",
+                    "method", "POST",
+                    "path", "/api/events",
+                    "queryParams", Map.of("device_id", "device-0001"),
+                    "expectedStatus", 200));
+
+            TaskResult result = executor.execute(emptyContext(), s);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+            verify(postRequestedFor(urlEqualTo("/api/events?device_id=device-0001")));
+        }
+
+        @Test
+        @DisplayName("resolves logical path, encodes values and repeats list values")
+        void shouldEncodeAndRepeatValues() {
+            stubFor(get(urlPathEqualTo("/api/devices"))
+                    .willReturn(aResponse().withStatus(200)));
+
+            var params = new java.util.LinkedHashMap<String, Object>();
+            params.put("q", "a b&c={x}");
+            params.put("id", java.util.List.of("d1", "d2"));
+            var s = step("http-client", Map.of(
+                    "target", "test-target",
+                    "path", "devices",
+                    "queryParams", params));
+
+            TaskResult result = executor.execute(emptyContext(), s);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+            verify(getRequestedFor(urlPathEqualTo("/api/devices"))
+                    .withQueryParam("q", equalTo("a b&c={x}"))
+                    .withQueryParam("id", havingExactly("d1", "d2")));
+        }
+
+        @Test
+        @DisplayName("resolves dynamic placeholders in values")
+        void shouldResolvePlaceholders() {
+            stubFor(get(urlPathEqualTo("/health")).willReturn(aResponse().withStatus(200)));
+
+            var s = step("http-client", Map.of(
+                    "target", "test-target",
+                    "path", "/health",
+                    "queryParams", Map.of(
+                            "exec", "{executionId}-{stepId}",
+                            "ts", "{timestamp}",
+                            "rid", "{uuid}")));
+
+            TaskResult result = executor.execute(emptyContext(), s);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+            verify(getRequestedFor(urlPathEqualTo("/health"))
+                    .withQueryParam("exec", equalTo("exec-001-task-001"))
+                    .withQueryParam("ts", matching("\\d{10,}"))
+                    .withQueryParam("rid", matching("[0-9a-f-]{36}")));
+        }
+
+        @Test
+        @DisplayName("fails when queryParams is not a map")
+        void shouldFailWhenNotMap() {
+            var s = step("http-client", Map.of(
+                    "target", "test-target",
+                    "path", "/health",
+                    "queryParams", "device_id=x"));
+
+            TaskResult result = executor.execute(emptyContext(), s);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+            assertThat(result.errorMessage()).contains("queryParams");
+        }
+    }
+
+    // ========================================================================
+    // Dynamic request parts: pathParams / headers / body
+    // ========================================================================
+
+    @Nested
+    @DisplayName("dynamic request parts")
+    class DynamicRequestTests {
+
+        @Test
+        @DisplayName("resolves pathParams, inline path placeholders, headers and body")
+        void shouldResolveAllParts() {
+            stubFor(post(urlPathMatching("/api/devices/dev-0001/events/\\d+"))
+                    .willReturn(aResponse().withStatus(201)));
+
+            var s = step("http-client", Map.of(
+                    "target", "test-target",
+                    "method", "POST",
+                    "path", "/api/devices/{deviceId}/events/{random:10-99}",
+                    "pathParams", Map.of("deviceId", "dev-{index:4}"),
+                    "queryParams", Map.of("run", "{executionId}"),
+                    "headers", Map.of("X-Request-Id", "{uuid}", "X-Tenant", "{choice:a|b}"),
+                    "body", "{\"id\":\"{index+9}\",\"nested\":{\"k\":1}}",
+                    "expectedStatus", 201));
+
+            TaskResult result = executor.execute(emptyContext(), s);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+            verify(postRequestedFor(urlPathMatching("/api/devices/dev-0001/events/\\d+"))
+                    .withQueryParam("run", equalTo("exec-001"))
+                    .withHeader("X-Request-Id", matching("[0-9a-f-]{36}"))
+                    .withHeader("X-Tenant", matching("[ab]"))
+                    .withRequestBody(equalToJson("{\"id\":\"10\",\"nested\":{\"k\":1}}")));
+        }
+
+        @Test
+        @DisplayName("serializes a structured body as JSON with resolved placeholders")
+        void shouldSerializeStructuredBody() {
+            stubFor(post(urlPathEqualTo("/api/events")).willReturn(aResponse().withStatus(200)));
+
+            var s = step("http-client", Map.of(
+                    "target", "test-target",
+                    "method", "POST",
+                    "path", "/api/events",
+                    "body", Map.of("device_id", "device-{index}", "count", 3,
+                            "tags", java.util.List.of("{choice:x|x}"))));
+
+            TaskResult result = executor.execute(emptyContext(), s);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+            verify(postRequestedFor(urlPathEqualTo("/api/events"))
+                    .withRequestBody(equalToJson("{\"device_id\":\"device-1\",\"count\":3,\"tags\":[\"x\"]}")));
+        }
+
+        @Test
+        @DisplayName("fails when a path placeholder has no pathParams entry")
+        void shouldFailOnMissingPathParam() {
+            var s = step("http-client", Map.of(
+                    "target", "test-target",
+                    "path", "/api/devices/{deviceId}"));
+
+            TaskResult result = executor.execute(emptyContext(), s);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+            assertThat(result.errorMessage()).contains("deviceId").contains("pathParams");
+        }
+
+        @Test
+        @DisplayName("fails on an invalid dynamic placeholder")
+        void shouldFailOnInvalidPlaceholder() {
+            var s = step("http-client", Map.of(
+                    "target", "test-target",
+                    "path", "/health",
+                    "headers", Map.of("X-Bad", "{random:abc}")));
+
+            TaskResult result = executor.execute(emptyContext(), s);
+
+            assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
+            assertThat(result.errorMessage()).contains("random");
+        }
+    }
+
+    // ========================================================================
     // expectedStatus assertion
     // ========================================================================
 

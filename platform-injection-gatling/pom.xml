@@ -21,12 +21,24 @@
             <artifactId>platform-domain</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Port HttpTargetResolver : resolution de la cible HTTP du step gatling -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Plugin API (TaskExecutor, @Injection pour GatlingTaskExecutor futur) -->
         <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-plugin-api</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <!-- Serialisation JSON des body structures (map/liste) du step HTTP -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
         </dependency>
 
         <!-- Gatling Java DSL (OpenInjectionStep, CoreDsl) -->

@@ -64,21 +64,35 @@ scenario:
       requiredContexts: [preload-iot-commands]
       parameters:
         target: iot-dispatcher-health
-        simulation: IotDispatcherMonitorSimulation
         path: health
         method: GET
+        loadModel:
+          type: RAMP
+          parameters: { from: 1, to: 500, durationSeconds: 60 }
       timeout: 5m
 
-    # Step 4 : Verifier lag Kafka = 0 (tout traite)
-    - id: assert-kafka-lag
-      task: kafka
+    # COUNT lit les offsets du topic ; kafka assertion compare son output.
+    - id: count-iot-commands
+      task: kafka-consumer
       phase: ASSERTION
       dependsOn: [inject-load]
       requiredContexts: [inject-load]
       parameters:
         cluster: iot-sut
         topic: iot-commands
-        expectedLag: 0
+        operation: COUNT
+      timeout: 1m
+
+    - id: assert-iot-commands-count
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [count-iot-commands]
+      requiredContexts: [count-iot-commands]
+      parameters:
+        metric: consumedCount
+        refTaskId: count-iot-commands
+        operator: GTE
+        value: 10000
       timeout: 1m
 
     # Step 5 : Verifier que WireMock a recu les 10 000 commandes HTTP
@@ -89,9 +103,9 @@ scenario:
       requiredContexts: [inject-load]
       parameters:
         target: wiremock
-        urlPattern: "/command"
-        expectedRequestCount: 10000
-        operator: GREATER_THAN_OR_EQUAL
+        metric: receivedCalls
+        value: 10000
+        operator: GTE
       timeout: 1m
 
 loadModels:

@@ -12,7 +12,9 @@ import java.util.Objects;
  */
 public class ScenarioValidationException extends ScenarioParsingException {
 
-    private final ValidationResult result;
+    private static final long serialVersionUID = 1L;
+
+    private final transient ValidationResult result;
 
     public ScenarioValidationException(ValidationResult result) {
         super("Scenario validation failed: " + result.errors().size() + " error(s)", result.errorMessages());

@@ -2,7 +2,7 @@ package com.performance.platform.app.api;
 
 import com.performance.platform.app.api.dto.SubmitResponse;
 import com.performance.platform.app.api.dto.ValidationErrorResponse;
-import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -36,11 +36,11 @@ public class ScenarioUploadController {
     private static final String STATUS_ACCEPTED = "ACCEPTED";
 
     private final ScenarioParsingUseCase parsingUseCase;
-    private final ExecuteScenarioUseCase executeUseCase;
+    private final SubmitScenarioUseCase executeUseCase;
 
     public ScenarioUploadController(
             ScenarioParsingUseCase parsingUseCase,
-            ExecuteScenarioUseCase executeUseCase) {
+            SubmitScenarioUseCase executeUseCase) {
         this.parsingUseCase = parsingUseCase;
         this.executeUseCase = executeUseCase;
     }
@@ -70,7 +70,7 @@ public class ScenarioUploadController {
 
         var scenario = parsingUseCase.parse(yamlContent);
         log.info("action=scenario_parsed scenarioId={}", scenario.id().value());
-        var executionId = executeUseCase.execute(scenario);
+        var executionId = executeUseCase.submit(scenario);
         log.info("action=scenario_accepted executionId={}", executionId.value());
         return ResponseEntity.accepted()
                 .body(new SubmitResponse(executionId.value(), STATUS_ACCEPTED));

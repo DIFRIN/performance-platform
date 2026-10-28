@@ -5,7 +5,7 @@ import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
-import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.in.GenerateReportUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
@@ -36,6 +36,10 @@ import com.performance.platform.infrastructure.persistence.mapper.TaskResultMapp
 import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.reporting.engine.DefaultReportEngine;
+import com.performance.platform.domain.report.ReportFormat;
+import com.performance.platform.reporting.output.ReportFileWriter;
+import com.performance.platform.reporting.output.ReportProperties;
+import com.performance.platform.reporting.render.HtmlReportRenderer;
 import com.performance.platform.reporting.model.CampaignReport;
 import com.performance.platform.scenario.parser.YamlScenarioParser;
 import com.performance.platform.scenario.usecase.DefaultScenarioParsingService;
@@ -55,6 +59,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -63,6 +68,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,6 +107,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @Tag("integration")
 class LocalModeAllTasksIT {
+    @TempDir
+    static Path reportDirectory;
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
@@ -180,7 +188,7 @@ class LocalModeAllTasksIT {
         var parsingUseCase = new DefaultScenarioParsingService(parser, validator);
 
         // 10. Use cases
-        ExecuteScenarioUseCase executeUseCase = scenario -> {
+        SubmitScenarioUseCase executeUseCase = scenario -> {
             try {
                 return engine.execute(scenario);
             } catch (ExecutionException e) {
@@ -207,7 +215,9 @@ class LocalModeAllTasksIT {
         };
 
         // 11. Report engine
-        reportEngine = new DefaultReportEngine(executionRepository, eventPublisher);
+        reportEngine = new DefaultReportEngine(executionRepository, eventPublisher,
+                new ReportFileWriter(List.of(new HtmlReportRenderer()),
+                        new ReportProperties(reportDirectory.toString(), List.of(ReportFormat.HTML))));
 
         GenerateReportUseCase reportUseCase = id -> {
             ExecutionState state = executionRepository.findById(id)

@@ -1,7 +1,7 @@
 package com.performance.platform.runtime;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.boot.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
@@ -19,7 +19,7 @@ import java.util.Map;
  * <p>
  * Enregistre via {@code META-INF/spring.factories} :
  * <pre>
- * org.springframework.boot.env.EnvironmentPostProcessor=\
+ * org.springframework.boot.EnvironmentPostProcessor=\
  *   com.performance.platform.runtime.RuntimeConfigEnvironmentPostProcessor
  * </pre>
  */

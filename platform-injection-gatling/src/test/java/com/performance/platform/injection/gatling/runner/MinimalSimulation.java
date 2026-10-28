@@ -24,6 +24,7 @@ import static io.gatling.javaapi.http.HttpDsl.http;
  * Effectue une requete HTTP GET sur l'URL de base configuree dans les
  * proprietes systeme ({@code test.baseUrl}).
  */
+@SuppressWarnings("this-escape") // Gatling requires setUp() during Simulation construction.
 public class MinimalSimulation extends Simulation {
 
     {

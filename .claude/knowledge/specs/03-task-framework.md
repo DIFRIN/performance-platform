@@ -147,11 +147,19 @@ Outputs : `containerId`, `status`, `image` (selon action).
     operation: PRELOAD          # PRODUCE | PRELOAD
     cluster: default            # cluster nommé (préféré)
     # bootstrapServers: kafka:9092   # legacy, WARN
-    topic: input-events
+    topic: input-events         # nom logique -> topic physique via kafka-clusters.<cluster>.topics
     messageCount: 10000
-    messageTemplate: "event-{index}"
+    key: "dev-{index:5}"        # défaut msg-{index}
+    headers:                    # valeurs dynamiques (DynamicValues)
+      x-correlation-id: "{uuid}"
+    payload:                    # string ou map/list (JSON) ; alias messageTemplate
+      id: "{index}"
+      value: "{random:1-100}"
     batchSize: 500
 ```
+Preparation-only : cadence et durée = step `gatling` avec `protocol: kafka` + `loadModel` (spec 06 §7).
+Key, headers et payload acceptent les placeholders `DynamicValues` (ADR-039), résolus par message
+(`{index}` = index 1-based du message). Placeholder invalide → step FAILED.
 Outputs : `messagesProduced`, `messagesFailed`. La tâche échoue si
 `messagesFailed > 0`. Les appels Kafka sont bornés par le `timeout` du step.
 
@@ -197,19 +205,53 @@ Outputs : `port`, `url`, `totalRequests` (VERIFY). Un port `0` demande un port �
     expectedStatus: 200
     body: '{"x":1}'             # POST/PUT/PATCH
     contentType: application/json
+    queryParams:                # optionnel — ?k=v, encodés ; liste → paramètre répété
+      device_id: "device-{index:4}"
+    pathParams:                 # optionnel — variables du path : path: /devices/{deviceId}
+      deviceId: "{index}"
+    headers:                    # optionnel
+      X-Request-Id: "{uuid}"
 ```
 Outputs : `statusCode`, `responseBody`, `durationMs`.
 
+**Contenu dynamique** (ADR-039) — `path`, `pathParams`, `queryParams`, `headers` et `body` acceptent des placeholders résolus à chaque requête par `DynamicValues` (`platform-plugin-api`) :
+
+| Placeholder | Valeur |
+|---|---|
+| `{index}` `{index:4}` `{index+100}` `{index*2}` `{index%5}` | compteur de requête (1-based, global à l'injection) ; `:N` = zéro-padding ; opérations `+ - * / %` |
+| `{uuid}` `{timestamp}` | UUID aléatoire / epoch millis |
+| `{date}` `{date:yyyy-MM-dd}` | date ISO / pattern `DateTimeFormatter` |
+| `{random}` `{random:1-100}` | entier aléatoire |
+| `{randomString:8}` `{randomHex:16}` | chaîne alphanumérique / hexadécimale |
+| `{choice:a\|b\|c}` `{cycle:a\|b\|c}` | valeur aléatoire / valeur tournante (pilotée par `{index}`) |
+| `{executionId}` `{stepId}` | contexte d'exécution |
+
+Un `{nom}` inconnu est laissé tel quel (JSON sûr). Un argument invalide fait échouer le step. Un `body` peut être une chaîne ou une map/liste YAML (sérialisée en JSON, placeholders dans toutes les chaînes). Dans `http-client`, `{index}` vaut toujours 1 (une seule requête).
+
+Le même contenu dynamique est supporté par les trois phases :
+- **PREPARATION** (`http-client`) : requête unique.
+- **INJECTION** (`gatling`, sans `simulation`) : injection HTTP générique créée dynamiquement (voir ci-dessous) ; placeholders résolus pour chaque requête, avec le même `{index}` pour toutes les parties d'une requête.
+- **ASSERTION** (`http-mock`) : `queryParams` filtre les appels comptés ; valeur statique → `equalTo`, valeur avec placeholder → regex `matches` (`DynamicValues.toRegex`).
+
 ### `gatling` — INJECTION (voir spec 06)
+Injection HTTP décrite par le scénario (aucune classe de simulation à fournir) :
 ```yaml
 - id: load
   task: gatling
   phase: INJECTION
   parameters:
-    simulation: com.example.CustomerApiSimulation
-    loadModel: api-load
+    target: device-api            # ou baseUrl: http://host:port ; path logique résolu via la cible
+    method: POST
+    path: /devices/{deviceId}/events
+    pathParams: { deviceId: "device-{index:4}" }
+    queryParams: { run: "{executionId}" }
+    headers: { X-Request-Id: "{uuid}" }
+    body: { value: "{random:1-100}" }     # chaîne ou map/liste (JSON)
+    expectedStatus: 201                   # optionnel (défaut Gatling : 2xx/3xx)
+    loadModel: { type: RAMP, parameters: { from: 1, to: 100, durationSeconds: 60 } }
   timeout: 20m
 ```
+`simulation: com.example.CustomSimulation` reste possible pour une simulation Gatling personnalisée (les paramètres HTTP ci-dessus sont alors ignorés).
 
 ---
 

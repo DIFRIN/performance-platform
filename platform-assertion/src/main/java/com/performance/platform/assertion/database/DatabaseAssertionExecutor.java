@@ -1,5 +1,6 @@
 package com.performance.platform.assertion.database;
 
+import com.performance.platform.application.ports.out.NamedResourceResolver;
 import com.performance.platform.domain.assertion.AssertionOperator;
 import com.performance.platform.domain.assertion.AssertionResult;
 import com.performance.platform.domain.assertion.AssertionStatus;
@@ -12,6 +13,8 @@ import com.performance.platform.plugin.AssertionExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.core.ResolvableType;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -157,15 +160,20 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
     // --- Resolution DataSource ---
 
     /**
-     * Resout une {@link DataSource} par son nom de bean Spring.
+     * Resout une {@link DataSource} configuree par nom logique, puis par nom de bean.
      *
      * @param datasourceName le nom du bean DataSource
      * @return la DataSource, ou null si non trouvee
      */
     DataSource resolveDataSource(String datasourceName) {
+        var type = ResolvableType.forClassWithGenerics(NamedResourceResolver.class, DataSource.class);
+        for (var resolver : applicationContext.<NamedResourceResolver<DataSource>>getBeanProvider(type)) {
+            DataSource resolved = resolver.resolve(datasourceName);
+            if (resolved != null) return resolved;
+        }
         try {
             return applicationContext.getBean(datasourceName, DataSource.class);
-        } catch (Exception e) {
+        } catch (NoSuchBeanDefinitionException e) {
             // Le nom logique "default" ne correspond pas au nom du bean Spring
             // (ADR-014 : bean primaire nomme "dataSource") : fallback sur la
             // DataSource primaire pour ce seul alias. Pour tout autre nom
@@ -174,7 +182,7 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
             if (PRIMARY_DATASOURCE_ALIAS.equals(datasourceName)) {
                 try {
                     return applicationContext.getBean(DataSource.class);
-                } catch (Exception primaryMissing) {
+                } catch (NoSuchBeanDefinitionException primaryMissing) {
                     log.warn("action=db_primary_datasource_missing datasource={} error={}",
                             datasourceName, primaryMissing.getMessage());
                     return null;

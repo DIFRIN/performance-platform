@@ -33,6 +33,8 @@ export function mount(el, executionId) {
     /* ---- State ---- */
     var intervalId = null;
     var reportReady = false;
+    var disposed = false;
+    var inFlight = false;
 
     /* ---- Skeleton ---- */
     el.innerHTML = buildSkeleton(executionId);
@@ -70,20 +72,29 @@ export function mount(el, executionId) {
     /* ---- Poll & Render loop ---- */
 
     async function pollAndRender() {
+        if (disposed || inFlight || reportReady) return;
+        inFlight = true;
         try {
             var available = await isReportAvailable(executionId);
+            if (disposed) return;
             if (available) {
                 renderIframe(bodyEl, executionId);
                 enableDownloadButtons(downloadPdfBtn, downloadJsonBtn);
                 reportReady = true;
+                if (intervalId !== null) {
+                    clearInterval(intervalId);
+                    intervalId = null;
+                }
             } else if (!reportReady) {
                 renderPending(bodyEl);
             }
         } catch (e) {
             console.error("report: poll failed", e);
-            if (!reportReady) {
+            if (!disposed && !reportReady) {
                 renderError(bodyEl, e.message || "Failed to check report availability");
             }
+        } finally {
+            inFlight = false;
         }
     }
 
@@ -96,6 +107,7 @@ export function mount(el, executionId) {
     /* ---- Cleanup ---- */
     return {
         cleanup: function () {
+            disposed = true;
             if (intervalId !== null) {
                 clearInterval(intervalId);
                 intervalId = null;
@@ -158,7 +170,7 @@ function renderPending(bodyEl) {
 function renderIframe(bodyEl, executionId) {
     bodyEl.innerHTML = '' +
         '<iframe class="report-iframe" src="' + escapeAttr(reportUrl(executionId, "html")) + '"' +
-        '        sandbox="allow-scripts allow-same-origin"' +
+        '        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"' +
         '        title="Execution Report"' +
         '        loading="lazy">' +
         '</iframe>';

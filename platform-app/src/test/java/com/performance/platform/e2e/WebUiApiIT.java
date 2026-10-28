@@ -4,7 +4,7 @@ import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.in.CancelExecutionUseCase;
 import com.performance.platform.application.ports.in.DeleteExecutionUseCase;
-import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.in.GenerateReportUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ListExecutionsUseCase;
@@ -199,7 +199,7 @@ class WebUiApiIT {
         var parsingUseCase = new DefaultScenarioParsingService(parser, validator);
 
         // 10. Use cases
-        ExecuteScenarioUseCase executeUseCase = scenario -> {
+        SubmitScenarioUseCase executeUseCase = scenario -> {
             try {
                 return engine.execute(scenario);
             } catch (ExecutionException e) {
@@ -242,7 +242,6 @@ class WebUiApiIT {
         };
 
         // 11. Report engine
-        reportEngine = new DefaultReportEngine(executionRepository, eventPublisher);
 
         GenerateReportUseCase reportUseCase = id -> {
             ExecutionState state = executionRepository.findById(id)
@@ -267,6 +266,7 @@ class WebUiApiIT {
                 List.of(ReportFormat.HTML, ReportFormat.JSON));
         reportFileWriter = new ReportFileWriter(
                 List.<ReportRenderer>of(htmlRenderer, jsonRenderer), reportProps);
+        reportEngine = new DefaultReportEngine(executionRepository, eventPublisher, reportFileWriter);
 
         // 12. Agent registry stub
         agentRegistry = new StubAgentRegistry();
