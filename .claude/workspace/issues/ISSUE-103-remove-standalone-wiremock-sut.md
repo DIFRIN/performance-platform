@@ -1,7 +1,7 @@
 # ISSUE-103 — Remove standalone WireMock from docker-compose-sut.yaml
 
 **PDR** : PDR-025
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : DONE
 **Priorite** : P0 (bloquant — WireMock standalone cree une confusion architecturale)
 **Bloquee par** : aucune
@@ -16,7 +16,7 @@ Supprimer le service WireMock standalone du fichier `docker-compose-sut.yaml`. D
 ## Fichiers a Modifier
 
 ```
-platform-deployment/examples/
+distribution/examples/
   └── docker-compose-sut.yaml      — Remove wiremock service block + its health check dependency
 ```
 
@@ -38,8 +38,8 @@ platform-deployment/examples/
 
 ## Criteres de Done
 
-- [ ] `docker compose -f platform-deployment/examples/docker-compose-sut.yaml config` -> YAML valide, 4 services, 0 wiremock
+- [ ] `docker compose -f distribution/examples/docker-compose-sut.yaml config` -> YAML valide, 4 services, 0 wiremock
 - [ ] Aucune reference a `wiremock` dans le fichier
 - [ ] Aucune reference a `wiremock` dans `iot-dispatcher` (ni depends_on, ni variable d'env)
-- [ ] `mvn test -pl platform-deployment -q` -> 0 erreur
+- [ ] `mvn test -pl distribution -q` -> 0 erreur
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-103 -> DONE

@@ -3,7 +3,7 @@
 **Module Maven** : `platform-xxx`
 **Package** : `com.performance.platform.xxx`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/XX.md` sections Y, Z
+**Specs de référence** : `docs/knowledge/specs/XX.md` sections Y, Z
 **Dépend de** : PDR-YYY
 **Issues** : ISSUE-XXX, ISSUE-YYY
 

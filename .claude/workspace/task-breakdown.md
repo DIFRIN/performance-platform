@@ -30,7 +30,7 @@
   `RetryPolicy`
 - Tests unitaires pour `ExecutionContext` (immutabilité + copy-on-write)
 
-**Specs à lire** : `02-execution-engine.md` sections 3+4, `.claude/knowledge/architecture.md` section 2  
+**Specs à lire** : `02-execution-engine.md` sections 3+4, `docs/knowledge/architecture.md` section 2  
 **Skills à lire** : `hexagonal-architecture.md`  
 **Output** : `platform-domain` compilable, 0 Spring, tous les records du glossaire
 
@@ -54,7 +54,7 @@
 ### Tâche 1.3 — Domain Events
 **Durée estimée** : 0.5 session Developer (à fusionner avec 1.2 si rapide)  
 **Périmètre** :
-- Tous les records d'events dans `platform-domain/event/` :
+- Tous les records d'events dans `core/platform-domain/event/` :
   `ScenarioStarted`, `ScenarioFinished`, `ScenarioCancelled`,
   `PhaseStarted`, `PhaseCompleted`,
   `TaskStarted`, `TaskCompleted`, `TaskFailed`, `TaskRetried`,
@@ -87,12 +87,12 @@
 ### Tâche 2.1 — Ports Application + DAG Builder
 **Durée estimée** : 1 session Developer  
 **Périmètre** :
-- Structure complète `platform-application` : tous les ports in/out (interfaces uniquement)
+- Structure complète `platform-use-cases` : tous les ports in/out (interfaces uniquement)
 - `ExecutionPlanBuilder` interface + implémentation (BFS topologique sur dependsOn)
 - Algorithme de détection de cycles (IllegalArgumentException si cycle)
 - Tests unitaires : DAG simple, DAG complexe, cycle détecté
 
-**Specs à lire** : `02-execution-engine.md` sections 2+3, `.claude/knowledge/architecture.md` section 3  
+**Specs à lire** : `02-execution-engine.md` sections 2+3, `docs/knowledge/architecture.md` section 3  
 **Prérequis** : Phase 1 ✅
 
 ---
@@ -120,7 +120,7 @@
 - `TaskExecutorRegistry` : auto-découverte Spring beans
 - Stub `NoOpTaskExecutor` pour tests d'intégration de l'engine
 
-**Specs à lire** : `02-execution-engine.md` section 9, `.claude/knowledge/skills/hexagonal-architecture.md`  
+**Specs à lire** : `02-execution-engine.md` section 9, `.claude/skills/hexagonal-architecture/SKILL.md`  
 **Prérequis** : Tâche 2.2 ✅
 
 ---

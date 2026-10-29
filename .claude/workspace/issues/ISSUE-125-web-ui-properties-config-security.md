@@ -1,7 +1,7 @@
 # ISSUE-125: WebUiProperties + config Spring conditionnelle + securite static/UI
 
 **PDR** : PDR-028
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-124
@@ -27,17 +27,17 @@ Mettre en place l'activation conditionnelle de l'IHM (`web.ui.enabled`), le stat
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/app/web/
+bootstrap/src/main/java/com/performance/platform/app/web/
   ├── WebUiProperties.java              — @ConfigurationProperties("web.ui") record { boolean enabled }
   └── WebUiConfiguration.java           — @ConditionalOnProperty(web.ui.enabled=true) WebMvcConfigurer
 
-platform-app/src/main/java/com/performance/platform/app/config/
+bootstrap/src/main/java/com/performance/platform/app/config/
   └── SecurityConfiguration.java        — MODIF : permit-all static+UI+API si JWT off ; JWT si on
 
-platform-app/src/main/resources/
+bootstrap/src/main/resources/
   └── application.yaml                  — MODIF : web.ui.enabled (defaut false), profil agent override false
 
-platform-app/src/test/java/com/performance/platform/app/web/
+bootstrap/src/test/java/com/performance/platform/app/web/
   ├── WebUiConfigurationTest.java       — UI servie si enabled, 404 sinon, jamais sur AGENT
   └── WebSecurityTest.java              — permit-all (JWT off) vs securise (JWT on)
 ```
@@ -90,7 +90,7 @@ public class WebUiConfiguration implements WebMvcConfigurer {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] `web.ui.enabled=true` → `/` sert index.html ; `false` → 404 sur `/`
 - [ ] Profil AGENT : UI jamais servie ET aucun serveur web (`WebApplicationType.NONE`, pas de Tomcat) — ADR-019
 - [ ] `platform.security.enabled=false` (defaut) → permit-all ; `=true` → `/api/**` securise ET `/`+`/assets/**` permit-all (ADR-019)

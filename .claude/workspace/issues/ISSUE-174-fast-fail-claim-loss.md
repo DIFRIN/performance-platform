@@ -19,11 +19,11 @@ Faire échouer rapidement un step dont un agent claimer est perdu (B3). Le moteu
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/
   └── remote/TransportExecutionEventHandler.java  — ajouter @EventListener AgentLost → tracker.onAgentLost
   └── (ou RemoteExecutionEngine si pré-consolidation) — idem
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/
   └── e2e/AgentLossRecoveryIT.java        — NOUVEAU (T4, Testcontainers ou stub lifecycle)
 ```
 

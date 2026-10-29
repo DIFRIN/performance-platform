@@ -16,10 +16,10 @@ Remplacer la methode privee `DagPhaseExecutor.assertionResultToTaskResult()` par
 ## Fichiers a Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/local/
   └── DagPhaseExecutor.java   -- remplacer assertionResultToTaskResult() par appel a AssertionResultMapper
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/local/
   └── DagPhaseExecutorTest.java -- verifier que la conversion AssertionResult->TaskResult utilise AssertionResultMapper
 ```
 
@@ -32,7 +32,7 @@ platform-execution-engine/src/test/java/com/performance/platform/engine/local/
 
 ## Criteres de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` -> 0 erreur
 - [ ] `assertionResultToTaskResult()` est supprimee de `DagPhaseExecutor`
 - [ ] Le code appelle `AssertionResultMapper.toTaskResult()` a la place
 - [ ] Tous les tests existants de `DagPhaseExecutor` passent sans modification

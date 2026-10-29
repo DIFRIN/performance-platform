@@ -64,7 +64,7 @@ platform-xxx/src/test/java/com/performance/platform/xxx/
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-xxx -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-xxx -q` → 0 erreur, 0 warning
 - [ ] [Critère métier 1]
 - [ ] [Critère métier 2]
 - [ ] `.claude/workspace/progress.md` : ISSUE-XXX → IN REVIEW (via `bash .claude/scripts/issue-finish.sh`)

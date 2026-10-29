@@ -1,7 +1,7 @@
 # ISSUE-105 — Create http-api-mock-agent-local.yaml scenario (LOCAL mode)
 
 **PDR** : PDR-025
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : DONE
 **Priorite** : P1 (critique — scenario de demonstration principal)
 **Bloquee par** : ISSUE-103 (wiremock retire du compose, le mock est maintenant agent-embedded)
@@ -23,10 +23,10 @@ Creer un scenario YAML complet qui demontre le pattern "WireMock as Agent" en mo
 ## Fichiers a Creer
 
 ```
-platform-deployment/examples/scenarios/
+distribution/examples/scenarios/
   └── http-api-mock-agent-local.yaml       — Scenario complet LOCAL mock-as-agent
 
-platform-deployment/examples/mappings/
+distribution/examples/mappings/
   └── http-api-endpoints.json              — Stubs WireMock pour le demo
 ```
 
@@ -47,7 +47,7 @@ platform-deployment/examples/mappings/
 # Aucun agentTags dans le scenario (pas de routing distribue).
 #
 # Prerequis :
-#   java -jar platform-app.jar --spring.profiles.active=local,examples-local
+#   java -jar platform-bootstrap.jar --spring.profiles.active=local,examples-local
 #
 # Config technique dans application-examples-local.yaml :
 #   platform.http-targets.mock-api.base-url: resolu dynamiquement depuis
@@ -218,15 +218,15 @@ loadModels:
 - **Mapping path classpath** : `classpath:mock/mappings` — les fichiers JSON de stubs sont dans le JAR
 - **Pipeline complet** : spawn-mock -> load-test -> assertions -> stop-mock (cleanup)
 - Le step `stop-mock` est en phase PREPARATION mais execute APRES les assertions (grace au DAG dependsOn). Ce n'est pas une violation de la phase — le DAG determine l'ordre d'execution reel.
-- Le repertoire `platform-deployment/examples/mappings/` doit etre cree s'il n'existe pas
+- Le repertoire `distribution/examples/mappings/` doit etre cree s'il n'existe pas
 - **Configuration-driven model** : Les `supportedTaskNames` de `LocalAgent` viennent du `TaskExecutorRegistry` (tous les noms enregistres). En LOCAL, tout est disponible — c'est la nature du mode.
 
 ## Criteres de Done
 
-- [ ] `http-api-mock-agent-local.yaml` cree dans `platform-deployment/examples/scenarios/`
-- [ ] `http-api-endpoints.json` cree dans `platform-deployment/examples/mappings/`
+- [ ] `http-api-mock-agent-local.yaml` cree dans `distribution/examples/scenarios/`
+- [ ] `http-api-endpoints.json` cree dans `distribution/examples/mappings/`
 - [ ] Le scenario est parseable par le ScenarioParser (test unitaire)
 - [ ] Scenario contient 0 URL inline — uniquement `target:` et `classpath:` references
 - [ ] Aucun champ `agentTags` dans le scenario
-- [ ] `mvn test -pl platform-deployment -q` -> 0 erreur
+- [ ] `mvn test -pl distribution -q` -> 0 erreur
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-105 -> DONE

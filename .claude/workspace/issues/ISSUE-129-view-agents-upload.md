@@ -1,7 +1,7 @@
 # ISSUE-129: Vue dashboard agents (ORCHESTRATOR) + vue upload (validation inline)
 
 **PDR** : PDR-029
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-128
@@ -22,14 +22,14 @@ montre les erreurs champ par champ ou redirige vers le detail en cas de succes.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/resources/static/assets/js/views/
+bootstrap/src/main/resources/static/assets/js/views/
   ├── agents.js                         — vue dashboard agents (polling 3s, ORCHESTRATOR)
   └── upload.js                         — vue upload (file + textarea, erreurs inline)
 
-platform-app/src/main/resources/static/assets/js/
+bootstrap/src/main/resources/static/assets/js/
   └── api.js                            — MODIF : listAgents(), uploadScenario(fileOrYaml)
 
-platform-app/src/main/resources/static/assets/css/
+bootstrap/src/main/resources/static/assets/css/
   └── app.css                           — MODIF : table agents, formulaire upload, messages d'erreur inline
 ```
 
@@ -63,7 +63,7 @@ export function mount(el) { /* render; poll si agents; return cleanup() */ }
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] Dashboard agents affiche id/etat/supportedTasks/lastHeartbeat (ORCHESTRATOR), polling avec cleanup
 - [ ] Upload accepte fichier multipart ET textarea YAML
 - [ ] Erreurs de validation affichees field-level inline (champ + message)

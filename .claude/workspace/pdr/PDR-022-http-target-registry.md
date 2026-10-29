@@ -3,7 +3,7 @@
 **Module Maven** : `platform-infrastructure`
 **Package** : `com.performance.platform.infrastructure.executor.http`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/03-task-framework.md`, `.claude/knowledge/adr/ADR-013-spring-first-infrastructure.md`, `.claude/knowledge/adr/ADR-014-datasource-configuration.md`
+**Specs de référence** : `docs/knowledge/specs/03-task-framework.md`, `docs/knowledge/adr/ADR-013-spring-first-infrastructure.md`, `docs/knowledge/adr/ADR-014-datasource-configuration.md`
 **Dépend de** : PDR-010 DONE (DatasourceProvider pattern à répliquer), PDR-020 DONE (KafkaClusterRegistry — même pattern)
 **Issues** : ISSUE-092, ISSUE-093, ISSUE-094, ISSUE-095
 
@@ -175,7 +175,7 @@ Ce PDR utilise :
   PDR-010 (DatasourceProvider)       → pattern identique
   PDR-020 (KafkaClusterRegistry)     → même pattern, même structure
   spring-web (RestClient)            → déjà dans Spring Boot 4.x
-  platform-infrastructure/pom.xml    → RestClient disponible via spring-boot-starter-web
+  infra/platform-infrastructure/pom.xml    → RestClient disponible via spring-boot-starter-web
 
 Ce PDR est utilisé par :
   PDR-024 (scénarios exemples)       → scenarios YAML utilisent target: wiremock, path: /__admin/requests
@@ -188,5 +188,5 @@ Ce PDR est utilisé par :
 - [ ] ISSUE-092, 093, 094, 095 toutes DONE
 - [ ] `HttpTargetRegistry`, `HttpClientTaskExecutor` dans interfaces-registry.md statut STABLE
 - [ ] `MockServerTaskExecutor` et `HttpMockAssertionExecutor` : aucune URL inline — `target:` reference uniquement (avec fallback déprécié)
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Aucun `new URL(...)`, aucun `HttpURLConnection` raw dans les executors HTTP

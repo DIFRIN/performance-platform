@@ -1,7 +1,7 @@
-# ISSUE-146 — GetExecutionStatusService : read-model framework-free (platform-application)
+# ISSUE-146 — GetExecutionStatusService : read-model framework-free (platform-use-cases)
 
 **PDR** : PDR-033
-**Module** : `platform-application`
+**Module** : `platform-use-cases`
 **Statut** : DONE
 **Priorité** : P1 (critique — fournit l'implémentation du port de statut, découplée de l'engine)
 **Bloquée par** : —
@@ -20,11 +20,11 @@ l'engine (commande). Cohérent avec `ListExecutionsService`/`DeleteExecutionServ
 
 ```
 CRÉER (main) :
-platform-application/src/main/java/com/performance/platform/application/usecase/
+core/platform-use-cases/src/main/java/com/performance/platform/application/usecase/
   └── GetExecutionStatusService.java   — implements GetExecutionStatusUseCase (0 annotation Spring)
 
 CRÉER (test) :
-platform-application/src/test/java/com/performance/platform/application/usecase/
+core/platform-use-cases/src/test/java/com/performance/platform/application/usecase/
   └── GetExecutionStatusServiceTest.java   — repository mocké (Mockito), cas présent/absent
 ```
 
@@ -37,7 +37,7 @@ public interface GetExecutionStatusUseCase {
     Optional<ExecutionState> getState(ExecutionId id);
 }
 
-// Nouveau service — 0 annotation Spring (platform-application reste framework-free)
+// Nouveau service — 0 annotation Spring (platform-use-cases reste framework-free)
 public final class GetExecutionStatusService implements GetExecutionStatusUseCase {
 
     private final ExecutionRepository repository;
@@ -62,8 +62,8 @@ public final class GetExecutionStatusService implements GetExecutionStatusUseCas
 
 ## Règles Spécifiques
 
-- **0 annotation Spring** : `platform-application` est framework-free (inviolable). Le bean est
-  câblé par la racine `platform-app` (ISSUE-144).
+- **0 annotation Spring** : `platform-use-cases` est framework-free (inviolable). Le bean est
+  câblé par la racine `platform-bootstrap` (ISSUE-144).
 - Le défaut de `getStatus` quand l'état n'est pas (encore) persisté : retourner
   `ExecutionStatus.STARTED` (aligné sur le comportement du `GetExecutionStatusUseCase` anonyme
   des tests E2E actuels — vérifier la valeur attendue).
@@ -73,7 +73,7 @@ public final class GetExecutionStatusService implements GetExecutionStatusUseCas
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-application -q` → 0 erreur
+- [ ] `mvn test -pl :platform-use-cases -q` → 0 erreur
 - [ ] `GetExecutionStatusService` créé, **0 annotation Spring**
 - [ ] Tests : cas présent (statut + état) et absent (`Optional.empty()`, statut défaut)
 - [ ] `.claude/workspace/progress.md` : géré par les scripts (`issue-finish.sh`)

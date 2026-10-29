@@ -17,10 +17,10 @@ les métriques + crée des spans OpenTelemetry.
 ## Fichiers à Créer
 
 ```
-platform-observability/src/main/java/com/performance/platform/observability/listener/
+infra/platform-observability/src/main/java/com/performance/platform/observability/listener/
   └── ObservabilityEventListener.java
 
-platform-observability/src/test/java/com/performance/platform/observability/listener/
+infra/platform-observability/src/test/java/com/performance/platform/observability/listener/
   └── ObservabilityEventListenerTest.java
 ```
 
@@ -45,7 +45,7 @@ public class ObservabilityEventListener {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-observability -q` → 0 erreur
+- [ ] `mvn test -pl :platform-observability -q` → 0 erreur
 - [ ] Chaque event incrémente/mesure la bonne métrique
 - [ ] `.claude/progress.md` mis à jour : ISSUE-075 → DONE
 - [ ] `.claude/context/interfaces-registry.md` mis à jour

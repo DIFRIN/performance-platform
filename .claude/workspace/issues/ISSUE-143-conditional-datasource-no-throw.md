@@ -21,32 +21,32 @@ orchestrateur-only conditionnels DISTRIBUTED (corrige le démarrage LOCAL).
 
 ```
 MODIFIER (main) :
-platform-execution-engine/.../engine/local/LocalExecutionEngine.java
+execution/platform-execution-engine/.../engine/local/LocalExecutionEngine.java
   — implements ExecuteScenarioUseCase, CancelExecutionUseCase   (au lieu de ExecutionEngine)
     (execute/cancel déjà présents ; getStatus reste méthode interne si utilisée, sinon retirer)
-platform-execution-engine/.../engine/remote/RemoteExecutionEngine.java
+execution/platform-execution-engine/.../engine/remote/RemoteExecutionEngine.java
   — implements ExecuteScenarioUseCase, CancelExecutionUseCase
-platform-execution-engine/.../engine/availability/DefaultAgentAvailabilityChecker.java
+execution/platform-execution-engine/.../engine/availability/DefaultAgentAvailabilityChecker.java
   — @ConditionalOnProperty(name="runtime.mode", havingValue="DISTRIBUTED")
-platform-execution-engine/.../engine/correlation/DefaultTaskCorrelationTracker.java
+execution/platform-execution-engine/.../engine/correlation/DefaultTaskCorrelationTracker.java
   — @ConditionalOnProperty(name="runtime.mode", havingValue="DISTRIBUTED")
 
 SUPPRIMER (main) :
-platform-execution-engine/.../engine/ExecutionEngine.java   — port redondant (ADR-026)
+execution/platform-execution-engine/.../engine/ExecutionEngine.java   — port redondant (ADR-026)
 
 CRÉER (main) :
-platform-execution-engine/.../engine/config/ExecutionEngineConfiguration.java
+execution/platform-execution-engine/.../engine/config/ExecutionEngineConfiguration.java
   — @Configuration ; @Bean @ConditionalOnProperty(runtime.mode=DISTRIBUTED) ExecutionConfig executionConfig(...)
   — (optionnel) ExecutionEngineProperties @ConfigurationProperties pour binder les valeurs
 
 MODIFIER (test) :
-platform-execution-engine/src/test/...  — tests référençant ExecutionEngine → ports in
+execution/platform-execution-engine/src/test/...  — tests référençant ExecutionEngine → ports in
 ```
 
 ## Interfaces à Implémenter
 
 ```java
-// Ports in EXISTANTS (platform-application) — signatures inchangées, juste implémentées par l'engine
+// Ports in EXISTANTS (platform-use-cases) — signatures inchangées, juste implémentées par l'engine
 public interface ExecuteScenarioUseCase { ExecutionId execute(ScenarioDefinition s) throws ExecutionException; }
 public interface CancelExecutionUseCase { void cancel(ExecutionId id); }
 
@@ -81,7 +81,7 @@ public class ExecutionEngineConfiguration {
 - **`getStatus`** : n'est PAS un port porté par l'engine (read-model séparé, ISSUE-146). Si la
   méthode `getStatus` interne de l'engine n'est plus utilisée, la retirer ; sinon la garder
   comme méthode privée/interne, pas comme implémentation de port.
-- **`ExecutionConfig`** : le record reste **framework-free** dans `platform-application` ; seul
+- **`ExecutionConfig`** : le record reste **framework-free** dans `platform-use-cases` ; seul
   le *binding/bean* vit dans l'engine. Valeurs par défaut cohérentes (vérifier les champs réels
   du record). Conditionnel DISTRIBUTED (seul `RemoteExecutionEngine` en a besoin).
 - **Beans orchestrateur-only conditionnels DISTRIBUTED** : `DefaultAgentAvailabilityChecker`
@@ -93,7 +93,7 @@ public class ExecutionEngineConfiguration {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur (tests adaptés à la suppression d'ExecutionEngine)
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur (tests adaptés à la suppression d'ExecutionEngine)
 - [ ] `ExecutionEngine.java` supprimé ; `grep -rn "ExecutionEngine\b" --include=*.java` → plus aucune référence de type (hors historique)
 - [ ] `LocalExecutionEngine`/`RemoteExecutionEngine` `implements ExecuteScenarioUseCase, CancelExecutionUseCase`
 - [ ] `ExecutionConfig` exposé en bean DISTRIBUTED par l'engine ; record toujours framework-free dans application

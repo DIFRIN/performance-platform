@@ -17,10 +17,10 @@ résultat avec un opérateur.
 ## Fichiers à Créer
 
 ```
-platform-assertion/src/main/java/com/performance/platform/assertion/database/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/database/
   └── DatabaseAssertionExecutor.java
 
-platform-assertion/src/test/java/com/performance/platform/assertion/database/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/database/
   └── DatabaseAssertionExecutorIT.java   — Testcontainers PostgreSQL
 ```
 
@@ -44,7 +44,7 @@ public class DatabaseAssertionExecutor implements AssertionExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-assertion -P integration-tests` → IT passe
+- [ ] `mvn verify -pl :platform-assertion -P integration-tests` → IT passe
 - [ ] `COUNT(*) > N` évalué correctement sur PostgreSQL Testcontainers
 - [ ] `.claude/progress.md` mis à jour : ISSUE-061 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `DatabaseAssertionExecutor` → STABLE

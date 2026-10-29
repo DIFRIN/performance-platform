@@ -17,7 +17,7 @@ avec leurs factories. Base pour tout le reste du projet.
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/id/
+core/platform-domain/src/main/java/com/performance/platform/domain/id/
   ├── ExecutionId.java     — id d'exécution, generate()/of()
   ├── ScenarioId.java      — id de scénario, of()
   ├── TaskId.java          — id de task dans un scénario, of()
@@ -27,7 +27,7 @@ platform-domain/src/main/java/com/performance/platform/domain/id/
   ├── SignalId.java        — id de signal, generate()
   └── ReportId.java        — id de rapport, generate()
 
-platform-domain/src/test/java/com/performance/platform/domain/id/
+core/platform-domain/src/test/java/com/performance/platform/domain/id/
   └── IdentifiersTest.java — non-null validation, égalité par valeur, factories
 ```
 
@@ -75,7 +75,7 @@ public record ReportId(String value) {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `ExecutionId.generate()` produit des valeurs uniques (UUID)
 - [ ] `new ExecutionId(null)` lève `NullPointerException`
 - [ ] Égalité par valeur vérifiée (record)

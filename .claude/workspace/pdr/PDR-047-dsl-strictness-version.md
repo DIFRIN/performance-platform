@@ -3,7 +3,7 @@
 **Module Maven** : `platform-scenario-dsl`
 **Package** : `com.performance.platform.scenario.parser`
 **Statut** : WAITING
-**Specs de référence** : `improvements.md` B6 ; `.claude/knowledge/specs/01-scenario-dsl.md`
+**Specs de référence** : `improvements.md` B6 ; `docs/knowledge/specs/01-scenario-dsl.md`
 **Dépend de** : PDR-005 (parser existant)
 **Issues** : ISSUE-176
 
@@ -63,4 +63,4 @@ Ce PDR est utilisé par :
 - [ ] `scenario.version` requis (ISSUE-176)
 - [ ] `ScenarioStrictnessTest` (T7) : corpus rejeté avec ligne fautive (ISSUE-176)
 - [ ] Scénarios YAML existants migrés si version absente
-- [ ] `mvn test -pl platform-scenario-dsl -q` → 0 erreur
+- [ ] `mvn test -pl :platform-scenario-dsl -q` → 0 erreur

@@ -22,17 +22,17 @@ Le Developer produit : `HttpTargetProperties`, `PlatformHttpTargetsProperties`, 
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/http/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/http/
   ├── HttpTargetProperties.java         — record + Map<String,String> paths
   ├── PlatformHttpTargetsProperties.java — @ConfigurationProperties(prefix="platform")
   ├── HttpTargetRegistry.java           — registre + resolvePath() + clientFor()
   └── HttpTargetConfiguration.java      — @Configuration @EnableConfigurationProperties
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/http/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/http/
   └── HttpTargetRegistryTest.java       — tests unitaires (pas d'HTTP réel)
 
-platform-app/src/main/resources/application-orchestrator.yaml  — ajouter bloc platform.http-targets.*
-platform-app/src/main/resources/application-local.yaml         — ajouter bloc platform.http-targets.*
+bootstrap/src/main/resources/application-orchestrator.yaml  — ajouter bloc platform.http-targets.*
+bootstrap/src/main/resources/application-local.yaml         — ajouter bloc platform.http-targets.*
 ```
 
 ---
@@ -179,7 +179,7 @@ platform:
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Test : binding depuis yaml → `HttpTargetRegistry.get("wiremock")` → non null
 - [ ] Test : `resolvePath("wiremock", "reset-requests")` → `"/__admin/requests"`
 - [ ] Test : `resolvePath("wiremock", "/direct")` → `"/direct"` (fallback)

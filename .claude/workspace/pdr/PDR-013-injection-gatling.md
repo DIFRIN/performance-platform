@@ -3,7 +3,7 @@
 **Module Maven** : `platform-injection-gatling`
 **Package** : `com.performance.platform.injection.gatling`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/06-injection-gatling.md` (complet), `.claude/knowledge/specs/01-scenario-dsl.md` §3
+**Specs de référence** : `docs/knowledge/specs/06-injection-gatling.md` (complet), `docs/knowledge/specs/01-scenario-dsl.md` §3
 **Dépend de** : PDR-001, PDR-003
 **Issues** : ISSUE-054, ISSUE-055, ISSUE-056, ISSUE-057, ISSUE-058
 

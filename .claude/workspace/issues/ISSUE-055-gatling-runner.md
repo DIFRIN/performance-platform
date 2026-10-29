@@ -17,13 +17,13 @@ répertoire de résultats.
 ## Fichiers à Créer
 
 ```
-platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/runner/
+infra/platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/runner/
   ├── GatlingRunner.java
   ├── DefaultGatlingRunner.java
   ├── GatlingRunConfig.java
   └── GatlingExecutionException.java
 
-platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/runner/
+infra/platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/runner/
   └── DefaultGatlingRunnerTest.java — simulation minimale → répertoire produit
 ```
 
@@ -49,7 +49,7 @@ public class GatlingExecutionException extends RuntimeException {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-injection-gatling -q` → 0 erreur
+- [ ] `mvn test -pl :platform-injection-gatling -q` → 0 erreur
 - [ ] Une simulation HTTP minimale s'exécute et produit un répertoire de résultats
 - [ ] `.claude/progress.md` mis à jour : ISSUE-055 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `GatlingRunner` → STABLE

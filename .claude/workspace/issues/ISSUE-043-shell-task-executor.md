@@ -17,10 +17,10 @@ timeout, exit codes attendus.
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/shell/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/shell/
   └── ShellTaskExecutor.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/shell/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/shell/
   └── ShellTaskExecutorTest.java — echo → stdout, exit code non-zéro → failed
 ```
 
@@ -44,7 +44,7 @@ public class ShellTaskExecutor implements TaskExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] `echo hello` → `stdout` contient "hello", exitCode 0
 - [ ] exit code non attendu → `TaskResult.failed`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-043 → DONE

@@ -3,7 +3,7 @@
 **Module Maven** : `platform-infrastructure`
 **Package** : `com.performance.platform.infrastructure.persistence`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/02-execution-engine.md` §2, `.claude/knowledge/constraints.md` CNF-02, ADR-011
+**Specs de référence** : `docs/knowledge/specs/02-execution-engine.md` §2, `docs/knowledge/constraints.md` CNF-02, ADR-011
 **Dépend de** : PDR-001, PDR-004
 **Issues** : ISSUE-050, ISSUE-051, ISSUE-052, ISSUE-053
 

@@ -89,7 +89,7 @@ Structure cible du root `pom.xml` (`<dependencyManagement>`) :
   `jackson-databind` côté géré), retirer ; sinon conserver.
 - **`platform-execution-engine`** : retirer `spring-context 6.2.6` (Spring 6) et
   `spring-boot-autoconfigure 4.0.0` → versions héritées du BOM (Spring 7, cohérent Spring Boot 4).
-- **`platform-app`** : conserve le `spring-boot-maven-plugin` avec `${spring-boot.version}`
+- **`platform-bootstrap`** : conserve le `spring-boot-maven-plugin` avec `${spring-boot.version}`
   (plugin non géré par `<dependencyManagement>`). Peut retirer les `<version>` des
   `spring-boot-starter-*` (gérés par le BOM) ; garder la property locale `spring-modulith.version`
   ou s'appuyer sur celle du root.

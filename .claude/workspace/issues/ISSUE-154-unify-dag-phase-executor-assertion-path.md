@@ -16,10 +16,10 @@ Simplifier `DagPhaseExecutor` en supprimant la branche conditionnelle `phase == 
 ## Fichiers a Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/local/
   └── DagPhaseExecutor.java   -- remplacer executeSingleStep() (branche if/else phase) par chemin unifie
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/local/
   └── DagPhaseExecutorTest.java -- ajouter/modifier tests pour couvrir le chemin unifie avec assertions
 ```
 
@@ -56,7 +56,7 @@ result = retryExecutor.executeWithRetry(policy, () -> executor.execute(context, 
 
 ## Criteres de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` -> 0 erreur
 - [ ] `executeAssertionStep()` supprimee
 - [ ] `executePreparationOrInjectionStep()` supprimee
 - [ ] Chemin unifie `executeStep()` implemente

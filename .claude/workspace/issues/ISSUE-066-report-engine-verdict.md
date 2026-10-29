@@ -17,11 +17,11 @@ calcule le `Verdict`, écoute `ScenarioFinished`.
 ## Fichiers à Créer
 
 ```
-platform-reporting/src/main/java/com/performance/platform/reporting/engine/
+infra/platform-report-renderers/src/main/java/com/performance/platform/reporting/engine/
   ├── DefaultReportEngine.java
   └── VerdictCalculator.java
 
-platform-reporting/src/test/java/com/performance/platform/reporting/engine/
+infra/platform-report-renderers/src/test/java/com/performance/platform/reporting/engine/
   ├── DefaultReportEngineTest.java
   └── VerdictCalculatorTest.java — SUCCESS / WARNING / FAILED
 ```
@@ -46,7 +46,7 @@ public class DefaultReportEngine implements ReportEngine {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-reporting -q` → 0 erreur
+- [ ] `mvn test -pl :platform-reporting -q` → 0 erreur
 - [ ] Verdict correct selon les statuts d'assertions
 - [ ] `ScenarioFinished` déclenche la génération
 - [ ] `.claude/progress.md` mis à jour : ISSUE-066 → DONE

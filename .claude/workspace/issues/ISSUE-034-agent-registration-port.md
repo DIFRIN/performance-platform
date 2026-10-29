@@ -17,13 +17,13 @@ Implémenter l'enregistrement et le heartbeat de l'agent via le transport
 ## Fichiers à Créer
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/registration/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/registration/
   ├── AgentRegistrationPort.java
   ├── TransportAgentRegistration.java   — publie via ExecutionTransport
   ├── HeartbeatScheduler.java           — heartbeat périodique
   └── RegistrationException.java
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/registration/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/registration/
   └── TransportAgentRegistrationTest.java
 ```
 
@@ -49,7 +49,7 @@ public class RegistrationException extends RuntimeException {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
 - [ ] `register` publie l'event AGENT_REGISTERED (mock transport)
 - [ ] Heartbeat publié à intervalle régulier
 - [ ] `.claude/progress.md` mis à jour : ISSUE-034 → DONE

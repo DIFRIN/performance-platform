@@ -1,7 +1,7 @@
 # ISSUE-107 — Create docker-compose-wiremock-agent.yaml
 
 **PDR** : PDR-025
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : DONE
 **Priorite** : P1 (critique — necessaire pour le demo DISTRIBUTED mock-as-agent)
 **Bloquee par** : ISSUE-103 (le docker-compose-sut ne contient plus de wiremock standalone — modele coherent)
@@ -28,7 +28,7 @@ Architecture :
 ## Fichier a Creer
 
 ```
-platform-deployment/examples/
+distribution/examples/
   └── docker-compose-wiremock-agent.yaml
 ```
 
@@ -39,9 +39,9 @@ platform-deployment/examples/
 # Performance Engineering Platform — WireMock as Agent Demo
 # =============================================================================
 # Usage:
-#   docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml build
-#   docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml up -d
-#   docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml down
+#   docker compose -f distribution/examples/docker-compose-wiremock-agent.yaml build
+#   docker compose -f distribution/examples/docker-compose-wiremock-agent.yaml up -d
+#   docker compose -f distribution/examples/docker-compose-wiremock-agent.yaml down
 #
 # Services: orchestrator + mock-agent + gatling-agent + standard-agent + kafka + postgres
 #
@@ -115,7 +115,7 @@ services:
   orchestrator:
     build:
       context: ../../
-      dockerfile: platform-deployment/docker/Dockerfile
+      dockerfile: distribution/docker/Dockerfile
     container_name: perf-orchestrator
     environment:
       RUNTIME_MODE: DISTRIBUTED
@@ -147,7 +147,7 @@ services:
   mock-agent:
     build:
       context: ../../
-      dockerfile: platform-deployment/docker/Dockerfile
+      dockerfile: distribution/docker/Dockerfile
     container_name: perf-mock-agent
     environment:
       RUNTIME_MODE: DISTRIBUTED
@@ -174,7 +174,7 @@ services:
   gatling-agent:
     build:
       context: ../../
-      dockerfile: platform-deployment/docker/Dockerfile
+      dockerfile: distribution/docker/Dockerfile
     container_name: perf-gatling-agent
     environment:
       RUNTIME_MODE: DISTRIBUTED
@@ -201,7 +201,7 @@ services:
   standard-agent:
     build:
       context: ../../
-      dockerfile: platform-deployment/docker/Dockerfile
+      dockerfile: distribution/docker/Dockerfile
     container_name: perf-standard-agent
     environment:
       RUNTIME_MODE: DISTRIBUTED
@@ -235,7 +235,7 @@ volumes:
 
 - **PAS de service WireMock standalone** — c'est le point central de ce PDR
 - **Configuration-driven model** : Chaque agent utilise `AGENT_SUPPORTED_TASKS` env var (mappe a `agent.supported-tasks` dans application.yml). Pas de `AGENT_TAGS` (les tags ne sont plus utilises pour le routing).
-- **Meme image Docker** : Tous les agents partagent le meme Dockerfile (`platform-deployment/docker/Dockerfile`) — artefact unique (CF-01). Config differente = role different.
+- **Meme image Docker** : Tous les agents partagent le meme Dockerfile (`distribution/docker/Dockerfile`) — artefact unique (CF-01). Config differente = role different.
 - `mock-agent` utilise `expose` (pas `ports`) pour eviter les collisions de ports. Le port WireMock EMBEDDED est attribue dynamiquement et accessible via le reseau Docker interne.
 - Le repertoire `init-scripts/` est reference depuis `../docker/` (chemin relatif au fichier compose dans `examples/`)
 - Les volumes `./scenarios:/scenarios:ro` et `./reports:/reports` permettent d'injecter les scenarios et de recuperer les rapports
@@ -244,10 +244,10 @@ volumes:
 
 ## Criteres de Done
 
-- [ ] `docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml config` -> YAML valide, 6 services
+- [ ] `docker compose -f distribution/examples/docker-compose-wiremock-agent.yaml config` -> YAML valide, 6 services
 - [ ] Aucun service nomme `wiremock` dans le fichier
 - [ ] Chaque agent a `AGENT_SUPPORTED_TASKS` env var avec sa liste de tasks
 - [ ] Aucun `AGENT_TAGS` dans le fichier
 - [ ] Le mapping `AGENT_SUPPORTED_TASKS` -> `agent.supported-tasks` fonctionne (ou est implemente si manquant)
-- [ ] `mvn test -pl platform-deployment -q` -> 0 erreur
+- [ ] `mvn test -pl distribution -q` -> 0 erreur
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-107 -> DONE

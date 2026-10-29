@@ -39,8 +39,8 @@ rm -rf pp-ai/
 
 # Vérifier la structure
 ls -la
-# Attendu : CLAUDE.md  agents/  .claude/knowledge/adr/  .claude/workspace/  .claude/guides/  .claude/workspace/issues/  .claude/workspace/pdr/
-#           .claude/workspace/progress.md  .claude/prompts/  .claude/workspace/current-issue.md  .claude/knowledge/specs/  .claude/knowledge/skills/
+# Attendu : CLAUDE.md  agents/  docs/knowledge/adr/  .claude/workspace/  .claude/guides/  .claude/workspace/issues/  .claude/workspace/pdr/
+#           .claude/workspace/progress.md  .claude/prompts/  .claude/workspace/current-issue.md  docs/knowledge/specs/  .claude/skills/
 
 git add .
 git commit -m "chore: init ai-project structure"
@@ -81,20 +81,20 @@ claude-design
 
 ```
 @system-designer produis les PDRs et Issues pour ce projet.
-2. .claude/knowledge/glossary.md
-3. .claude/knowledge/architecture.md
-4. .claude/knowledge/constraints.md
-5. .claude/knowledge/specs/00-overview.md
-6. .claude/knowledge/specs/01-scenario-dsl.md
-7. .claude/knowledge/specs/02-execution-engine.md
-8. .claude/knowledge/specs/03-task-framework.md
-9. .claude/knowledge/specs/04-agent-runtime.md
-10. .claude/knowledge/specs/05-transport-layer.md
-11. .claude/knowledge/specs/06-injection-gatling.md
-12. .claude/knowledge/specs/07-assertion-framework.md
-13. .claude/knowledge/specs/08-report-engine.md
-14. .claude/knowledge/specs/09-deployment.md
-15. .claude/knowledge/adr/*.md
+2. docs/knowledge/glossary.md
+3. docs/knowledge/architecture.md
+4. docs/knowledge/constraints.md
+5. docs/knowledge/specs/00-overview.md
+6. docs/knowledge/specs/01-scenario-dsl.md
+7. docs/knowledge/specs/02-execution-engine.md
+8. docs/knowledge/specs/03-task-framework.md
+9. docs/knowledge/specs/04-agent-runtime.md
+10. docs/knowledge/specs/05-transport-layer.md
+11. docs/knowledge/specs/06-injection-gatling.md
+12. docs/knowledge/specs/07-assertion-framework.md
+13. docs/knowledge/specs/08-report-engine.md
+14. docs/knowledge/specs/09-deployment.md
+15. docs/knowledge/adr/*.md
 16. .claude/workspace/interfaces-registry.md
 
 MISSION :
@@ -274,7 +274,7 @@ Vérifier UNIQUEMENT les points BLOQUANTS du rapport précédent.
 
 ```bash
 # Si l'Architect produit un ADR
-git add .claude/knowledge/adr/ADR-00X-*.md
+git add docs/knowledge/adr/ADR-00X-*.md
 git commit -m "arch: ADR-00X — [titre de la décision]"
 ```
 
@@ -378,12 +378,12 @@ mvn clean install -q && echo "✅ BUILD OK" || echo "❌ BUILD FAILED"
 mvn test -q && echo "✅ TESTS OK" || echo "❌ TESTS FAILED"
 
 # Coverage (après Phase 1)
-mvn jacoco:report -pl platform-domain && \
+mvn jacoco:report -pl :platform-domain && \
   grep -A2 "platform-domain" target/site/jacoco/index.html | grep -o '[0-9]*%' | head -1
 
 # Vérifier qu'aucune annotation Spring n'est dans platform-domain
 grep -r "@Component\|@Service\|@Repository\|@Autowired" \
-  platform-domain/src/main/java/ && echo "❌ VIOLATION" || echo "✅ DOMAIN CLEAN"
+  core/platform-domain/src/main/java/ && echo "❌ VIOLATION" || echo "✅ DOMAIN CLEAN"
 
 # Plugins disponibles
 ls -la plugins/ 2>/dev/null || echo "No plugins loaded"

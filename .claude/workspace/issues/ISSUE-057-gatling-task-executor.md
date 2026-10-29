@@ -17,10 +17,10 @@ Implémenter `GatlingTaskExecutor` : assemble runner + parser, retourne `Injecti
 ## Fichiers à Créer
 
 ```
-platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/
+infra/platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/
   └── GatlingTaskExecutor.java
 
-platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/
+infra/platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/
   └── GatlingTaskExecutorTest.java
 ```
 
@@ -48,7 +48,7 @@ public class GatlingTaskExecutor implements TaskExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-injection-gatling -q` → 0 erreur
+- [ ] `mvn test -pl :platform-injection-gatling -q` → 0 erreur
 - [ ] `execute` retourne un `TaskResult` SUCCESS avec `outputs["result"]` = `InjectionResult`
 - [ ] Aucune occurrence de `TaskType`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-057 → DONE

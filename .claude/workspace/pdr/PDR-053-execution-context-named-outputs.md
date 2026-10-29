@@ -80,4 +80,4 @@ Ce PDR est utilisé par :
 - [ ] `getOutput`/`getFirstOutput` ajoutés + `get(Class)`/`getFirst(Class)` dépréciés (ISSUE-194)
 - [ ] `with()` O(chemin), plus de deep-copy O(store) (ISSUE-194)
 - [ ] Consommateurs migrés (ISSUE-195)
-- [ ] `mvn test -pl platform-domain,platform-execution-engine,platform-reporting -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain,:platform-execution-engine,:platform-reporting -q` → 0 erreur

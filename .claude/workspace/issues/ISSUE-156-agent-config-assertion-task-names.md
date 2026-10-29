@@ -1,7 +1,7 @@
 # ISSUE-156 -- Add Assertion Task Names to Agent Configuration
 
 **PDR** : PDR-037
-**Module** : `platform-app`, `platform-assertion`
+**Module** : `platform-bootstrap`, `platform-assertion`
 **Statut** : DONE
 **Priorite** : P1 (critique -- sans cette config, les agents distribues ne peuvent pas executer d'assertions)
 **Bloquee par** : ISSUE-150 (AssertionExecutor extends TaskExecutor), ISSUE-152 (registre unifie)
@@ -16,17 +16,17 @@ Ajouter les 6 noms d'assertion a la configuration `agent.supported-tasks` dans `
 ## Fichiers a Modifier
 
 ```
-platform-app/src/main/resources/
+bootstrap/src/main/resources/
   └── application-agent.yaml     -- ajouter les 6 noms d'assertion a agent.supported-tasks
 
-platform-app/src/main/resources/
+bootstrap/src/main/resources/
   ├── application-local.yaml         -- verifier que les assertions sont supportees en mode LOCAL
   └── application-orchestrator.yaml  -- verifier la config (l'orchestrateur n'execute pas les assertions, les agents oui)
 
-platform-assertion/src/main/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/
   └── database/DatabaseAssertionExecutor.java -- optionnel: renommer getSupportedAssertionName() si conflit
 
-platform-assertion/src/test/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/
   └── AssertionTaskNameUniquenessTest.java -- NOUVEAU: verifier qu'aucun nom d'assertion n'entre en conflit avec un TaskExecutor existant
 ```
 
@@ -71,7 +71,7 @@ Si cette decision est acceptee, mettre a jour egalement :
 
 ## Criteres de Done
 
-- [ ] `mvn test -pl platform-app -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` -> 0 erreur
 - [ ] `application-agent.yaml` liste les 6 noms d'assertion (ou 5 + `database-assertion`)
 - [ ] `application-local.yaml` reference correctement les noms d'assertion
 - [ ] Test : `AssertionTaskNameUniquenessTest` verifie qu'aucun `AssertionExecutor.getSupportedAssertionName()` n'egale un `TaskExecutor.getSupportedTaskName()` (sauf si intentionnel)

@@ -1,7 +1,7 @@
 # ISSUE-114 — Wire DistributedAgentRuntime with config-driven supportedTaskNames
 
 **PDR** : PDR-026
-**Module** : `platform-app` (config wiring) + `platform-agent-runtime` (test verification)
+**Module** : `platform-bootstrap` (config wiring) + `platform-agent-runtime` (test verification)
 **Statut** : DONE
 **Priorite** : P0 (DISTRIBUTED mode doit suivre ADR-015)
 **Bloquee par** : ISSUE-112 (AgentRuntimeConfiguration doit exister)
@@ -18,10 +18,10 @@ Verifier egalement le comportement "agent idle" : si `agent.supported-tasks` est
 ## Fichiers a Creer / Modifier
 
 ```
-platform-agent-runtime/src/test/java/com/performance/platform/agent/runtime/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/runtime/
   └── DistributedAgentConfigDrivenTest.java     — test verification config-driven
 
-platform-app/src/test/java/com/performance/platform/app/config/
+bootstrap/src/test/java/com/performance/platform/app/config/
   └── AgentRuntimeConfigurationTest.java        — UPDATE: ajouter tests DISTRIBUTED config-driven
 ```
 
@@ -80,7 +80,7 @@ void filterShouldRejectTaskNotInConfiguredNames() {
 }
 ```
 
-## Test d'integration Spring (platform-app)
+## Test d'integration Spring (platform-bootstrap)
 
 Ajouter dans `AgentRuntimeConfigurationTest` :
 
@@ -165,8 +165,8 @@ void distributedAgentWithEmptyConfigShouldBeIdle() {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] `DistributedAgentRuntime.canExecute("gatling")` = false si "gatling" n'est pas dans `agent.supported-tasks`
 - [ ] Agent avec `agent.supported-tasks=[]` → `canExecute()` retourne false pour tout
 - [ ] Aucun scan d'annotations pour deriver `supportedTaskNames` dans la couche config

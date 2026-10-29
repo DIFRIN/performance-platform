@@ -16,10 +16,10 @@ Deprecier `TaskExecutorLookup.findAssertionExecutor()` en fournissant une implem
 ## Fichiers a Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/local/
   └── TaskExecutorLookup.java   -- ajouter default method findAssertionExecutor() avec @Deprecated
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/local/
   └── TaskExecutorLookupTest.java -- NOUVEAU: test de la default method findAssertionExecutor
 ```
 
@@ -52,7 +52,7 @@ default AssertionExecutor findAssertionExecutor(String assertionName) {
 
 ## Criteres de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` -> 0 erreur
 - [ ] `findAssertionExecutor()` a l'annotation `@Deprecated(since="2.0", forRemoval=true)`
 - [ ] La methode default delegue a `findTaskExecutor()` et cast en `AssertionExecutor`
 - [ ] Test : `findAssertionExecutor("gatling-metric")` via mock de `findTaskExecutor` retournant un `AssertionExecutor` -> cast reussi

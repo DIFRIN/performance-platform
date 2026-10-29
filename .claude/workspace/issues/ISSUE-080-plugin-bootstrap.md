@@ -1,7 +1,7 @@
 # ISSUE-080 — PluginBootstrap (chargement au démarrage)
 
 **PDR** : PDR-018
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : WAITING
 **Priorité** : P2
 **Bloquée par** : ISSUE-077, ISSUE-047
@@ -17,11 +17,11 @@ démarrage via `PluginLoader`, sans crasher sur JAR invalide.
 ## Fichiers à Créer
 
 ```
-platform-app/src/main/java/com/performance/platform/app/plugin/
+bootstrap/src/main/java/com/performance/platform/app/plugin/
   ├── PluginBootstrap.java
   └── PluginProperties.java   — dir, enabled
 
-platform-app/src/test/java/com/performance/platform/app/plugin/
+bootstrap/src/test/java/com/performance/platform/app/plugin/
   └── PluginBootstrapTest.java
 ```
 
@@ -47,7 +47,7 @@ public record PluginProperties(String dir, boolean enabled) {}
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] Bootstrap appelle `loader.load` une fois si enabled
 - [ ] `enabled=false` → loader non appelé
 - [ ] `.claude/progress.md` mis à jour : ISSUE-080 → DONE

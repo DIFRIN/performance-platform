@@ -17,12 +17,12 @@ les 8 `LoadModelType` en `List<OpenInjectionStep>` (Gatling Java DSL).
 ## Fichiers à Créer
 
 ```
-platform-injection-gatling/pom.xml — dépend de domain, plugin-api, gatling-http, gatling-app
-platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/load/
+infra/platform-injection-gatling/pom.xml — dépend de domain, plugin-api, gatling-http, gatling-app
+infra/platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/load/
   ├── LoadModelTranslator.java
   └── DefaultLoadModelTranslator.java
 
-platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/load/
+infra/platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/load/
   └── DefaultLoadModelTranslatorTest.java — les 8 types
 ```
 
@@ -48,7 +48,7 @@ public class DefaultLoadModelTranslator implements LoadModelTranslator { /* swit
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-injection-gatling -q` → 0 erreur
+- [ ] `mvn test -pl :platform-injection-gatling -q` → 0 erreur
 - [ ] Chaque `LoadModelType` produit la bonne séquence d'`OpenInjectionStep`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-054 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `LoadModelTranslator` → STABLE

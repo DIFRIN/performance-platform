@@ -17,11 +17,11 @@ Implémenter la réception du `ScenarioRestartSignal` et le mécanisme de cleanu
 ## Fichiers à Créer
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/restart/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/restart/
   ├── ScenarioRestartHandler.java
   └── StatefulResourceCleaner.java   — interface implémentée par les executors stateful
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/restart/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/restart/
   └── ScenarioRestartHandlerTest.java
 ```
 
@@ -48,7 +48,7 @@ public class ScenarioRestartHandler {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
 - [ ] Signal reçu → tous les cleaners invoqués → état IDLE
 - [ ] `executionId=null` → cleanup global
 - [ ] `.claude/progress.md` mis à jour : ISSUE-037 → DONE

@@ -1,6 +1,6 @@
 # PDR-046 — Single Runtime Mode/Role Resolution
 
-**Module Maven** : `platform-app`
+**Module Maven** : `platform-bootstrap`
 **Package** : `com.performance.platform.runtime`
 **Statut** : WAITING
 **Specs de référence** : `improvements.md` B5 ; `ADR-006-runtime-config-priority.md` ; `ADR-019-web-ui-serving-and-security.md` ; `ADR-021-headless-cli-run-mode.md`
@@ -82,4 +82,4 @@ Ce PDR est utilisé par :
 - [ ] Un seul chemin de résolution (ISSUE-175)
 - [ ] `--runtime.role=AGENT` → `WebApplicationType.NONE` (T3)
 - [ ] `RuntimeConfigResolutionTest` paramétré sur (env, property, cli-arg) passe
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur

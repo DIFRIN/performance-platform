@@ -16,12 +16,12 @@ Implémenter le registre des load models réutilisables.
 ## Fichiers à Créer
 
 ```
-platform-scenario-dsl/src/main/java/com/performance/platform/scenario/loadmodel/
+performance/platform-scenario-dsl/src/main/java/com/performance/platform/scenario/loadmodel/
   ├── LoadModelRegistry.java          — interface
   ├── DefaultLoadModelRegistry.java   — implémentation (Map en mémoire)
   └── LoadModelNotFoundException.java
 
-platform-scenario-dsl/src/test/java/com/performance/platform/scenario/loadmodel/
+performance/platform-scenario-dsl/src/test/java/com/performance/platform/scenario/loadmodel/
   └── DefaultLoadModelRegistryTest.java
 ```
 
@@ -45,7 +45,7 @@ public class LoadModelNotFoundException extends RuntimeException {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-scenario-dsl -q` → 0 erreur
+- [ ] `mvn test -pl :platform-scenario-dsl -q` → 0 erreur
 - [ ] `get("absent")` lève `LoadModelNotFoundException`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-017 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `LoadModelRegistry` → STABLE

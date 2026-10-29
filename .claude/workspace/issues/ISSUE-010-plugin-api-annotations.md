@@ -17,13 +17,13 @@ annotations de marquage des `TaskExecutor`, avec rétention RUNTIME.
 ## Fichiers à Créer
 
 ```
-platform-plugin-api/pom.xml                 — dépend de platform-domain, 0 Spring
-platform-plugin-api/src/main/java/com/performance/platform/plugin/
+core/platform-plugin-api/pom.xml                 — dépend de platform-domain, 0 Spring
+core/platform-plugin-api/src/main/java/com/performance/platform/plugin/
   ├── Preparation.java
   ├── Injection.java
   └── Assertion.java
 
-platform-plugin-api/src/test/java/com/performance/platform/plugin/
+core/platform-plugin-api/src/test/java/com/performance/platform/plugin/
   └── AnnotationsRetentionTest.java — réflexion : RUNTIME + @Target(TYPE)
 ```
 
@@ -47,7 +47,7 @@ public @interface Assertion { String name(); String version() default "1.0.0"; S
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-plugin-api -q` → 0 erreur
+- [ ] `mvn test -pl :platform-plugin-api -q` → 0 erreur
 - [ ] Réflexion : les 3 annotations ont `RetentionPolicy.RUNTIME` et `ElementType.TYPE`
 - [ ] `pom.xml` ne contient aucune dépendance `spring-*`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-010 → DONE

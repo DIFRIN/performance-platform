@@ -16,7 +16,7 @@ Créer 3 interfaces scellées (`ExecutionEvent`, `TaskEvent`, `AssertionEvent`) 
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/event/
+core/platform-domain/src/main/java/com/performance/platform/domain/event/
   ├── ExecutionEvent.java          — NOUVEAU: sealed interface
   ├── TaskEvent.java               — NOUVEAU: sealed interface
   └── AssertionEvent.java          — NOUVEAU: sealed interface
@@ -27,7 +27,7 @@ platform-domain/src/main/java/com/performance/platform/domain/event/
 Chaque record reçoit `implements XxxEvent` :
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/event/
+core/platform-domain/src/main/java/com/performance/platform/domain/event/
   ├── ScenarioStarted.java         — ajouter implements ExecutionEvent
   ├── ScenarioFinished.java        — ajouter implements ExecutionEvent
   ├── ScenarioCancelled.java       — ajouter implements ExecutionEvent
@@ -138,6 +138,6 @@ Avant modification, vérifier que chaque record a bien les accesseurs requis par
 - [ ] `TaskEvent` sealed interface créée avec 7 permits
 - [ ] `AssertionEvent` sealed interface créée avec 2 permits
 - [ ] 16 records modifiés avec `implements XxxEvent`
-- [ ] `mvn compile -pl platform-domain -q` → 0 erreur
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn compile -pl :platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] Aucun test modifié (les interfaces sont additives)

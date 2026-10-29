@@ -101,7 +101,7 @@
 | `AssertionExecutor` | ✅ STABLE | PDR-003 | ISSUE-011 |
 | `StatefulResourceCleaner` | 🔄 IN PROGRESS | PDR-009/PDR-010 | ISSUE-040 |
 
-## platform-application (Ports)
+## platform-use-cases (Ports)
 
 | Interface | Statut | PDR | Issue |
 |---|---|---|---|
@@ -319,7 +319,7 @@
 | `ObservabilityEventListener` | ✅ STABLE | PDR-017 | ISSUE-075 |
 | `ObservabilityConfiguration` / `ExecutionContextMdcFilter` | ✅ STABLE | PDR-017 | ISSUE-076 |
 
-## platform-app
+## platform-bootstrap
 
 | Interface / Classe | Statut | PDR | Issue |
 |---|---|---|---|
@@ -394,7 +394,7 @@
 | `DeviceApiApplication` + `DeviceEventController` + `DeviceRepository` + `DeviceEventProducer` | ✅ STABLE | PDR-023 | ISSUE-097 |
 | SQL schema `devices` + seed 10k | 🔄 IN PROGRESS | PDR-023 | ISSUE-098 |
 
-## platform-deployment (PDR-024 — exemples et scénarios)
+## distribution (PDR-024 — exemples et scénarios)
 
 | Livrable | Statut | PDR | Issue |
 |---|---|---|---|
@@ -406,7 +406,7 @@
 | `scenarios/device-api-*.yaml` (LOCAL+DIST) | ✅ STABLE | PDR-024 | ISSUE-101 |
 | `README.md` examples guide | ✅ STABLE | PDR-024 | ISSUE-102 |
 
-## platform-deployment (PDR-025 — Mock Agent Demo Scenarios + Device Cleanup)
+## distribution (PDR-025 — Mock Agent Demo Scenarios + Device Cleanup)
 
 | Livrable | Statut | PDR | Issue |
 |---|---|---|---|
@@ -494,7 +494,7 @@
 | `TaskChannel` / `SignalChannel` / `EventChannel` / `LifecycleChannel` / `ConnectionLifecycle` | ✅ STABLE | PDR-052 | ISSUE-191 |
 | `ExecutionTransport` (façade composite de migration, `getType()` retiré) | ✅ STABLE (temporaire) | PDR-052 | ISSUE-191, ISSUE-193 |
 
-### platform-application
+### platform-use-cases
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|
@@ -507,7 +507,7 @@
 |---|---|---|---|
 | `AssertionExecutorRegistry` / `DefaultAssertionExecutorRegistry` | ⚠️ BREAKING → REMOVED (ADR-030) | PDR-036 | ISSUE-182 |
 
-### platform-app (runtime)
+### platform-bootstrap (runtime)
 
 | Classe / Interface | Statut | PDR | Issue |
 |---|---|---|---|

@@ -16,10 +16,10 @@ Implémenter `DockerTaskExecutor` : START/STOP/PULL de containers avec ports, en
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/docker/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/docker/
   └── DockerTaskExecutor.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/docker/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/docker/
   └── DockerTaskExecutorTest.java — mock du client Docker (pas de daemon en test unitaire)
 ```
 
@@ -43,7 +43,7 @@ public class DockerTaskExecutor implements TaskExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] START (mock) → outputs containerId
 - [ ] cleanup arrête les containers tracés
 - [ ] `.claude/progress.md` mis à jour : ISSUE-044 → DONE

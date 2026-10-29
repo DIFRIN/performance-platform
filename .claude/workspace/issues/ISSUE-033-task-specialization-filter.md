@@ -17,13 +17,13 @@ type scellé `TaskFilterResult`.
 ## Fichiers à Créer
 
 ```
-platform-agent-runtime/pom.xml — dépend de domain, application, transport
-platform-agent-runtime/src/main/java/com/performance/platform/agent/filter/
+execution/platform-agent-runtime/pom.xml — dépend de domain, application, transport
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/filter/
   ├── TaskSpecializationFilter.java
   ├── TaskFilterResult.java
   └── DefaultTaskSpecializationFilter.java
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/filter/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/filter/
   └── DefaultTaskSpecializationFilterTest.java — Responsible / NotResponsible
 ```
 
@@ -51,7 +51,7 @@ public class DefaultTaskSpecializationFilter implements TaskSpecializationFilter
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
 - [ ] taskName supporté → `Responsible` ; non supporté → `NotResponsible`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-033 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `TaskSpecializationFilter`, `TaskFilterResult` → STABLE

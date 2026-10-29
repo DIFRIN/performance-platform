@@ -17,7 +17,7 @@ Créer tous les enums du domaine, y compris `AssertionOperator` avec sa méthode
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/
+core/platform-domain/src/main/java/com/performance/platform/domain/
   ├── scenario/Phase.java
   ├── scenario/ExecutionMode.java
   ├── task/TaskStatus.java
@@ -33,7 +33,7 @@ platform-domain/src/main/java/com/performance/platform/domain/
   ├── report/ReportFormat.java
   └── transport/TransportType.java
 
-platform-domain/src/test/java/com/performance/platform/domain/assertion/
+core/platform-domain/src/test/java/com/performance/platform/domain/assertion/
   └── AssertionOperatorTest.java — les 6 opérateurs sur des cas limites
 ```
 
@@ -79,7 +79,7 @@ public enum AssertionOperator {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `AssertionOperator.LT.evaluate(1, 2)` == true ; `.GT.evaluate(1, 2)` == false
 - [ ] `TransportType` ne contient pas `GRPC`
 - [ ] Aucun enum `TaskType` dans le module

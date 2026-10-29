@@ -3,7 +3,7 @@
 **Module Maven** : `platform-domain`
 **Package** : `com.performance.platform.domain.event`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/02-execution-engine.md` section 8, `.claude/knowledge/specs/05-transport-layer.md` section 3, `.claude/workspace/assertion-distributed-analysis.md` section 4
+**Specs de reference** : `docs/knowledge/specs/02-execution-engine.md` section 8, `docs/knowledge/specs/05-transport-layer.md` section 3, `.claude/workspace/assertion-distributed-analysis.md` section 4
 **Depend de** : PDR-002 (AgentSignal domain events, deja DONE), PDR-001 (SignalId, ExecutionId, TaskId, deja DONE)
 **Issues** : ISSUE-157
 
@@ -18,7 +18,7 @@ Ce PDR modifie UNIQUEMENT `platform-domain` :
 2. Ajoute `ExecutionLifecycleSignal` record implementant `AgentSignal`
 3. Met a jour la clause `permits` de `AgentSignal` pour inclure `ExecutionLifecycleSignal`
 
-Aucune modification de `platform-application`, `platform-transport`, ou autre module.
+Aucune modification de `platform-use-cases`, `platform-transport`, ou autre module.
 
 ---
 

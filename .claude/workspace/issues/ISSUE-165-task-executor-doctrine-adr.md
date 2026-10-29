@@ -16,26 +16,26 @@ Créer l'ADR-022 documentant la doctrine Task Executor (executor dédié vs Shel
 ## Fichiers à Créer
 
 ```
-.claude/knowledge/adr/
+docs/knowledge/adr/
   └── ADR-022-task-executor-doctrine.md   — doctrine dédié vs shell
 
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/
   └── package-info.java                   — liste des executors disponibles
 ```
 
 ## Fichiers à Modifier
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/database/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/database/
   └── DatabaseTaskExecutor.java           — ajouter mention des garde-fous dans la Javadoc
 
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/docker/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/docker/
   └── DockerTaskExecutor.java             — idem
 
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/fs/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/fs/
   └── FilesystemTaskExecutor.java         — idem
 
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/shell/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/shell/
   └── ShellTaskExecutor.java              — mentionner le rôle de fallback
 ```
 
@@ -99,7 +99,7 @@ package com.performance.platform.infrastructure.executor;
 
 ## Criteres de Done
 
-- [ ] ADR-022 créé dans `.claude/knowledge/adr/ADR-022-task-executor-doctrine.md`
+- [ ] ADR-022 créé dans `docs/knowledge/adr/ADR-022-task-executor-doctrine.md`
 - [ ] `package-info.java` créé listant les 8 executors avec leur taskName
 - [ ] Javadoc de 4 executors mise à jour mentionnant leurs garde-fous
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur (aucun changement de code)
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur (aucun changement de code)

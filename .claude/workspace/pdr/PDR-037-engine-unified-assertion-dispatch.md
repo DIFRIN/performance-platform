@@ -3,7 +3,7 @@
 **Module Maven** : `platform-execution-engine`, `platform-agent-runtime`
 **Package** : `com.performance.platform.engine`, `com.performance.platform.agent.runtime`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/02-execution-engine.md`, `.claude/workspace/assertion-distributed-analysis.md` sections 4-5
+**Specs de reference** : `docs/knowledge/specs/02-execution-engine.md`, `.claude/workspace/assertion-distributed-analysis.md` sections 4-5
 **Depend de** : PDR-035 (AssertionExecutor extends TaskExecutor), PDR-036 (AssertionResultMapper), PDR-038 (ExecutionLifecycleSignal)
 **Issues** : ISSUE-154, ISSUE-155, ISSUE-156, ISSUE-158, ISSUE-159
 
@@ -481,7 +481,7 @@ Ce PDR est utilise par :
 - [ ] Agent recoit et traite `ExecutionLifecycleSignal` (ISSUE-159)
 - [ ] Agent gere `stopBehavior` : immediate, completeCurrentCycle, gracePeriod (ISSUE-159)
 - [ ] `application-agent.yaml` liste les 6 noms d'assertion (ISSUE-156)
-- [ ] `mvn test -pl platform-execution-engine -q` -> 0 erreur
-- [ ] `mvn test -pl platform-agent-runtime -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` -> 0 erreur
 - [ ] Test d'integration : assertion avec linkedTo en mode LOCAL
 - [ ] Test d'integration : assertion avec linkedTo en mode DISTRIBUTED

@@ -3,7 +3,7 @@
 **Module Maven** : `platform-domain`
 **Package** : `com.performance.platform.domain.event`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/02-execution-engine.md`, ADR-012
+**Specs de reference** : `docs/knowledge/specs/02-execution-engine.md`, ADR-012
 **Depend de** : PDR-002 (Events — déjà DONE)
 **Issues** : ISSUE-163, ISSUE-164
 
@@ -100,7 +100,7 @@ Les événements de lifecycle agent sont dans `platform-transport`, pas dans le 
 
 ## package-info.java
 
-Fichier à créer : `platform-domain/src/main/java/com/performance/platform/domain/event/package-info.java`
+Fichier à créer : `core/platform-domain/src/main/java/com/performance/platform/domain/event/package-info.java`
 
 ```java
 /**
@@ -188,5 +188,5 @@ Ce PDR est utilisé par :
 - [ ] 16 records modifiés avec `implements XxxEvent` (ISSUE-163)
 - [ ] `package-info.java` créé avec la documentation des catégories (ISSUE-164)
 - [ ] Test ArchUnit de vérification des hiérarchies scellées (ISSUE-164)
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] Aucun changement de comportement — les events sont toujours des records immuables

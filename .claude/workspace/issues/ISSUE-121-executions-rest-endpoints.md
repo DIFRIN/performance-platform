@@ -1,7 +1,7 @@
 # ISSUE-121: Endpoints REST executions (list / tasks / delete) + DTOs + progress
 
 **PDR** : PDR-027
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-120
@@ -22,18 +22,18 @@ des resumes pagines, et delete retourne 204.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/app/api/
+bootstrap/src/main/java/com/performance/platform/app/api/
   ├── ExecutionController.java          — nouveau controller IHM (list/tasks/delete)
   └── ScenarioController.java           — MODIF : embarquer progress dans getStatus
 
-platform-app/src/main/java/com/performance/platform/app/api/dto/
+bootstrap/src/main/java/com/performance/platform/app/api/dto/
   ├── ExecutionSummaryResponse.java
   ├── ProgressResponse.java
   ├── TaskSummaryResponse.java
   ├── TaskListResponse.java
   └── ExecutionStatusResponse.java      — MODIF : ajout champ progress
 
-platform-app/src/test/java/com/performance/platform/app/api/
+bootstrap/src/test/java/com/performance/platform/app/api/
   └── ExecutionControllerTest.java      — @WebMvcTest (list/tasks/delete/status+progress)
 ```
 
@@ -80,7 +80,7 @@ public record TaskListResponse(String executionId, int total, List<TaskSummaryRe
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] `GET /executions?limit=N` → liste de resumes triee desc avec progress
 - [ ] `GET /executions/{id}/tasks` → resumes (errorMessage si KO)
 - [ ] `DELETE /executions/{id}` → 204 si terminee ; 409 si active (STARTED/RUNNING) — ADR-020

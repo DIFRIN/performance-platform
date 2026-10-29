@@ -18,10 +18,10 @@ Créer le `TaskAgentRuntime` unique (A1) paramétré par `ExecutionTransport` +
 ## Fichiers à Créer
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
   └── TaskAgentRuntime.java                  — NOUVEAU
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/runtime/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/runtime/
   └── TaskAgentRuntimeTest.java              — NOUVEAU (LOCAL + DISTRIBUTED)
 ```
 
@@ -56,5 +56,5 @@ public class TaskAgentRuntime implements AgentRuntime {
 ## Critères de Done
 
 - [ ] `TaskAgentRuntime` unique compile et passe les tests
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-186 → DONE

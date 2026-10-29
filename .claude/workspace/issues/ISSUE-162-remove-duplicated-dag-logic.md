@@ -16,7 +16,7 @@ Supprimer les méthodes de parcours DAG dupliquées dans `RemoteExecutionEngine`
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
   └── RemoteExecutionEngine.java   — supprimer les méthodes DAG dupliquées
 ```
 
@@ -41,11 +41,11 @@ Ces méthodes ont une sémantique différente en DISTRIBUTED (itèrent sur tous 
 
 ## Vérification
 
-Compter les lignes supprimées et s'assurer que `mvn test -pl platform-execution-engine -q` passe.
+Compter les lignes supprimées et s'assurer que `mvn test -pl :platform-execution-engine -q` passe.
 
 ## Criteres de Done
 
 - [ ] 6 méthodes DAG dupliquées supprimées de `RemoteExecutionEngine`
 - [ ] ~120 lignes de code supprimées
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
-- [ ] `mvn test -pl platform-execution-engine -q` → même nombre de tests qu'avant (0 supprimé)
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → même nombre de tests qu'avant (0 supprimé)

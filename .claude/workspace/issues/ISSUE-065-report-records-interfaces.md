@@ -17,8 +17,8 @@ Créer le module `platform-reporting`, les records du rapport et les interfaces 
 ## Fichiers à Créer
 
 ```
-platform-reporting/pom.xml — dépend de domain, application, openhtmltopdf, jackson
-platform-reporting/src/main/java/com/performance/platform/reporting/
+infra/platform-report-renderers/pom.xml — dépend de domain, application, openhtmltopdf, jackson
+infra/platform-report-renderers/src/main/java/com/performance/platform/reporting/
   ├── PublicationTarget.java      — ⚠️ défini ICI (pas dans platform-domain) — noms d'outils externes
   ├── ReportEngine.java
   ├── ReportRenderer.java
@@ -33,7 +33,7 @@ platform-reporting/src/main/java/com/performance/platform/reporting/
   ├── RenderException.java
   └── PublicationException.java
 
-platform-reporting/src/test/java/com/performance/platform/reporting/model/
+infra/platform-report-renderers/src/test/java/com/performance/platform/reporting/model/
   └── CampaignReportTest.java
 ```
 
@@ -73,7 +73,7 @@ public enum PublicationTarget { CONFLUENCE, S3, SHAREPOINT, GIT, NEXUS, CUSTOM }
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-reporting -q` → 0 erreur
+- [ ] `mvn test -pl :platform-reporting -q` → 0 erreur
 - [ ] Records et interfaces compilent
 - [ ] `.claude/progress.md` mis à jour : ISSUE-065 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `ReportEngine`, `ReportRenderer`, `ReportPublisher` ⚡, `CampaignReport` → STABLE

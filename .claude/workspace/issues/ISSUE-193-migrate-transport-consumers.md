@@ -1,7 +1,7 @@
 # ISSUE-193 — Migrate Transport Consumers to Narrow Ports
 
 **PDR** : PDR-052
-**Module** : `platform-execution-engine`, `platform-agent-runtime`, `platform-app`
+**Module** : `platform-execution-engine`, `platform-agent-runtime`, `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-192
@@ -17,12 +17,12 @@ puis retirer la façade `ExecutionTransport` si plus aucune référence directe 
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/.../RemoteStepDispatcher.java   — dépendre de TaskChannel + EventChannel
-platform-execution-engine/.../TransportExecutionEventHandler.java — EventChannel
-platform-agent-runtime/.../TaskAgentRuntime.java          — TaskChannel + SignalChannel + ConnectionLifecycle
-platform-agent-runtime/.../AgentLifecycleIngestion.java   — LifecycleChannel
-platform-agent-runtime/.../TransportAgentRegistration.java — LifecycleChannel
-platform-transport/.../ExecutionTransport.java            — retirer la façade si plus de référence
+execution/platform-execution-engine/.../RemoteStepDispatcher.java   — dépendre de TaskChannel + EventChannel
+execution/platform-execution-engine/.../TransportExecutionEventHandler.java — EventChannel
+execution/platform-agent-runtime/.../TaskAgentRuntime.java          — TaskChannel + SignalChannel + ConnectionLifecycle
+execution/platform-agent-runtime/.../AgentLifecycleIngestion.java   — LifecycleChannel
+execution/platform-agent-runtime/.../TransportAgentRegistration.java — LifecycleChannel
+infra/platform-transport/.../ExecutionTransport.java            — retirer la façade si plus de référence
 ```
 
 ## Règles Spécifiques
@@ -33,5 +33,5 @@ platform-transport/.../ExecutionTransport.java            — retirer la façade
 ## Critères de Done
 
 - [ ] Consommateurs migrés, façade retirée si possible
-- [ ] `mvn test -pl platform-execution-engine,platform-agent-runtime,platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine,:platform-agent-runtime,:platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-193 → DONE

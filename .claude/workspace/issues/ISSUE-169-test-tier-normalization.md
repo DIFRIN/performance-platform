@@ -20,9 +20,9 @@ tournent pas (ils tournent déjà sur `mvn test`) — c'est l'incohérence des p
 
 ```
 pom.xml                                  — documenter la convention (commentaire)
-platform-app/pom.xml                     — reclasser les 4 classes Testcontainers si *E2ETest → *IT
-platform-transport/pom.xml               — vérifier Kafka/RabbitMQ *IT déjà derrière failsafe
-platform-infrastructure/pom.xml          — vérifier DatabaseAssertionExecutorIT
+bootstrap/pom.xml                     — reclasser les 4 classes Testcontainers si *E2ETest → *IT
+infra/platform-transport/pom.xml               — vérifier Kafka/RabbitMQ *IT déjà derrière failsafe
+infra/platform-infrastructure/pom.xml          — vérifier DatabaseAssertionExecutorIT
 ```
 
 ## Règles Spécifiques

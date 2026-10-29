@@ -1,7 +1,7 @@
 # ISSUE-128: Vue detail d'execution (tasks ok/ko, barre progression, phases)
 
 **PDR** : PDR-029
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-127
@@ -21,13 +21,13 @@ Le Developer peut verifier que le detail se rafraichit (polling 3s) et affiche l
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/resources/static/assets/js/views/
+bootstrap/src/main/resources/static/assets/js/views/
   └── execution-detail.js               — vue detail : mount(el, executionId) → cleanup()
 
-platform-app/src/main/resources/static/assets/js/
+bootstrap/src/main/resources/static/assets/js/
   └── api.js                            — MODIF : getStatus(id), getTasks(id)
 
-platform-app/src/main/resources/static/assets/css/
+bootstrap/src/main/resources/static/assets/css/
   └── app.css                           — MODIF : table tasks, phase sections, expansion detail
 ```
 
@@ -60,7 +60,7 @@ export function mount(el, executionId) {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] Detail rafraichi toutes les 3s, intervalle nettoye au changement de route
 - [ ] Tasks groupees par phase avec statut ok/ko/running et messages d'erreur
 - [ ] Barre de progression alimentee par le champ serveur uniquement

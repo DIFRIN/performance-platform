@@ -17,11 +17,11 @@ JMS). NOTE : gRPC NON inclus (cohérent avec la suppression de gRPC).
 ## Fichiers à Créer / Modifier
 
 ```
-platform-injection-gatling/pom.xml — ajouter gatling-http, gatling-kafka, gatling-jms (PAS gatling-grpc)
-platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/protocol/
+infra/platform-injection-gatling/pom.xml — ajouter gatling-http, gatling-kafka, gatling-jms (PAS gatling-grpc)
+infra/platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/protocol/
   └── ProtocolSupportInfo.java   — déclare les protocoles supportés
 
-platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/protocol/
+infra/platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/protocol/
   └── ProtocolSupportInfoTest.java
 ```
 
@@ -33,7 +33,7 @@ platform-injection-gatling/src/test/java/com/performance/platform/injection/gatl
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-injection-gatling -q` → 0 erreur
+- [ ] `mvn test -pl :platform-injection-gatling -q` → 0 erreur
 - [ ] `ProtocolSupportInfo` ne déclare PAS gRPC
 - [ ] Le pom ne contient pas `gatling-grpc`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-058 → DONE

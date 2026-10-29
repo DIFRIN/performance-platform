@@ -16,7 +16,7 @@ Implementer le dispatch des signaux `ExecutionLifecycleSignal` (START/STOP) dans
 ## Fichiers a Creer
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/
   ├── ExecutionLifecycleDispatcher.java          — interface fonctionnelle de dispatch
   └── lifecycle/
       ├── LocalLifecycleDispatcher.java          — implementation LOCAL (appel LocalAgent)
@@ -26,7 +26,7 @@ platform-execution-engine/src/main/java/com/performance/platform/engine/
 ## Fichiers a Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/
   ├── DagPhaseExecutor.java                      — injecter ExecutionLifecycleDispatcher, envoyer START/STOP autour de executeStep()
   ├── local/LocalExecutionEngine.java            — ajouter dispatchLifecycleSignal avant/autour de executePhase, coordonner linkedTo
   ├── local/ExecutionPlanBuilder.java            — peupler assertionIntervalSteps depuis linkedTo
@@ -34,7 +34,7 @@ platform-execution-engine/src/main/java/com/performance/platform/engine/
 ```
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/
+core/platform-domain/src/main/java/com/performance/platform/domain/
   └── ExecutionPlan.java                         — ajouter champ List<ExecutionStep> assertionIntervalSteps
 ```
 
@@ -209,7 +209,7 @@ Memes modifications que `LocalExecutionEngine`, mais via `transport.broadcastSig
 
 Fichiers a creer :
 ```
-platform-execution-engine/src/test/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/
   └── lifecycle/
       ├── LocalLifecycleDispatcherTest.java       — tests unitaires avec mock LocalAgent
       └── RemoteLifecycleDispatcherTest.java      — tests unitaires avec mock ExecutionTransport
@@ -217,7 +217,7 @@ platform-execution-engine/src/test/java/com/performance/platform/engine/
 
 Fichiers a modifier :
 ```
-platform-execution-engine/src/test/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/
   ├── DefaultExecutionPlanBuilderTest.java        — ajouter les tests pour linkedTo / assertionIntervalSteps
   ├── DagPhaseExecutorTest.java                   — verifier que START/STOP sont envoyes
   ├── LocalExecutionEngineTest.java               — verifier la coordination linkedTo
@@ -247,6 +247,6 @@ Tests unitaires minimum :
 - [ ] `DagPhaseExecutor` envoie START/STOP autour de chaque task
 - [ ] `LocalExecutionEngine` coordonne les assertions avec `linkedTo`
 - [ ] `RemoteExecutionEngine` coordonne les assertions avec `linkedTo`
-- [ ] `mvn test -pl platform-execution-engine -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` -> 0 erreur
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-158 -> DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis a jour : `ExecutionLifecycleDispatcher`, `LocalLifecycleDispatcher`, `RemoteLifecycleDispatcher`

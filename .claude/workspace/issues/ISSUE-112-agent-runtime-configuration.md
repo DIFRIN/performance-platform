@@ -1,7 +1,7 @@
 # ISSUE-112 — Create AgentRuntimeConfiguration @Configuration
 
 **PDR** : PDR-026
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : WAITING
 **Priorite** : P0 (bloquant ISSUE-113, ISSUE-114)
 **Bloquee par** : ISSUE-111 (AgentProperties doit exister)
@@ -16,10 +16,10 @@ Creer la classe de configuration Spring `AgentRuntimeConfiguration` qui produit 
 ## Fichiers a Creer
 
 ```
-platform-app/src/main/java/com/performance/platform/app/config/
+bootstrap/src/main/java/com/performance/platform/app/config/
   └── AgentRuntimeConfiguration.java      — @Configuration avec @Bean conditionnels
 
-platform-app/src/test/java/com/performance/platform/app/config/
+bootstrap/src/test/java/com/performance/platform/app/config/
   └── AgentRuntimeConfigurationTest.java  — tests de selection de beans selon mode
 ```
 
@@ -241,8 +241,8 @@ Utiliser `ApplicationContextRunner` pour des tests de configuration legers (sans
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
-- [ ] `AgentRuntimeConfiguration` est dans `platform-app/src/main/java/com/performance/platform/app/config/`
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
+- [ ] `AgentRuntimeConfiguration` est dans `bootstrap/src/main/java/com/performance/platform/app/config/`
 - [ ] Les tests verifient le bon type de bean selon le mode
 - [ ] Aucun `if/switch` sur runtime.mode ou runtime.role dans la config
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-112 → DONE

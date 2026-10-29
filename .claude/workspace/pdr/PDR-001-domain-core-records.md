@@ -3,7 +3,7 @@
 **Module Maven** : `platform-domain`
 **Package** : `com.performance.platform.domain`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/01-scenario-dsl.md` §6-7, `.claude/knowledge/specs/02-execution-engine.md` §3-5, `.claude/knowledge/specs/03-task-framework.md` §2, `.claude/knowledge/specs/04-agent-runtime.md` §4-7, `.claude/knowledge/specs/06-injection-gatling.md` §5, `.claude/knowledge/specs/07-assertion-framework.md` §3-6
+**Specs de référence** : `docs/knowledge/specs/01-scenario-dsl.md` §6-7, `docs/knowledge/specs/02-execution-engine.md` §3-5, `docs/knowledge/specs/03-task-framework.md` §2, `docs/knowledge/specs/04-agent-runtime.md` §4-7, `docs/knowledge/specs/06-injection-gatling.md` §5, `docs/knowledge/specs/07-assertion-framework.md` §3-6
 **Dépend de** : rien
 **Issues** : ISSUE-001, ISSUE-002, ISSUE-003, ISSUE-004, ISSUE-005, ISSUE-006, ISSUE-007
 

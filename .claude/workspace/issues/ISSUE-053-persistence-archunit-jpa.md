@@ -17,7 +17,7 @@ n'apparaissent QUE dans `..infrastructure.persistence..` et jamais ailleurs.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/arch/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/arch/
   └── PersistenceConfinementTest.java
 ```
 
@@ -29,6 +29,6 @@ platform-infrastructure/src/test/java/com/performance/platform/infrastructure/ar
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Test passe : aucune fuite d'entity JPA hors du package persistence
 - [ ] `.claude/progress.md` mis à jour : ISSUE-053 → DONE

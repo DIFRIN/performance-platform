@@ -17,10 +17,10 @@ disponibles et utilise le transport in-memory.
 ## Fichiers à Créer
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/local/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/local/
   └── LocalAgent.java
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/local/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/local/
   └── LocalAgentTest.java — supporte tout, FIRST_COMPLETE
 ```
 
@@ -46,7 +46,7 @@ public class LocalAgent implements AgentRuntime {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
 - [ ] `LocalAgent` supporte toutes les tasks enregistrées
 - [ ] Exécution via transport in-memory testée
 - [ ] `.claude/progress.md` mis à jour : ISSUE-038 → DONE

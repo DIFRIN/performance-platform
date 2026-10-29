@@ -16,7 +16,7 @@ Ajouter l'opération `QUERY` au `DatabaseTaskExecutor` pour permettre l'exécuti
 ## Fichiers à Modifier
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/database/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/database/
   └── DatabaseTaskExecutor.java   — ajouter executeQuery() + case "QUERY"
 ```
 
@@ -131,5 +131,5 @@ Ajouter dans la Javadoc de `DatabaseTaskExecutor` :
 - [ ] `executeQuery()` implémentée avec support SELECT et UPDATE
 - [ ] `case "QUERY"` ajouté dans le switch de `execute()`
 - [ ] Javadoc de la classe mise à jour avec les 5 paramètres
-- [ ] `mvn compile -pl platform-infrastructure -q` → 0 erreur
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur (tests existants non cassés)
+- [ ] `mvn compile -pl :platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur (tests existants non cassés)

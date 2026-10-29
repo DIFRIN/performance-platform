@@ -1,7 +1,7 @@
 # ISSUE-116 — Replace AGENT_TAGS with AGENT_SUPPORTED_TASKS in ALL deployment files
 
 **PDR** : PDR-026
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : DONE
 **Priorite** : P0 (cleanup obligatoire ADR-015)
 **Bloquee par** : ISSUE-111 (AgentProperties doit exister, car c'est la cible du mapping)
@@ -15,7 +15,7 @@ Remplacer CHAQUE occurrence de `AGENT_TAGS` par `AGENT_SUPPORTED_TASKS` dans tou
 
 ## Fichiers a Modifier
 
-### 1. `platform-deployment/docker/docker-compose.yaml`
+### 1. `distribution/docker/docker-compose.yaml`
 
 Deux occurrences (ligne ~125 et ~150) :
 
@@ -37,7 +37,7 @@ Deux occurrences (ligne ~125 et ~150) :
       AGENT_SUPPORTED_TASKS: "gatling,mock-server,http-client"
 ```
 
-### 2. `platform-deployment/kubernetes/agent-deployment.yaml`
+### 2. `distribution/kubernetes/agent-deployment.yaml`
 
 Ligne 54 :
 
@@ -60,21 +60,21 @@ Ligne 54 :
 ### 3. Autres fichiers
 
 Verifier aussi :
-- `platform-deployment/kubernetes/configmap.yaml` (si `AGENT_TAGS` present)
-- `platform-deployment/kubernetes/secret-template.yaml` (si `AGENT_TAGS` present)
-- Tout fichier `*.yaml` ou `*.yml` sous `platform-deployment/`
+- `distribution/kubernetes/configmap.yaml` (si `AGENT_TAGS` present)
+- `distribution/kubernetes/secret-template.yaml` (si `AGENT_TAGS` present)
+- Tout fichier `*.yaml` ou `*.yml` sous `distribution/`
 - Tout fichier `.env`, `.properties`, ou script Shell qui reference `AGENT_TAGS`
 
 ### 4. Fichiers qui contiennent `agentTags` dans les scenarios YAML
 
-Les scenarios DISTRIBUTED dans `platform-deployment/examples/scenarios/` contiennent `agentTags` dans leurs steps. Ces champs `agentTags` n'ont jamais ete supportes dans les specs du parser YAML -- ils sont des commentaires/documentation. Action :
+Les scenarios DISTRIBUTED dans `distribution/examples/scenarios/` contiennent `agentTags` dans leurs steps. Ces champs `agentTags` n'ont jamais ete supportes dans les specs du parser YAML -- ils sont des commentaires/documentation. Action :
 
 - **Supprimer** les lignes `agentTags: [kafka, standard]` etc.
 - **Transformer** les commentaires qui mentionnent `agentTags` pour expliquer le modele configuration-driven a la place.
 
 Fichiers concernes :
-- `platform-deployment/examples/scenarios/iot-dispatcher-distributed.yaml`
-- `platform-deployment/examples/scenarios/device-api-distributed.yaml`
+- `distribution/examples/scenarios/iot-dispatcher-distributed.yaml`
+- `distribution/examples/scenarios/device-api-distributed.yaml`
 
 Chaque fichier a des commentaires comme :
 ```yaml
@@ -92,13 +92,13 @@ Et supprimer les champs `agentTags:` actifs (non commentes) dans ces scenarios.
 
 ```bash
 # Doit retourner ZERO resultat
-grep -r "AGENT_TAGS" platform-deployment/
+grep -r "AGENT_TAGS" distribution/
 
 # Doit retourner ZERO resultat dans les fichiers YAML
-grep -r "agentTags:" platform-deployment/**/*.yaml
+grep -r "agentTags:" distribution/**/*.yaml
 
 # Verifier que AGENT_SUPPORTED_TASKS est present
-grep -r "AGENT_SUPPORTED_TASKS" platform-deployment/
+grep -r "AGENT_SUPPORTED_TASKS" distribution/
 ```
 
 ## Regles Specifiques
@@ -112,9 +112,9 @@ grep -r "AGENT_SUPPORTED_TASKS" platform-deployment/
 
 ## Critères de Done
 
-- [ ] `grep -r "AGENT_TAGS" platform-deployment/` retourne ZERO resultat
-- [ ] `grep -r "agentTags:" platform-deployment/**/*.yaml` retourne ZERO resultat
-- [ ] `grep -r "AGENT_SUPPORTED_TASKS" platform-deployment/` retourne les fichiers modifies
+- [ ] `grep -r "AGENT_TAGS" distribution/` retourne ZERO resultat
+- [ ] `grep -r "agentTags:" distribution/**/*.yaml` retourne ZERO resultat
+- [ ] `grep -r "AGENT_SUPPORTED_TASKS" distribution/` retourne les fichiers modifies
 - [ ] Les valeurs d'env var sont des noms de task valides (pas des tags)
 - [ ] Les commentaires referencent ADR-015
 - [ ] Les scenarios DISTRIBUTED n'ont plus de champ `agentTags` actif

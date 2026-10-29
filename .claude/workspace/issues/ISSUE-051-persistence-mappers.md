@@ -16,11 +16,11 @@ Implémenter les mappers entre records domaine et entities JPA (sérialisation J
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/persistence/mapper/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/persistence/mapper/
   ├── ExecutionStateMapper.java
   └── TaskResultMapper.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/persistence/mapper/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/persistence/mapper/
   ├── ExecutionStateMapperTest.java
   └── TaskResultMapperTest.java
 ```
@@ -49,6 +49,6 @@ class TaskResultMapper {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Round-trip `ExecutionState` et `TaskResult` préserve les valeurs
 - [ ] `.claude/progress.md` mis à jour : ISSUE-051 → DONE

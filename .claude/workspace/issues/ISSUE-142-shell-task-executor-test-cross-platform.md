@@ -21,7 +21,7 @@ par `@TempDir`. Les tests purement logiques restent exécutés partout. Le code 
 
 ```
 MODIFIER (test) :
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/shell/ShellTaskExecutorTest.java
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/shell/ShellTaskExecutorTest.java
   — @DisabledOnOs(OS.WINDOWS) sur les @Nested / @Test exécutant un process shell :
       BasicCommands (echo/bash), WorkingDirectory (pwd/bash + /tmp), EnvironmentVariables (bash),
       Timeout (bash sleep), Cleanup (bash touch+sleep), OutputsStructure (echo/bash),
@@ -70,7 +70,7 @@ class WorkingDirectory {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` vert sur Linux/macOS (tests shell exécutés)
+- [ ] `mvn test -pl :platform-infrastructure -q` vert sur Linux/macOS (tests shell exécutés)
 - [ ] Sur Windows : les tests dépendant de bash sont `skipped`, les tests logiques `passent` ;
       `mvn test` vert (vérifiable à défaut par revue : aucune commande bash/`/tmp` hors garde)
 - [ ] Plus aucun littéral `/tmp` dans `ShellTaskExecutorTest` (→ `@TempDir`)

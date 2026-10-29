@@ -1,7 +1,7 @@
 # ISSUE-078 — RuntimeModeResolver (env var prioritaire sur properties)
 
 **PDR** : PDR-018
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : WAITING
 **Priorité** : P1
 **Bloquée par** : ISSUE-077
@@ -17,12 +17,12 @@ réécrite en properties Spring au bootstrap pour piloter les `@ConditionalOnPro
 ## Fichiers à Créer
 
 ```
-platform-app/src/main/java/com/performance/platform/app/runtime/
+bootstrap/src/main/java/com/performance/platform/app/runtime/
   ├── RuntimeModeResolver.java
   ├── RuntimeRole.java
   └── RuntimeConfigEnvironmentPostProcessor.java   — applique la priorité env var
 
-platform-app/src/test/java/com/performance/platform/app/runtime/
+bootstrap/src/test/java/com/performance/platform/app/runtime/
   └── RuntimeModeResolverTest.java — env var gagne, fallback property
 ```
 
@@ -46,7 +46,7 @@ public class RuntimeModeResolver {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] `RUNTIME_MODE=DISTRIBUTED` override `runtime.mode: LOCAL` du yaml
 - [ ] `.claude/progress.md` mis à jour : ISSUE-078 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `RuntimeModeResolver` → STABLE

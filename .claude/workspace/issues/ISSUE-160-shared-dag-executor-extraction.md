@@ -16,22 +16,22 @@ Déplacer `DagPhaseExecutor` du package `engine/local/` vers `engine/shared/` et
 ## Fichiers à Créer
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/shared/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/shared/
   ├── DagPhaseExecutor.java        — déplacé depuis engine/local/ (modifié : accepte StepDispatcher)
   └── StepDispatcher.java          — NOUVEAU: interface fonctionnelle
 
-platform-execution-engine/src/main/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/local/
   └── LocalStepDispatcher.java     — NOUVEAU: implémentation locale du StepDispatcher
 ```
 
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/local/
   ├── DagPhaseExecutor.java        — SUPPRIMÉ (déplacé vers shared/)
   └── LocalExecutionEngine.java    — utiliser DagPhaseExecutor depuis shared/ + injecter LocalStepDispatcher
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/local/
   └── DagPhaseExecutorTest.java    — déplacer vers shared/ (ou adapter les imports)
 ```
 
@@ -183,13 +183,13 @@ this.dagPhaseExecutor = new DagPhaseExecutor(dispatcher);
 
 Déplacer `DagPhaseExecutorTest` dans `engine/shared/` et adapter :
 ```
-platform-execution-engine/src/test/java/com/performance/platform/engine/shared/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/shared/
   └── DagPhaseExecutorTest.java    — déplacé, test avec un StepDispatcher mock
 ```
 
 Créer :
 ```
-platform-execution-engine/src/test/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/local/
   └── LocalStepDispatcherTest.java — NOUVEAU: test du dispatcher local
 ```
 
@@ -199,6 +199,6 @@ platform-execution-engine/src/test/java/com/performance/platform/engine/local/
 - [ ] `StepDispatcher` interface créée
 - [ ] `LocalStepDispatcher` implémenté (appel direct executor + retry)
 - [ ] `LocalExecutionEngine` utilise `DagPhaseExecutor` depuis shared
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] Tous les tests `DagPhaseExecutorTest` passent dans leur nouveau package
 - [ ] `LocalStepDispatcherTest` créé avec tests de dispatch

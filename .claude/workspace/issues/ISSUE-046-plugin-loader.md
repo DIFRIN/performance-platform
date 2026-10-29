@@ -18,14 +18,14 @@ erreurs (JAR corrompu ignoré, pas de crash).
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/plugin/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/plugin/
   ├── PluginLoader.java
   ├── DefaultPluginLoader.java
   ├── PluginLoadResult.java
   ├── PluginWarning.java
   └── PluginError.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/plugin/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/plugin/
   └── DefaultPluginLoaderTest.java — JAR valide chargé, JAR corrompu ignoré, classe non-instanciable
 ```
 
@@ -52,7 +52,7 @@ public record PluginError(String pluginJar, String message, Throwable cause) {}
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] JAR plugin valide → executor chargé
 - [ ] JAR corrompu → `PluginError`, pas d'exception propagée
 - [ ] `.claude/progress.md` mis à jour : ISSUE-046 → DONE

@@ -1,9 +1,9 @@
 # PDR-026 — Agent Configuration Wiring & End-to-End Verification
 
-**Module Maven** : `platform-app` (config beans), `platform-agent-runtime` (tests)
+**Module Maven** : `platform-bootstrap` (config beans), `platform-agent-runtime` (tests)
 **Package** : `com.performance.platform.app.config`
 **Statut** : WAITING
-**Specs de reference** : `.claude/knowledge/adr/ADR-015-configuration-driven-agent-specialization.md`, `.claude/knowledge/specs/04-agent-runtime.md`
+**Specs de reference** : `docs/knowledge/adr/ADR-015-configuration-driven-agent-specialization.md`, `docs/knowledge/specs/04-agent-runtime.md`
 **Depend de** : PDR-009 (Agent Runtime — DONE), PDR-018 (Application Assembly — DONE), ADR-015 (ACCEPTED)
 **Issues** : ISSUE-111, ISSUE-112, ISSUE-113, ISSUE-114, ISSUE-115, ISSUE-116, ISSUE-117, ISSUE-118
 
@@ -136,9 +136,9 @@ Ce PDR est utilise par :
 - [ ] Toutes les Issues ISSUE-111 a ISSUE-118 sont DONE
 - [ ] `AgentProperties` est dans `.claude/workspace/interfaces-registry.md` avec statut STABLE
 - [ ] `AgentRuntimeConfiguration` est dans `.claude/workspace/interfaces-registry.md` avec statut STABLE
-- [ ] `mvn test -pl platform-app -q` passe (tests unitaires configuration)
+- [ ] `mvn test -pl :platform-bootstrap -q` passe (tests unitaires configuration)
 - [ ] `mvn verify -P integration-tests` passe (E2E tests Testcontainers)
-- [ ] `grep -r AGENT_TAGS` dans `platform-deployment/` retourne zero resultat
+- [ ] `grep -r AGENT_TAGS` dans `distribution/` retourne zero resultat
 - [ ] `AGENT_SUPPORTED_TASKS` est la seule variable d'environnement utilisee pour la specialisation
 - [ ] Mode LOCAL : LocalAgent accepte tous les task names du registre
 - [ ] Mode DISTRIBUTED : DistributedAgentRuntime n'accepte que les task names de `agent.supported-tasks`

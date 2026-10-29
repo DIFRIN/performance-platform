@@ -23,10 +23,10 @@ Le comportement externe (CONSUME, COUNT, outputs `messagesConsumed`, `lag`) rest
 ## Fichiers à Modifier
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/kafka/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/kafka/
   └── KafkaConsumerTaskExecutor.java     — refactoring
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/kafka/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/kafka/
   └── KafkaConsumerTaskExecutorTest.java — mise à jour (mock KafkaClusterRegistry)
 ```
 
@@ -108,7 +108,7 @@ parameters:
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Aucun `new Properties()` + `new KafkaConsumer(...)` dans `KafkaConsumerTaskExecutor`
 - [ ] Test : CONSUME avec `cluster: default` → registry consulté, topic résolu, factory créé
 - [ ] Test : COUNT avec `bootstrapServers:` legacy → WARN loggé

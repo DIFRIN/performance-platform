@@ -17,11 +17,11 @@ exécution locale via `TaskExecutorRegistry`, publication des events (claim/prog
 ## Fichiers à Créer
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
   ├── AgentRuntime.java
   └── DistributedAgentRuntime.java
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/runtime/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/runtime/
   └── DistributedAgentRuntimeTest.java — claim sur match, ignore sinon, publie events
 ```
 
@@ -57,7 +57,7 @@ public class DistributedAgentRuntime implements AgentRuntime {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
 - [ ] Task supportée → claim + completion ; non supportée → ignorée
 - [ ] MessageId dupliqué → pas de double exécution
 - [ ] `.claude/progress.md` mis à jour : ISSUE-036 → DONE

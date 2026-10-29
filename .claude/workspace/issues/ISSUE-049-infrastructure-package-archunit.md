@@ -18,7 +18,7 @@ dépendre cycliquement d'un autre ; chaque responsabilité reste confinée.
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/arch/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/arch/
   └── InfrastructurePackageSeparationTest.java
 ```
 
@@ -33,6 +33,6 @@ platform-infrastructure/src/test/java/com/performance/platform/infrastructure/ar
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Test ArchUnit passe avec les 4 packages présents
 - [ ] `.claude/progress.md` mis à jour : ISSUE-049 → DONE

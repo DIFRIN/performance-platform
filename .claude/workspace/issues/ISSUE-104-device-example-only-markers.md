@@ -8,4 +8,4 @@
 > Date superseded: 2026-06-22
 > By: System Designer
 > Reason: Device example-only code does not belong in production module platform-infrastructure.
-> Decision: DELETE (not mark). Device simulation lives only in platform-examples/.
+> Decision: DELETE (not mark). Device simulation lives only in distribution/examples/sut/.

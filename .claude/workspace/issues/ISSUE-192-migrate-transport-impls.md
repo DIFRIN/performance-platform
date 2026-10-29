@@ -18,7 +18,7 @@ implémentation n'implémente que ce qu'elle supporte ; capacité non supportée
 ## Fichiers à Modifier
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/
+infra/platform-transport/src/main/java/com/performance/platform/transport/
   ├── inmemory/InMemoryExecutionTransport.java
   ├── kafka/KafkaExecutionTransport.java
   ├── rabbitmq/RabbitMQExecutionTransport.java
@@ -35,5 +35,5 @@ platform-transport/src/main/java/com/performance/platform/transport/
 ## Critères de Done
 
 - [ ] 5 implémentations migrées, `getType()` absent
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-192 → DONE

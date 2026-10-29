@@ -113,4 +113,4 @@ Ce PDR est utilisé par :
 - [ ] `DefaultTaskCorrelationTracker` implémente les 5 nouvelles méthodes
 - [ ] `CorrelationTrackerMemoryTest` (T5) : 10 000 dispatches → `size()` revient à 0 après complétion + éviction
 - [ ] `onAgentLost` rend `isComplete(ALL_COMPLETE)` true pour un claim orphelin
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur

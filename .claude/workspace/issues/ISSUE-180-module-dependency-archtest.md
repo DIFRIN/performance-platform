@@ -1,7 +1,7 @@
 # ISSUE-180 — ModuleDependencyArchTest (T1)
 
 **PDR** : PDR-048
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P0 (ratchet qui rend la dérive récurrente)
 **Bloquée par** : ISSUE-177, ISSUE-178, ISSUE-179
@@ -24,7 +24,7 @@ un scanner ASM compatible Java 25 (l'ASM repackagé de Spring 7.0.3 fonctionne).
 ## Fichiers à Créer
 
 ```
-platform-app/src/test/java/com/performance/platform/arch/
+bootstrap/src/test/java/com/performance/platform/arch/
   └── ModuleDependencyTest.java            — NOUVEAU (scan bytecode via Spring ASM)
 ```
 
@@ -43,5 +43,5 @@ une classe de chaque module analysé.
 ## Critères de Done
 
 - [ ] `ModuleDependencyTest` (T1) vert et non-vacuous
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-180 → DONE

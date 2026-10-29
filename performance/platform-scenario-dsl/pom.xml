@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.performance</groupId>
+        <artifactId>performance-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>platform-scenario-dsl</artifactId>
+    <name>Platform Scenario DSL</name>
+    <description>Scenario validation, dependency checks and load-model policies, independent of serialization.</description>
+
+    <dependencies>
+        <!-- Domaine pur (records ScenarioDefinition, StepDefinition, LoadModel, etc.) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Ports applicatifs (ScenarioParsingUseCase) + exceptions (ScenarioParsingException) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-use-cases</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- SnakeYAML — parsing YAML brut -->
+
+        <!-- Jackson — mapping YAML (via SnakeYAML) vers DTOs -->
+
+        <!-- JUnit 5 pour les tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

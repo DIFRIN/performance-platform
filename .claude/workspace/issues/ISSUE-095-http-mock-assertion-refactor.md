@@ -23,10 +23,10 @@ Rétrocompatibilité : si `wiremockUrl` est fourni sans `target`, utiliser l'URL
 ## Fichiers à Modifier
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/http/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/http/
   └── HttpMockAssertionExecutor.java     — injecter HttpTargetRegistry (si dans .http package)
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/http/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/http/
   └── HttpMockAssertionExecutorTest.java — adapter tests
 ```
 
@@ -96,7 +96,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Test : `target: wiremock` → `HttpTargetRegistry.clientFor("wiremock")` appelé
 - [ ] Test : `wiremockUrl:` (legacy) → log WARN + client éphémère
 - [ ] Tests WireMock existants (fonctionnels) toujours verts

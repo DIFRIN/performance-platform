@@ -3,7 +3,7 @@
 **Module Maven** : `platform-infrastructure`
 **Package** : `com.performance.platform.infrastructure.executor.database`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/03-task-framework.md`, ADR-013, ADR-014
+**Specs de reference** : `docs/knowledge/specs/03-task-framework.md`, ADR-013, ADR-014
 **Depend de** : PDR-010 (DatabaseTaskExecutor — déjà DONE)
 **Issues** : ISSUE-166, ISSUE-167
 
@@ -145,10 +145,10 @@ private TaskResult executeQuery(StepDefinition step, long startNanos, DataSource
 ## Fichiers à Modifier
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/database/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/database/
   └── DatabaseTaskExecutor.java   — ajouter executeQuery() + case "QUERY" dans execute()
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/database/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/database/
   └── DatabaseTaskExecutorTest.java — ajouter tests QUERY SELECT et UPDATE
 ```
 
@@ -200,5 +200,5 @@ Ce PDR est utilisé par :
 - [ ] `case "QUERY"` ajouté dans le switch de `execute()` (ISSUE-166)
 - [ ] Tests unitaires pour QUERY SELECT et UPDATE (ISSUE-167)
 - [ ] Tests unitaires pour cas d'erreur (missing query, unknown operation) (ISSUE-167)
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] La Javadoc du `DatabaseTaskExecutor` mentionne les 3 opérations supportées

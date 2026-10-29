@@ -1,7 +1,7 @@
 # ISSUE-096 — SUT iot-dispatcher (Spring Boot : Kafka → DB → HTTP)
 
 **PDR** : PDR-023
-**Module** : `platform-examples/iot-dispatcher/` (standalone — hors Maven multi-module)
+**Module** : `distribution/examples/sut/iot-dispatcher/` (standalone — hors Maven multi-module)
 **Statut** : WAITING
 **Priorité** : P1
 **Bloquée par** : ISSUE-098 (DB schema doit être DONE — les services partagent le même schéma)
@@ -24,7 +24,7 @@ Ce service est délibérément simple (pas de couche service abstraite, pas de J
 ## Fichiers à Créer
 
 ```
-platform-examples/iot-dispatcher/
+distribution/examples/sut/iot-dispatcher/
 ├── pom.xml
 └── src/
     ├── main/
@@ -237,10 +237,10 @@ logging:
 
 ## Critères de Done
 
-- [ ] `mvn package -f platform-examples/iot-dispatcher/pom.xml -DskipTests` → BUILD SUCCESS
-- [ ] `mvn test -f platform-examples/iot-dispatcher/pom.xml` → tests unitaires OK (mock Kafka, mock DB)
+- [ ] `mvn package -f distribution/examples/sut/iot-dispatcher/pom.xml -DskipTests` → BUILD SUCCESS
+- [ ] `mvn test -f distribution/examples/sut/iot-dispatcher/pom.xml` → tests unitaires OK (mock Kafka, mock DB)
 - [ ] Test : message avec `device_id` connu → `IotHttpClient.sendCommand()` appelé
 - [ ] Test : message avec `device_id` inconnu → log WARN, pas d'appel HTTP
 - [ ] Test : message JSON malformé (pas de `device_id`) → log WARN, pas d'exception
-- [ ] `Dockerfile` présent dans `platform-examples/iot-dispatcher/`
+- [ ] `Dockerfile` présent dans `distribution/examples/sut/iot-dispatcher/`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-096 → DONE

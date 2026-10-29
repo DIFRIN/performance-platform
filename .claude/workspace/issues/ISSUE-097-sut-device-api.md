@@ -1,7 +1,7 @@
 # ISSUE-097 — SUT device-api (Spring Boot : HTTP → DB → Kafka)
 
 **PDR** : PDR-023
-**Module** : `platform-examples/device-api/` (standalone)
+**Module** : `distribution/examples/sut/device-api/` (standalone)
 **Statut** : WAITING
 **Priorité** : P1
 **Bloquée par** : ISSUE-098 (DB schema doit être DONE)
@@ -24,7 +24,7 @@ Ce service est la cible de charge Gatling dans le scénario `device-api-local.ya
 ## Fichiers à Créer
 
 ```
-platform-examples/device-api/
+distribution/examples/sut/device-api/
 ├── pom.xml
 └── src/
     ├── main/
@@ -201,12 +201,12 @@ logging:
 
 ## Critères de Done
 
-- [ ] `mvn package -f platform-examples/device-api/pom.xml -DskipTests` → BUILD SUCCESS
-- [ ] `mvn test -f platform-examples/device-api/pom.xml` → tests OK
+- [ ] `mvn package -f distribution/examples/sut/device-api/pom.xml -DskipTests` → BUILD SUCCESS
+- [ ] `mvn test -f distribution/examples/sut/device-api/pom.xml` → tests OK
 - [ ] Test : `POST /api/events?device_id=device-0001` (known) → 200 `{known: true, event_published: true}`
 - [ ] Test : `POST /api/events?device_id=unknown-999` (unknown) → 200 `{known: false, event_published: true}`
 - [ ] Test : `POST /api/events` sans `device_id` → 400 Bad Request
 - [ ] Test : `GET /api/health` → 200 `{status: UP}`
 - [ ] Test : Kafka `kafkaTemplate.send()` appelé dans les deux cas (known + unknown)
-- [ ] `Dockerfile` présent dans `platform-examples/device-api/`
+- [ ] `Dockerfile` présent dans `distribution/examples/sut/device-api/`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-097 → DONE

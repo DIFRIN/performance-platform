@@ -1,7 +1,7 @@
 # ISSUE-188 — Verify Equivalence + Boundary Post-Merge
 
 **PDR** : PDR-050
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-184, ISSUE-185, ISSUE-186, ISSUE-187
@@ -17,8 +17,8 @@ et `ModuleDependencyArchTest` (T1) doivent rester verts, et la suite complète p
 ## Fichiers à Vérifier
 
 ```
-platform-app/src/test/java/.../LocalDistributedEquivalenceTest.java — toujours vert
-platform-app/src/test/java/.../ModuleDependencyArchTest.java        — toujours vert
+bootstrap/src/test/java/.../LocalDistributedEquivalenceTest.java — toujours vert
+bootstrap/src/test/java/.../ModuleDependencyArchTest.java        — toujours vert
 ```
 
 ## Règles Spécifiques

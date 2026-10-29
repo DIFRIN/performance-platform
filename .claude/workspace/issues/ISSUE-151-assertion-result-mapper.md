@@ -16,10 +16,10 @@ Creer la classe utilitaire `AssertionResultMapper` dans `platform-assertion`. Ce
 ## Fichiers a Creer
 
 ```
-platform-assertion/src/main/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/
   └── AssertionResultMapper.java       -- utilitaire statique: toTaskResult(), extractSummary()
 
-platform-assertion/src/test/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/
   └── AssertionResultMapperTest.java   -- tests: tous les statuts, history vide/non-vide, extractSummary
 ```
 
@@ -47,7 +47,7 @@ public final class AssertionResultMapper {
 
 ## Criteres de Done
 
-- [ ] `mvn test -pl platform-assertion -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` -> 0 erreur
 - [ ] `AssertionResultMapper` compile
 - [ ] Test : toTaskResult avec PASSED -> TaskResult.status=SUCCESS, outputs["assertion"] est un AssertionSummary
 - [ ] Test : toTaskResult avec FAILED -> TaskResult.status=FAILED, errorMessage = description

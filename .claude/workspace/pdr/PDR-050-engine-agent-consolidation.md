@@ -1,6 +1,6 @@
 # PDR-050 — Engine & Agent Consolidation (collapse the mode fork)
 
-**Module Maven** : `platform-execution-engine`, `platform-agent-runtime`, `platform-app`
+**Module Maven** : `platform-execution-engine`, `platform-agent-runtime`, `platform-bootstrap`
 **Package** : `com.performance.platform.engine`, `com.performance.platform.agent.runtime`
 **Statut** : WAITING
 **Specs de référence** : `improvements.md` A1, §3 (target architecture) ; `ADR-026-assembly-strategy-thin-composition-root.md`
@@ -86,7 +86,7 @@ public class TaskAgentRuntime implements AgentRuntime {
 
 Les classes supprimées : `LocalExecutionEngine`, `RemoteExecutionEngine`,
 `LocalAgent`, `DistributedAgentRuntime`. `LocalLifecycleDispatcher`/`RemoteLifecycleDispatcher`
-restent les implémentations de `ExecutionLifecycleDispatcher` (câblées dans platform-app).
+restent les implémentations de `ExecutionLifecycleDispatcher` (câblées dans platform-bootstrap).
 
 ---
 

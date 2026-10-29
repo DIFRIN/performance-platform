@@ -18,11 +18,11 @@ Créer `ExecutionContext` strictement immuable (méthode `with()` uniquement) et
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/execution/
+core/platform-domain/src/main/java/com/performance/platform/domain/execution/
   ├── ExecutionContext.java
   └── PartialExecutionContext.java
 
-platform-domain/src/test/java/com/performance/platform/domain/execution/
+core/platform-domain/src/test/java/com/performance/platform/domain/execution/
   ├── ExecutionContextTest.java        — immutabilité, with() retourne nouvelle instance, get/getFirst/getAll
   └── PartialExecutionContextTest.java — get/getFirst
 ```
@@ -63,7 +63,7 @@ public record PartialExecutionContext(ExecutionId executionId, ScenarioId scenar
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `ctx.with("k", v) != ctx` (nouvelle instance) et `ctx` inchangé
 - [ ] `getAll("absent")` retourne une map vide non-null
 - [ ] Tentative de mutation du store retournée → `UnsupportedOperationException`

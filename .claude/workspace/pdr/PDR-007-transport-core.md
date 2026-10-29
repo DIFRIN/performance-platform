@@ -3,7 +3,7 @@
 **Module Maven** : `platform-transport`
 **Package** : `com.performance.platform.transport`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/05-transport-layer.md` §1-3, §5-7, ADR-002, ADR-008
+**Specs de référence** : `docs/knowledge/specs/05-transport-layer.md` §1-3, §5-7, ADR-002, ADR-008
 **Dépend de** : PDR-001, PDR-002
 **Issues** : ISSUE-025, ISSUE-026, ISSUE-027
 

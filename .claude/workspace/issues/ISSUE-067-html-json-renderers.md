@@ -16,13 +16,13 @@ Implémenter les renderers HTML (template) et JSON (Jackson).
 ## Fichiers à Créer
 
 ```
-platform-reporting/src/main/java/com/performance/platform/reporting/render/
+infra/platform-report-renderers/src/main/java/com/performance/platform/reporting/render/
   ├── HtmlReportRenderer.java
   └── JsonReportRenderer.java
-platform-reporting/src/main/resources/templates/
+infra/platform-report-renderers/src/main/resources/templates/
   └── campaign-report.html   — template (en-tête, résumé, sections, verdict badge)
 
-platform-reporting/src/test/java/com/performance/platform/reporting/render/
+infra/platform-report-renderers/src/test/java/com/performance/platform/reporting/render/
   ├── HtmlReportRendererTest.java
   └── JsonReportRendererTest.java — round-trip JSON
 ```
@@ -42,7 +42,7 @@ platform-reporting/src/test/java/com/performance/platform/reporting/render/
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-reporting -q` → 0 erreur
+- [ ] `mvn test -pl :platform-reporting -q` → 0 erreur
 - [ ] HTML contient le verdict et les KPIs ; JSON désérialisable en `CampaignReport`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-067 → DONE
 - [ ] `.claude/context/interfaces-registry.md` mis à jour

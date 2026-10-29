@@ -1,7 +1,7 @@
 # ISSUE-175 — Single Runtime Resolution incl. CLI args (T3)
 
 **PDR** : PDR-046
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : —
@@ -19,7 +19,7 @@ Consolider les 3 chemins de résolution mode/rôle (`main().isAgentMode()`,
 ## Fichiers à Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/
+bootstrap/src/main/java/com/performance/platform/
   ├── PerformancePlatformApplication.java   — déléguer à RuntimeConfigResolver
   └── runtime/
       ├── RuntimeConfigResolver.java        — NOUVEAU (env > CLI args > property > défaut)
@@ -27,7 +27,7 @@ platform-app/src/main/java/com/performance/platform/
       ├── RuntimeConfigEnvironmentPostProcessor.java — réduire/supprimer
       └── RuntimeModeResolver.java          — conserver/déléguer (ou supprimer)
 
-platform-app/src/test/java/com/performance/platform/runtime/
+bootstrap/src/test/java/com/performance/platform/runtime/
   └── RuntimeConfigResolutionTest.java      — NOUVEAU (T3)
 ```
 
@@ -54,6 +54,6 @@ public final class RuntimeConfigResolver {
 
 - [ ] `RuntimeConfigResolutionTest` (T3) vert
 - [ ] `--runtime.role=AGENT` → `WebApplicationType.NONE`
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-175 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour (RuntimeConfig/RuntimeConfigResolver)

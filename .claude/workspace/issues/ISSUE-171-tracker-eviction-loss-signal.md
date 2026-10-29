@@ -17,11 +17,11 @@ d'agent, signal de complétion, ordre de complétion, size) et le test mémoire 
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/correlation/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/correlation/
   ├── TaskCorrelationTracker.java          — ajouter onAgentLost/remove/size/onComplete/resultsInCompletionOrder
   └── DefaultTaskCorrelationTracker.java   — implémenter + enrichir CorrelationState
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/correlation/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/correlation/
   └── CorrelationTrackerMemoryTest.java    — NOUVEAU (T5)
 ```
 
@@ -44,7 +44,7 @@ List<TaskResult> resultsInCompletionOrder(MessageId messageId);
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] `CorrelationTrackerMemoryTest` (T5) vert
 - [ ] `onAgentLost` rend `isComplete(ALL_COMPLETE)` vrai pour un claim orphelin
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-171 → DONE

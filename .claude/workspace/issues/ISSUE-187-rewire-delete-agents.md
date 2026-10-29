@@ -1,7 +1,7 @@
 # ISSUE-187 — Rewire Agent Config + Delete LocalAgent/DistributedAgentRuntime
 
 **PDR** : PDR-050
-**Module** : `platform-agent-runtime`, `platform-app`
+**Module** : `platform-agent-runtime`, `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-186, ISSUE-177
@@ -17,11 +17,11 @@ les deux modes, et supprimer `LocalAgent` + `DistributedAgentRuntime` (A1).
 ## Fichiers à Modifier
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/
   ├── local/LocalAgent.java                     — SUPPRIMER
   └── runtime/DistributedAgentRuntime.java      — SUPPRIMER
 
-platform-app/src/main/java/com/performance/platform/app/config/
+bootstrap/src/main/java/com/performance/platform/app/config/
   └── AgentRuntimeConfiguration.java            — réécrire (un bean TaskAgentRuntime, paramétré par mode)
 ```
 
@@ -35,6 +35,6 @@ platform-app/src/main/java/com/performance/platform/app/config/
 
 - [ ] `LocalAgent`/`DistributedAgentRuntime` supprimés
 - [ ] `AgentRuntimeConfiguration` réécrite, smoke LOCAL/AGENT verts
-- [ ] `mvn test -pl platform-agent-runtime,platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime,:platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-187 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour (LocalAgent/DistributedAgentRuntime → ❌ REMOVED, TaskAgentRuntime → PLANNED)

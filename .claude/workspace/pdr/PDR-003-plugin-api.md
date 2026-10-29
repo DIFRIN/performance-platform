@@ -3,7 +3,7 @@
 **Module Maven** : `platform-plugin-api`
 **Package** : `com.performance.platform.plugin`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/03-task-framework.md` §1, §7.2, §7.8, `.claude/knowledge/constraints.md` CF-07, CF-08
+**Specs de référence** : `docs/knowledge/specs/03-task-framework.md` §1, §7.2, §7.8, `docs/knowledge/constraints.md` CF-07, CF-08
 **Dépend de** : PDR-001
 **Issues** : ISSUE-010, ISSUE-011
 

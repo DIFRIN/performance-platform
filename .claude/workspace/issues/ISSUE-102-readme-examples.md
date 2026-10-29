@@ -1,7 +1,7 @@
 # ISSUE-102 — README examples + guide démarrage
 
 **PDR** : PDR-024
-**Module** : `platform-deployment/examples/`
+**Module** : `distribution/examples/`
 **Statut** : WAITING
 **Priorité** : P2
 **Bloquée par** : ISSUE-099, ISSUE-100, ISSUE-101 (tous les fichiers doivent exister)
@@ -11,7 +11,7 @@
 
 ## Objectif
 
-Créer `platform-deployment/examples/README.md` — guide de démarrage step-by-step pour les deux use cases IoT, en mode LOCAL et DISTRIBUTED.
+Créer `distribution/examples/README.md` — guide de démarrage step-by-step pour les deux use cases IoT, en mode LOCAL et DISTRIBUTED.
 
 Le README doit être **autonome** : quelqu'un qui découvre le projet doit pouvoir lancer les exemples en 5 minutes sans lire les specs.
 
@@ -20,7 +20,7 @@ Le README doit être **autonome** : quelqu'un qui découvre le projet doit pouvo
 ## Fichiers à Créer
 
 ```
-platform-deployment/examples/
+distribution/examples/
   └── README.md
 ```
 
@@ -66,10 +66,10 @@ Deux use cases réels de test de performance sur des services IoT :
 
 ```bash
 # Depuis la racine du projet
-docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
+docker compose -f distribution/examples/docker-compose-sut.yaml up -d
 
 # Vérifier que tout est healthy (~60s)
-docker compose -f platform-deployment/examples/docker-compose-sut.yaml ps
+docker compose -f distribution/examples/docker-compose-sut.yaml ps
 ```
 
 Ports exposés :
@@ -88,7 +88,7 @@ Ports exposés :
 mvn clean package -DskipTests -q
 
 # Démarrer en mode LOCAL avec le profil d'exemples
-java -jar platform-app/target/performance-platform.jar \
+java -jar bootstrap/target/performance-platform.jar \
   --spring.profiles.active=local,examples-local
 ```
 
@@ -98,10 +98,10 @@ java -jar platform-app/target/performance-platform.jar \
 
 ```bash
 # Construire l'image Docker de la plateforme
-docker build -f platform-deployment/docker/Dockerfile -t performance-platform:latest .
+docker build -f distribution/docker/Dockerfile -t performance-platform:latest .
 
 # Démarrer orchestrateur + 2 agents
-docker compose -f platform-deployment/docker/docker-compose.yaml up -d
+docker compose -f distribution/docker/docker-compose.yaml up -d
 
 # Vérifier
 curl http://localhost:8080/actuator/health
@@ -120,12 +120,12 @@ curl http://localhost:8080/actuator/health
 # Mode LOCAL (1 000 commandes)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
-  --data-binary @platform-deployment/examples/scenarios/iot-dispatcher-local.yaml
+  --data-binary @distribution/examples/scenarios/iot-dispatcher-local.yaml
 
 # Mode DISTRIBUTED (10 000 commandes)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
-  --data-binary @platform-deployment/examples/scenarios/iot-dispatcher-distributed.yaml
+  --data-binary @distribution/examples/scenarios/iot-dispatcher-distributed.yaml
 ```
 
 ### SUT-B : Device API
@@ -134,12 +134,12 @@ curl -X POST http://localhost:8080/scenarios/run \
 # Mode LOCAL (1 000 users, ramp 60s)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
-  --data-binary @platform-deployment/examples/scenarios/device-api-local.yaml
+  --data-binary @distribution/examples/scenarios/device-api-local.yaml
 
 # Mode DISTRIBUTED (10 000 users, ramp 120s)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
-  --data-binary @platform-deployment/examples/scenarios/device-api-distributed.yaml
+  --data-binary @distribution/examples/scenarios/device-api-distributed.yaml
 ```
 
 ### Suivre l'exécution
@@ -152,7 +152,7 @@ curl http://localhost:8080/executions/{execution-id}/status
 # → stdout de la JVM
 
 # Logs plateforme (mode DISTRIBUTED)
-docker compose -f platform-deployment/docker/docker-compose.yaml logs orchestrator -f
+docker compose -f distribution/docker/docker-compose.yaml logs orchestrator -f
 ```
 
 ---
@@ -186,10 +186,10 @@ Le même scénario `device-api-local.yaml` s'exécute sans modification sur tous
 ## Arrêter le SUT
 
 ```bash
-docker compose -f platform-deployment/examples/docker-compose-sut.yaml down
+docker compose -f distribution/examples/docker-compose-sut.yaml down
 
 # Avec suppression des données (reset complet)
-docker compose -f platform-deployment/examples/docker-compose-sut.yaml down -v
+docker compose -f distribution/examples/docker-compose-sut.yaml down -v
 ```
 ```
 
@@ -205,7 +205,7 @@ docker compose -f platform-deployment/examples/docker-compose-sut.yaml down -v
 
 ## Critères de Done
 
-- [ ] `README.md` créé dans `platform-deployment/examples/`
+- [ ] `README.md` créé dans `distribution/examples/`
 - [ ] 5 étapes claires (start SUT, start platform, submit scenario, follow, stop)
 - [ ] Deux scénarios documentés (SUT-A et SUT-B)
 - [ ] Deux modes documentés (LOCAL et DISTRIBUTED)

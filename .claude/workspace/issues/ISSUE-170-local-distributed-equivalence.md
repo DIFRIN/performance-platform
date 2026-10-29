@@ -1,7 +1,7 @@
 # ISSUE-170 — LocalDistributedEquivalenceTest (T2)
 
 **PDR** : PDR-043
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P0 (test le plus précieux du repo — gate de la fusion A1)
 **Bloquée par** : —
@@ -19,7 +19,7 @@ C'est le filet qui rend la fusion A1 sûre (T2).
 ## Fichiers à Créer
 
 ```
-platform-app/src/test/java/com/performance/platform/app/e2e/
+bootstrap/src/test/java/com/performance/platform/app/e2e/
   └── LocalDistributedEquivalenceTest.java
   └── equivalence-scenario.yaml   — scénario minimal (prep + injection + assertion)
 ```

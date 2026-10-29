@@ -16,11 +16,11 @@ Implémenter `RetryExecutor` appliquant une `RetryPolicy` (backoff exponentiel p
 ## Fichiers à Créer
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/retry/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/retry/
   ├── RetryExecutor.java          — interface
   └── DefaultRetryExecutor.java   — implémentation
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/retry/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/retry/
   └── DefaultRetryExecutorTest.java — succès après N retries, échec après maxAttempts, calcul du délai
 ```
 
@@ -44,7 +44,7 @@ public class DefaultRetryExecutor implements RetryExecutor { /* ... */ }
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] Action réussissant au 3e essai → succès
 - [ ] Action échouant toujours → exception après `maxAttempts`
 - [ ] Délais conformes au backoff (test avec multiplier=2.0)

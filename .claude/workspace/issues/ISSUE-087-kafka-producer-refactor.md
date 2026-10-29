@@ -23,10 +23,10 @@ Le comportement externe (outputs `messagesProduced`, `messagesFailed`) reste ide
 ## Fichiers à Modifier
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/kafka/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/kafka/
   └── KafkaProducerTaskExecutor.java    — refactoring complet
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/kafka/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/kafka/
   └── KafkaProducerTaskExecutorTest.java — mise à jour des tests (mock KafkaClusterRegistry)
 ```
 
@@ -106,7 +106,7 @@ parameters:
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Aucun `new Properties()` dans `KafkaProducerTaskExecutor`
 - [ ] Aucun `new KafkaProducer(...)` dans `KafkaProducerTaskExecutor`
 - [ ] Test : step avec `cluster: iot-sut` → registry consulté, topic résolu

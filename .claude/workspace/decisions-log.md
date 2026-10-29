@@ -39,7 +39,7 @@ IMPACT : SignalsTest utilise new ReportId("report-1") et SignalId.generate().
 [2026-06-14] [platform-execution-engine] DECISION : Kahn's BFS avec merge Math::max pour calculer les dagLevels — sans librairie externe
 CONTEXTE : La question "BFS ou tri topologique ? Quelle lib ?" etait en suspens depuis la phase de design. ISSUE-019 implemente ExecutionPlanBuilder.
 RAISON : Kahn (BFS sur degres entrants) est l'algorithme standard pour le tri topologique de DAG. Le merge avec Math::max gere correctement les dependances multiples (diamond pattern). Aucune librairie externe necessaire — l'algorithme tient en ~55 lignes de code et les collections Java standard suffisent.
-IMPACT : DagLevelCalculator.java dans platform-execution-engine/engine/plan/. Les dagLevels sont calcules globalement (toutes phases confondues) pour garantir la coherence des niveaux en presence de dependances inter-phases.
+IMPACT : DagLevelCalculator.java dans execution/platform-execution-engine/engine/plan/. Les dagLevels sont calcules globalement (toutes phases confondues) pour garantir la coherence des niveaux en presence de dependances inter-phases.
 
 ---
 
@@ -68,7 +68,7 @@ Documenter la décision prise ici quand elle est tranchée.
 
 ## Decisions ISSUE-082
 
-[2026-06-20] [platform-app] DECISION: @SpringBootTest contourne par manual wiring + Testcontainers
+[2026-06-20] [platform-bootstrap] DECISION: @SpringBootTest contourne par manual wiring + Testcontainers
 CONTEXTE: @SpringBootTest incompatible (SpringExtension.getTestContextManager() appelle
 computeIfAbsent, methode supprimee de JUnit 5.11.4 ExtensionContext$Store).
 RAISON: Le contournement via manual wiring est deja etabli dans le codebase
@@ -77,14 +77,14 @@ IMPACT: LocalFlowE2ETest utilise Hibernate SessionFactory + Flyway + PostgreSQL
 Testcontainer directement, sans Spring Data JPA. RawJpaExecutionRepository
 wrapper JPA/Hibernate pur implementant ExecutionRepository.
 
-[2026-06-20] [platform-app] DECISION: Injection shell plutot que Gatling dans l'E2E
+[2026-06-20] [platform-bootstrap] DECISION: Injection shell plutot que Gatling dans l'E2E
 CONTEXTE: Gatling demande une classe Simulation compilee sur le classpath, un
 classloader isole, et un serveur HTTP cible. Trop de complexite pour un test E2E.
 RAISON: Le test doit verifier le flux complet (PREP->INJECT->ASSERT), pas specifiquement
 Gatling. ShellTaskExecutor est plus fiable, cross-platform (echo), et sans dependance externe.
 IMPACT: e2e-local.yaml utilise "shell" avec "echo" pour la phase INJECTION au lieu de "gatling".
 
-[2026-06-20] [platform-app] DECISION: E2E test execute via surefire (pas failsafe)
+[2026-06-20] [platform-bootstrap] DECISION: E2E test execute via surefire (pas failsafe)
 CONTEXTE: Failsafe (integration-test) echoue apres spring-boot:repackage (package phase)
 avec NoClassDefFound sur ScenarioController. Le test passe correctement via surefire
 et aussi via failsafe:integration-test isole.
@@ -99,7 +99,7 @@ IMPACT: LocalFlowE2ETest.java execute par surefire. mvn verify -P integration-te
 [2026-06-21] [architecture] DECISION : ADR-015 — Named Resource Registry Pattern officialise comme standard
 CONTEXTE : PDR-020 (Kafka) et PDR-022 (HTTP) repliquent le pattern DatasourceProvider/ADR-014 mot pour mot. Question : ADR-014 (datasource only) suffit-il pour les ressources externes futures ?
 RAISON : ADR-014 n'a pas l'autorite normative transverse. Sans standard, chaque ressource future reinventerait sa convention (risque credentials inline, cles YAML incoherentes). 5 invariants : reference logique dans scenario, config sous platform.<famille>.*, credentials par env var, binding @ConfigurationProperties+Map record immuable, Registry via @Bean (pas @Component).
-IMPACT : ADR-014 devient une instance du standard. S'applique a PDR-020, PDR-022, et toute ressource externe future (gRPC, S3, Redis...). Ne s'applique JAMAIS a transport.* (ADR-017) ni a platform-domain/plugin-api.
+IMPACT : ADR-014 devient une instance du standard. S'applique a PDR-020, PDR-022, et toute ressource externe future (gRPC, S3, Redis...). Ne s'applique JAMAIS a transport.* (ADR-017) ni a core/platform-domain/plugin-api.
 
 [2026-06-21] [architecture] DECISION : ADR-016 — Resolution noms logiques (topics/paths) avec fallback transparent
 CONTEXTE : PDR-020 (resolveTopic) et PDR-022 (resolvePath) ajoutent un 2e niveau de resolution (sous-ressource) non couvert par ADR-014. Quel comportement si nom logique non mappe ?
@@ -113,8 +113,8 @@ IMPACT : PDR-021 beans transportKafkaTemplate/transportProducerFactory/transport
 
 [2026-06-21] [architecture] DECISION : ADR-018 — Isolation des services SUT d'exemple (platform-examples)
 CONTEXTE : PDR-023 cree iot-dispatcher/device-api en Spring Boot 3.4.x, hors pom racine, sans archi hexagonale. Tension apparente avec stack NON NEGOCIABLE (CLAUDE.md §4) et regles archi.
-RAISON : Le SUT n'est PAS le produit : c'est un systeme tiers simule pour la demo. Les regles plateforme (stack 4.x, hexagonale, domaine pur, registries, ArchUnit) NE s'appliquent PAS a platform-examples/. Hors build Maven racine, packages com.performance.examples.*, couplage uniquement par contrat reseau (topics/endpoints via registries ADR-015).
-IMPACT : Reviewer NE doit PAS signaler les "violations" archi dans platform-examples/. NE PAS ajouter au pom racine, NE PAS upgrader vers 4.x. Build SUT verifie separement (Done PDR-023).
+RAISON : Le SUT n'est PAS le produit : c'est un systeme tiers simule pour la demo. Les regles plateforme (stack 4.x, hexagonale, domaine pur, registries, ArchUnit) NE s'appliquent PAS a distribution/examples/sut/. Hors build Maven racine, packages com.performance.examples.*, couplage uniquement par contrat reseau (topics/endpoints via registries ADR-015).
+IMPACT : Reviewer NE doit PAS signaler les "violations" archi dans distribution/examples/sut/. NE PAS ajouter au pom racine, NE PAS upgrader vers 4.x. Build SUT verifie separement (Done PDR-023).
 
 ---
 
@@ -122,7 +122,7 @@ IMPACT : Reviewer NE doit PAS signaler les "violations" archi dans platform-exam
 
 [2026-06-23] [architecture] DECISION : ADR-019 — Securite IHM = `platform.security.enabled` existant, PAS de `security.jwt.enabled`
 CONTEXTE : PDR-028/ISSUE-125 introduisaient une propriete `security.jwt.enabled` independante du mode pour activer JWT. Or `SecurityConfiguration` (ISSUE-081) pilote DEJA la securite via `platform.security.enabled` + detection issuer-uri OAuth2. `security.jwt.enabled` n'existe nulle part.
-RAISON : Eviter deux mecanismes concurrents et une property morte. Reutiliser l'existant ; ajouter `/`, `/index.html`, `/assets/**` aux matchers permitAll() quand la securite est active (assets publics, pas de login v1). `platform-app` reste l'adapter entrant racine (serving statique + controllers + use cases = pas une violation Modulith).
+RAISON : Eviter deux mecanismes concurrents et une property morte. Reutiliser l'existant ; ajouter `/`, `/index.html`, `/assets/**` aux matchers permitAll() quand la securite est active (assets publics, pas de login v1). `platform-bootstrap` reste l'adapter entrant racine (serving statique + controllers + use cases = pas une violation Modulith).
 IMPACT : ISSUE-125 corrigee (cle securite + matchers statiques). PDR-028 a aligner. SecurityConfiguration.java a etendre. Voir ADR-019.
 
 [2026-06-23] [architecture] DECISION : ADR-020 — Read-model executions : progress (state+taskResults), pas de port CQRS separe, delete interdit si actif

@@ -16,10 +16,10 @@ Implémenter `S3ReportPublisher` : upload des fichiers du rapport vers un bucket
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/s3/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/s3/
   └── S3ReportPublisher.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/s3/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/s3/
   └── S3ReportPublisherTest.java — client S3 mocké (ou Testcontainers LocalStack)
 ```
 
@@ -42,7 +42,7 @@ public class S3ReportPublisher implements ReportPublisher {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Upload testé (mock ou LocalStack)
 - [ ] `.claude/progress.md` mis à jour : ISSUE-072 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `S3ReportPublisher` → STABLE

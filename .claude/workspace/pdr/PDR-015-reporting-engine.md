@@ -3,7 +3,7 @@
 **Module Maven** : `platform-reporting`
 **Package** : `com.performance.platform.reporting`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/08-report-engine.md` §1-5, §7
+**Specs de référence** : `docs/knowledge/specs/08-report-engine.md` §1-5, §7
 **Dépend de** : PDR-001, PDR-002, PDR-004, PDR-013, PDR-014
 **Issues** : ISSUE-065, ISSUE-066, ISSUE-067, ISSUE-068, ISSUE-069
 
@@ -103,7 +103,7 @@ Ce PDR utilise :
 
 Ce PDR est utilisé par :
   PDR-016 (publishers)   → implémentent ReportPublisher
-  PDR-018 (platform-app) → orchestration finale
+  PDR-018 (platform-bootstrap) → orchestration finale
 ```
 
 ---

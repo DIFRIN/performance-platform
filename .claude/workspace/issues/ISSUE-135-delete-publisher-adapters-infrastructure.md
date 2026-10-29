@@ -20,7 +20,7 @@ avant les contrats eux-mêmes (ISSUE-136/137).
 
 ```
 SUPPRIMER (main) :
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/
   ├── MultiPublisherDispatcher.java
   ├── PublishersProperties.java
   ├── confluence/ConfluenceReportPublisher.java
@@ -28,14 +28,14 @@ platform-infrastructure/src/main/java/com/performance/platform/infrastructure/pu
   └── git/GitReportPublisher.java
 
 SUPPRIMER (test) :
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/
   ├── MultiPublisherDispatcherTest.java
   ├── confluence/ConfluenceReportPublisherTest.java
   ├── s3/S3ReportPublisherTest.java
   └── git/GitReportPublisherTest.java
 
 MODIFIER :
-platform-infrastructure/pom.xml  — retirer les dépendances utilisées UNIQUEMENT par les
+infra/platform-infrastructure/pom.xml  — retirer les dépendances utilisées UNIQUEMENT par les
                                    publishers supprimés (le cas échéant). NE PAS retirer
                                    WireMock (utilisé aussi par MockServerTaskExecutor main).
 ```
@@ -43,7 +43,7 @@ platform-infrastructure/pom.xml  — retirer les dépendances utilisées UNIQUEM
 ## Interfaces à Implémenter
 
 > Aucune nouvelle interface. Suppression d'adapters (ADR-022). Après suppression, le port
-> `ReportPublisherPort` (platform-application) n'a plus aucun implémenteur — il sera supprimé
+> `ReportPublisherPort` (platform-use-cases) n'a plus aucun implémenteur — il sera supprimé
 > en ISSUE-136.
 
 ## Règles Spécifiques
@@ -60,13 +60,13 @@ platform-infrastructure/pom.xml  — retirer les dépendances utilisées UNIQUEM
 - À l'issue de cette Issue, le module **ne compile pas encore** tant que `ReportPublisherPort`
   est référencé par rien d'autre — vérifier : si `MultiPublisherDispatcher` était le seul
   implémenteur, sa suppression suffit à ce que le module compile (le port reste défini dans
-  platform-application, sans implémenteur, ce qui est légal).
+  platform-use-cases, sans implémenteur, ce qui est légal).
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur (le module compile sans le package publisher)
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur (le module compile sans le package publisher)
 - [ ] Le répertoire `.../infrastructure/publisher/` n'existe plus (main + test)
-- [ ] `grep -r "ReportPublisher\b" platform-infrastructure/src` → vide
+- [ ] `grep -r "ReportPublisher\b" infra/platform-infrastructure/src` → vide
 - [ ] ArchUnit infra vert
 - [ ] `.claude/workspace/progress.md` : géré par les scripts (`issue-finish.sh`)
 - [ ] `.claude/workspace/interfaces-registry.md` : entrées publishers infra → `❌ REMOVED (ADR-022)`

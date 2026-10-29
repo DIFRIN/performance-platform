@@ -17,7 +17,7 @@ Créer les events agent/assertion/report et l'interface scellée `AgentSignal` a
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/event/
+core/platform-domain/src/main/java/com/performance/platform/domain/event/
   ├── AssertionPassed.java
   ├── AssertionFailed.java
   ├── AgentRegistered.java
@@ -28,7 +28,7 @@ platform-domain/src/main/java/com/performance/platform/domain/event/
   ├── AgentSignal.java            — sealed interface
   └── ScenarioRestartSignal.java  — implements AgentSignal
 
-platform-domain/src/test/java/com/performance/platform/domain/event/
+core/platform-domain/src/test/java/com/performance/platform/domain/event/
   └── SignalsTest.java — ScenarioRestartSignal instanceof AgentSignal, executionId nullable
 ```
 
@@ -59,7 +59,7 @@ public record ScenarioRestartSignal(SignalId id, ExecutionId executionId, String
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `new ScenarioRestartSignal(id, null, "X", now) instanceof AgentSignal` == true
 - [ ] `.claude/progress.md` mis à jour : ISSUE-009 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `AgentSignal`, `ScenarioRestartSignal`, events → STABLE

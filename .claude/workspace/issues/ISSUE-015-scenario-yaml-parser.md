@@ -18,14 +18,14 @@ YAML de scénario en `ScenarioDefinition` immuable (SnakeYAML + Jackson). Mapper
 ## Fichiers à Créer
 
 ```
-platform-scenario-dsl/pom.xml — dépend de platform-domain, platform-application, snakeyaml, jackson
-platform-scenario-dsl/src/main/java/com/performance/platform/scenario/parser/
+performance/platform-scenario-dsl/pom.xml — dépend de platform-domain, platform-use-cases, snakeyaml, jackson
+performance/platform-scenario-dsl/src/main/java/com/performance/platform/scenario/parser/
   ├── ScenarioParser.java          — interface
   ├── YamlScenarioParser.java      — implémentation
   ├── DurationParser.java          — "30s"/"5m"/"2h" → Duration
   └── dto/                         — DTO Jackson internes (non exposés)
 
-platform-scenario-dsl/src/test/java/com/performance/platform/scenario/parser/
+performance/platform-scenario-dsl/src/test/java/com/performance/platform/scenario/parser/
   ├── YamlScenarioParserTest.java  — parse le YAML de référence
   └── DurationParserTest.java
 ```
@@ -79,12 +79,12 @@ loadModels:
 - `step.task` (YAML) → `StepDefinition.taskName` (String).
 - `LoadModel.parameters` contient les champs spécifiques au type (`stages`, `usersPerSecond`...).
 - Les DTO Jackson restent internes ; on retourne uniquement des records domaine.
-- YAML malformé → `ScenarioParsingException` (de `platform-application`) avec liste d'erreurs.
-- `ScenarioParsingException` réutilisée depuis `platform-application` (ne pas redéfinir).
+- YAML malformé → `ScenarioParsingException` (de `platform-use-cases`) avec liste d'erreurs.
+- `ScenarioParsingException` réutilisée depuis `platform-use-cases` (ne pas redéfinir).
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-scenario-dsl -q` → 0 erreur
+- [ ] `mvn test -pl :platform-scenario-dsl -q` → 0 erreur
 - [ ] Le YAML de référence parse en `ScenarioDefinition` complet
 - [ ] `30s`/`5m`/`2h` → `Duration` corrects
 - [ ] `.claude/progress.md` mis à jour : ISSUE-015 → DONE

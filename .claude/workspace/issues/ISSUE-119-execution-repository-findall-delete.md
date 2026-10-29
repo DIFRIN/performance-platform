@@ -22,13 +22,13 @@ est trie/borne et que la suppression efface bien execution + resultats.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-application/src/main/java/com/performance/platform/application/ports/out/
+core/platform-use-cases/src/main/java/com/performance/platform/application/ports/out/
   └── ExecutionRepository.java         — AJOUT findAll(int) + deleteById(ExecutionId)
 
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/persistence/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/persistence/
   └── JpaExecutionRepository.java      — implementation des 2 nouvelles methodes (+ requete/repo Spring Data si besoin)
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/persistence/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/persistence/
   └── JpaExecutionRepositoryTest.java  — tests findAll (tri/limit) + deleteById (cascade resultats)
 ```
 
@@ -37,7 +37,7 @@ platform-infrastructure/src/test/java/com/performance/platform/infrastructure/pe
 ## Interfaces à Implémenter
 
 ```java
-// platform-application — ajout au port existant (ne pas casser les methodes existantes)
+// platform-use-cases — ajout au port existant (ne pas casser les methodes existantes)
 public interface ExecutionRepository {
     // ... existant : save, findById, updatePhase, saveTaskResult, getTaskResults ...
 
@@ -60,7 +60,7 @@ public interface ExecutionRepository {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur, 0 warning
 - [ ] `findAll(limit)` retourne les N executions les plus recentes triees desc
 - [ ] `deleteById` supprime execution + resultats ; no-op si id inconnu
 - [ ] Methodes existantes du port inchangees (compilation des modules consommateurs OK)

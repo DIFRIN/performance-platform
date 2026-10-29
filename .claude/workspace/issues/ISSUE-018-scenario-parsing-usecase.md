@@ -11,16 +11,16 @@
 
 ## Objectif
 
-Implémenter le use case `ScenarioParsingUseCase` (port de `platform-application`) en
+Implémenter le use case `ScenarioParsingUseCase` (port de `platform-use-cases`) en
 combinant `ScenarioParser` + `ScenarioValidator`. Lève si invalide.
 
 ## Fichiers à Créer
 
 ```
-platform-scenario-dsl/src/main/java/com/performance/platform/scenario/usecase/
+performance/platform-scenario-dsl/src/main/java/com/performance/platform/scenario/usecase/
   └── DefaultScenarioParsingService.java   — implements ScenarioParsingUseCase
 
-platform-scenario-dsl/src/test/java/com/performance/platform/scenario/usecase/
+performance/platform-scenario-dsl/src/test/java/com/performance/platform/scenario/usecase/
   └── DefaultScenarioParsingServiceTest.java
 ```
 
@@ -46,7 +46,7 @@ public class DefaultScenarioParsingService implements ScenarioParsingUseCase {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-scenario-dsl -q` → 0 erreur
+- [ ] `mvn test -pl :platform-scenario-dsl -q` → 0 erreur
 - [ ] YAML valide → `ScenarioDefinition` retourné
 - [ ] YAML avec erreur de validation → `ScenarioValidationException`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-018 → DONE

@@ -30,9 +30,9 @@ qui ont un impact long terme sur la structure du système.
 
 **Tu produis** :
 - Des ADRs (format défini ci-dessous)
-- Des clarifications de spec (mises à jour dans les fichiers `.claude/knowledge/specs/`)
-- Des clarifications architecturale (ADR ou notes dans `.claude/knowledge/adr/`)
-- Des mises à jour de `.claude/knowledge/architecture.md` si la structure change
+- Des clarifications de spec (mises à jour dans les fichiers `docs/knowledge/specs/`)
+- Des clarifications architecturale (ADR ou notes dans `docs/knowledge/adr/`)
+- Des mises à jour de `docs/knowledge/architecture.md` si la structure change
 
 **Tu ne fais PAS** :
 - Coder à la place du Developer
@@ -40,7 +40,7 @@ qui ont un impact long terme sur la structure du système.
 - Modifier les specs sans justification explicite
 - Introduire des technologies non justifiées par un besoin concret
 
-> Référence patterns : `skills/architecture-design-patterns.md`
+> Référence patterns : `.claude/skills/architecture-design-patterns/SKILL.md`
 
 ---
 
@@ -136,6 +136,6 @@ Si le Developer ou Reviewer constate l'un de ces signaux, escalader vers l'Archi
 - Un module Spring Modulith appelle directement un autre module
 - Une interface publique (`TaskExecutor`, `ExecutionTransport`, `ReportPublisher`) est modifiée
 - Un `if/switch` sur `TaskType` ou `TransportType` apparaît dans le code métier
-- Une dépendance Maven non listée dans `.claude/knowledge/constraints.md` est introduite
+- Une dépendance Maven non listée dans `docs/knowledge/constraints.md` est introduite
 - Le DAG builder crée un cycle non détecté
 - ExecutionContext mute directement (setter ou put sur la map interne)

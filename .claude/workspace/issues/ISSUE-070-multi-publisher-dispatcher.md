@@ -17,11 +17,11 @@ Implémenter `MultiPublisherDispatcher` (package `.publisher`) : route un rappor
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/
   ├── MultiPublisherDispatcher.java
   └── PublishersProperties.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/
   └── MultiPublisherDispatcherTest.java — dispatch à N publishers, échec d'un seul n'arrête pas les autres
 ```
 
@@ -45,7 +45,7 @@ public class MultiPublisherDispatcher implements ReportPublisherPort {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Dispatch à 3 publishers ; 1 échoue → 2 réussissent
 - [ ] `.claude/progress.md` mis à jour : ISSUE-070 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `MultiPublisherDispatcher` → STABLE

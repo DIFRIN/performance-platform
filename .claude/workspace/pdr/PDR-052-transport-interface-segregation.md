@@ -1,6 +1,6 @@
 # PDR-052 — Transport Interface Segregation
 
-**Module Maven** : `platform-transport` (+ consommateurs `platform-execution-engine`, `platform-agent-runtime`, `platform-app`)
+**Module Maven** : `platform-transport` (+ consommateurs `platform-execution-engine`, `platform-agent-runtime`, `platform-bootstrap`)
 **Package** : `com.performance.platform.transport`
 **Statut** : WAITING
 **Specs de référence** : `improvements.md` A4 ; `ADR-002-transport-abstraction.md` ; `ADR-012-agent-lifecycle-event.md`
@@ -92,4 +92,4 @@ Ce PDR est utilisé par :
 - [ ] Ports étroits définis + façade de migration (ISSUE-191)
 - [ ] 5 implémentations migrées (ISSUE-192)
 - [ ] Consommateurs migrés sur les ports étroits (ISSUE-193)
-- [ ] `mvn test -pl platform-transport,platform-execution-engine,platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport,:platform-execution-engine,:platform-agent-runtime -q` → 0 erreur

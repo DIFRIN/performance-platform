@@ -1,7 +1,7 @@
 # ISSUE-185 — Rewire Config + Delete Local/RemoteExecutionEngine
 
 **PDR** : PDR-050
-**Module** : `platform-execution-engine`, `platform-app`
+**Module** : `platform-execution-engine`, `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-184
@@ -18,12 +18,12 @@ modes, et supprimer `LocalExecutionEngine` + `RemoteExecutionEngine` + leur
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/
   ├── local/LocalExecutionEngine.java         — SUPPRIMER
   ├── remote/RemoteExecutionEngine.java       — SUPPRIMER
   └── config/ExecutionEngineConfiguration.java — réécrire (un bean ExecutionEngine, StepDispatcher conditionnel)
 
-platform-app/src/main/java/com/performance/platform/app/config/
+bootstrap/src/main/java/com/performance/platform/app/config/
   └── (câblage StepDispatcher LOCAL vs DISTRIBUTED via @Bean conditionnel)
 ```
 
@@ -36,6 +36,6 @@ platform-app/src/main/java/com/performance/platform/app/config/
 
 - [ ] `LocalExecutionEngine`/`RemoteExecutionEngine` supprimés
 - [ ] Config réécrite, smoke tests LOCAL/ORCHESTRATOR verts
-- [ ] `mvn test -pl platform-execution-engine,platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine,:platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-185 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour (Local/Remote → ❌ REMOVED, ExecutionEngine → PLANNED)

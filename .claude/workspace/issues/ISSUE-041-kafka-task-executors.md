@@ -17,11 +17,11 @@ Implémenter les executors Kafka de préparation : consumer (MONITOR/CONSUME/COU
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/kafka/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/kafka/
   ├── KafkaConsumerTaskExecutor.java
   └── KafkaProducerTaskExecutor.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/kafka/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/kafka/
   └── KafkaTaskExecutorsIT.java — Testcontainers Kafka
 ```
 
@@ -51,7 +51,7 @@ public class KafkaProducerTaskExecutor implements TaskExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-infrastructure -P integration-tests` → IT passe
+- [ ] `mvn verify -pl :platform-infrastructure -P integration-tests` → IT passe
 - [ ] Consumer COUNT retourne `messagesConsumed`
 - [ ] Producer PRELOAD produit le bon nombre de messages
 - [ ] `.claude/progress.md` mis à jour : ISSUE-041 → DONE

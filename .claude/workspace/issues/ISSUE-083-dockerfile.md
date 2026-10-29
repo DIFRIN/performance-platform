@@ -1,7 +1,7 @@
 # ISSUE-083 — Dockerfile multi-stage (image unique <300MB)
 
 **PDR** : PDR-019
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : WAITING
 **Priorité** : P2
 **Bloquée par** : ISSUE-077
@@ -11,13 +11,13 @@
 
 ## Objectif
 
-Créer le module `platform-deployment` et le Dockerfile multi-stage produisant une image unique
+Créer le module `distribution` et le Dockerfile multi-stage produisant une image unique
 non-root avec healthcheck.
 
 ## Fichiers à Créer
 
 ```
-platform-deployment/docker/
+distribution/docker/
   ├── Dockerfile
   └── .dockerignore
 ```
@@ -29,7 +29,7 @@ FROM eclipse-temurin:25-jre-alpine AS runtime
 RUN addgroup -S perf && adduser -S perf -G perf
 USER perf
 WORKDIR /app
-COPY --from=build /app/platform-app/target/performance-platform.jar app.jar
+COPY --from=build /app/platform-bootstrap/target/performance-platform.jar app.jar
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1
 EXPOSE 8080 9000

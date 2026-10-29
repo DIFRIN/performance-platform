@@ -17,12 +17,12 @@ exposant les 4 métriques obligatoires.
 ## Fichiers à Créer
 
 ```
-platform-observability/pom.xml — dépend de domain, micrometer, otel
-platform-observability/src/main/java/com/performance/platform/observability/metrics/
+infra/platform-observability/pom.xml — dépend de domain, micrometer, otel
+infra/platform-observability/src/main/java/com/performance/platform/observability/metrics/
   ├── ExecutionMetrics.java
   └── MicrometerExecutionMetrics.java
 
-platform-observability/src/test/java/com/performance/platform/observability/metrics/
+infra/platform-observability/src/test/java/com/performance/platform/observability/metrics/
   └── MicrometerExecutionMetricsTest.java — SimpleMeterRegistry
 ```
 
@@ -50,7 +50,7 @@ public class MicrometerExecutionMetrics implements ExecutionMetrics {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-observability -q` → 0 erreur
+- [ ] `mvn test -pl :platform-observability -q` → 0 erreur
 - [ ] Les 4 métriques sont enregistrées avec les bons tags
 - [ ] `.claude/progress.md` mis à jour : ISSUE-074 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `ExecutionMetrics` → STABLE

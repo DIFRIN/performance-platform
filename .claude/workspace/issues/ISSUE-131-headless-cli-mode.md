@@ -1,7 +1,7 @@
 # ISSUE-131: Mode CLI headless (run-and-exit sur `--scenario=`)
 
 **PDR** : PDR-028
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-125
@@ -12,7 +12,7 @@
 
 ## Objectif
 
-Ajouter le mode CLI headless : `java -jar platform-app.jar --scenario=path/to/scenario.yaml`
+Ajouter le mode CLI headless : `java -jar platform-bootstrap.jar --scenario=path/to/scenario.yaml`
 parse et execute le scenario, imprime un resume structure sur stdout, et sort avec un code
 de retour (0 succes / 1 echec / 2 args invalides), SANS demarrer Tomcat ni l'IHM. En
 l'absence de `--scenario=`, le comportement serveur actuel (API + IHM) reste strictement
@@ -23,17 +23,17 @@ inchange. Voir ADR-021.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/
+bootstrap/src/main/java/com/performance/platform/
   └── PerformancePlatformApplication.java   — MODIF : main() detecte --scenario= ;
                                                si present → SpringApplicationBuilder
                                                .web(WebApplicationType.NONE).run(args) ;
                                                sinon → SpringApplication.run (inchange)
 
-platform-app/src/main/java/com/performance/platform/app/cli/
+bootstrap/src/main/java/com/performance/platform/app/cli/
   └── CliScenarioRunner.java                — ApplicationRunner, actif uniquement en headless :
                                                lit --scenario, parse, execute, poll, print, exit
 
-platform-app/src/test/java/com/performance/platform/app/cli/
+bootstrap/src/test/java/com/performance/platform/app/cli/
   └── CliScenarioRunnerHeadlessTest.java    — @SpringBootTest(webEnvironment = NONE) :
                                                charge un scenario test, assert exit code + stdout
 ```
@@ -42,7 +42,7 @@ platform-app/src/test/java/com/performance/platform/app/cli/
 
 ## Interfaces à Implémenter
 
-> Ports in existants (platform-application), a appeler — ne PAS les modifier :
+> Ports in existants (platform-use-cases), a appeler — ne PAS les modifier :
 
 ```java
 public interface ScenarioParsingUseCase {
@@ -135,8 +135,8 @@ public class CliScenarioRunner implements ApplicationRunner {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
-- [ ] `java -jar platform-app/target/*.jar --scenario=<scenario valide>` → execute, imprime
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
+- [ ] `java -jar bootstrap/target/*.jar --scenario=<scenario valide>` → execute, imprime
       le resume, sort avec code 0 (succes) ; aucun port HTTP ouvert (pas de Tomcat)
 - [ ] Scenario en echec → code de sortie 1 ; scenario introuvable / YAML invalide → code 2
 - [ ] Sans `--scenario=` → comportement serveur inchange (API + IHM selon `web.ui.enabled`),

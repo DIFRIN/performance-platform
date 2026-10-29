@@ -76,7 +76,7 @@ ils sont calibrés pour charger le minimum de contexte nécessaire.
 **Responsable** : Architect + Humain
 
 ```
-1. Humain vérifie que la phase précédente est ✅ dans .claude/knowledge/roadmap.md
+1. Humain vérifie que la phase précédente est ✅ dans docs/knowledge/roadmap.md
 2. Activer Architect :
    "Valide le démarrage de la Phase X. Vérifie :
     - Prérequis de la phase précédente satisfaits (PDRs DONE dans progress.md)
@@ -132,7 +132,7 @@ ils sont calibrés pour charger le minimum de contexte nécessaire.
 └─────────────────────────────────────────────────────────────────┘
            │
            ▼
-       Tâche DONE → prochaine tâche dans .claude/knowledge/roadmap.md
+       Tâche DONE → prochaine tâche dans docs/knowledge/roadmap.md
 ```
 
 ### 4.3 Cycle de Correction (CHANGES_REQUESTED)
@@ -206,9 +206,9 @@ agents/tester.md             (section phase concernée)
 **Architect** :
 ```
 agents/architect.md          (toujours)
-.claude/knowledge/adr/*.md                     (tous - pour ne pas re-décider ce qui l'est déjà)
-.claude/knowledge/architecture.md              (toujours)
-.claude/knowledge/constraints.md               (toujours)
+docs/knowledge/adr/*.md                     (tous - pour ne pas re-décider ce qui l'est déjà)
+docs/knowledge/architecture.md              (toujours)
+docs/knowledge/constraints.md               (toujours)
 [spec concernée par l'escalade]
 ```
 
@@ -226,8 +226,8 @@ agents/architect.md          (toujours)
 |---|---|---|
 | `.claude/workspace/progress.md` | System Designer + Developer + Reviewer | Chaque changement de statut |
 | `.claude/workspace/current-issue.md` | Scripts issue-*.sh | Chaque transition d'Issue |
-| `.claude/knowledge/roadmap.md` | Humain + Architect | Fin de chaque phase |
-| `.claude/knowledge/adr/` | Architect | Sur décision architecturale |
+| `docs/knowledge/roadmap.md` | Humain + Architect | Fin de chaque phase |
+| `docs/knowledge/adr/` | Architect | Sur décision architecturale |
 
 ### Format du Suivi dans .claude/workspace/progress.md
 

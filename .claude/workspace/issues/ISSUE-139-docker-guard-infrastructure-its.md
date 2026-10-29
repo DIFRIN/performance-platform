@@ -19,10 +19,10 @@ Docker (ADR-023).
 
 ```
 MODIFIER (tests) :
-platform-infrastructure/src/test/java/.../DatabaseTaskExecutorIT.java
-platform-infrastructure/src/test/java/.../KafkaTaskExecutorsIT.java
-platform-infrastructure/src/test/java/.../EntitiesMappingIT.java
-platform-infrastructure/src/test/java/.../JpaExecutionRepositoryIT.java
+infra/platform-infrastructure/src/test/java/.../DatabaseTaskExecutorIT.java
+infra/platform-infrastructure/src/test/java/.../KafkaTaskExecutorsIT.java
+infra/platform-infrastructure/src/test/java/.../EntitiesMappingIT.java
+infra/platform-infrastructure/src/test/java/.../JpaExecutionRepositoryIT.java
   — remplacer @Testcontainers par @Testcontainers(disabledWithoutDocker = true)
 ```
 
@@ -44,8 +44,8 @@ class DatabaseTaskExecutorIT { /* @Container ... inchangé */ }
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` (sans Docker) → vert, les 4 IT `skipped`
-- [ ] `mvn verify -pl platform-infrastructure -P integration-tests` (avec Docker) → les 4 IT s'exécutent
+- [ ] `mvn test -pl :platform-infrastructure -q` (sans Docker) → vert, les 4 IT `skipped`
+- [ ] `mvn verify -pl :platform-infrastructure -P integration-tests` (avec Docker) → les 4 IT s'exécutent
 - [ ] Les 4 classes portent `@Testcontainers(disabledWithoutDocker = true)`
 - [ ] `.claude/workspace/progress.md` : géré par les scripts (`issue-finish.sh`)
 </content>

@@ -3,7 +3,7 @@
 **Module Maven** : `platform-infrastructure`
 **Package** : `com.performance.platform.infrastructure.executor.kafka`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/03-task-framework.md`, `.claude/knowledge/adr/ADR-013-spring-first-infrastructure.md`, `.claude/knowledge/adr/ADR-014-datasource-configuration.md`
+**Specs de référence** : `docs/knowledge/specs/03-task-framework.md`, `docs/knowledge/adr/ADR-013-spring-first-infrastructure.md`, `docs/knowledge/adr/ADR-014-datasource-configuration.md`
 **Dépend de** : PDR-010 (DONE — DatasourceProvider pattern à répliquer)
 **Issues** : ISSUE-086, ISSUE-087, ISSUE-088
 
@@ -144,7 +144,7 @@ public class KafkaClusterConfiguration {
 Ce PDR utilise :
   PDR-010 (DatasourceProvider)     → pattern identique à répliquer
   spring-kafka                     → ProducerFactory, ConsumerFactory, KafkaTemplate
-  platform-infrastructure/pom.xml  → ajouter <dependency>spring-kafka</dependency>
+  infra/platform-infrastructure/pom.xml  → ajouter <dependency>spring-kafka</dependency>
 
 Ce PDR est utilisé par :
   PDR-021 (transport Spring Kafka)  → partage le pattern Spring Kafka
@@ -157,5 +157,5 @@ Ce PDR est utilisé par :
 
 - [ ] ISSUE-086, 087, 088 toutes DONE
 - [ ] `KafkaClusterRegistry` + `KafkaClusterProperties` dans interfaces-registry.md avec statut STABLE
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Aucun `new Properties()`, aucun `new KafkaConsumer(...)`, aucun `new KafkaProducer(...)` dans les task executors

@@ -16,10 +16,10 @@ Implémenter `FileAssertionExecutor` : vérifie l'existence/checksum/taille d'un
 ## Fichiers à Créer
 
 ```
-platform-assertion/src/main/java/com/performance/platform/assertion/file/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/file/
   └── FileAssertionExecutor.java
 
-platform-assertion/src/test/java/com/performance/platform/assertion/file/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/file/
   └── FileAssertionExecutorTest.java — EXISTS/CHECKSUM/SIZE sur @TempDir
 ```
 
@@ -41,7 +41,7 @@ public class FileAssertionExecutor implements AssertionExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-assertion -q` → 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` → 0 erreur
 - [ ] EXISTS et CHECKSUM sha256 vérifiés sur `@TempDir`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-064 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `FileAssertionExecutor` → STABLE

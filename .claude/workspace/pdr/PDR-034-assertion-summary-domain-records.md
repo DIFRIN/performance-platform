@@ -3,7 +3,7 @@
 **Module Maven** : `platform-domain`
 **Package** : `com.performance.platform.domain.assertion`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/07-assertion-framework.md`, `.claude/workspace/assertion-distributed-analysis.md`
+**Specs de reference** : `docs/knowledge/specs/07-assertion-framework.md`, `.claude/workspace/assertion-distributed-analysis.md`
 **Depend de** : PDR-001 (deja DONE)
 **Issues** : ISSUE-148, ISSUE-149
 

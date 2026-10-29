@@ -18,10 +18,10 @@ dans un dépôt Git distant.
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/git/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/git/
   └── GitReportPublisher.java          (classe principale, ~300 lignes)
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/git/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/git/
   └── GitReportPublisherTest.java      (tests unitaires, ~15 tests)
 ```
 
@@ -99,6 +99,6 @@ public class GitReportPublisher implements ReportPublisher {
 - [ ] CC-02 Javadoc classe (pipeline Git cohesif)
 - [ ] CC-02 Javadoc `publish()` (> 40 lignes probable)
 - [ ] Tests : ~15 tests couvrant cas nominal, erreurs, auth
-- [ ] `mvn test -pl platform-infrastructure -Dtest="GitReportPublisherTest"` → BUILD SUCCESS
+- [ ] `mvn test -pl :platform-infrastructure -Dtest="GitReportPublisherTest"` → BUILD SUCCESS
 - [ ] 0 warning
 - [ ] `platform-infrastructure` tests totaux OK

@@ -3,7 +3,7 @@
 **Module Maven** : `platform-observability`
 **Package** : `com.performance.platform.observability`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/constraints.md` CNF-04, `.claude/knowledge/architecture.md` §4
+**Specs de référence** : `docs/knowledge/constraints.md` CNF-04, `docs/knowledge/architecture.md` §4
 **Dépend de** : PDR-001, PDR-002
 **Issues** : ISSUE-074, ISSUE-075, ISSUE-076
 
@@ -66,7 +66,7 @@ Ce PDR utilise :
   PDR-002 → TaskCompleted, TaskFailed, PhaseCompleted, ScenarioFinished
 
 Ce PDR est utilisé par :
-  PDR-018 (platform-app) → auto-config observabilité
+  PDR-018 (platform-bootstrap) → auto-config observabilité
 ```
 
 ---

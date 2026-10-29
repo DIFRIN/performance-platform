@@ -1,6 +1,6 @@
 # PDR-028 — IHM Web Serving & Static Shell
 
-**Module Maven** : `platform-app`
+**Module Maven** : `platform-bootstrap`
 **Package** : `com.performance.platform.app.web` (config Spring), `src/main/resources/static` (assets)
 **Statut** : WAITING
 **Specs de reference** : Design valide utilisateur (Web IHM), ADR-013 (Spring-first infra)
@@ -137,7 +137,7 @@ Ce PDR est utilise par :
 
 - [ ] Toutes les Issues ISSUE-125 et ISSUE-126 sont DONE
 - [ ] `WebUiProperties` et `WebUiConfiguration` dans `.claude/workspace/interfaces-registry.md` avec statut STABLE
-- [ ] `mvn test -pl platform-app -q` passe
+- [ ] `mvn test -pl :platform-bootstrap -q` passe
 - [ ] `web.ui.enabled=true` → IHM servie a `/` ; `false` → 404 sur `/`
 - [ ] Profil AGENT : IHM jamais servie ET aucun serveur web (`WebApplicationType.NONE`, pas de Tomcat) — ADR-019
 - [ ] `--scenario=` present → aucun serveur web, run-and-exit preserve

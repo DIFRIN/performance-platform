@@ -28,14 +28,14 @@ Le côté consume (`KafkaConsumerManager`) sera traité dans ISSUE-090.
 ## Fichiers à Modifier
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/kafka/
+infra/platform-transport/src/main/java/com/performance/platform/transport/kafka/
   └── KafkaExecutionTransport.java         — champ producer → template, send via template
 
-platform-transport/src/main/java/com/performance/platform/transport/config/
+infra/platform-transport/src/main/java/com/performance/platform/transport/config/
   └── KafkaTransportBeans.java             — NOUVEAU : @Bean KafkaTemplate<String,byte[]>
                                              (peut être dans TransportConfiguration existant)
 
-platform-transport/src/test/java/com/performance/platform/transport/kafka/
+infra/platform-transport/src/test/java/com/performance/platform/transport/kafka/
   └── KafkaExecutionTransportTest.java     — adapter mocks pour KafkaTemplate
 ```
 
@@ -134,7 +134,7 @@ public class KafkaTransportBeans {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] Aucun `KafkaProducer` raw dans `KafkaExecutionTransport`
 - [ ] Aucun `new Properties()` + `new KafkaProducer(...)` dans le module platform-transport
 - [ ] Test : `dispatchTask(request)` → `kafkaTemplate.send(tasksTopic, ...)` appelé

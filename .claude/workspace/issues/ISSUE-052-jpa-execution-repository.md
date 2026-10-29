@@ -17,12 +17,12 @@ repositories Spring Data.
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/persistence/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/persistence/
   ├── JpaExecutionRepository.java
   ├── ExecutionStateJpaRepository.java
   └── TaskResultJpaRepository.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/persistence/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/persistence/
   └── JpaExecutionRepositoryIT.java   — Testcontainers : save/find/multi-claim
 ```
 
@@ -53,7 +53,7 @@ interface TaskResultJpaRepository extends JpaRepository<TaskResultEntity, TaskRe
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-infrastructure -P integration-tests` → IT passe
+- [ ] `mvn verify -pl :platform-infrastructure -P integration-tests` → IT passe
 - [ ] save/find round-trip ; 2 saveTaskResult agents différents → getTaskResults retourne 2 entrées
 - [ ] re-save même id → pas de doublon
 - [ ] `.claude/progress.md` mis à jour : ISSUE-052 → DONE

@@ -17,11 +17,11 @@ Implémenter `TaskCorrelationTracker` qui suit la corrélation `MessageId → cl
 ## Fichiers à Créer
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/correlation/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/correlation/
   ├── TaskCorrelationTracker.java          — interface
   └── DefaultTaskCorrelationTracker.java   — implémentation thread-safe
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/correlation/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/correlation/
   └── DefaultTaskCorrelationTrackerTest.java — FIRST_COMPLETE vs ALL_COMPLETE
 ```
 
@@ -50,7 +50,7 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker { /
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] 2 claims, 1 completed, policy FIRST_COMPLETE → `isComplete` true
 - [ ] 2 claims, 1 completed, policy ALL_COMPLETE → `isComplete` false ; après 2e → true
 - [ ] `.claude/progress.md` mis à jour : ISSUE-021 → DONE

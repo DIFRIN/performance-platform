@@ -16,10 +16,10 @@ Creer le record `AssertionSample` dans `platform-domain` -- un echantillon indiv
 ## Fichiers a Creer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/assertion/
+core/platform-domain/src/main/java/com/performance/platform/domain/assertion/
   └── AssertionSample.java       -- record immuable: sampledAt, observedValue, unit, metadata
 
-platform-domain/src/test/java/com/performance/platform/domain/assertion/
+core/platform-domain/src/test/java/com/performance/platform/domain/assertion/
   └── AssertionSampleTest.java   -- tests: constructeur compact, defensive copy metadata
 ```
 
@@ -50,7 +50,7 @@ public record AssertionSample(
 
 ## Criteres de Done
 
-- [ ] `mvn test -pl platform-domain -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` -> 0 erreur
 - [ ] `AssertionSample` compile
 - [ ] Test : metadata null -> remplace par Map.of() (pas NPE)
 - [ ] Test : toutes les valeurs passes sont preservees

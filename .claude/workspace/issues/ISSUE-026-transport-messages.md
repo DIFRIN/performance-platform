@@ -17,11 +17,11 @@ Créer les records de transport `TaskExecutionRequest` (remplace `TaskMessage`) 
 ## Fichiers à Créer
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/message/
+infra/platform-transport/src/main/java/com/performance/platform/transport/message/
   ├── TaskExecutionRequest.java
   └── ExecutionEvent.java
 
-platform-transport/src/test/java/com/performance/platform/transport/message/
+infra/platform-transport/src/test/java/com/performance/platform/transport/message/
   └── TransportMessagesTest.java — instanciation + constantes
 ```
 
@@ -54,7 +54,7 @@ public record ExecutionEvent(
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] Aucune occurrence de `TaskMessage`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-026 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `TaskExecutionRequest`, `ExecutionEvent` → STABLE

@@ -3,7 +3,7 @@
 **Module Maven** : `platform-execution-engine`
 **Package** : `com.performance.platform.engine`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/02-execution-engine.md` (complet), ADR-011
+**Specs de référence** : `docs/knowledge/specs/02-execution-engine.md` (complet), ADR-011
 **Dépend de** : PDR-001, PDR-002, PDR-004, PDR-005, PDR-007
 **Issues** : ISSUE-019, ISSUE-020, ISSUE-021, ISSUE-022, ISSUE-023, ISSUE-024
 
@@ -102,7 +102,7 @@ Ce PDR utilise :
   PDR-007 → ExecutionTransport, TaskExecutionRequest
 
 Ce PDR est utilisé par :
-  PDR-018 (platform-app) → orchestration finale
+  PDR-018 (platform-bootstrap) → orchestration finale
 ```
 
 ---

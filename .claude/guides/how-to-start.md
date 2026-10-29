@@ -1,7 +1,7 @@
 # Guide — Démarrage du Projet
 
 > Ce guide répond à : "J'ai ce repo, par où je commence ?"
-> À lire UNE SEULE FOIS au démarrage. Ensuite, suivre `.claude/knowledge/roadmap.md`.
+> À lire UNE SEULE FOIS au démarrage. Ensuite, suivre `docs/knowledge/roadmap.md`.
 
 ---
 
@@ -19,10 +19,10 @@ Avant de lancer le premier agent, vérifier :
 
 ```
 Lire dans cet ordre (20 minutes) :
-1. .claude/knowledge/glossary.md          ← Le vocabulaire. Tout le reste en dépend.
-2. .claude/knowledge/architecture.md      ← La structure Maven + règles de dépendances
-3. .claude/knowledge/constraints.md       ← Ce qui ne change jamais
-4. .claude/knowledge/roadmap.md           ← Les 10 phases dans l'ordre
+1. docs/knowledge/glossary.md          ← Le vocabulaire. Tout le reste en dépend.
+2. docs/knowledge/architecture.md      ← La structure Maven + règles de dépendances
+3. docs/knowledge/constraints.md       ← Ce qui ne change jamais
+4. docs/knowledge/roadmap.md           ← Les 10 phases dans l'ordre
 5. CLAUDE.md            ← Comment les agents travaillent
 ```
 
@@ -66,10 +66,10 @@ toutes les classes du domaine (entités, value objects, events)
 telles que définies dans le glossaire et les interfaces de spec-01/02.
 
 ## Specs de Référence
-- `.claude/knowledge/specs/01-scenario-dsl.md` section 6 (modèle de données)
-- `.claude/knowledge/specs/02-execution-engine.md` sections 2, 3, 4
-- `.claude/knowledge/architecture.md` section 2 (structure Maven)
-- `.claude/knowledge/skills/hexagonal-architecture.md`
+- `docs/knowledge/specs/01-scenario-dsl.md` section 6 (modèle de données)
+- `docs/knowledge/specs/02-execution-engine.md` sections 2, 3, 4
+- `docs/knowledge/architecture.md` section 2 (structure Maven)
+- `.claude/skills/hexagonal-architecture/SKILL.md`
 
 ## Périmètre de la Tâche
 
@@ -86,8 +86,8 @@ telles que définies dans le glossaire et les interfaces de spec-01/02.
 
 ## Interfaces à Respecter
 
-Voir `.claude/knowledge/specs/01-scenario-dsl.md` section 6 et
-`.claude/knowledge/specs/02-execution-engine.md` sections 3 et 4.
+Voir `docs/knowledge/specs/01-scenario-dsl.md` section 6 et
+`docs/knowledge/specs/02-execution-engine.md` sections 3 et 4.
 
 ## Critères de Done
 - [ ] `mvn compile` passe sur tous les modules
@@ -105,7 +105,7 @@ Voir `.claude/knowledge/specs/01-scenario-dsl.md` section 6 et
 Instruction d'activation :
 "Tu es l'agent Architect de ce projet.
 Lis agents/architect.md.
-Lis architecture.md, constraints.md, .claude/knowledge/adr/*.md.
+Lis architecture.md, constraints.md, docs/knowledge/adr/*.md.
 Valide que les PDRs et Issues pour la Phase 1 sont cohérents
 avec les specs et l'architecture. Identifie tout manque
 avant de laisser le Developer démarrer."
@@ -140,8 +140,8 @@ Ne JAMAIS mixer les rôles dans une même session.
 
 | Besoin | Fichier |
 |---|---|
-| Comprendre le vocabulaire | `.claude/knowledge/glossary.md` |
-| Voir où on en est | `.claude/knowledge/roadmap.md` + `.claude/workspace/progress.md` |
+| Comprendre le vocabulaire | `docs/knowledge/glossary.md` |
+| Voir où on en est | `docs/knowledge/roadmap.md` + `.claude/workspace/progress.md` |
 | Savoir quoi faire maintenant | `.claude/workspace/current-issue.md` |
-| Décisions architecturales | `.claude/knowledge/adr/*.md` |
+| Décisions architecturales | `docs/knowledge/adr/*.md` |
 | Comment les agents collaborent | `.claude/guides/agent-orchestration.md` |

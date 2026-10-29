@@ -17,15 +17,15 @@ Créer les records de définition de scénario : `ScenarioDefinition`, `StepDefi
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/scenario/
+core/platform-domain/src/main/java/com/performance/platform/domain/scenario/
   ├── ScenarioDefinition.java
   └── StepDefinition.java
-platform-domain/src/main/java/com/performance/platform/domain/injection/
+core/platform-domain/src/main/java/com/performance/platform/domain/injection/
   └── LoadModel.java
-platform-domain/src/main/java/com/performance/platform/domain/execution/
+core/platform-domain/src/main/java/com/performance/platform/domain/execution/
   └── RetryPolicy.java
 
-platform-domain/src/test/java/com/performance/platform/domain/scenario/
+core/platform-domain/src/test/java/com/performance/platform/domain/scenario/
   ├── ScenarioDefinitionTest.java — copies défensives, collections null→vide
   └── StepDefinitionTest.java     — non-null id/taskName/phase
 ```
@@ -84,7 +84,7 @@ public record RetryPolicy(int maxAttempts, Duration initialDelay, double multipl
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `new StepDefinition(id, null, phase, ...)` lève `NullPointerException`
 - [ ] Modifier la liste source après construction ne modifie pas le record
 - [ ] Aucune référence à `TaskDefinition` ou `TaskType`

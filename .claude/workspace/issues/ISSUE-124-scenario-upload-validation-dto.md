@@ -1,7 +1,7 @@
 # ISSUE-124: Endpoint POST /api/v1/scenarios/upload + DTO d'erreur de validation structure
 
 **PDR** : PDR-027
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-121
@@ -21,14 +21,14 @@ le scenario puis l'executant immediatement. Aligner le DTO d'erreur de validatio
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/app/api/
+bootstrap/src/main/java/com/performance/platform/app/api/
   ├── ScenarioUploadController.java     — POST /scenarios/upload (multipart + textarea YAML)
   └── ApiExceptionHandler.java          — MODIF : ScenarioValidationException → ValidationErrorResponse
 
-platform-app/src/main/java/com/performance/platform/app/api/dto/
+bootstrap/src/main/java/com/performance/platform/app/api/dto/
   └── ValidationErrorResponse.java      — { message, errors[] { field, message } }
 
-platform-app/src/test/java/com/performance/platform/app/api/
+bootstrap/src/test/java/com/performance/platform/app/api/
   └── ScenarioUploadControllerTest.java — @WebMvcTest (multipart, textarea, 400 field-level, 202)
 ```
 
@@ -77,7 +77,7 @@ public record ValidationErrorResponse(String message, List<FieldError> errors) {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] Upload multipart valide → 202 + executionId
 - [ ] Upload textarea YAML valide → 202 + executionId
 - [ ] Scenario invalide → 400 avec erreurs field-level (champ + message)

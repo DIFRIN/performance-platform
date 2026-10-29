@@ -18,13 +18,13 @@ transforme un `ScenarioDefinition` en `ExecutionPlan` avec steps triés par phas
 ## Fichiers à Créer
 
 ```
-platform-execution-engine/pom.xml — dépend de domain, application, scenario-dsl, transport
-platform-execution-engine/src/main/java/com/performance/platform/engine/plan/
+execution/platform-execution-engine/pom.xml — dépend de domain, application, scenario-dsl, transport
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/plan/
   ├── ExecutionPlanBuilder.java        — interface
   ├── DefaultExecutionPlanBuilder.java — implémentation
   └── DagLevelCalculator.java          — calcule dagLevel par tri topologique
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/plan/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/plan/
   ├── DefaultExecutionPlanBuilderTest.java
   └── DagLevelCalculatorTest.java
 ```
@@ -43,12 +43,12 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder { /* ..
 - Séparer les steps en 3 listes par `Phase` : preparation / injection / assertion.
 - `dagLevel` : 0 si aucune dépendance, sinon `max(level des deps) + 1`.
 - `requiredContextKeys` = `Set.copyOf(step.requiredContexts())`.
-- Cycle détecté → `InvalidScenarioException` (de `platform-application`).
+- Cycle détecté → `InvalidScenarioException` (de `platform-use-cases`).
 - `initialContext` = `ExecutionContext.initial(executionId, scenarioId)`.
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] Steps correctement répartis par phase et ordonnés par dagLevel
 - [ ] Cycle → `InvalidScenarioException`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-019 → DONE

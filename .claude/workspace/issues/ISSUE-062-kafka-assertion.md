@@ -17,10 +17,10 @@ en lisant le résultat d'un step KafkaConsumer du contexte.
 ## Fichiers à Créer
 
 ```
-platform-assertion/src/main/java/com/performance/platform/assertion/kafka/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/kafka/
   └── KafkaAssertionExecutor.java
 
-platform-assertion/src/test/java/com/performance/platform/assertion/kafka/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/kafka/
   └── KafkaAssertionExecutorTest.java
 ```
 
@@ -43,7 +43,7 @@ public class KafkaAssertionExecutor implements AssertionExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-assertion -q` → 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` → 0 erreur
 - [ ] `consumedCount > N` évalué depuis le contexte
 - [ ] `.claude/progress.md` mis à jour : ISSUE-062 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `KafkaAssertionExecutor` → STABLE

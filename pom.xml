@@ -23,20 +23,26 @@
     </properties>
 
     <modules>
-        <module>platform-domain</module>
-        <module>platform-plugin-api</module>
-        <module>platform-application</module>
-        <module>platform-scenario-dsl</module>
-        <module>platform-execution-engine</module>
-        <module>platform-transport</module>
-        <module>platform-agent-runtime</module>
-        <module>platform-infrastructure</module>
-        <module>platform-injection-gatling</module>
-        <module>platform-assertion</module>
-        <module>platform-reporting</module>
-        <module>platform-observability</module>
-        <module>platform-app</module>
-        <module>platform-deployment</module>
+        <module>core/platform-domain</module>
+        <module>core/platform-use-cases</module>
+        <module>core/platform-plugin-api</module>
+        <module>core/platform-transport-api</module>
+        <module>core/platform-report-api</module>
+        <module>execution/platform-execution-engine</module>
+        <module>execution/platform-agent-runtime</module>
+        <module>performance/platform-scenario-dsl</module>
+        <module>performance/platform-campaign-engine</module>
+        <module>performance/platform-assertion</module>
+        <module>performance/platform-reporting</module>
+        <module>infra/platform-scenario-yaml</module>
+        <module>infra/platform-infrastructure</module>
+        <module>infra/platform-transport</module>
+        <module>infra/platform-injection-gatling</module>
+        <module>infra/platform-assertion-adapters</module>
+        <module>infra/platform-report-renderers</module>
+        <module>infra/platform-observability</module>
+        <module>bootstrap</module>
+        <module>distribution</module>
     </modules>
 
     <dependencyManagement>

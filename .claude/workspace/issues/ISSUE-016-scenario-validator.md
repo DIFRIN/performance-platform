@@ -17,7 +17,7 @@ incluant la détection de cycle DAG et la cohérence des `requiredContexts`.
 ## Fichiers à Créer
 
 ```
-platform-scenario-dsl/src/main/java/com/performance/platform/scenario/validation/
+performance/platform-scenario-dsl/src/main/java/com/performance/platform/scenario/validation/
   ├── ScenarioValidator.java          — interface
   ├── DefaultScenarioValidator.java   — implémentation
   ├── ValidationResult.java
@@ -25,7 +25,7 @@ platform-scenario-dsl/src/main/java/com/performance/platform/scenario/validation
   ├── ValidationWarning.java
   └── DagCycleDetector.java           — tri topologique
 
-platform-scenario-dsl/src/test/java/com/performance/platform/scenario/validation/
+performance/platform-scenario-dsl/src/test/java/com/performance/platform/scenario/validation/
   ├── DefaultScenarioValidatorTest.java
   └── DagCycleDetectorTest.java
 ```
@@ -56,7 +56,7 @@ public record ValidationWarning(String field, String message) {}
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-scenario-dsl -q` → 0 erreur
+- [ ] `mvn test -pl :platform-scenario-dsl -q` → 0 erreur
 - [ ] Un scénario avec cycle → `valid=false` avec erreur de cycle
 - [ ] `requiredContext` référençant un step postérieur → erreur
 - [ ] Le YAML de référence (ISSUE-015) → `valid=true`

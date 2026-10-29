@@ -3,7 +3,7 @@
 **Module Maven** : `platform-domain`
 **Package** : `com.performance.platform.domain.event`
 **Statut** : IN PROGRESS
-**Specs de référence** : `.claude/knowledge/architecture.md` §4, `.claude/knowledge/specs/02-execution-engine.md` §8, `.claude/knowledge/specs/04-agent-runtime.md` §6-7, `.claude/knowledge/specs/05-transport-layer.md` §3
+**Specs de référence** : `docs/knowledge/architecture.md` §4, `docs/knowledge/specs/02-execution-engine.md` §8, `docs/knowledge/specs/04-agent-runtime.md` §6-7, `docs/knowledge/specs/05-transport-layer.md` §3
 **Dépend de** : PDR-001
 **Issues** : ISSUE-008 (DONE), ISSUE-009 (IN REVIEW)
 

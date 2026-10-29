@@ -1,7 +1,7 @@
 # ISSUE-130: Vue rapport (poll → iframe HTML + download PDF/JSON) + E2E Testcontainers
 
 **PDR** : PDR-029
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-129
@@ -22,13 +22,13 @@ a "affiche" sans jamais declencher la generation, et que l'E2E valide la chaine 
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/resources/static/assets/js/views/
+bootstrap/src/main/resources/static/assets/js/views/
   └── report.js                         — vue rapport (poll dispo → iframe HTML + download PDF/JSON)
 
-platform-app/src/main/resources/static/assets/js/
+bootstrap/src/main/resources/static/assets/js/
   └── api.js                            — MODIF : reportUrl(id, format), checkReportAvailable(id)
 
-platform-app/src/test/java/com/performance/platform/e2e/
+bootstrap/src/test/java/com/performance/platform/e2e/
   └── WebUiApiE2ETest.java              — Testcontainers : list/tasks/delete/agents/report/upload
 ```
 
@@ -64,7 +64,7 @@ export function mount(el, executionId) {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] `mvn verify -P integration-tests` → E2E vert
 - [ ] Vue rapport : poll → iframe HTML inline + boutons download PDF/JSON, jamais de generation declenchee
 - [ ] E2E couvre list/tasks/delete/agents/report/upload (incl. 404→200 rapport et 400 upload invalide)

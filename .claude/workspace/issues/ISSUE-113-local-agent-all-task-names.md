@@ -1,7 +1,7 @@
 # ISSUE-113 — Wire LocalAgent with ALL task names from TaskExecutorRegistry
 
 **PDR** : PDR-026
-**Module** : `platform-app` (config wiring) + `platform-agent-runtime` (test verification)
+**Module** : `platform-bootstrap` (config wiring) + `platform-agent-runtime` (test verification)
 **Statut** : DONE
 **Priorite** : P0 (LOCAL mode doit fonctionner)
 **Bloquee par** : ISSUE-112 (AgentRuntimeConfiguration doit exister)
@@ -18,10 +18,10 @@ Le code du `LocalAgent` est DEJA correct -- il utilise `descriptor.supportedTask
 ## Fichiers a Creer / Modifier
 
 ```
-platform-app/src/test/java/com/performance/platform/app/config/
+bootstrap/src/test/java/com/performance/platform/app/config/
   └── AgentRuntimeConfigurationTest.java   — UPDATE: ajouter test LOCAL all-task-names (si pas deja couvert dans ISSUE-112)
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/local/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/local/
   └── LocalAgentAllTaskNamesTest.java      — test: LocalAgent avec registre connu, verifie canExecute()
 ```
 
@@ -94,7 +94,7 @@ void localAgentShouldIgnoreAgentProperties() {
 }
 ```
 
-## Test d'integration Spring (dans platform-app)
+## Test d'integration Spring (dans platform-bootstrap)
 
 Ajouter dans `AgentRuntimeConfigurationTest` (cree dans ISSUE-112) un test qui verifie que le `AgentRuntime` bean en LOCAL a bien le bon type ET que son `getDescriptor().supportedTaskNames()` contient tous les task names des executors enregistres :
 
@@ -136,8 +136,8 @@ void localAgentShouldHaveAllTaskNamesFromRegistry() {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] `LocalAgent.canExecute("mock-server")` = true si "mock-server" est dans le registre
 - [ ] `LocalAgent.canExecute("unknown")` = false si "unknown" n'est pas dans le registre
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-113 → DONE

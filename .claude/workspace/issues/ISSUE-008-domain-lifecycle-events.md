@@ -16,7 +16,7 @@ Créer les records d'events du cycle de vie scénario, phase et task (verbe au p
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/event/
+core/platform-domain/src/main/java/com/performance/platform/domain/event/
   ├── ScenarioStarted.java
   ├── ScenarioFinished.java
   ├── ScenarioCancelled.java
@@ -30,7 +30,7 @@ platform-domain/src/main/java/com/performance/platform/domain/event/
   ├── TaskFailed.java
   └── TaskRetried.java
 
-platform-domain/src/test/java/com/performance/platform/domain/event/
+core/platform-domain/src/test/java/com/performance/platform/domain/event/
   └── LifecycleEventsTest.java — instanciation + égalité par valeur
 ```
 
@@ -58,7 +58,7 @@ public record TaskRetried(ExecutionId executionId, TaskId taskId, int attempt, I
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] Tous les events instanciables, égalité par valeur
 - [ ] `.claude/progress.md` mis à jour : ISSUE-008 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : events → STABLE

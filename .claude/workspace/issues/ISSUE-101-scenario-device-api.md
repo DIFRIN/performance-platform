@@ -1,7 +1,7 @@
 # ISSUE-101 — Scénarios YAML device-api (LOCAL + DISTRIBUTED)
 
 **PDR** : PDR-024
-**Module** : `platform-deployment/examples/scenarios/`
+**Module** : `distribution/examples/scenarios/`
 **Statut** : WAITING
 **Priorité** : P1
 **Bloquée par** : ISSUE-086 (cluster: ref), ISSUE-092 (target: ref), ISSUE-099 (SUT docker-compose)
@@ -23,15 +23,15 @@ Ces scénarios démontrent le pattern classique de test de charge :
 ## Fichiers à Créer
 
 ```
-platform-deployment/examples/scenarios/
+distribution/examples/scenarios/
   ├── device-api-local.yaml
   └── device-api-distributed.yaml
 
-platform-app/src/main/resources/
+bootstrap/src/main/resources/
   └── application-examples-local.yaml    — déjà créé dans ISSUE-100, ajouter le bloc device-api
 
-platform-app/src/main/resources/sql/
-  └── seed-sut-devices.sql               — copie de platform-examples/sut-db/sql/V2__seed_10k_devices.sql (source PDR-023)
+bootstrap/src/main/resources/sql/
+  └── seed-sut-devices.sql               — copie de distribution/examples/sut/sut-db/sql/V2__seed_10k_devices.sql (source PDR-023)
                                            (renommé sans préfixe Flyway), accessible via classpath:sql/seed-sut-devices.sql
                                            (INC-4 option A). INSERT ... ON CONFLICT DO NOTHING, 10 000 devices.
 ```
@@ -48,8 +48,8 @@ platform-app/src/main/resources/sql/
 # SUT-B : POST HTTP → DB lookup → Kafka produce
 #
 # Prérequis :
-#   docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
-#   java -jar platform-app.jar --spring.profiles.active=local,examples-local
+#   docker compose -f distribution/examples/docker-compose-sut.yaml up -d
+#   java -jar platform-bootstrap.jar --spring.profiles.active=local,examples-local
 #
 # Configuration technique dans application-examples-local.yaml :
 #   platform.datasources.sut-db    → jdbc:postgresql://localhost:5433/sut_devices
@@ -273,7 +273,7 @@ platform:
 
 - Mêmes règles que ISSUE-100 : syntaxe DSL valide, aucune URL inline, `dependsOn:` explicites.
 - L'assertion `task: database` avec `query:` et `expectedValue:` doit correspondre à la signature du `DatabaseAssertionExecutor` existant (ISSUE-061). Le Developer vérifie la syntaxe DSL contre l'implémentation existante.
-- `scriptPath: "classpath:sql/seed-sut-devices.sql"` → le script SQL de seed est copié depuis `platform-examples/sut-db/sql/V2__seed_10k_devices.sql` vers `platform-app/src/main/resources/sql/seed-sut-devices.sql` (renommé sans préfixe Flyway pour ne pas déclencher Flyway sur la base plateforme). Vérifier que la convention `classpath:` est supportée par `DatabaseTaskExecutor`.
+- `scriptPath: "classpath:sql/seed-sut-devices.sql"` → le script SQL de seed est copié depuis `distribution/examples/sut/sut-db/sql/V2__seed_10k_devices.sql` vers `bootstrap/src/main/resources/sql/seed-sut-devices.sql` (renommé sans préfixe Flyway pour ne pas déclencher Flyway sur la base plateforme). Vérifier que la convention `classpath:` est supportée par `DatabaseTaskExecutor`.
 - Le step `reset-devices` (PURGE table `devices`) précède le step `seed-devices` (POPULATE) : le script de seed contient `ON CONFLICT DO NOTHING`, donc un PURGE préalable garantit un état propre. La table est `devices` — il n'existe PAS de table `events` (PDR-023).
 
 ---
@@ -283,7 +283,7 @@ platform:
 - [ ] `device-api-local.yaml` : parseable par `ScenarioParser` sans exception
 - [ ] `device-api-distributed.yaml` : parseable par `ScenarioParser` sans exception
 - [ ] `application-examples-local.yaml` : section `datasources.sut-db` + `http-targets.device-api` (base-url 8084) ajoutée
-- [ ] `platform-app/src/main/resources/sql/seed-sut-devices.sql` créé (copie de V2__seed_10k_devices.sql, sans préfixe Flyway)
+- [ ] `bootstrap/src/main/resources/sql/seed-sut-devices.sql` créé (copie de V2__seed_10k_devices.sql, sans préfixe Flyway)
 - [ ] `scriptPath: "classpath:sql/seed-sut-devices.sql"` dans les deux scénarios (PAS de `classpath:sql/V2__...`)
 - [ ] Aucune URL inline dans les scénarios — y compris blocs `gatling:` (pas de `baseUrl:`, utiliser `target: device-api` + `path: submit-event`)
 - [ ] Steps `dependsOn:` corrects (order : reset-devices → seed-devices → warmup/health → load → assertions)

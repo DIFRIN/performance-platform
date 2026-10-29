@@ -20,10 +20,10 @@ Le Developer produit `HttpClientTaskExecutor` + ses tests unitaires. L'executor 
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/http/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/http/
   └── HttpClientTaskExecutor.java        — @Preparation, implémente TaskExecutor
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/http/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/http/
   └── HttpClientTaskExecutorTest.java    — tests unitaires (mock RestClient)
 ```
 
@@ -230,7 +230,7 @@ public class HttpClientTaskExecutor implements TaskExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Test : `target:` manquant → `TaskResult.failed` avec message clair
 - [ ] Test : `path:` manquant → `TaskResult.failed` avec message clair
 - [ ] Test : GET sur target connu → outputs `{statusCode, responseBody, durationMs}` présents

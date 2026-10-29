@@ -20,7 +20,7 @@ façade composite de migration.
 ## Fichiers à Créer
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/
+infra/platform-transport/src/main/java/com/performance/platform/transport/
   ├── TaskChannel.java            — dispatchTask + receiveTask
   ├── SignalChannel.java          — broadcastSignal + receiveSignal
   ├── EventChannel.java           — publishEvent + subscribe
@@ -49,6 +49,6 @@ public interface ExecutionTransport extends TaskChannel, SignalChannel, EventCha
 ## Critères de Done
 
 - [ ] Ports étroits + façade créés
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-191 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour (ports étroits)

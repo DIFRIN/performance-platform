@@ -1,7 +1,7 @@
 # ISSUE-106 — Create http-api-mock-agent-distributed.yaml scenario (DISTRIBUTED mode)
 
 **PDR** : PDR-025
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : DONE
 **Priorite** : P1 (critique — contrepartie DISTRIBUTED du scenario LOCAL)
 **Bloquee par** : ISSUE-105 (les mappings JSON sont deja crees, scenario LOCAL sert de modele)
@@ -22,7 +22,7 @@ Creer un scenario YAML pour le mode DISTRIBUTED qui demontre le pattern "WireMoc
 ## Fichier a Creer
 
 ```
-platform-deployment/examples/scenarios/
+distribution/examples/scenarios/
   └── http-api-mock-agent-distributed.yaml
 ```
 
@@ -47,7 +47,7 @@ platform-deployment/examples/scenarios/
 #   standard-agent: agent.supported-tasks: [http-mock, database, kafka]
 #
 # Prerequis :
-#   docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml up -d
+#   docker compose -f distribution/examples/docker-compose-wiremock-agent.yaml up -d
 #
 # Config technique :
 #   platform.http-targets.mock-api.base-url: auto-resolved from ExecutionContext
@@ -179,10 +179,10 @@ loadModels:
 
 ## Criteres de Done
 
-- [ ] `http-api-mock-agent-distributed.yaml` cree dans `platform-deployment/examples/scenarios/`
+- [ ] `http-api-mock-agent-distributed.yaml` cree dans `distribution/examples/scenarios/`
 - [ ] Le scenario est parseable par le ScenarioParser (test unitaire)
 - [ ] Scenario contient 0 URL inline — uniquement `target:`, `classpath:` references logiques
 - [ ] Aucun champ `agentTags` dans le scenario
 - [ ] Commentaires documentent le routing par task name + config `agent.supported-tasks`
-- [ ] `mvn test -pl platform-deployment -q` -> 0 erreur
+- [ ] `mvn test -pl distribution -q` -> 0 erreur
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-106 -> DONE

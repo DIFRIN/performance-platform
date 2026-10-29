@@ -1,7 +1,7 @@
 # ISSUE-122: Endpoint REST GET /api/v1/agents (ORCHESTRATOR)
 
 **PDR** : PDR-027
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-121
@@ -21,13 +21,13 @@ des agents (id, etat, supportedTasks, lastHeartbeat) est retournee en mode ORCHE
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/app/api/
+bootstrap/src/main/java/com/performance/platform/app/api/
   └── AgentController.java              — GET /api/v1/agents (conditionnel ORCHESTRATOR)
 
-platform-app/src/main/java/com/performance/platform/app/api/dto/
+bootstrap/src/main/java/com/performance/platform/app/api/dto/
   └── AgentResponse.java
 
-platform-app/src/test/java/com/performance/platform/app/api/
+bootstrap/src/test/java/com/performance/platform/app/api/
   └── AgentControllerTest.java          — @WebMvcTest
 ```
 
@@ -65,7 +65,7 @@ public record AgentResponse(
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] `GET /agents` (ORCHESTRATOR) → liste mappee depuis findAll()
 - [ ] Controller absent en mode LOCAL (condition)
 - [ ] `.claude/workspace/progress.md` : ISSUE-122 → IN REVIEW (via `bash .claude/scripts/issue-finish.sh`)

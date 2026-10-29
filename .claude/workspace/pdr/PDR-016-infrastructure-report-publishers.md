@@ -3,7 +3,7 @@
 **Module Maven** : `platform-infrastructure`
 **Package** : `com.performance.platform.infrastructure.publisher`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/08-report-engine.md` §6-7, `.claude/knowledge/specs/03-task-framework.md` §7.6
+**Specs de référence** : `docs/knowledge/specs/08-report-engine.md` §6-7, `docs/knowledge/specs/03-task-framework.md` §7.6
 **Dépend de** : PDR-001, PDR-004, PDR-015
 **Issues** : ISSUE-070, ISSUE-071, ISSUE-072, ISSUE-073
 
@@ -72,7 +72,7 @@ Ce PDR utilise :
   PDR-015 → ReportPublisher, CampaignReport, PublisherConfig, PublicationException, ReportEngine
 
 Ce PDR est utilisé par :
-  PDR-018 (platform-app) → assemblage des publishers selon config
+  PDR-018 (platform-bootstrap) → assemblage des publishers selon config
 ```
 
 ---

@@ -18,11 +18,11 @@ et publier `AgentLost` (domaine) à chaque expiration TTL.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/registry/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/registry/
   ├── AgentLifecycleIngestion.java        — NOUVEAU (SmartLifecycle + AgentLifecycleEventHandler)
   └── config/AgentRegistryConfiguration.java — ajouter @Bean AgentTtlMonitor
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/registry/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/registry/
   ├── AgentLifecycleIngestionTest.java    — NOUVEAU
   └── AgentTtlMonitorWiringTest.java      — NOUVEAU (start/stop + AgentLost publié)
 ```

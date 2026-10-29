@@ -1,7 +1,7 @@
 # ISSUE-177 — Cut execution-engine → agent-runtime Edge
 
 **PDR** : PDR-048
-**Module** : `platform-execution-engine`, `platform-app`
+**Module** : `platform-execution-engine`, `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : —
@@ -19,19 +19,19 @@ Le dispatcher reste dans l'engine et ne dépend plus de l'agent-runtime.
 ## Fichiers à Modifier
 
 ```
-platform-application/src/main/java/com/performance/platform/application/ports/out/
+core/platform-use-cases/src/main/java/com/performance/platform/application/ports/out/
   └── LifecycleSignalHandler.java          — NOUVEAU (port, 0 annotation)
 
-platform-agent-runtime/src/main/java/com/performance/platform/agent/local/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/local/
   └── LocalAgent.java                      — implements LifecycleSignalHandler
 
-platform-execution-engine/src/main/java/com/performance/platform/engine/lifecycle/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/lifecycle/
   └── LocalLifecycleDispatcher.java        — dépend du port, plus de LocalAgent
 
-platform-app/src/main/java/com/performance/platform/app/config/
+bootstrap/src/main/java/com/performance/platform/app/config/
   └── AgentRuntimeConfiguration.java       — le @Bean LOCAL retourne LocalAgent (type concret)
 
-platform-execution-engine/pom.xml          — retirer platform-agent-runtime
+execution/platform-execution-engine/pom.xml          — retirer platform-agent-runtime
 ```
 
 ## Règles Spécifiques
@@ -42,7 +42,7 @@ platform-execution-engine/pom.xml          — retirer platform-agent-runtime
 
 ## Critères de Done
 
-- [ ] `LocalLifecycleDispatcher` vit dans `platform-app`
+- [ ] `LocalLifecycleDispatcher` vit dans `platform-bootstrap`
 - [ ] `platform-execution-engine` n'importe plus `platform-agent-runtime`
-- [ ] `mvn test -pl platform-execution-engine,platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine,:platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-177 → DONE

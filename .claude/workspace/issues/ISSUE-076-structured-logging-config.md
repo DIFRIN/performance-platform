@@ -17,13 +17,13 @@ classe `ObservabilityConfiguration` (MeterRegistry, tracer OTel).
 ## Fichiers à Créer
 
 ```
-platform-observability/src/main/java/com/performance/platform/observability/config/
+infra/platform-observability/src/main/java/com/performance/platform/observability/config/
   ├── ObservabilityConfiguration.java
   └── ExecutionContextMdcFilter.java   — pose le MDC
-platform-observability/src/main/resources/
+infra/platform-observability/src/main/resources/
   └── logback-spring.xml               — encoder JSON
 
-platform-observability/src/test/java/com/performance/platform/observability/config/
+infra/platform-observability/src/test/java/com/performance/platform/observability/config/
   └── ExecutionContextMdcFilterTest.java
 ```
 
@@ -45,7 +45,7 @@ public class ExecutionContextMdcFilter { /* met/retire les clés MDC */ }
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-observability -q` → 0 erreur
+- [ ] `mvn test -pl :platform-observability -q` → 0 erreur
 - [ ] Le MDC contient les clés attendues pendant le traitement
 - [ ] `.claude/progress.md` mis à jour : ISSUE-076 → DONE
 - [ ] `.claude/context/interfaces-registry.md` mis à jour

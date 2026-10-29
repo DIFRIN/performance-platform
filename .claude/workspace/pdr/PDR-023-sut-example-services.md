@@ -1,6 +1,6 @@
 # PDR-023 — SUT Example Services (IoT Use Cases)
 
-**Module Maven** : `platform-examples/` (standalone — NON inclus dans le root pom.xml multi-module)
+**Module Maven** : `distribution/examples/sut/` (standalone — NON inclus dans le root pom.xml multi-module)
 **Package** : `com.performance.examples.iot` / `com.performance.examples.device`
 **Statut** : WAITING
 **Specs de référence** : aucune spec plateforme — ce sont des services cibles indépendants
@@ -32,7 +32,7 @@ Les **IoT devices** (destinataires HTTP du dispatcher) sont simulés par WireMoc
 ### SUT-A : `iot-dispatcher`
 
 ```
-platform-examples/iot-dispatcher/
+distribution/examples/sut/iot-dispatcher/
 ├── pom.xml                              (Spring Boot 3.4.x, spring-kafka, postgresql)
 └── src/main/
     ├── java/com/performance/examples/iot/
@@ -101,7 +101,7 @@ iot:
 ### SUT-B : `device-api`
 
 ```
-platform-examples/device-api/
+distribution/examples/sut/device-api/
 ├── pom.xml                              (Spring Boot 3.4.x, spring-kafka, postgresql)
 └── src/main/
     ├── java/com/performance/examples/device/
@@ -171,7 +171,7 @@ server:
 ### DB Schema partagé : `sut-db/`
 
 ```
-platform-examples/sut-db/sql/
+distribution/examples/sut/sut-db/sql/
 ├── V1__devices_schema.sql
 └── V2__seed_10k_devices.sql
 ```
@@ -229,7 +229,7 @@ Ce PDR est utilisé par :
 ## Critères de Done (PDR complet)
 
 - [ ] ISSUE-096, 097, 098 toutes DONE
-- [ ] `mvn package -f platform-examples/iot-dispatcher/pom.xml -q` → BUILD SUCCESS
-- [ ] `mvn package -f platform-examples/device-api/pom.xml -q` → BUILD SUCCESS
-- [ ] `platform-examples/sut-db/sql/V1__devices_schema.sql` — syntaxe PostgreSQL valide
-- [ ] `platform-examples/sut-db/sql/V2__seed_10k_devices.sql` — 10 000 rows attendus
+- [ ] `mvn package -f distribution/examples/sut/iot-dispatcher/pom.xml -q` → BUILD SUCCESS
+- [ ] `mvn package -f distribution/examples/sut/device-api/pom.xml -q` → BUILD SUCCESS
+- [ ] `distribution/examples/sut/sut-db/sql/V1__devices_schema.sql` — syntaxe PostgreSQL valide
+- [ ] `distribution/examples/sut/sut-db/sql/V2__seed_10k_devices.sql` — 10 000 rows attendus

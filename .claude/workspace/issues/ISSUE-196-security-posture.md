@@ -1,7 +1,7 @@
 # ISSUE-196 — Security Posture Decision + Documentation
 
 **PDR** : PDR-054
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P3
 **Bloquée par** : —
@@ -20,10 +20,10 @@ rôles/authorities sur `/api/**` quand la sécurité est activée.
 ## Fichiers à Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/app/security/
+bootstrap/src/main/java/com/performance/platform/app/security/
   └── SecurityConfiguration.java     — WARN si désactivé + rôles sur /api/** si activé
 
-platform-app/src/test/java/com/performance/platform/app/web/
+bootstrap/src/test/java/com/performance/platform/app/web/
   └── WebSecurityTest.java           — étendre (rôles + WARN)
 ```
 
@@ -36,5 +36,5 @@ platform-app/src/test/java/com/performance/platform/app/web/
 
 - [ ] Posture documentée + WARN explicite
 - [ ] Rôles sur `/api/**` quand sécurité activée
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-196 → DONE

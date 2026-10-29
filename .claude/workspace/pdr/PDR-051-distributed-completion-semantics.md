@@ -79,4 +79,4 @@ Ce PDR est utilisé par :
 - [ ] `ResultSelectionPolicy` + `selectResult` déterministe (ISSUE-189)
 - [ ] `ResultSelectionDeterminismTest` (T6) passe 1 000/1 000 (ISSUE-189)
 - [ ] Polling 500 ms remplacé par signal de complétion (ISSUE-190)
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur

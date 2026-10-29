@@ -1,0 +1,144 @@
+# =============================================================================
+# Scénario : Device API — Mode DISTRIBUTED (plateforme)
+# SUT-B : POST HTTP → DB lookup → Kafka produce
+#
+# Prérequis :
+#   - docker compose -f distribution/examples/docker-compose-sut.yaml up -d
+#   - plateforme DISTRIBUTED : orchestrateur + 2 agents
+#
+# Différences vs local :
+#   - Charge 10 000 req/s au lieu de 1 000
+#   - Configuration-driven : les steps sont routés via agent.supported-tasks (ADR-015)
+#   - Pas de warmup — l'orchestrateur gère le scheduling distribué
+#   - Aucune URL inline — uniquement références logiques (target:, cluster:, topic:)
+# =============================================================================
+scenario:
+  id: device-api-distributed
+  name: "Test SUT-B Device API — mode DISTRIBUTED, cible 10 000 req/s"
+  version: "1.0"
+  tags: [device-api, distributed]
+  metadata:
+    owner: perf-team
+    sut: device-api
+  execution: { mode: DISTRIBUTED }
+
+  report:
+    components: { device-api: "1.0.0-SNAPSHOT" }
+    environment: DISTRIBUTED-DOCKER
+    objective: "Validate Device API throughput under a distributed load"
+    testType: LOAD
+    loadDescription: "Ramp from 1 to 10000 users per second over 120 seconds per injection agent"
+    assumptions:
+      - "10000 active devices seeded before injection"
+      - "Dedicated Kafka topic; request counts include all participating agents"
+    criteria:
+      - { name: Maximum duration, metric: durationSeconds, taskId: load-test, operator: "<=", threshold: 150 }
+      - { name: Target volume, metric: totalRequests, taskId: load-test, operator: ">=", threshold: 600000 }
+      - { name: No technical errors, metric: errorRate, taskId: load-test, operator: "==", threshold: 0 }
+      - { name: p95 objective, metric: p95Ms, taskId: load-test, operator: "<=", threshold: 500 }
+      - { name: p99 objective, metric: p99Ms, taskId: load-test, operator: "<=", threshold: 1000 }
+    # Saturation must be measured separately; no clean-bill-of-health is inferred.
+
+  steps:
+    # Step 1 : Vider la table devices avant re-seed
+    - id: reset-devices
+      task: database
+      phase: PREPARATION
+      parameters:
+        datasource: sut-db
+        operation: PURGE
+        table: devices
+      timeout: 30s
+
+    # Step 2 : Repeupler la table devices
+    - id: seed-devices
+      task: database
+      phase: PREPARATION
+      dependsOn: [reset-devices]
+      requiredContexts: [reset-devices]
+      parameters:
+        datasource: sut-db
+        operation: POPULATE
+        scriptPath: "classpath:sql/seed-sut-devices.sql"
+      timeout: 2m
+
+    # Step 3 : Vérifier que device-api est prêt
+    - id: check-health
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [seed-devices]
+      requiredContexts: [seed-devices]
+      parameters:
+        target: device-api
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 30s
+
+    # Step 4 : Charge 10 000 users — ramp 120s
+    # Cet agent doit avoir "gatling" dans son agent.supported-tasks
+    - id: load-test
+      task: gatling
+      phase: INJECTION
+      dependsOn: [check-health]
+      requiredContexts: [check-health]
+      parameters:
+        target: device-api
+        path: submit-event
+        method: POST
+        # Pas de `simulation` : l'injection HTTP est construite depuis ces parametres.
+        # Placeholders resolus a chaque requete ({index} global, {uuid}, {random:a-b}, {choice:..}, ...)
+        # Le SUT exige device_id dans la query string, pas dans un body JSON.
+        queryParams:
+          device_id: "device-{index:4}"
+        headers:
+          X-Request-Id: "{uuid}"
+        expectedStatus: 200
+        loadModel:
+          type: RAMP
+          parameters: { from: 1, to: 10000, durationSeconds: 120 }
+      timeout: 5m
+
+    # COUNT observe le topic Kafka après la charge HTTP (un événement par requête).
+    - id: count-device-events
+      task: kafka-consumer
+      phase: ASSERTION
+      dependsOn: [load-test]
+      requiredContexts: [load-test]
+      parameters:
+        cluster: iot-sut
+        topic: device-events
+        operation: COUNT
+      timeout: 1m
+
+    # Step 6 : Comparer le nombre observé sur le topic à la charge attendue
+    - id: assert-kafka-produced
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [count-device-events]
+      requiredContexts: [count-device-events]
+      parameters:
+        metric: consumedCount
+        refTaskId: count-device-events
+        operator: GTE
+        value: 600000
+      timeout: 2m
+
+    # Step 7 : Vérifier intégrité base de données
+    - id: assert-db-intact
+      task: database-assertion
+      phase: ASSERTION
+      dependsOn: [load-test]
+      requiredContexts: [load-test]
+      parameters:
+        datasource: sut-db
+        query: "SELECT COUNT(*) FROM devices WHERE is_active = true"
+        value: 10000
+        operator: EQ
+      timeout: 1m
+
+loadModels:
+  device-api-high-ramp:
+    type: RAMP
+    target: 10000
+    duration: 120s

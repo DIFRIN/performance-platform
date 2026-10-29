@@ -3,7 +3,7 @@
 **Module Maven** : `platform-scenario-dsl`
 **Package** : `com.performance.platform.scenario`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/01-scenario-dsl.md` (complet)
+**Specs de référence** : `docs/knowledge/specs/01-scenario-dsl.md` (complet)
 **Dépend de** : PDR-001, PDR-004
 **Issues** : ISSUE-015, ISSUE-016, ISSUE-017, ISSUE-018
 

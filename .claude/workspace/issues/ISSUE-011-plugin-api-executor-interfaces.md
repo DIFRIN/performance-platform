@@ -17,11 +17,11 @@ test ArchUnit garantissant 0 import Spring dans le module.
 ## Fichiers à Créer
 
 ```
-platform-plugin-api/src/main/java/com/performance/platform/plugin/
+core/platform-plugin-api/src/main/java/com/performance/platform/plugin/
   ├── TaskExecutor.java
   └── AssertionExecutor.java
 
-platform-plugin-api/src/test/java/com/performance/platform/plugin/
+core/platform-plugin-api/src/test/java/com/performance/platform/plugin/
   └── PluginApiArchitectureTest.java — ArchUnit : 0 import org.springframework
 ```
 
@@ -48,7 +48,7 @@ public interface AssertionExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-plugin-api -q` → 0 erreur
+- [ ] `mvn test -pl :platform-plugin-api -q` → 0 erreur
 - [ ] Test ArchUnit passe
 - [ ] Aucune occurrence de `TaskType` ou `getSupportedType`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-011 → DONE

@@ -3,7 +3,7 @@
 **Module Maven** : `platform-transport`
 **Package** : `com.performance.platform.transport.kafka`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/adr/ADR-009-kafka-consumer-group-per-agent.md`, `.claude/knowledge/adr/ADR-013-spring-first-infrastructure.md`, `.claude/knowledge/specs/05-transport-layer.md`
+**Specs de référence** : `docs/knowledge/adr/ADR-009-kafka-consumer-group-per-agent.md`, `docs/knowledge/adr/ADR-013-spring-first-infrastructure.md`, `docs/knowledge/specs/05-transport-layer.md`
 **Dépend de** : PDR-020 DONE (spring-kafka déjà intégré au projet, patterns établis)
 **Issues** : ISSUE-089, ISSUE-090, ISSUE-091
 
@@ -134,12 +134,12 @@ public class DynamicKafkaListenerRegistry {
 ```
 Ce PDR utilise :
   PDR-020 (spring-kafka présent)     → spring-kafka déjà dans le classpath
-  platform-transport/pom.xml         → spring-kafka déjà ajouté (PDR-020)
+  infra/platform-transport/pom.xml         → spring-kafka déjà ajouté (PDR-020)
   KafkaTransportProperties           → bootstrap-servers, topics, consumer-group (inchangés)
   KafkaMessageCodec                  → inchangé
 
 Ce PDR est utilisé par :
-  PDR-018 (platform-app)             → KafkaExecutionTransport via TransportConfiguration (inchangé)
+  PDR-018 (platform-bootstrap)             → KafkaExecutionTransport via TransportConfiguration (inchangé)
   PDR-024 (scénarios exemples)       → utilise DISTRIBUTED mode avec KAFKA transport
 ```
 
@@ -152,4 +152,4 @@ Ce PDR est utilisé par :
 - [ ] `DynamicKafkaListenerRegistry` dans interfaces-registry.md statut STABLE
 - [ ] Aucun `Thread.currentThread()`, aucun polling loop manuel dans `platform-transport`
 - [ ] Tests d'intégration Testcontainers (Kafka) existants passent (ISSUE-029 tests réutilisables)
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur

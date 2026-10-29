@@ -16,7 +16,7 @@ Ajouter les tests unitaires pour la nouvelle opération `QUERY` du `DatabaseTask
 ## Fichiers à Modifier
 
 ```
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/database/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/database/
   └── DatabaseTaskExecutorTest.java   — ajouter tests QUERY
 ```
 
@@ -120,6 +120,6 @@ void setUp() {
 
 - [ ] 6 nouveaux tests ajoutés à `DatabaseTaskExecutorTest`
 - [ ] Tous les tests existants passent (PURGE, POPULATE, erreurs)
-- [ ] `mvn test -pl platform-infrastructure -Dtest=DatabaseTaskExecutorTest -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -Dtest=DatabaseTaskExecutorTest -q` → 0 erreur
 - [ ] Couverture des cas d'erreur (missing query, missing datasource)
 - [ ] Couverture des deux queryType (SELECT, UPDATE)

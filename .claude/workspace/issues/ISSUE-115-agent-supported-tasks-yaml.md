@@ -1,7 +1,7 @@
 # ISSUE-115 — Add agent.supported-tasks to application-agent.yaml
 
 **PDR** : PDR-026
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorite** : P0 (configuration YAML source de verite pour le mode DISTRIBUTED)
 **Bloquee par** : ISSUE-111 (AgentProperties doit exister pour que la propriete soit lue)
@@ -16,8 +16,8 @@ Ajouter la propriete `agent.supported-tasks` dans le profil YAML agent (`applica
 ## Fichiers a Modifier
 
 ```
-platform-app/src/main/resources/application-agent.yaml        — ajouter agent.supported-tasks
-platform-app/src/main/resources/application-orchestrator.yaml — ajouter agent.supported-tasks (commentee)
+bootstrap/src/main/resources/application-agent.yaml        — ajouter agent.supported-tasks
+bootstrap/src/main/resources/application-orchestrator.yaml — ajouter agent.supported-tasks (commentee)
 ```
 
 ## Modification dans `application-agent.yaml`

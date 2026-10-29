@@ -17,10 +17,10 @@ auto-delete par agent. Sérialisation Jackson.
 ## Fichiers à Créer
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/rabbitmq/
+infra/platform-transport/src/main/java/com/performance/platform/transport/rabbitmq/
   └── RabbitMQExecutionTransport.java
 
-platform-transport/src/test/java/com/performance/platform/transport/rabbitmq/
+infra/platform-transport/src/test/java/com/performance/platform/transport/rabbitmq/
   └── RabbitMQExecutionTransportIT.java   — Testcontainers RabbitMQ, round-trip
 ```
 
@@ -43,7 +43,7 @@ public class RabbitMQExecutionTransport implements ExecutionTransport {
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-transport -P integration-tests` → IT RabbitMQ passe
+- [ ] `mvn verify -pl :platform-transport -P integration-tests` → IT RabbitMQ passe
 - [ ] Round-trip via Testcontainers RabbitMQ
 - [ ] `getType()` == RABBITMQ
 - [ ] `.claude/progress.md` mis à jour : ISSUE-030 → DONE

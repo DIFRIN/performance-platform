@@ -17,17 +17,17 @@ avec les `@Bean` conditionnels (squelette — beans complétés par les issues s
 ## Fichiers à Créer
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/
+infra/platform-transport/src/main/java/com/performance/platform/transport/
   └── TransportType.java                       — enum des transports disponibles
 
-platform-transport/src/main/java/com/performance/platform/transport/config/
+infra/platform-transport/src/main/java/com/performance/platform/transport/config/
   ├── KafkaTransportProperties.java
   ├── RabbitMQTransportProperties.java
   ├── HttpTransportProperties.java
   ├── SocketTransportProperties.java
   └── TransportConfiguration.java
 
-platform-transport/src/test/java/com/performance/platform/transport/config/
+infra/platform-transport/src/test/java/com/performance/platform/transport/config/
   └── TransportConfigurationTest.java — binding properties
 ```
 
@@ -57,6 +57,6 @@ public record SocketTransportProperties(String orchestratorHost, int orchestrato
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] Binding des properties testé
 - [ ] `.claude/progress.md` mis à jour : ISSUE-028 → DONE

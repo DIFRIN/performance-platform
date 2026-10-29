@@ -53,4 +53,4 @@ progress.md et les PDRs sont gérés par les scripts — ne pas les lire.
 - Virtual Threads : `Executors.newVirtualThreadPerTaskExecutor()` pour tout I/O
 - Logging : `log.info("action={} id={}", action, id)` — toujours avec contexte
 - 0 annotation Spring dans `platform-domain`
-- Noms conformes au `.claude/knowledge/glossary.md`
+- Noms conformes au `docs/knowledge/glossary.md`

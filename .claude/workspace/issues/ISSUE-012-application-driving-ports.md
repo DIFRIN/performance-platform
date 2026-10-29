@@ -1,7 +1,7 @@
 # ISSUE-012 — Ports entrants (use cases) + exceptions applicatives
 
 **PDR** : PDR-004
-**Module** : `platform-application`
+**Module** : `platform-use-cases`
 **Statut** : WAITING
 **Priorité** : P0
 **Bloquée par** : ISSUE-003, ISSUE-006
@@ -11,27 +11,27 @@
 
 ## Objectif
 
-Créer le module `platform-application` (dépend de `platform-domain` uniquement) et les
+Créer le module `platform-use-cases` (dépend de `platform-domain` uniquement) et les
 ports entrants (use cases) + exceptions applicatives.
 
 ## Fichiers à Créer
 
 ```
-platform-application/pom.xml — dépend de platform-domain uniquement
-platform-application/src/main/java/com/performance/platform/application/ports/in/
+core/platform-use-cases/pom.xml — dépend de platform-domain uniquement
+core/platform-use-cases/src/main/java/com/performance/platform/application/ports/in/
   ├── ExecuteScenarioUseCase.java
   ├── ScenarioParsingUseCase.java
   ├── GetExecutionStatusUseCase.java
   ├── CancelExecutionUseCase.java
   └── GenerateReportUseCase.java
-platform-application/src/main/java/com/performance/platform/application/exception/
+core/platform-use-cases/src/main/java/com/performance/platform/application/exception/
   ├── ExecutionException.java
   ├── ReportGenerationException.java
   ├── NoAvailableAgentException.java
   ├── InvalidScenarioException.java
   └── ScenarioParsingException.java   — défini ici pour découpler scenario-dsl du port in
 
-platform-application/src/test/java/com/performance/platform/application/
+core/platform-use-cases/src/test/java/com/performance/platform/application/
   └── arch/ApplicationArchitectureTest.java — ArchUnit : 0 import infrastructure/Spring
 ```
 
@@ -68,7 +68,7 @@ public class ScenarioParsingException extends RuntimeException {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-application -q` → 0 erreur
+- [ ] `mvn test -pl :platform-use-cases -q` → 0 erreur
 - [ ] Test ArchUnit passe
 - [ ] `.claude/progress.md` mis à jour : ISSUE-012 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : use cases → STABLE

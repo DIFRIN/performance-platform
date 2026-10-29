@@ -17,11 +17,11 @@ via `AgentRegistryPort`, sans aucune sélection (ADR-008).
 ## Fichiers à Créer
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/availability/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/availability/
   ├── AgentAvailabilityChecker.java          — interface
   └── DefaultAgentAvailabilityChecker.java   — implémentation
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/availability/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/availability/
   └── DefaultAgentAvailabilityCheckerTest.java
 ```
 
@@ -42,13 +42,13 @@ public class DefaultAgentAvailabilityChecker implements AgentAvailabilityChecker
 ## Règles Spécifiques
 
 - `awaitAgentFor` : poll `registry.hasAgentFor(taskName)` jusqu'au timeout (NOTE R5 : ≥120s en K8s).
-- Timeout atteint sans agent → `NoAvailableAgentException` (de `platform-application`).
+- Timeout atteint sans agent → `NoAvailableAgentException` (de `platform-use-cases`).
 - AUCUNE sélection d'agent — uniquement vérification de présence.
 - Attente sous Virtual Threads.
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] Agent présent → retour immédiat ; absent jusqu'au timeout → `NoAvailableAgentException`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-022 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `AgentAvailabilityChecker` → STABLE

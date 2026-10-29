@@ -1,7 +1,7 @@
 # ISSUE-077 — SpringBoot main + Modulith + assemblage Maven
 
 **PDR** : PDR-018
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : WAITING
 **Priorité** : P1
 **Bloquée par** : ISSUE-023, ISSUE-039, ISSUE-052
@@ -11,17 +11,17 @@
 
 ## Objectif
 
-Créer le module `platform-app` (artefact unique), la classe main Spring Boot + Modulith, et
+Créer le module `platform-bootstrap` (artefact unique), la classe main Spring Boot + Modulith, et
 assembler les dépendances Maven de tous les modules.
 
 ## Fichiers à Créer
 
 ```
-platform-app/pom.xml — dépend de TOUS les modules ; spring-boot-maven-plugin (fat jar)
-platform-app/src/main/java/com/performance/platform/app/
+bootstrap/pom.xml — dépend de TOUS les modules ; spring-boot-maven-plugin (fat jar)
+bootstrap/src/main/java/com/performance/platform/app/
   └── PerformancePlatformApplication.java
 
-platform-app/src/test/java/com/performance/platform/app/
+bootstrap/src/test/java/com/performance/platform/app/
   ├── ApplicationContextTest.java        — le contexte démarre
   └── ModulithVerificationTest.java      — ApplicationModules.verify()
 ```
@@ -44,7 +44,7 @@ public class PerformancePlatformApplication {
 
 ## Critères de Done
 
-- [ ] `mvn clean install` → `platform-app/target/performance-platform.jar` produit
+- [ ] `mvn clean install` → `bootstrap/target/performance-platform.jar` produit
 - [ ] `ApplicationModules.of(...).verify()` passe
 - [ ] Le contexte Spring démarre en profil de test
 - [ ] `.claude/progress.md` mis à jour : ISSUE-077 → DONE

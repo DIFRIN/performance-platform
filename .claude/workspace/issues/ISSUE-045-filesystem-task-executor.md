@@ -16,10 +16,10 @@ Implémenter `FilesystemTaskExecutor` : CREATE/DELETE/UPLOAD/CLEANUP de fichiers
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/fs/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/fs/
   └── FilesystemTaskExecutor.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/fs/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/fs/
   └── FilesystemTaskExecutorTest.java — CREATE/DELETE sur @TempDir
 ```
 
@@ -41,7 +41,7 @@ public class FilesystemTaskExecutor implements TaskExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] CREATE puis DELETE récursif testés sur `@TempDir`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-045 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `FilesystemTaskExecutor` → STABLE

@@ -19,14 +19,14 @@ Apres `AssertionExecutor extends TaskExecutor` (ISSUE-150), les 6 implementation
 ## Fichiers a Modifier
 
 ```
-platform-assertion/src/main/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/
   ├── AssertionExecutorRegistry.java          -- ajouter @Deprecated(since="2.0", forRemoval=true)
   └── DefaultAssertionExecutorRegistry.java   -- ajouter @Deprecated(since="2.0", forRemoval=true)
 
-platform-assertion/src/test/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/
   └── AssertionExecutorAsTaskExecutorTest.java -- NOUVEAU: test Spring verifiant que les 6 AssertionExecutor sont dans DefaultTaskExecutorRegistry
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/
   └── AssertionExecutorsInTaskRegistryTest.java -- NOUVEAU: test Spring verifiant collection auto par DefaultTaskExecutorRegistry
 ```
 
@@ -39,8 +39,8 @@ platform-infrastructure/src/test/java/com/performance/platform/infrastructure/ex
 
 ## Criteres de Done
 
-- [ ] `mvn test -pl platform-assertion -q` -> 0 erreur
-- [ ] `mvn test -pl platform-infrastructure -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` -> 0 erreur
 - [ ] `AssertionExecutorRegistry` a l'annotation `@Deprecated(since="2.0", forRemoval=true)`
 - [ ] `DefaultAssertionExecutorRegistry` a l'annotation `@Deprecated(since="2.0", forRemoval=true)`
 - [ ] Test : `DefaultTaskExecutorRegistry.getSupportedTaskNames()` contient les 6 noms d'assertion

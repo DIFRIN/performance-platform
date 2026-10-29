@@ -3,7 +3,7 @@
 **Module Maven** : `platform-assertion`, `platform-infrastructure`
 **Package** : `com.performance.platform.assertion`, `com.performance.platform.infrastructure.executor`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/07-assertion-framework.md`, `.claude/workspace/assertion-distributed-analysis.md` section 3
+**Specs de reference** : `docs/knowledge/specs/07-assertion-framework.md`, `.claude/workspace/assertion-distributed-analysis.md` section 3
 **Depend de** : PDR-035 (AssertionExecutor extends TaskExecutor), PDR-010 (TaskExecutorRegistry)
 **Issues** : ISSUE-151, ISSUE-152, ISSUE-153
 
@@ -196,5 +196,5 @@ Ce PDR est utilise par :
 - [ ] `DefaultTaskExecutorRegistry` recoit automatiquement les 6 `AssertionExecutor` beans (verifie via test Spring)
 - [ ] `AssertionExecutorRegistry` et `DefaultAssertionExecutorRegistry` sont annotes `@Deprecated(since="2.0", forRemoval=true)`
 - [ ] `DagPhaseExecutor.assertionResultToTaskResult()` est remplace par l'appel a `AssertionResultMapper.toTaskResult()`
-- [ ] `mvn test -pl platform-assertion -q` -> 0 erreur
-- [ ] `mvn test -pl platform-infrastructure -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` -> 0 erreur

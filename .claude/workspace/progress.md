@@ -147,7 +147,7 @@
 | ISSUE-133 | Résoudre le conflit Spring 6/7 dans platform-execution-engine | DONE | PDR-030 | ISSUE-132 |
 | ISSUE-134 | Retirer les versions Spring explicites des poms enfants restants | DONE | PDR-030 | ISSUE-132 |
 | ISSUE-135 | Supprimer les adapters publisher de platform-infrastructure | DONE | PDR-031 | — |
-| ISSUE-136 | Supprimer ReportPublisherPort de platform-application | DONE | PDR-031 | ISSUE-135 |
+| ISSUE-136 | Supprimer ReportPublisherPort de platform-use-cases | DONE | PDR-031 | ISSUE-135 |
 | ISSUE-137 | Supprimer les contrats de publication de platform-reporting | DONE | PDR-031 | ISSUE-135 |
 | ISSUE-138 | Nettoyer la config publishers et documenter la diffusion CI/CD | DONE | PDR-031 | ISSUE-135 |
 | ISSUE-139 | Garde Docker sur les ITs de platform-infrastructure | DONE | PDR-032 | — |
@@ -155,9 +155,9 @@
 | ISSUE-141 | Garde Docker sur DatabaseAssertionExecutorIT + @TempDir dans FileAssertionExecutorTest | DONE | PDR-032 | — |
 | ISSUE-142 | Rendre ShellTaskExecutorTest cross-platform | DONE | PDR-032 | — |
 | ISSUE-143 | Engine implémente les ports in + suppression du port ExecutionEngine + config possédée | DONE | PDR-033 | ISSUE-134 |
-| ISSUE-144 | Composition root mince (platform-app) : glue lookup + scenario parsing + status + smoke tests | DONE | PDR-033 | ISSUE-143,145,146,147 |
+| ISSUE-144 | Composition root mince (platform-bootstrap) : glue lookup + scenario parsing + status + smoke tests | DONE | PDR-033 | ISSUE-143,145,146,147 |
 | ISSUE-145 | platform-infrastructure : datasource/JPA/repository conditionnels (sans throw) | DONE | PDR-033 | ISSUE-134 |
-| ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-application) | DONE | PDR-033 | — |
+| ISSUE-146 | GetExecutionStatusService : read-model framework-free (platform-use-cases) | DONE | PDR-033 | — |
 | ISSUE-147 | AgentRegistry self-wiring conditionnel (platform-agent-runtime) | DONE | PDR-033 | ISSUE-134 |
 | ISSUE-148 | - AssertionSummary Domain Record | DONE | PDR-034 | — |
 | ISSUE-149 | - AssertionSample Domain Record | DONE | PDR-034 | ISSUE-148 |
@@ -216,7 +216,7 @@
 | PDR-001 | Domain Core Records | platform-domain | DONE | ISSUE-001..007 | — |
 | PDR-002 | Domain Events | platform-domain | DONE | ISSUE-008,009 | PDR-001 |
 | PDR-003 | Plugin API | platform-plugin-api | DONE | ISSUE-010,011 | PDR-001 |
-| PDR-004 | Application Ports & Use Cases | platform-application | DONE | ISSUE-012,013,014 | PDR-001 |
+| PDR-004 | Application Ports & Use Cases | platform-use-cases | DONE | ISSUE-012,013,014 | PDR-001 |
 | PDR-005 | Scenario DSL | platform-scenario-dsl | DONE | ISSUE-015..018 | PDR-001, PDR-004 |
 | PDR-006 | Execution Engine | platform-execution-engine | DONE | ISSUE-019..024 | PDR-001,002,004,005,007 |
 | PDR-007 | Transport Layer Core | platform-transport | DONE | ISSUE-025,026,027 | PDR-001, PDR-002 |
@@ -230,20 +230,20 @@
 | PDR-015 | Reporting Engine | platform-reporting | DONE | ISSUE-065..069 | PDR-001,002,004,013,014 |
 | PDR-016 | Report Publishers (infra `.publisher`) | platform-infrastructure | DONE (SUPERSEDED by PDR-031 / ADR-022 — publishers retirés) | ISSUE-070..073 | PDR-001,004,015 |
 | PDR-017 | Observability | platform-observability | DONE | ISSUE-074,075,076 | PDR-001,002 |
-| PDR-018 | Application Assembly | platform-app | DONE | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
-| PDR-019 | Deployment | platform-deployment | DONE | ISSUE-083,084,085 | PDR-018 |
+| PDR-018 | Application Assembly | platform-bootstrap | DONE | ISSUE-077..082 | PDR-005,006,008,009,010,011,012,013,014,015,016,017 |
+| PDR-019 | Deployment | distribution | DONE | ISSUE-083,084,085 | PDR-018 |
 | PDR-020 | Named Kafka Cluster Registry + Executors | platform-infrastructure | DONE | ISSUE-086,087,088 | PDR-010 |
 | PDR-021 | Spring Kafka Migration — Transport | platform-transport | DONE | ISSUE-089,090,091 | PDR-020 |
 | PDR-022 | HTTP Target Registry + HttpClientExecutor | platform-infrastructure | DONE | ISSUE-092,093,094,095 | PDR-010,PDR-020 |
-| PDR-023 | SUT Example Services (IoT) | platform-examples/ | DONE | ISSUE-096,097,098 | — |
-| PDR-024 | Scénarios IoT + Docker Compose SUT | platform-deployment | DONE | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
-| PDR-025 | Mock Agent Demo Scenarios + Device Cleanup | platform-deployment | WAITING (blocked by PDR-026 priority) | ISSUE-103,104,105,106,107,108,109,110 | PDR-010,013,014,018,019,022,023,024,026 |
-| PDR-026 | Agent Configuration Wiring & E2E Verification | platform-app + platform-agent-runtime | WAITING | ISSUE-111,112,113,114,115,116,117,118 | PDR-009, PDR-018, ADR-015 |
-| PDR-027 | IHM Backend API Extensions | platform-application + platform-infrastructure + platform-app | WAITING | ISSUE-119..124 | PDR-004,012,015,018 |
-| PDR-028 | IHM Web Serving & Static Shell | platform-app | WAITING | ISSUE-125,126,131 | PDR-027 |
-| PDR-029 | IHM Frontend Views (vanilla JS) | platform-app | WAITING | ISSUE-127..130 | PDR-028 |
+| PDR-023 | SUT Example Services (IoT) | distribution/examples/sut/ | DONE | ISSUE-096,097,098 | — |
+| PDR-024 | Scénarios IoT + Docker Compose SUT | distribution | DONE | ISSUE-099,100,101,102 | PDR-020,PDR-022,PDR-023 |
+| PDR-025 | Mock Agent Demo Scenarios + Device Cleanup | distribution | WAITING (blocked by PDR-026 priority) | ISSUE-103,104,105,106,107,108,109,110 | PDR-010,013,014,018,019,022,023,024,026 |
+| PDR-026 | Agent Configuration Wiring & E2E Verification | platform-bootstrap + platform-agent-runtime | WAITING | ISSUE-111,112,113,114,115,116,117,118 | PDR-009, PDR-018, ADR-015 |
+| PDR-027 | IHM Backend API Extensions | platform-use-cases + platform-infrastructure + platform-bootstrap | WAITING | ISSUE-119..124 | PDR-004,012,015,018 |
+| PDR-028 | IHM Web Serving & Static Shell | platform-bootstrap | WAITING | ISSUE-125,126,131 | PDR-027 |
+| PDR-029 | IHM Frontend Views (vanilla JS) | platform-bootstrap | WAITING | ISSUE-127..130 | PDR-028 |
 | PDR-030 | Spring Boot BOM Centralization | root + tous modules | WAITING | ISSUE-132,133,134 | — (ADR-024) |
-| PDR-031 | Local-Only Reporting (suppression publishers) | platform-infrastructure + platform-application + platform-reporting + platform-app | WAITING | ISSUE-135,136,137,138 | — (ADR-022) |
+| PDR-031 | Local-Only Reporting (suppression publishers) | platform-infrastructure + platform-use-cases + platform-reporting + platform-bootstrap | WAITING | ISSUE-135,136,137,138 | — (ADR-022) |
 | PDR-032 | Cross-Platform Test Execution | platform-infrastructure + platform-transport + platform-assertion | WAITING | ISSUE-139,140,141,142 | — (ADR-023) |
 | PDR-033 | Assemblage runtime : self-wiring par module + composition root mince | engine + application + agent-runtime + app + infrastructure | WAITING | ISSUE-143,144,145,146,147 | PDR-030 (ADR-026, ADR-025) |
 | PDR-034 | AssertionSummary Domain Records | platform-domain | WAITING | ISSUE-148,149 | PDR-001 |
@@ -255,18 +255,18 @@
 | PDR-040 | Event Package Formalization | platform-domain | WAITING | ISSUE-163,164 | PDR-002 |
 | PDR-041 | Task Executor Audit & Doctrine | platform-infrastructure | WAITING | ISSUE-165 | PDR-010 |
 | PDR-042 | DatabaseTaskExecutor Refinement | platform-infrastructure | WAITING | ISSUE-166,167 | PDR-010 |
-| PDR-043 | Safety Net: CI + Test Tiers + Equivalence | root, platform-app, all | DONE | ISSUE-168,169,170 | — |
+| PDR-043 | Safety Net: CI + Test Tiers + Equivalence | root, platform-bootstrap, all | DONE | ISSUE-168,169,170 | — |
 | PDR-044 | Task Correlation Tracker Lifecycle | platform-execution-engine | DONE | ISSUE-171 | PDR-006 |
 | PDR-045 | Agent Lifecycle Ingestion & Loss Fast-Fail | platform-agent-runtime, platform-transport, platform-execution-engine | DONE | ISSUE-172,173,174 | PDR-044, PDR-009, PDR-007 |
-| PDR-046 | Single Runtime Resolution | platform-app | DONE | ISSUE-175 | PDR-018 |
+| PDR-046 | Single Runtime Resolution | platform-bootstrap | DONE | ISSUE-175 | PDR-018 |
 | PDR-047 | DSL Strictness & Version | platform-scenario-dsl | DONE | ISSUE-176 | PDR-005 |
-| PDR-048 | Cross-Module Boundary Enforcement | platform-app, engine, assertion, infrastructure, reporting, application | DONE | ISSUE-177,178,179,180 | PDR-004, PDR-010, PDR-014, PDR-022, PDR-037 |
-| PDR-049 | Spring Modulith Decision | platform-app | DONE | ISSUE-183 | PDR-048 |
-| PDR-050 | Engine & Agent Consolidation | platform-execution-engine, platform-agent-runtime, platform-app | DONE | ISSUE-184,185,186,187,188 | PDR-043, PDR-048, PDR-039, PDR-045 |
+| PDR-048 | Cross-Module Boundary Enforcement | platform-bootstrap, engine, assertion, infrastructure, reporting, application | DONE | ISSUE-177,178,179,180 | PDR-004, PDR-010, PDR-014, PDR-022, PDR-037 |
+| PDR-049 | Spring Modulith Decision | platform-bootstrap | DONE | ISSUE-183 | PDR-048 |
+| PDR-050 | Engine & Agent Consolidation | platform-execution-engine, platform-agent-runtime, platform-bootstrap | DONE | ISSUE-184,185,186,187,188 | PDR-043, PDR-048, PDR-039, PDR-045 |
 | PDR-051 | Distributed Completion Semantics | platform-execution-engine | DONE | ISSUE-189,190 | PDR-044, PDR-050 |
 | PDR-052 | Transport Interface Segregation | platform-transport | DONE | ISSUE-191,192,193 | PDR-007, PDR-008 |
 | PDR-053 | ExecutionContext Named Outputs | platform-domain | DONE | ISSUE-194,195 | PDR-001 |
-| PDR-054 | Security Posture | platform-app | DONE | ISSUE-196 | PDR-018 |
+| PDR-054 | Security Posture | platform-bootstrap | DONE | ISSUE-196 | PDR-018 |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
 | — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
@@ -565,7 +565,7 @@
 | 2026-06-20 | ISSUE-076 | IN PROGRESS → IN REVIEW | Developer — ObservabilityConfiguration + ExecutionContextMdcFilter + logback-spring.xml + 19 tests, 57 total OK, BUILD SUCCESS |
 | 2026-06-20 | ISSUE-076 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 57 tests OK. Commit. |
 | 2026-06-20 | ISSUE-077 | TODO → IN PROGRESS | Developer |
-| 2026-06-20 | ISSUE-077 | IN PROGRESS → IN REVIEW | Developer — platform-app: pom.xml (11 modules) + PerformancePlatformApplication + 4 tests, fat JAR 131 MB, BUILD SUCCESS |
+| 2026-06-20 | ISSUE-077 | IN PROGRESS → IN REVIEW | Developer — platform-bootstrap: pom.xml (11 modules) + PerformancePlatformApplication + 4 tests, fat JAR 131 MB, BUILD SUCCESS |
 | 2026-06-20 | ISSUE-077 | IN REVIEW → DONE | Reviewer — APPROVED: 0 bloquant, 0 recommandation. 4 tests OK. Commit. |
 | 2026-06-20 | PDR-017 | IN PROGRESS → DONE | Reviewer (ISSUE-074,075,076 all DONE) |
 | 2026-06-20 | ISSUE-078 | IN REVIEW → RE-REVIEW | Developer — [TEST-04] APPLIED: System.getenv() → environment.getProperty() + 3 tests priorite. 27 tests OK. |
@@ -590,7 +590,7 @@
 | 2026-06-20 | PDR-019 | TODO → IN PROGRESS | Developer (ISSUE-083 started) |
 | 2026-06-20 | ISSUE-083 | IN PROGRESS → IN REVIEW | Developer |
 | 2026-06-20 | ISSUE-083 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation PENDING ([PRECISION] exception .dockerignore inutile) |
-| 2026-06-20 | ISSUE-083 | APPROVED → DONE | Reviewer — re-review: [PRECISION] CONFIRMED (suppression !platform-app/target/performance-platform.jar + commentaire chemin JAR) |
+| 2026-06-20 | ISSUE-083 | APPROVED → DONE | Reviewer — re-review: [PRECISION] CONFIRMED (suppression !bootstrap/target/performance-platform.jar + commentaire chemin JAR) |
 | 2026-06-20 | ISSUE-084 | TODO → IN PROGRESS | Developer |
 | 2026-06-20 | ISSUE-084 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 2 recommandations PENDING (SPEC-01 depends_on orchestrator, SPEC-02 AGENT_TAGS) |
 | 2026-06-20 | ISSUE-084 | APPROVED → DONE | Reviewer — re-review: 2 recommandations CONFIRMED (SPEC-01 + SPEC-02). Commit. |
@@ -629,7 +629,7 @@
 | 2026-06-22 | ISSUE-100 | WAITING → IN PROGRESS | Developer — iot-dispatcher-local.yaml + distributed (files already exist, verified parseable) |
 | 2026-06-22 | ISSUE-100 | IN PROGRESS → IN REVIEW | Developer — 2 scenarios YAML iot-dispatcher (LOCAL + DISTRIBUTED) + application-examples-local.yaml. 4 parse tests OK, 188 total OK, BUILD SUCCESS. 0 inline URL, agentTags OK. |
 | 2026-06-22 | ISSUE-100 | IN REVIEW → APPROVED | Reviewer — 0 bloquant, 1 recommandation [PRECISION] PENDING (agentTags silencieusement ignores). 4 parse tests OK, BUILD SUCCESS. |
-| 2026-06-22 | ISSUE-102 | TODO → IN PROGRESS → IN REVIEW | Developer — README.md examples + guide démarrage créé dans platform-deployment/examples/ (162 lignes). |
+| 2026-06-22 | ISSUE-102 | TODO → IN PROGRESS → IN REVIEW | Developer — README.md examples + guide démarrage créé dans distribution/examples/ (162 lignes). |
 | 2026-06-22 | ISSUE-096 | IN PROGRESS → IN REVIEW | Developer — iot-dispatcher SUT: pom.xml + 4 classes + YAML + Dockerfile + 4 tests OK, BUILD SUCCESS |
 | 2026-06-22 | ISSUE-097 | WAITING → IN REVIEW | Developer — device-api SUT: pom.xml + 4 classes + YAML + Dockerfile + 6 tests OK, BUILD SUCCESS |
 | 2026-06-22 | ISSUE-099 | WAITING → IN REVIEW | Developer — docker-compose-sut.yaml + wiremock/mappings/iot-endpoints.json, YAML + JSON validated |
@@ -710,7 +710,7 @@
 | 2026-06-22 | ISSUE-117 | IN_REVIEW → APPROVED | Reviewer approved |
 | 2026-06-22 | ISSUE-117 | APPROVED → DONE | issue-next.sh |
 | 2026-06-23 | ADR-021 + ISSUE-131 | — → WAITING | System Designer — Mode CLI headless (run-and-exit sur `--scenario=`). ADR-021 cree : detection `--scenario=` dans main(), `WebApplicationType.NONE` si present (aucun Tomcat/IHM), `CliScenarioRunner` (ApplicationRunner) parse→execute→poll→print stdout→exit (0/1/2). ISSUE-131 ajoutee a PDR-028 (depend de ISSUE-125). Le mode "existant PDR-018" suppose par PDR-028 n'existait pas dans le code ; il est desormais formalise (PDR-028 + ADR-021). 3e mode d'acces aux cotes API et IHM. |
-| 2026-06-23 | PDR-027,028,029 + ISSUE-119..130 | — → WAITING | System Designer — Web IHM (HTML/CSS+vanilla JS dans platform-app, toggle web.ui.enabled, polling 3s, JWT property-driven). PDR-027 backend API extensions (findAll/deleteById, ListExecutions/DeleteExecution use cases, ExecutionProgress server-side, REST endpoints executions/tasks/agents/report-stream/upload + structured validation DTO). PDR-028 web serving + static shell (WebUiConfiguration, security, index.html/nav/hash router). PDR-029 frontend views (executions list, detail, agents, upload, report) + E2E Testcontainers. Report streamed already-generated, NEVER generated on demand. |
+| 2026-06-23 | PDR-027,028,029 + ISSUE-119..130 | — → WAITING | System Designer — Web IHM (HTML/CSS+vanilla JS dans platform-bootstrap, toggle web.ui.enabled, polling 3s, JWT property-driven). PDR-027 backend API extensions (findAll/deleteById, ListExecutions/DeleteExecution use cases, ExecutionProgress server-side, REST endpoints executions/tasks/agents/report-stream/upload + structured validation DTO). PDR-028 web serving + static shell (WebUiConfiguration, security, index.html/nav/hash router). PDR-029 frontend views (executions list, detail, agents, upload, report) + E2E Testcontainers. Report streamed already-generated, NEVER generated on demand. |
 | 2026-06-23 | ISSUE-119 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-23 | ISSUE-119 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-06-23 | ISSUE-119 | IN_REVIEW → APPROVED | Reviewer approved |
@@ -766,7 +766,7 @@
 | 2026-06-23 | ISSUE-131 | APPROVED → DONE | issue-next.sh |
 | 2026-06-29 | ADR-022/023/024/025 | — → ACCEPTED | System Designer — Décisions Architect formalisées pour 4 problèmes structurels. ADR-022 Report output local only (suppression publishers S3/Git/Confluence). ADR-023 Cross-platform tests ÉTENDU (Docker `disabledWithoutDocker` + shell `@DisabledOnOs(WINDOWS)` + `@TempDir` + encodage UTF-8). ADR-024 Spring Boot BOM single source (RENUMÉROTÉ depuis collision ADR-022 ; ancien fichier ADR-022-spring-boot-bom = tombstone → ADR-024). ADR-025 Conditional infrastructure beans (datasource/JPA/registries `@ConditionalOnProperty`/`@ConditionalOnBean`, plus de throw). |
 | 2026-06-29 | PDR-030..033 + ISSUE-132..145 | — → WAITING | System Designer — 4 PDRs + 14 Issues créés. PDR-030 BOM centralization (132,133,134 ; P0 fondation). PDR-031 local-only reporting (135,136,137,138 ; supprime publishers + ReportPublisherPort + contrats reporting + config). PDR-032 cross-platform tests (139,140,141,142 ; 7 ITs Docker-guard + ShellTaskExecutorTest @DisabledOnOs + @TempDir). PDR-033 conditional beans (143,144,145 ; dataSource/JPA conditionnels, E2E AGENT sans DB ; dépend PDR-030). PDR-016 (Report Publishers) marqué SUPERSEDED by PDR-031/ADR-022. |
-| 2026-06-29 | PDR-033 + ISSUE-143..145 | RÉÉCRIT | System Designer — Objectif corrigé après audit code réel : le vrai écart n'est PAS « rendre conditionnels des beans existants » mais « platform-app n'a aucun bean d'assemblage du cœur exécution » (use cases ExecuteScenario/GetStatus/Cancel/Parsing, TaskExecutorLookup bridge, ExecutionConfig, AgentRegistry n'existent QUE dans les tests E2E hand-wired). Les engines sont DÉJÀ @ConditionalOnProperty(runtime.mode). Nouveau découpage : ISSUE-143 (platform-app, assemblage LOCAL+use cases+lookup+parsing+smoke LOCAL), ISSUE-144 (platform-app, DISTRIBUTED ExecutionConfig+AgentRegistry+smoke ORCH/AGENT), ISSUE-145 (platform-infrastructure, datasource/JPA/repository conditionnels sans throw). ADR-025 réécrit (assemblage runtime + beans infra conditionnels). PDR-033 renommé. Smoke tests via SpringApplicationBuilder (pas Testcontainers, pas @SpringBootTest). |
+| 2026-06-29 | PDR-033 + ISSUE-143..145 | RÉÉCRIT | System Designer — Objectif corrigé après audit code réel : le vrai écart n'est PAS « rendre conditionnels des beans existants » mais « platform-bootstrap n'a aucun bean d'assemblage du cœur exécution » (use cases ExecuteScenario/GetStatus/Cancel/Parsing, TaskExecutorLookup bridge, ExecutionConfig, AgentRegistry n'existent QUE dans les tests E2E hand-wired). Les engines sont DÉJÀ @ConditionalOnProperty(runtime.mode). Nouveau découpage : ISSUE-143 (platform-bootstrap, assemblage LOCAL+use cases+lookup+parsing+smoke LOCAL), ISSUE-144 (platform-bootstrap, DISTRIBUTED ExecutionConfig+AgentRegistry+smoke ORCH/AGENT), ISSUE-145 (platform-infrastructure, datasource/JPA/repository conditionnels sans throw). ADR-025 réécrit (assemblage runtime + beans infra conditionnels). PDR-033 renommé. Smoke tests via SpringApplicationBuilder (pas Testcontainers, pas @SpringBootTest). |
 | 2026-06-29 | ADR-026 + PDR-033 + ISSUE-143..147 | RAFFINÉ (Architect) | Architect — Évaluation de l'assemblage validée par l'utilisateur (D1=reco, D2=framework-free, Go). ADR-026 créé : composition root mince + self-wiring conditionnel par module + suppression des ports redondants. D1 : engines implémentent ExecuteScenarioUseCase+CancelExecutionUseCase, port ExecutionEngine SUPPRIMÉ ; GetExecutionStatusUseCase = read-model framework-free. D2 : scenario-dsl reste framework-free (câblé par la racine). Possession par module : ExecutionConfig→engine, AgentRegistry→agent-runtime, beans orchestrateur-only (AvailabilityChecker/CorrelationTracker) conditionnels DISTRIBUTED (corrige bug LOCAL). Re-découpage 5 issues module-pures : 143 (engine), 144 (app root mince + smoke 3 modes), 145 (infra conditionnel), 146 (application read-model), 147 (agent-runtime AgentRegistry). ADR-026 raffine ADR-025. |
 | 2026-06-29 | ISSUE-132 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-06-29 | ISSUE-132 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
@@ -787,14 +787,14 @@
 | platform-domain | ✓ | PASS | ArchUnit + value objects |
 | platform-plugin-api | ✓ | PASS | Annotations + interfaces |
 | platform-scenario-dsl | ✓ | PASS | Parser + validator + contract E2E |
-| platform-application | ✓ | PASS | Use cases + ExecutionProgressCalculator |
+| platform-use-cases | ✓ | PASS | Use cases + ExecutionProgressCalculator |
 | platform-assertion | ✓ | PASS | Executors + pipeline E2E |
 | platform-reporting | ✓ | PASS | Engine + renderers + contract E2E |
 | platform-injection-gatling | ✓ | PASS | Gatling runner + pipeline E2E |
 | platform-agent-runtime | ✓ | PASS | LocalAgent + DistributedAgent + E2E |
 | platform-execution-engine | ✓ | PASS | Local/Remote engines + E2E |
 | platform-observability | ✓ | PASS | Metrics + listeners |
-| **platform-app** | **192** | **✓ PASS** | Unit + E2E (PostgreSQL Testcontainers) |
+| **platform-bootstrap** | **192** | **✓ PASS** | Unit + E2E (PostgreSQL Testcontainers) |
 | **platform-transport** | **225** | **⚠️ 1 FLAKY** | `SocketExecutionTransportTest$SignalRoundTrip` — port contention |
 | **platform-infrastructure** | **359** | **❌ 49 FAIL** | WireMock Jetty 11 manquant (MockServer + Confluence) |
 
@@ -853,7 +853,7 @@
 
 ### Temps d'exécution
 - Suite complète (tous modules) : ~3 min 30 s
-- Suite E2E uniquement (platform-app) : ~1 min 25 s (PostgreSQL Testcontainers)
+- Suite E2E uniquement (platform-bootstrap) : ~1 min 25 s (PostgreSQL Testcontainers)
 - Suite unitaire (sans Testcontainers) : ~45 s
 | 2026-06-29 | ISSUE-132 | IN_REVIEW → CHANGES_REQUESTED | Tests KO à investiguer : platform-infrastructure (49 échecs — WireMock/Jetty 11 absent) et platform-transport (1 flaky — contention port SocketExecutionTransportTest). Vérifier si le BOM spring-boot-dependencies 4.0.0 a modifié la version résolue de WireMock (3.12.1 → version gérée par le BOM). Le Developer doit s'assurer que le build reste vert après l'ajout des BOMs. |
 | 2026-06-29 | ISSUE-132 | CHANGES_REQUESTED → IN_REVIEW | issue-finish.sh |

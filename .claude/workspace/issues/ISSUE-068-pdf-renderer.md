@@ -16,10 +16,10 @@ Implémenter `PdfReportRenderer` qui convertit le HTML du rapport en PDF via Ope
 ## Fichiers à Créer
 
 ```
-platform-reporting/src/main/java/com/performance/platform/reporting/render/
+infra/platform-report-renderers/src/main/java/com/performance/platform/reporting/render/
   └── PdfReportRenderer.java
 
-platform-reporting/src/test/java/com/performance/platform/reporting/render/
+infra/platform-report-renderers/src/test/java/com/performance/platform/reporting/render/
   └── PdfReportRendererTest.java — magic bytes %PDF
 ```
 
@@ -41,7 +41,7 @@ public class PdfReportRenderer implements ReportRenderer {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-reporting -q` → 0 erreur
+- [ ] `mvn test -pl :platform-reporting -q` → 0 erreur
 - [ ] Le `byte[]` commence par `%PDF`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-068 → DONE
 - [ ] `.claude/context/interfaces-registry.md` mis à jour

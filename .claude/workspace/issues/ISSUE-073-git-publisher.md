@@ -16,10 +16,10 @@ Implémenter `GitReportPublisher` : commit + push des fichiers du rapport dans u
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/git/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/git/
   └── GitReportPublisher.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/git/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/git/
   └── GitReportPublisherTest.java — dépôt Git local de test (JGit)
 ```
 
@@ -42,7 +42,7 @@ public class GitReportPublisher implements ReportPublisher {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Commit créé dans un dépôt Git local de test
 - [ ] `.claude/progress.md` mis à jour : ISSUE-073 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `GitReportPublisher` → STABLE

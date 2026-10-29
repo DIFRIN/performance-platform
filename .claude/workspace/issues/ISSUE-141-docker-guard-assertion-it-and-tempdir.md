@@ -19,9 +19,9 @@
 
 ```
 MODIFIER (tests) :
-platform-assertion/src/test/java/.../DatabaseAssertionExecutorIT.java
+infra/platform-assertion-adapters/src/test/java/.../DatabaseAssertionExecutorIT.java
   — @Testcontainers(disabledWithoutDocker = true)
-platform-assertion/src/test/java/.../FileAssertionExecutorTest.java
+infra/platform-assertion-adapters/src/test/java/.../FileAssertionExecutorTest.java
   — "/tmp" littéral → @TempDir Path tempDir (chemin réel portable Windows/macOS/Linux)
 ```
 
@@ -53,7 +53,7 @@ void shouldPassWhenFileExists() throws IOException {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-assertion -q` → vert sur tout OS (sans Docker : l'IT `skipped`)
+- [ ] `mvn test -pl :platform-assertion -q` → vert sur tout OS (sans Docker : l'IT `skipped`)
 - [ ] `FileAssertionExecutorTest` : plus aucun littéral `/tmp` ; utilise `@TempDir`
 - [ ] `DatabaseAssertionExecutorIT` porte `@Testcontainers(disabledWithoutDocker = true)`
 - [ ] `.claude/workspace/progress.md` : géré par les scripts (`issue-finish.sh`)

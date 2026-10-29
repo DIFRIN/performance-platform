@@ -17,12 +17,12 @@ Créer le module `platform-assertion` et le `AssertionExecutorRegistry` qui coll
 ## Fichiers à Créer
 
 ```
-platform-assertion/pom.xml — dépend de domain, plugin-api, injection-gatling
-platform-assertion/src/main/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/pom.xml — dépend de domain, plugin-api, injection-gatling
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/
   ├── AssertionExecutorRegistry.java
   └── DefaultAssertionExecutorRegistry.java
 
-platform-assertion/src/test/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/
   └── DefaultAssertionExecutorRegistryTest.java
 ```
 
@@ -47,7 +47,7 @@ public class DefaultAssertionExecutorRegistry implements AssertionExecutorRegist
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-assertion -q` → 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` → 0 erreur
 - [ ] `getFor("gatling-metric")` retourne le bon executor
 - [ ] `.claude/progress.md` mis à jour : ISSUE-059 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `AssertionExecutorRegistry` → STABLE

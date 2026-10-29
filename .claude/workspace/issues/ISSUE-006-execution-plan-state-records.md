@@ -17,19 +17,19 @@ value objects résultats (`InjectionResult`, `AssertionResult`, `Evidence`).
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/execution/
+core/platform-domain/src/main/java/com/performance/platform/domain/execution/
   ├── ExecutionPlan.java
   ├── ExecutionStep.java
   └── ExecutionState.java
-platform-domain/src/main/java/com/performance/platform/domain/injection/
+core/platform-domain/src/main/java/com/performance/platform/domain/injection/
   └── InjectionResult.java
-platform-domain/src/main/java/com/performance/platform/domain/assertion/
+core/platform-domain/src/main/java/com/performance/platform/domain/assertion/
   ├── AssertionResult.java
   └── Evidence.java
 
-platform-domain/src/test/java/com/performance/platform/domain/execution/
+core/platform-domain/src/test/java/com/performance/platform/domain/execution/
   └── ExecutionPlanTest.java
-platform-domain/src/test/java/com/performance/platform/domain/assertion/
+core/platform-domain/src/test/java/com/performance/platform/domain/assertion/
   └── AssertionResultTest.java — isPassed()
 ```
 
@@ -69,7 +69,7 @@ public record Evidence(Object actualValue, Object expectedValue, AssertionOperat
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `AssertionResult` avec status PASSED → `isPassed()` true
 - [ ] `.claude/progress.md` mis à jour : ISSUE-006 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `ExecutionPlan`, `ExecutionStep`, `ExecutionState`, `InjectionResult`, `AssertionResult`, `Evidence` → STABLE

@@ -3,7 +3,7 @@
 **Module Maven** : `platform-infrastructure`
 **Package** : `com.performance.platform.infrastructure.executor`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/03-task-framework.md`
+**Specs de reference** : `docs/knowledge/specs/03-task-framework.md`
 **Depend de** : PDR-010 (TaskExecutorRegistry — déjà DONE)
 **Issues** : ISSUE-165
 
@@ -89,7 +89,7 @@ L'audit vérifie aussi qu'il n'y a pas de duplication fonctionnelle entre execut
 
 ## Format de l'ADR
 
-L'ADR suit le format standard du projet (voir `.claude/knowledge/adr/`). Numéro proposé : **ADR-022**.
+L'ADR suit le format standard du projet (voir `docs/knowledge/adr/`). Numéro proposé : **ADR-022**.
 
 ```
 ADR-022 — Task Executor Doctrine: Dedicated vs Shell
@@ -117,7 +117,7 @@ Ce PDR est utilisé par :
 
 ## Criteres de Done (PDR complet)
 
-- [ ] ADR-022 créé dans `.claude/knowledge/adr/ADR-022-task-executor-doctrine.md` (ISSUE-165)
+- [ ] ADR-022 créé dans `docs/knowledge/adr/ADR-022-task-executor-doctrine.md` (ISSUE-165)
 - [ ] `package-info.java` dans `com.performance.platform.infrastructure.executor` documentant la liste des executors
 - [ ] Chaque executor dédié a sa Javadoc mise à jour mentionnant ses garde-fous spécifiques
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur (aucun changement de code, juste doc)
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur (aucun changement de code, juste doc)

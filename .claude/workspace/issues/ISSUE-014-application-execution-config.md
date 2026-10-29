@@ -1,7 +1,7 @@
 # ISSUE-014 — ExecutionConfig (record de configuration applicative)
 
 **PDR** : PDR-004
-**Module** : `platform-application`
+**Module** : `platform-use-cases`
 **Statut** : WAITING
 **Priorité** : P1
 **Bloquée par** : ISSUE-012
@@ -16,10 +16,10 @@ Créer le record `ExecutionConfig` regroupant les timeouts et la politique de co
 ## Fichiers à Créer
 
 ```
-platform-application/src/main/java/com/performance/platform/application/config/
+core/platform-use-cases/src/main/java/com/performance/platform/application/config/
   └── ExecutionConfig.java
 
-platform-application/src/test/java/com/performance/platform/application/config/
+core/platform-use-cases/src/test/java/com/performance/platform/application/config/
   └── ExecutionConfigTest.java — instanciation
 ```
 
@@ -41,6 +41,6 @@ public record ExecutionConfig(
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-application -q` → 0 erreur
+- [ ] `mvn test -pl :platform-use-cases -q` → 0 erreur
 - [ ] `.claude/progress.md` mis à jour : ISSUE-014 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `ExecutionConfig` → STABLE

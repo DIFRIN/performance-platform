@@ -17,10 +17,10 @@ sélectionné via `@ConditionalOnProperty(transport.type=IN_MEMORY)`.
 ## Fichiers à Créer
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/inmemory/
+infra/platform-transport/src/main/java/com/performance/platform/transport/inmemory/
   └── InMemoryExecutionTransport.java
 
-platform-transport/src/test/java/com/performance/platform/transport/inmemory/
+infra/platform-transport/src/test/java/com/performance/platform/transport/inmemory/
   └── InMemoryExecutionTransportTest.java — dispatch→receiveTask, publishEvent→subscribe, broadcastSignal→receiveSignal
 ```
 
@@ -44,7 +44,7 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] Round-trip dispatch→receive, publish→subscribe, signal→receiveSignal
 - [ ] `Subscription.cancel()` stoppe la réception
 - [ ] `.claude/progress.md` mis à jour : ISSUE-027 → DONE

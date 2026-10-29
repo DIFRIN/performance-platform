@@ -20,10 +20,10 @@ déprécier `get(Class)`/`getFirst(Class)`, et passer à un store persistant/imm
 ## Fichiers à Modifier
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/execution/
+core/platform-domain/src/main/java/com/performance/platform/domain/execution/
   └── ExecutionContext.java        — getOutput/getFirstOutput + store persistant + dépréciations
 
-platform-domain/src/test/java/com/performance/platform/domain/execution/
+core/platform-domain/src/test/java/com/performance/platform/domain/execution/
   └── ExecutionContextNamedOutputTest.java   — NOUVEAU
 ```
 
@@ -45,6 +45,6 @@ public <T> Optional<T> getFirstOutput(String taskId, String outputName, Class<T>
 
 - [ ] `getOutput`/`getFirstOutput` ajoutés, `get(Class)`/`getFirst(Class)` dépréciés
 - [ ] `with()` O(chemin) — test de performance/unité
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-194 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour (ExecutionContext → ⚠️ BREAKING)

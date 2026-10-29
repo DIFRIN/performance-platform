@@ -16,10 +16,10 @@ Creer le record `AssertionSummary` dans `platform-domain` -- le format de sortie
 ## Fichiers a Creer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/assertion/
+core/platform-domain/src/main/java/com/performance/platform/domain/assertion/
   └── AssertionSummary.java       -- record immuable: assertionId, verdict, description, collectedData, history, evaluationDuration, evaluatedAt
 
-platform-domain/src/test/java/com/performance/platform/domain/assertion/
+core/platform-domain/src/test/java/com/performance/platform/domain/assertion/
   └── AssertionSummaryTest.java   -- tests: constructeur compact, defensive copies, isPassed(), factory of()
 ```
 
@@ -66,7 +66,7 @@ public record AssertionSummary(
 
 ## Criteres de Done
 
-- [ ] `mvn test -pl platform-domain -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` -> 0 erreur
 - [ ] `AssertionSummary` compile (constructeur compact + factory + isPassed)
 - [ ] Test : constructeur avec history non-vide -> les elements sont preserves
 - [ ] Test : collectedData null -> remplace par Map.of() (pas NPE)

@@ -17,11 +17,11 @@ broadcast, suit les claims/résultats multi-agents, applique la `TaskCompletionP
 ## Fichiers à Créer
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
   ├── RemoteExecutionEngine.java       — implements ExecutionEngine
   └── PartialContextBuilder.java       — extrait PartialExecutionContext depuis requiredContextKeys
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/remote/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/remote/
   ├── RemoteExecutionEngineTest.java   — dispatch, claim, completion policies
   └── PartialContextBuilderTest.java
 ```
@@ -56,7 +56,7 @@ public class RemoteExecutionEngine implements ExecutionEngine {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] Dispatch broadcast sans targetAgentId (vérifié)
 - [ ] ALL_COMPLETE attend N résultats ; FIRST_COMPLETE avance au 1er
 - [ ] `.claude/progress.md` mis à jour : ISSUE-024 → DONE

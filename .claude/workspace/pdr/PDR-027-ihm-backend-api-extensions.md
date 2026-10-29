@@ -1,9 +1,9 @@
 # PDR-027 — IHM Backend API Extensions
 
-**Module Maven** : `platform-application` (ports + use cases), `platform-infrastructure` (JPA adapter), `platform-app` (REST controllers + DTOs)
+**Module Maven** : `platform-use-cases` (ports + use cases), `platform-infrastructure` (JPA adapter), `platform-bootstrap` (REST controllers + DTOs)
 **Package** : `com.performance.platform.application.ports`, `com.performance.platform.infrastructure.persistence`, `com.performance.platform.app.api`
 **Statut** : WAITING
-**Specs de reference** : Design valide utilisateur (Web IHM), `.claude/knowledge/specs/02-execution-engine.md`, `.claude/knowledge/specs/04-agent-runtime.md`, `.claude/knowledge/specs/08-report-engine.md`, ADR-013 (Spring-first infra)
+**Specs de reference** : Design valide utilisateur (Web IHM), `docs/knowledge/specs/02-execution-engine.md`, `docs/knowledge/specs/04-agent-runtime.md`, `docs/knowledge/specs/08-report-engine.md`, ADR-013 (Spring-first infra)
 **Depend de** : PDR-004 (Application Ports & Use Cases — DONE), PDR-012 (Persistence — DONE), PDR-018 (Application Assembly — DONE), PDR-015 (Reporting Engine — DONE)
 **Issues** : ISSUE-119, ISSUE-120, ISSUE-121, ISSUE-122, ISSUE-123, ISSUE-124
 
@@ -42,7 +42,7 @@ Constats verifies dans le code :
 
 ## Interfaces Publiques
 
-### Extension de ExecutionRepository (port sortant — `platform-application`)
+### Extension de ExecutionRepository (port sortant — `platform-use-cases`)
 
 ```java
 package com.performance.platform.application.ports.out;
@@ -68,7 +68,7 @@ public interface ExecutionRepository {
 }
 ```
 
-### ListExecutionsUseCase (port entrant — `platform-application`)
+### ListExecutionsUseCase (port entrant — `platform-use-cases`)
 
 ```java
 package com.performance.platform.application.ports.in;
@@ -89,7 +89,7 @@ public interface ListExecutionsUseCase {
 }
 ```
 
-### DeleteExecutionUseCase (port entrant — `platform-application`)
+### DeleteExecutionUseCase (port entrant — `platform-use-cases`)
 
 ```java
 package com.performance.platform.application.ports.in;
@@ -131,7 +131,7 @@ public record ExecutionProgress(int total, int ok, int ko, int running) {
 > Note : `ExecutionProgress` est un record domaine pur (0 annotation), donc place dans `platform-domain`.
 > Le calcul (mapping ExecutionState → ExecutionProgress) est realise dans la couche application.
 
-### DTOs REST (`platform-app` — package `com.performance.platform.app.api.dto`)
+### DTOs REST (`platform-bootstrap` — package `com.performance.platform.app.api.dto`)
 
 ```java
 // Resume d'execution pour la liste
@@ -236,8 +236,8 @@ Ce PDR est utilise par :
 - [ ] Toutes les Issues ISSUE-119 a ISSUE-124 sont DONE
 - [ ] `ExecutionRepository.findAll(int)` et `deleteById(ExecutionId)` implementes dans `JpaExecutionRepository`
 - [ ] `ListExecutionsUseCase`, `DeleteExecutionUseCase`, `ExecutionProgress` dans `.claude/workspace/interfaces-registry.md` avec statut STABLE
-- [ ] `mvn test -pl platform-application -q` et `mvn test -pl platform-infrastructure -q` passent
-- [ ] `mvn test -pl platform-app -q` passe (MockMvc sur tous les nouveaux endpoints)
+- [ ] `mvn test -pl :platform-use-cases -q` et `mvn test -pl :platform-infrastructure -q` passent
+- [ ] `mvn test -pl :platform-bootstrap -q` passe (MockMvc sur tous les nouveaux endpoints)
 - [ ] Endpoint report streame le fichier deja genere (404 si absent, jamais de generation)
 - [ ] Endpoint agents conditionnel ORCHESTRATOR, wire `AgentRegistryPort.findAll()`
 - [ ] DTO d'erreur de validation aligne sur le format champ+message

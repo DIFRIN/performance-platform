@@ -35,14 +35,14 @@ Format a utiliser :
 | `DeviceCheckTaskExecutor` | ❌ REMOVED | PDR-025 | ISSUE-104 (example-only code deleted from production module) |
 ```
 
-### 2. platform-deployment section
+### 2. distribution section
 
 Si une entree pour `device-check-perf.yaml` existe, la marquer comme REMOVED :
 ```
 | `scenarios/device-check-perf.yaml` | ❌ REMOVED | PDR-025 | ISSUE-109 (depends on deleted executors) |
 ```
 
-### 3. platform-deployment (PDR-025) section
+### 3. distribution (PDR-025) section
 
 Mettre a jour les entrees existantes de PDR-025 pour refleter les nouveaux IDs d'Issue (ISSUE-103 a ISSUE-110 au lieu de ISSUE-103 a ISSUE-108). Les nouvelles entrees :
 ```

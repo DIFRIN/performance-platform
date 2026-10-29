@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.performance</groupId>
+        <artifactId>performance-platform</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>platform-injection-gatling</artifactId>
+    <name>Platform Injection Gatling</name>
+    <description>Traduction des LoadModel en OpenInjectionStep Gatling Java DSL. Injection via GatlingTaskExecutor.</description>
+
+    <dependencies>
+        <!-- Domaine pur (LoadModel, LoadModelType, InjectionResult) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Port HttpTargetResolver : resolution de la cible HTTP du step gatling -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-use-cases</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Plugin API (TaskExecutor, @Injection pour GatlingTaskExecutor futur) -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-plugin-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Serialisation JSON des body structures (map/liste) du step HTTP -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- Gatling Java DSL (OpenInjectionStep, CoreDsl) -->
+        <dependency>
+            <groupId>io.gatling</groupId>
+            <artifactId>gatling-app</artifactId>
+            <version>3.11.2</version>
+        </dependency>
+
+        <!-- CC-03: Gatling HTTP — includes HTTP/HTTPS + WebSocket protocols.
+             Core protocol for REST API, web app, and real-time bidirectional testing. -->
+        <dependency>
+            <groupId>io.gatling</groupId>
+            <artifactId>gatling-http</artifactId>
+            <version>3.11.2</version>
+        </dependency>
+
+        <!-- CC-03: Gatling Kafka — NOT AVAILABLE as io.gatling:gatling-kafka
+             for Gatling 3.11.x. The community plugin (ru.tinkoff:gatling-kafka-plugin)
+             targets Gatling 3.8+ but has not been validated for 3.11.2.
+             Kafka protocol support is declared in ProtocolSupportInfo but
+             the DSL dependency must be provided externally by end-users
+             who need Kafka load-injection. Tracking: future upgrade to
+             Gatling 3.12+ may include official gatling-kafka artifact. -->
+
+        <!-- CC-03: Gatling JMS — enterprise messaging protocol support
+             (ActiveMQ, Artemis, IBM MQ). Required for JMS queue/topic
+             load-injection scenarios. -->
+        <dependency>
+            <groupId>io.gatling</groupId>
+            <artifactId>gatling-jms</artifactId>
+            <version>3.11.2</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Gatling Charts (generation rapports HTML) -->
+        <dependency>
+            <groupId>io.gatling</groupId>
+            <artifactId>gatling-charts</artifactId>
+            <version>3.11.2</version>
+        </dependency>
+
+        <!-- Logging structuré -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+
+        <!-- Spring Context (@Component) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- JUnit 5 pour les tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AssertJ pour les assertions fluides -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+</project>

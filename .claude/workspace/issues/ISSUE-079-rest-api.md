@@ -1,7 +1,7 @@
 # ISSUE-079 — API REST (submit / status / cancel / report)
 
 **PDR** : PDR-018
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : WAITING
 **Priorité** : P1
 **Bloquée par** : ISSUE-077, ISSUE-018
@@ -17,13 +17,13 @@ l'annulation et la récupération du rapport.
 ## Fichiers à Créer
 
 ```
-platform-app/src/main/java/com/performance/platform/app/api/
+bootstrap/src/main/java/com/performance/platform/app/api/
   ├── ScenarioController.java
   ├── dto/SubmitResponse.java
   ├── dto/ExecutionStatusResponse.java
   └── ApiExceptionHandler.java   — @RestControllerAdvice (validation → 400 détaillé)
 
-platform-app/src/test/java/com/performance/platform/app/api/
+bootstrap/src/test/java/com/performance/platform/app/api/
   └── ScenarioControllerTest.java — @WebMvcTest
 ```
 
@@ -48,7 +48,7 @@ public class ScenarioController {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] POST scénario valide → 202 + ExecutionId ; invalide → 400 détaillé
 - [ ] GET status retourne l'état
 - [ ] `.claude/progress.md` mis à jour : ISSUE-079 → DONE

@@ -18,11 +18,11 @@ et la `Phase` correspondante.
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/plugin/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/plugin/
   ├── AnnotationScanner.java
   └── PluginDescriptor.java   — (name, version, description, phase, executorClass)
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/plugin/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/plugin/
   └── AnnotationScannerTest.java
 ```
 
@@ -45,7 +45,7 @@ public record PluginDescriptor(String name, String version, String description,
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Classe annotée `@Injection(name="x")` → `PluginDescriptor(phase=INJECTION, name="x")`
 - [ ] Classe sans annotation → `Optional.empty()`
 - [ ] `.claude/progress.md` mis à jour : ISSUE-048 → DONE

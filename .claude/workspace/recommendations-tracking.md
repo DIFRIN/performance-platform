@@ -45,7 +45,7 @@ Reviewer: re-review confirme les corrections
 `RegistrationException` est sémantiquement incorrect et peut stopper silencieusement le
 scheduler Virtual Thread.
 
-**Fichier** : `platform-agent-runtime/.../registration/HeartbeatScheduler.java` lignes 130-133
+**Fichier** : `execution/platform-agent-runtime/.../registration/HeartbeatScheduler.java` lignes 130-133
 
 **Correction** :
 ```java
@@ -70,8 +70,8 @@ Race condition TOCTOU dans `AgentTtlMonitor.checkExpired()` : entre `findExpired
 Un agent vivant peut être retiré du registre.
 
 **Fichiers** :
-- `platform-agent-runtime/.../registry/AgentTtlMonitor.java` lignes 88-94
-- `platform-agent-runtime/.../registry/InMemoryAgentRegistry.java`
+- `execution/platform-agent-runtime/.../registry/AgentTtlMonitor.java` lignes 88-94
+- `execution/platform-agent-runtime/.../registry/InMemoryAgentRegistry.java`
 
 **Correction** :
 1. Ajouter une méthode `onAgentExpiredIfStillExpired(AgentId, Instant checkedAt)` dans
@@ -92,8 +92,8 @@ void onAgentExpiredIfStillExpired(AgentId agentId, Instant checkedAt) {
 `f.cancel(false)` annule la future tâche mais NE ferme PAS le thread sous-jacent.
 
 **Fichiers** :
-- `platform-agent-runtime/.../registration/HeartbeatScheduler.java` — méthode `stop()`
-- `platform-agent-runtime/.../registry/AgentTtlMonitor.java` — méthode `stop()`
+- `execution/platform-agent-runtime/.../registration/HeartbeatScheduler.java` — méthode `stop()`
+- `execution/platform-agent-runtime/.../registry/AgentTtlMonitor.java` — méthode `stop()`
 
 **Correction** : ajouter `scheduler.shutdown()` après `f.cancel(false)` dans les deux `stop()`.
 
@@ -105,7 +105,7 @@ void onAgentExpiredIfStillExpired(AgentId agentId, Instant checkedAt) {
 `AgentTtlMonitor` dépend de `InMemoryAgentRegistry` (classe concrète) — violation du
 Dependency Inversion Principle. Bloque les futures implémentations (Redis, JDBC) du registre.
 
-**Fichier** : `platform-agent-runtime/.../registry/AgentTtlMonitor.java` ligne 28
+**Fichier** : `execution/platform-agent-runtime/.../registry/AgentTtlMonitor.java` ligne 28
 
 **Correction** : Introduire une interface package-private `TtlTrackable` dans le package
 `registry` exposant `findExpired(Instant)` et `onAgentExpiredIfStillExpired(AgentId, Instant)`.
@@ -127,7 +127,7 @@ interface TtlTrackable {
 Tous les heartbeats reportent le même état initial — l'orchestrateur voit toujours
 `IDLE` avec 0 tâches actives, indépendamment de la réalité.
 
-**Fichier** : `platform-agent-runtime/.../registration/HeartbeatScheduler.java`
+**Fichier** : `execution/platform-agent-runtime/.../registration/HeartbeatScheduler.java`
 
 **Correction** : Remplacer `int activeTaskCount` par des `Supplier<AgentState>` et
 `Supplier<Integer>` permettant à `DistributedAgentRuntime` (ISSUE-036) de passer des
@@ -164,11 +164,11 @@ Migrer `TransportAgentRegistration` de `publishEvent(ExecutionEvent)` vers
 
 Voir **ADR-012** pour le design complet de `AgentLifecycleEvent` et l'extension de
 `ExecutionTransport`. Fichiers à créer/modifier :
-- CRÉER `platform-transport/.../AgentLifecycleEvent.java` (record)
-- CRÉER `platform-transport/.../AgentLifecycleEventHandler.java` (functional interface)
-- MODIFIER `platform-transport/.../ExecutionTransport.java` (+ `publishAgentEvent` + `subscribeAgentEvents`)
-- MODIFIER `platform-transport/.../inmemory/InMemoryExecutionTransport.java`
-- MODIFIER `platform-agent-runtime/.../registration/TransportAgentRegistration.java`
+- CRÉER `infra/platform-transport/.../AgentLifecycleEvent.java` (record)
+- CRÉER `infra/platform-transport/.../AgentLifecycleEventHandler.java` (functional interface)
+- MODIFIER `infra/platform-transport/.../ExecutionTransport.java` (+ `publishAgentEvent` + `subscribeAgentEvents`)
+- MODIFIER `infra/platform-transport/.../inmemory/InMemoryExecutionTransport.java`
+- MODIFIER `execution/platform-agent-runtime/.../registration/TransportAgentRegistration.java`
 - MODIFIER `.claude/workspace/interfaces-registry.md` (ajout des nouveaux types)
 
 ---
@@ -178,7 +178,7 @@ Voir **ADR-012** pour le design complet de `AgentLifecycleEvent` et l'extension 
 `register()` la déclare, `deregister()` et `sendHeartbeat()` non — bien que
 l'implémentation les lève dans les 3 cas.
 
-**Fichier** : `platform-agent-runtime/.../registration/AgentRegistrationPort.java`
+**Fichier** : `execution/platform-agent-runtime/.../registration/AgentRegistrationPort.java`
 
 **Correction** : Ajouter `throws RegistrationException` sur `deregister()` et `sendHeartbeat()`.
 (`RegistrationException` est unchecked — c'est une déclaration documentaire, pas fonctionnelle.)
@@ -189,7 +189,7 @@ l'implémentation les lève dans les 3 cas.
 `ExecutionEvent.of()` : Javadoc incorrecte — indique "sans defensive copy" alors que la
 méthode appelle le constructeur canonique qui effectue `Map.copyOf()`.
 
-**Fichier** : `platform-transport/.../message/ExecutionEvent.java`
+**Fichier** : `infra/platform-transport/.../message/ExecutionEvent.java`
 
 **Correction** : Corriger la Javadoc pour refléter le comportement réel.
 
@@ -199,7 +199,7 @@ méthode appelle le constructeur canonique qui effectue `Map.copyOf()`.
 `TransportAgentRegistration.capabilitiesToPayload()` utilise un nom qualifié complet
 `com.performance.platform.domain.agent.AgentCapabilities` au lieu d'un import.
 
-**Fichier** : `platform-agent-runtime/.../registration/TransportAgentRegistration.java` lignes 134-139
+**Fichier** : `execution/platform-agent-runtime/.../registration/TransportAgentRegistration.java` lignes 134-139
 
 **Correction** : Ajouter `import com.performance.platform.domain.agent.AgentCapabilities;`
 en haut du fichier et simplifier la signature de méthode.
@@ -210,7 +210,7 @@ en haut du fichier et simplifier la signature de méthode.
 `AgentTtlMonitor.checkExpired()` : aucun log produit quand un agent expire. L'expiration
 d'un agent est un événement opérationnel critique.
 
-**Fichier** : `platform-agent-runtime/.../registry/AgentTtlMonitor.java` méthode `checkExpired()`
+**Fichier** : `execution/platform-agent-runtime/.../registry/AgentTtlMonitor.java` méthode `checkExpired()`
 
 **Correction** :
 ```java
@@ -225,7 +225,7 @@ log.warn("action=agent_expired agentId={} lastHeartbeat={} ttl={}",
 opèrent sans vérifier `isConnected()`. Comportement divergent avec les implémentations
 réelles (Kafka, RabbitMQ).
 
-**Fichier** : `platform-transport/.../inmemory/InMemoryExecutionTransport.java`
+**Fichier** : `infra/platform-transport/.../inmemory/InMemoryExecutionTransport.java`
 
 **Correction** : Ajouter une vérification défensive au début de chaque méthode de dispatch :
 ```java
@@ -240,7 +240,7 @@ if (!connected.get()) {
 `TransportAgentRegistration.toPayload(AgentDescriptor)` : mapping manuel champ par champ.
 Si `AgentDescriptor` évolue, le payload ne sera pas mis à jour automatiquement.
 
-**Fichier** : `platform-agent-runtime/.../registration/TransportAgentRegistration.java`
+**Fichier** : `execution/platform-agent-runtime/.../registration/TransportAgentRegistration.java`
 
 **Workaround** : Ajouter un commentaire `// NOTE: synchroniser avec AgentDescriptor si le record évolue`
 au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec ISSUE-028.
@@ -276,13 +276,13 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 [ISSUE-045] [2026-06-19] [CONFIRMED] [CRAFT-07] executionId absent des logs — ajoute executionKey a tous les log.info/log.error
 [ISSUE-046] [2026-06-19] [CONFIRMED] [CRAFT-05] 3 methodes >40L (load/loadExecutorsFromJar/tryLoadClass) sans justification CC-02 — ajouter commentaire Javadoc
 [ISSUE-047] [2026-06-19] [CONFIRMED] [CRAFT-05] Constructeur DefaultPluginRegistry 58 lignes (>40) sans justification CC-02 — ajouter commentaire Javadoc expliquant le flux d'initialisation cohesif
-[ISSUE-049] [2026-06-19] [OVERRIDDEN] [PRECISION-02] Override <release>23</release> inutile dans platform-infrastructure/pom.xml — ArchUnit 1.3.0 gere le bytecode Java 25 sans probleme (verifie experimentalement). Supprimer le bloc <configuration><release>23</release></configuration> du maven-compiler-plugin.
+[ISSUE-049] [2026-06-19] [OVERRIDDEN] [PRECISION-02] Override <release>23</release> inutile dans infra/platform-infrastructure/pom.xml — ArchUnit 1.3.0 gere le bytecode Java 25 sans probleme (verifie experimentalement). Supprimer le bloc <configuration><release>23</release></configuration> du maven-compiler-plugin.
 [ISSUE-050] [2026-06-19] [CORRECTION] PRECISION-02 ANNULE — analyse ASM : ArchUnit 1.3.0 bundle ASM 9.7.x (Opcodes V23 max = class 67). Java 25 produit class version 69, non supporte. Release 23 est necessaire. Retabli dans ISSUE-050 avec justification documentee.
 [ISSUE-052] [2026-06-19] [CONFIRMED] [CRAFT-01] Javadoc JpaExecutionRepository ligne 29-30 : "All public methods are transactional" incorrect — @Transactional retire intentionnellement (proxy Spring 7.0). Les transactions sont deleguees aux repos Spring Data sous-jacents, chaque appel etant atomique individuellement. Remplacer par Javadoc expliquant la delegation transactionnelle. Fichier : JpaExecutionRepository.java:29-30.
-[ISSUE-029] [2026-06-19] [CONFIRMED] [CRAFT-08] Magic string "@type" repete 5 fois dans KafkaMessageCodec (lignes 75, 89, 106, 134, 147). Extraire en constante privee TYPE_FIELD = "@type". Fichier : platform-transport/.../kafka/KafkaMessageCodec.java.
-[ISSUE-029] [2026-06-19] [CONFIRMED] [TEST-04] Absence de tests unitaires pour les null-checks de parametres publics de KafkaExecutionTransport. Ajouter 2-3 cas shouldThrowOnNull*(Request/Handler). Fichier : platform-transport/.../kafka/KafkaExecutionTransportIT.java.
-[ISSUE-032] [2026-06-19] [CONFIRMED] [PRECISION-01] Javadoc obsoleted dans TransportConfiguration — corrige : "implementations completes (ISSUE-029, 030, 031, 032)". Fichier : platform-transport/.../config/TransportConfiguration.java.
-[ISSUE-032] [2026-06-19] [CONFIRMED] [TEST-06] 3 Thread.sleep(200) dans SocketExecutionTransportTest → remplaces par Awaitility await().atMost(...).pollDelay(...). Fichier : platform-transport/.../socket/SocketExecutionTransportTest.java.
+[ISSUE-029] [2026-06-19] [CONFIRMED] [CRAFT-08] Magic string "@type" repete 5 fois dans KafkaMessageCodec (lignes 75, 89, 106, 134, 147). Extraire en constante privee TYPE_FIELD = "@type". Fichier : infra/platform-transport/.../kafka/KafkaMessageCodec.java.
+[ISSUE-029] [2026-06-19] [CONFIRMED] [TEST-04] Absence de tests unitaires pour les null-checks de parametres publics de KafkaExecutionTransport. Ajouter 2-3 cas shouldThrowOnNull*(Request/Handler). Fichier : infra/platform-transport/.../kafka/KafkaExecutionTransportIT.java.
+[ISSUE-032] [2026-06-19] [CONFIRMED] [PRECISION-01] Javadoc obsoleted dans TransportConfiguration — corrige : "implementations completes (ISSUE-029, 030, 031, 032)". Fichier : infra/platform-transport/.../config/TransportConfiguration.java.
+[ISSUE-032] [2026-06-19] [CONFIRMED] [TEST-06] 3 Thread.sleep(200) dans SocketExecutionTransportTest → remplaces par Awaitility await().atMost(...).pollDelay(...). Fichier : infra/platform-transport/.../socket/SocketExecutionTransportTest.java.
 [ISSUE-055] [2026-06-20] [CONFIRMED] [CRAFT-05] DefaultGatlingRunner.run() 50 lignes > 40 — CC-02 Javadoc ajoute expliquant le pipeline sequentiel coherent. Fichier : .../runner/DefaultGatlingRunner.java.
 [ISSUE-055] [2026-06-20] [CONFIRMED] [SPEC-01] GatlingRunner.run() — throws GatlingExecutionException ajoute a la signature. Fichier : .../runner/GatlingRunner.java.
 [ISSUE-055] [2026-06-20] [CONFIRMED] [ROBUSTNESS-01] Proprietes systeme restaurees dans finally (sauvegarde + restauration). Fichier : .../runner/DefaultGatlingRunner.java.
@@ -318,11 +318,11 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 [ISSUE-068] [2026-06-20] [CONFIRMED] [TEST-04] Test shouldWrapConversionErrors() trompeur — remplace par 2 vrais tests d'erreur : shouldRethrowRenderExceptionAsIs (stub HtmlReportRenderer qui lance RenderException → rethrown as-is) et shouldWrapGenericExceptionInRenderException (stub HtmlReportRenderer qui lance RuntimeException → wrapped in RenderException). Stubs manuels (anonymous subclass) car Mockito incompatible Java 25 sur cette classe. 74 tests OK. Fichier : .../render/PdfReportRendererTest.java.
 
-[ISSUE-069] [2026-06-20] [CONFIRMED] [CRAFT-07] executionId absent des logs dans les methodes privees writeRenderOutputs() (no_renderer_for_format, format_written) et copyGatlingDirectories() (gatling_dir_missing, gatling_copied, gatling_copy_interrupted, gatling_copy_failed). Passer executionId en parametre a ces methodes ou le stocker comme variable locale dans write() et l'inclure dans chaque log interne. Fichier : platform-reporting/.../output/ReportFileWriter.java.
+[ISSUE-069] [2026-06-20] [CONFIRMED] [CRAFT-07] executionId absent des logs dans les methodes privees writeRenderOutputs() (no_renderer_for_format, format_written) et copyGatlingDirectories() (gatling_dir_missing, gatling_copied, gatling_copy_interrupted, gatling_copy_failed). Passer executionId en parametre a ces methodes ou le stocker comme variable locale dans write() et l'inclure dans chaque log interne. Fichier : infra/platform-report-renderers/.../output/ReportFileWriter.java.
 
-[ISSUE-069] [2026-06-20] [CONFIRMED] [CRAFT-08] Magic strings sans constantes : "reports" (ligne 70, defaut outputDirectory), "campaign." (ligne 116, prefixe nom fichier), "gatling" (ligne 133, nom sous-repertoire Gatling). Extraire en private static final String DEFAULT_OUTPUT_DIRECTORY / REPORT_FILE_PREFIX / GATLING_SUBDIR. Fichier : platform-reporting/.../output/ReportFileWriter.java.
+[ISSUE-069] [2026-06-20] [CONFIRMED] [CRAFT-08] Magic strings sans constantes : "reports" (ligne 70, defaut outputDirectory), "campaign." (ligne 116, prefixe nom fichier), "gatling" (ligne 133, nom sous-repertoire Gatling). Extraire en private static final String DEFAULT_OUTPUT_DIRECTORY / REPORT_FILE_PREFIX / GATLING_SUBDIR. Fichier : infra/platform-report-renderers/.../output/ReportFileWriter.java.
 
-[ISSUE-070] [2026-06-20] [CONFIRMED] [CONFIG-01] Prefixe de configuration `platform.publishers` diverge de la spec qui montre `reporting.publishers`. Bien que coherent avec la convention `platform.*` pour les proprietes infrastructure (cf. PlatformDatasourcesProperties), l'utilisateur doit savoir que output settings utilisent `reporting.*` et publisher settings `platform.publishers.*`. Ajouter un commentaire Javadoc sur PublishersProperties expliquant la relation avec reporting.* et la raison du prefixe separe. Fichier : platform-infrastructure/.../publisher/PublishersProperties.java (classe).
+[ISSUE-070] [2026-06-20] [CONFIRMED] [CONFIG-01] Prefixe de configuration `platform.publishers` diverge de la spec qui montre `reporting.publishers`. Bien que coherent avec la convention `platform.*` pour les proprietes infrastructure (cf. PlatformDatasourcesProperties), l'utilisateur doit savoir que output settings utilisent `reporting.*` et publisher settings `platform.publishers.*`. Ajouter un commentaire Javadoc sur PublishersProperties expliquant la relation avec reporting.* et la raison du prefixe separe. Fichier : infra/platform-infrastructure/.../publisher/PublishersProperties.java (classe).
 
 [ISSUE-071] [2026-06-20] [CONFIRMED] [CRAFT-05] CC-02 Javadoc classe (pipeline cohesif Confluence: validation→buildConfluencePayload→buildStorageBody→HTTP POST→reponse/erreur, helpers escapeJson/escapeHtml/formatDuration/verdictColor indissociables). Fichier : .../confluence/ConfluenceReportPublisher.java (classe, lignes 43-51).
 
@@ -338,37 +338,37 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 
 ---
 
-[ISSUE-073] [2026-06-20] [CONFIRMED] [PRECISION] Parametre `logDir` inutilise dans `runGit(Path logDir, Path workDir, String... command)`. Le parametre n'est jamais reference dans le corps de la methode. Supprimer `logDir` de la signature de `runGit()` et mettre a jour les 4 appelants (`gitClone`, `gitAdd`, `gitCommit`, `gitPush`). Fichier : platform-infrastructure/.../publisher/git/GitReportPublisher.java:239.
+[ISSUE-073] [2026-06-20] [CONFIRMED] [PRECISION] Parametre `logDir` inutilise dans `runGit(Path logDir, Path workDir, String... command)`. Le parametre n'est jamais reference dans le corps de la methode. Supprimer `logDir` de la signature de `runGit()` et mettre a jour les 4 appelants (`gitClone`, `gitAdd`, `gitCommit`, `gitPush`). Fichier : infra/platform-infrastructure/.../publisher/git/GitReportPublisher.java:239.
 
-[ISSUE-078] [2026-06-20] [CONFIRMED] [TEST-04] Chemin prioritaire `System.getenv("RUNTIME_MODE")`/`MODE`/`TRANSPORT_TYPE` non couvert par les tests. Remplacer `System.getenv()` par `environment.getProperty()` dans `resolveMode()`/`resolveRole()`/`resolveTransportType()`. Ajouter 3 tests de priorite (env var override property) via `MockEnvironment.withProperty()`. Fichiers : platform-app/.../runtime/RuntimeModeResolver.java + RuntimeModeResolverTest.java.
-
----
-
-[ISSUE-063] [2026-06-20] [CONFIRMED] [CRAFT-05] Classe 379 lignes (>300) sans marqueur CC-02 dans la Javadoc de classe. La methode evaluate() a son CC-02 (lignes 101-105) mais la classe elle-meme manque le marqueur. Ajouter bloc CC-02 dans la Javadoc de classe expliquant le pipeline cohesif d'evaluation WireMock (resolution parametres → validation metrique → resolution URL → HTTP /__admin/requests/count → extraction count → evaluation operateur → construction resultat). Pattern etabli : ISSUE-062, ISSUE-064, ISSUE-071. Fichier : platform-assertion/.../httpmock/HttpMockAssertionExecutor.java:32-46.
+[ISSUE-078] [2026-06-20] [CONFIRMED] [TEST-04] Chemin prioritaire `System.getenv("RUNTIME_MODE")`/`MODE`/`TRANSPORT_TYPE` non couvert par les tests. Remplacer `System.getenv()` par `environment.getProperty()` dans `resolveMode()`/`resolveRole()`/`resolveTransportType()`. Ajouter 3 tests de priorite (env var override property) via `MockEnvironment.withProperty()`. Fichiers : bootstrap/.../runtime/RuntimeModeResolver.java + RuntimeModeResolverTest.java.
 
 ---
 
-[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-02] ExecutionStatusResponse.phaseStatuses sans defensive copy dans le constructeur compact. Ajouter `phaseStatuses = phaseStatuses == null ? Map.of() : Map.copyOf(phaseStatuses);`. Fichier : platform-app/.../api/dto/ExecutionStatusResponse.java.
-
-[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-08] Magic string "ACCEPTED" a la ligne 70 de ScenarioController. Extraire en constante `STATUS_ACCEPTED`. Fichier : platform-app/.../api/ScenarioController.java:70.
-
-[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-07] Logs ApiExceptionHandler sans contexte (executionId absent). Pour handleExecution et handleReportGeneration, l'executionId pourrait etre extrait de l'exception si disponible. Fichier : platform-app/.../api/ApiExceptionHandler.java.
+[ISSUE-063] [2026-06-20] [CONFIRMED] [CRAFT-05] Classe 379 lignes (>300) sans marqueur CC-02 dans la Javadoc de classe. La methode evaluate() a son CC-02 (lignes 101-105) mais la classe elle-meme manque le marqueur. Ajouter bloc CC-02 dans la Javadoc de classe expliquant le pipeline cohesif d'evaluation WireMock (resolution parametres → validation metrique → resolution URL → HTTP /__admin/requests/count → extraction count → evaluation operateur → construction resultat). Pattern etabli : ISSUE-062, ISSUE-064, ISSUE-071. Fichier : infra/platform-assertion-adapters/.../httpmock/HttpMockAssertionExecutor.java:32-46.
 
 ---
 
-[ISSUE-080] [2026-06-20] [CONFIRMED] [CRAFT-01/DOC] PluginProperties Javadoc ligne 17 : "Si enabled est absent, la valeur par defaut est true" — mais le champ boolean primitif sans traitement dans le constructeur compact a pour defaut JVM false. Si l'intention est true, utiliser Boolean wrapper + null-check dans le constructeur compact. Sinon, corriger la Javadoc (true → false). Fichier : platform-app/.../plugin/PluginProperties.java:17.
+[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-02] ExecutionStatusResponse.phaseStatuses sans defensive copy dans le constructeur compact. Ajouter `phaseStatuses = phaseStatuses == null ? Map.of() : Map.copyOf(phaseStatuses);`. Fichier : bootstrap/.../api/dto/ExecutionStatusResponse.java.
 
-[ISSUE-080] [2026-06-20] [CONFIRMED] [NAMING] Test shouldNotCrashWhenLoaderThrowsException — nom trompeur. Le test verifie que l'exception est PROPAGEE, pas qu'elle est absorbee. Le nom suggere l'inverse. Renommer en shouldPropagateLoaderException. Fichier : platform-app/.../plugin/PluginBootstrapTest.java:106.
+[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-08] Magic string "ACCEPTED" a la ligne 70 de ScenarioController. Extraire en constante `STATUS_ACCEPTED`. Fichier : bootstrap/.../api/ScenarioController.java:70.
 
-[ISSUE-082] [2026-06-20] [CONFIRMED] [VERSION] Testcontainers 1.20.4 → 1.20.6 pour alignement inter-modules. platform-assertion, platform-infrastructure, platform-transport utilisent 1.20.6. Mettre a jour les 3 entrees <version> dans platform-app/pom.xml (testcontainers, postgresql, junit-jupiter). Fichier : platform-app/pom.xml:143,149,155.
+[ISSUE-079] [2026-06-20] [CONFIRMED] [CRAFT-07] Logs ApiExceptionHandler sans contexte (executionId absent). Pour handleExecution et handleReportGeneration, l'executionId pourrait etre extrait de l'exception si disponible. Fichier : bootstrap/.../api/ApiExceptionHandler.java.
 
-[ISSUE-083] [2026-06-20] [CONFIRMED] [PRECISION] Exception `.dockerignore` inutile `!platform-app/target/performance-platform.jar` ligne 26. Le Dockerfile multi-stage compile depuis les sources (stage build) et copie le JAR via `COPY --from=build`, pas depuis le contexte de build hote. L'exception re-inclut un fichier qui n'est jamais lu depuis le contexte — code mort. Supprimer la ligne 26 et eventuellement la remplacer par un commentaire documentant le chemin du JAR de sortie. Fichier : platform-deployment/docker/.dockerignore:26.
+---
 
-[ISSUE-084] [2026-06-20] [CONFIRMED] [SPEC-01] `depends_on` des agents (agent-1, agent-2) ne reference pas `orchestrator`. La spec 09-deployment.md section 2 montre `depends_on: [kafka, orchestrator]` pour les agents. Ajouter `orchestrator` avec `condition: service_started` dans le bloc `depends_on` des deux agents. Fichier : platform-deployment/docker/docker-compose.yaml lignes 109-112, 130-133. → Verifie: agent-1 depends_on orchestrator service_started (ligne 113-114), agent-2 depends_on orchestrator service_started (ligne 138-139).
+[ISSUE-080] [2026-06-20] [CONFIRMED] [CRAFT-01/DOC] PluginProperties Javadoc ligne 17 : "Si enabled est absent, la valeur par defaut est true" — mais le champ boolean primitif sans traitement dans le constructeur compact a pour defaut JVM false. Si l'intention est true, utiliser Boolean wrapper + null-check dans le constructeur compact. Sinon, corriger la Javadoc (true → false). Fichier : bootstrap/.../plugin/PluginProperties.java:17.
 
-[ISSUE-084] [2026-06-20] [CONFIRMED] [SPEC-02] `AGENT_TAGS` absent des environnements agent-1 et agent-2. La spec 09-deployment.md section 2 montre `AGENT_TAGS: europe,standard` et `AGENT_TAGS: europe,high-memory`. ADR-008 confirme que les tags sont des metadonnees d'observabilite. Ajouter `AGENT_TAGS: "dev,standard"` pour agent-1 et `AGENT_TAGS: "dev,high-memory"` pour agent-2. Fichier : platform-deployment/docker/docker-compose.yaml lignes 99-106, 121-128. → Verifie: agent-1 AGENT_TAGS="dev,standard" (ligne 106), agent-2 AGENT_TAGS="dev,high-memory" (ligne 131).
+[ISSUE-080] [2026-06-20] [CONFIRMED] [NAMING] Test shouldNotCrashWhenLoaderThrowsException — nom trompeur. Le test verifie que l'exception est PROPAGEE, pas qu'elle est absorbee. Le nom suggere l'inverse. Renommer en shouldPropagateLoaderException. Fichier : bootstrap/.../plugin/PluginBootstrapTest.java:106.
 
-[ISSUE-085] [2026-06-20] [CONFIRMED] [PRECISION] Terminologie "headless" incorrecte dans les commentaires des services `perf-kafka-service` et `perf-postgres-service` de service.yaml. Ces services sont des placeholders pour services externes (managed Kafka/PostgreSQL), pas des headless services K8s (qui requierent `clusterIP: None`). Remplacer "(headless placeholder)" par "(external service placeholder)" dans les deux commentaires d'en-tete (lignes 29 et 48). Fichier : platform-deployment/kubernetes/service.yaml.
+[ISSUE-082] [2026-06-20] [CONFIRMED] [VERSION] Testcontainers 1.20.4 → 1.20.6 pour alignement inter-modules. platform-assertion, platform-infrastructure, platform-transport utilisent 1.20.6. Mettre a jour les 3 entrees <version> dans bootstrap/pom.xml (testcontainers, postgresql, junit-jupiter). Fichier : bootstrap/pom.xml:143,149,155.
+
+[ISSUE-083] [2026-06-20] [CONFIRMED] [PRECISION] Exception `.dockerignore` inutile `!bootstrap/target/performance-platform.jar` ligne 26. Le Dockerfile multi-stage compile depuis les sources (stage build) et copie le JAR via `COPY --from=build`, pas depuis le contexte de build hote. L'exception re-inclut un fichier qui n'est jamais lu depuis le contexte — code mort. Supprimer la ligne 26 et eventuellement la remplacer par un commentaire documentant le chemin du JAR de sortie. Fichier : distribution/docker/.dockerignore:26.
+
+[ISSUE-084] [2026-06-20] [CONFIRMED] [SPEC-01] `depends_on` des agents (agent-1, agent-2) ne reference pas `orchestrator`. La spec 09-deployment.md section 2 montre `depends_on: [kafka, orchestrator]` pour les agents. Ajouter `orchestrator` avec `condition: service_started` dans le bloc `depends_on` des deux agents. Fichier : distribution/docker/docker-compose.yaml lignes 109-112, 130-133. → Verifie: agent-1 depends_on orchestrator service_started (ligne 113-114), agent-2 depends_on orchestrator service_started (ligne 138-139).
+
+[ISSUE-084] [2026-06-20] [CONFIRMED] [SPEC-02] `AGENT_TAGS` absent des environnements agent-1 et agent-2. La spec 09-deployment.md section 2 montre `AGENT_TAGS: europe,standard` et `AGENT_TAGS: europe,high-memory`. ADR-008 confirme que les tags sont des metadonnees d'observabilite. Ajouter `AGENT_TAGS: "dev,standard"` pour agent-1 et `AGENT_TAGS: "dev,high-memory"` pour agent-2. Fichier : distribution/docker/docker-compose.yaml lignes 99-106, 121-128. → Verifie: agent-1 AGENT_TAGS="dev,standard" (ligne 106), agent-2 AGENT_TAGS="dev,high-memory" (ligne 131).
+
+[ISSUE-085] [2026-06-20] [CONFIRMED] [PRECISION] Terminologie "headless" incorrecte dans les commentaires des services `perf-kafka-service` et `perf-postgres-service` de service.yaml. Ces services sont des placeholders pour services externes (managed Kafka/PostgreSQL), pas des headless services K8s (qui requierent `clusterIP: None`). Remplacer "(headless placeholder)" par "(external service placeholder)" dans les deux commentaires d'en-tete (lignes 29 et 48). Fichier : distribution/kubernetes/service.yaml.
 
 [ISSUE-100] [2026-06-22] [DEFERRED->ISSUE-103] [PRECISION] agentTags dans iot-dispatcher-distributed.yaml (lignes 50, 66) silencieusement ignores par YamlScenarioParser. StepYamlDto n'a pas de champ agentTags et Jackson est configure avec FAIL_ON_UNKNOWN_PROPERTIES=false. Le routage par agent base sur les tags ne fonctionnera pas tant que StepDefinition + StepYamlDto ne supportent pas agentTags. Ajouter List<String> agentTags a StepDefinition, StepYamlDto, et au mapping dans YamlScenarioParser, puis integrer dans TaskSpecializationFilter. Deferre a ISSUE-103 -- ajout support agentTags dans StepDefinition -> StepYamlDto -> YamlScenarioParser -> TaskSpecializationFilter.
 
@@ -408,26 +408,26 @@ au-dessus de la méthode. La solution complète (Jackson mapper) viendra avec IS
 | 2026-06-19 | ISSUE-029 | [TEST-04] Ajouter tests null-checks parametres publics KafkaExecutionTransport (shouldThrowOnNull*) | APPLIED |
 | 2026-06-20 | ISSUE-068 | [TEST-04] Test shouldWrapConversionErrors → 2 tests erreur avec stubs anonymes (Mockito incompatible Java 25) | APPLIED |
 
-[ISSUE-088] [2026-06-21] [CONFIRMED] [PRECISION-01] CC-02 line counts inaccurate in executeConsume() and executeCount() Javadoc. executeConsume() CC-02 says "~48 lines" but actual is ~58 lines. executeCount() CC-02 says "~35 lines" but actual is ~60 lines. Update both CC-02 comments to reflect actual sizes after cluster-vs-legacy refactoring. Fichier : platform-infrastructure/.../executor/kafka/KafkaConsumerTaskExecutor.java:158,255.
+[ISSUE-088] [2026-06-21] [CONFIRMED] [PRECISION-01] CC-02 line counts inaccurate in executeConsume() and executeCount() Javadoc. executeConsume() CC-02 says "~48 lines" but actual is ~58 lines. executeCount() CC-02 says "~35 lines" but actual is ~60 lines. Update both CC-02 comments to reflect actual sizes after cluster-vs-legacy refactoring. Fichier : infra/platform-infrastructure/.../executor/kafka/KafkaConsumerTaskExecutor.java:158,255.
 
-[ISSUE-088] [2026-06-21] [CONFIRMED] [PRECISION-02] Duplicate import java.util.Map at lines 29 and 33 in KafkaTaskExecutorsIT.java. Remove the duplicate at line 33. Fichier : platform-infrastructure/src/test/.../executor/kafka/KafkaTaskExecutorsIT.java:33.
+[ISSUE-088] [2026-06-21] [CONFIRMED] [PRECISION-02] Duplicate import java.util.Map at lines 29 and 33 in KafkaTaskExecutorsIT.java. Remove the duplicate at line 33. Fichier : infra/platform-infrastructure/src/test/.../executor/kafka/KafkaTaskExecutorsIT.java:33.
 
-[ISSUE-088] [2026-06-21] [CONFIRMED] [PRECISION-03] Unused parameter groupId in executeCount() method signature. Both cluster and legacy paths create ephemeral perf-count-* group IDs internally; the passed groupId is never referenced. Remove groupId from executeCount() signature and the call-site in execute(). Fichier : platform-infrastructure/.../executor/kafka/KafkaConsumerTaskExecutor.java:259-262,129.
+[ISSUE-088] [2026-06-21] [CONFIRMED] [PRECISION-03] Unused parameter groupId in executeCount() method signature. Both cluster and legacy paths create ephemeral perf-count-* group IDs internally; the passed groupId is never referenced. Remove groupId from executeCount() signature and the call-site in execute(). Fichier : infra/platform-infrastructure/.../executor/kafka/KafkaConsumerTaskExecutor.java:259-262,129.
 
-[ISSUE-093] [2026-06-22] [APPLIED] [CRAFT-05] execute() ~47 lignes (>40) sans CC-02 dans HttpClientTaskExecutor. Ajouter Javadoc CC-02 expliquant le pipeline cohesif : extraction parametres → validation target/path → resolution path logique → obtention RestClient → execution Virtual Thread avec timeout guard. Fichier : platform-infrastructure/.../executor/http/HttpClientTaskExecutor.java (avant execute()).
+[ISSUE-093] [2026-06-22] [APPLIED] [CRAFT-05] execute() ~47 lignes (>40) sans CC-02 dans HttpClientTaskExecutor. Ajouter Javadoc CC-02 expliquant le pipeline cohesif : extraction parametres → validation target/path → resolution path logique → obtention RestClient → execution Virtual Thread avec timeout guard. Fichier : infra/platform-infrastructure/.../executor/http/HttpClientTaskExecutor.java (avant execute()).
 
-[ISSUE-093] [2026-06-22] [APPLIED] [CRAFT-05] executeRequest() ~57 lignes (>40) sans CC-02 dans HttpClientTaskExecutor. Ajouter Javadoc CC-02 expliquant le pipeline cohesif : switch methode HTTP → appel RestClient .toEntity() → capture 4xx/5xx → extraction status/body → construction outputs → assertion expectedStatus → retour TaskResult. Fichier : platform-infrastructure/.../executor/http/HttpClientTaskExecutor.java (avant executeRequest()).
+[ISSUE-093] [2026-06-22] [APPLIED] [CRAFT-05] executeRequest() ~57 lignes (>40) sans CC-02 dans HttpClientTaskExecutor. Ajouter Javadoc CC-02 expliquant le pipeline cohesif : switch methode HTTP → appel RestClient .toEntity() → capture 4xx/5xx → extraction status/body → construction outputs → assertion expectedStatus → retour TaskResult. Fichier : infra/platform-infrastructure/.../executor/http/HttpClientTaskExecutor.java (avant executeRequest()).
 
-[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-05] registerExecutionHandler() 42 lignes (>40) sans CC-02 method-level dans DynamicKafkaListenerRegistry. Pipeline cohesif : computeIfAbsent → createContainer → dispatch EventGroup → retour Runnable cleanup. Fichier : platform-transport/.../kafka/DynamicKafkaListenerRegistry.java:170-211.
+[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-05] registerExecutionHandler() 42 lignes (>40) sans CC-02 method-level dans DynamicKafkaListenerRegistry. Pipeline cohesif : computeIfAbsent → createContainer → dispatch EventGroup → retour Runnable cleanup. Fichier : infra/platform-transport/.../kafka/DynamicKafkaListenerRegistry.java:170-211.
 
-[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-05] registerAgentLifecycleHandler() 43 lignes (>40) sans CC-02 method-level dans DynamicKafkaListenerRegistry. Pipeline cohesif : computeIfAbsent → createContainer → dispatch EventGroup → retour Runnable cleanup. Fichier : platform-transport/.../kafka/DynamicKafkaListenerRegistry.java:217-259.
+[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-05] registerAgentLifecycleHandler() 43 lignes (>40) sans CC-02 method-level dans DynamicKafkaListenerRegistry. Pipeline cohesif : computeIfAbsent → createContainer → dispatch EventGroup → retour Runnable cleanup. Fichier : infra/platform-transport/.../kafka/DynamicKafkaListenerRegistry.java:217-259.
 
-[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-08] Magic string "orchestrator" utilisee en dur deux fois dans KafkaExecutionTransport (lignes 144, 152) pour registerExecutionHandler/registerAgentLifecycleHandler. Extraire en constante ORCHESTRATOR_GROUP = "orchestrator". Fichier : platform-transport/.../kafka/KafkaExecutionTransport.java.
+[ISSUE-090] [2026-06-22] [APPLIED] [CRAFT-08] Magic string "orchestrator" utilisee en dur deux fois dans KafkaExecutionTransport (lignes 144, 152) pour registerExecutionHandler/registerAgentLifecycleHandler. Extraire en constante ORCHESTRATOR_GROUP = "orchestrator". Fichier : infra/platform-transport/.../kafka/KafkaExecutionTransport.java.
 
-[ISSUE-090] [2026-06-22] [APPLIED] [DRY] Duplication ~30 lignes entre registerExecutionHandler() et registerAgentLifecycleHandler() — le bloc computeIfAbsent de creation container + dispatch instanceof est identique. Extraire methode privee getOrCreateEventGroup(String groupId) factorisant la creation et le dispatch. Fichier : platform-transport/.../kafka/DynamicKafkaListenerRegistry.java.
+[ISSUE-090] [2026-06-22] [APPLIED] [DRY] Duplication ~30 lignes entre registerExecutionHandler() et registerAgentLifecycleHandler() — le bloc computeIfAbsent de creation container + dispatch instanceof est identique. Extraire methode privee getOrCreateEventGroup(String groupId) factorisant la creation et le dispatch. Fichier : infra/platform-transport/.../kafka/DynamicKafkaListenerRegistry.java.
 
 ---
 
-[ISSUE-095] [2026-06-22] [CONFIRMED] [CRAFT-05] Classe HttpMockAssertionExecutor 419 lignes (>300) sans marqueur CC-02 dans la Javadoc de classe. Regression ISSUE-063 (CC-02 etait present avant refactoring). Pipeline cohesif : resolution source (target/wiremockUrl/refTaskId) → appel WireMock (RestClient v2 ou JDK HttpClient legacy) → evaluation operateur → construction AssertionResult, avec helpers parametres/metriques/construction indissociables. Ajouter bloc CC-02 dans la Javadoc de classe. Fichier : platform-assertion/.../httpmock/HttpMockAssertionExecutor.java (classe, lignes 33-52).
+[ISSUE-095] [2026-06-22] [CONFIRMED] [CRAFT-05] Classe HttpMockAssertionExecutor 419 lignes (>300) sans marqueur CC-02 dans la Javadoc de classe. Regression ISSUE-063 (CC-02 etait present avant refactoring). Pipeline cohesif : resolution source (target/wiremockUrl/refTaskId) → appel WireMock (RestClient v2 ou JDK HttpClient legacy) → evaluation operateur → construction AssertionResult, avec helpers parametres/metriques/construction indissociables. Ajouter bloc CC-02 dans la Javadoc de classe. Fichier : infra/platform-assertion-adapters/.../httpmock/HttpMockAssertionExecutor.java (classe, lignes 33-52).
 
-[ISSUE-095] [2026-06-22] [CONFIRMED] [CRAFT-05] Methode evaluate() 123 lignes (>40) sans Javadoc ni marqueur CC-02. Regression ISSUE-063 (CC-02 etait present sur evaluate() avant refactoring). Pipeline cohesif : (1) extraction/validation parametres, (2) validation metrique, (3) resolution operateur, (4) resolution source HTTP tri-flux (target → wiremockUrl → refTaskId), (5) evaluation operateur, (6) construction Evidence + AssertionResult, (7) logging structure. Ajouter Javadoc avec bloc CC-02 avant evaluate(). Fichier : platform-assertion/.../httpmock/HttpMockAssertionExecutor.java (avant evaluate(), ligne 113).
+[ISSUE-095] [2026-06-22] [CONFIRMED] [CRAFT-05] Methode evaluate() 123 lignes (>40) sans Javadoc ni marqueur CC-02. Regression ISSUE-063 (CC-02 etait present sur evaluate() avant refactoring). Pipeline cohesif : (1) extraction/validation parametres, (2) validation metrique, (3) resolution operateur, (4) resolution source HTTP tri-flux (target → wiremockUrl → refTaskId), (5) evaluation operateur, (6) construction Evidence + AssertionResult, (7) logging structure. Ajouter Javadoc avec bloc CC-02 avant evaluate(). Fichier : infra/platform-assertion-adapters/.../httpmock/HttpMockAssertionExecutor.java (avant evaluate(), ligne 113).

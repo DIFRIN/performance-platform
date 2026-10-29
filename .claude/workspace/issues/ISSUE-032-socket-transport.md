@@ -17,11 +17,11 @@ reconnexion best-effort côté agent.
 ## Fichiers à Créer
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/socket/
+infra/platform-transport/src/main/java/com/performance/platform/transport/socket/
   ├── SocketExecutionTransport.java
   └── SocketConnectionRegistry.java   — connexions actives côté orchestrateur
 
-platform-transport/src/test/java/com/performance/platform/transport/socket/
+infra/platform-transport/src/test/java/com/performance/platform/transport/socket/
   └── SocketExecutionTransportTest.java — loopback round-trip
 ```
 
@@ -45,7 +45,7 @@ public class SocketExecutionTransport implements ExecutionTransport {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] Round-trip loopback (client+serveur en mémoire)
 - [ ] `getType()` == SOCKET
 - [ ] `.claude/progress.md` mis à jour : ISSUE-032 → DONE

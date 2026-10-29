@@ -1,7 +1,7 @@
 # ISSUE-123: Endpoint REST GET /api/v1/executions/{id}/report (stream fichier deja genere)
 
 **PDR** : PDR-027
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-121
@@ -22,10 +22,10 @@ et que la generation n'est JAMAIS declenchee par cet endpoint.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/app/api/
+bootstrap/src/main/java/com/performance/platform/app/api/
   └── ReportController.java             — GET /executions/{id}/report?format= (stream)
 
-platform-app/src/test/java/com/performance/platform/app/api/
+bootstrap/src/test/java/com/performance/platform/app/api/
   └── ReportControllerTest.java         — @WebMvcTest (html/pdf/json + 404 absent)
 ```
 
@@ -54,7 +54,7 @@ public class ReportController {
   resoudre le chemin selon le layout reel de `ReportFileWriter` :
   `{reporting.output-directory}/{executionId}/campaign.{html|pdf|json}` (defaut output-directory = `reports`).
   Utiliser `org.springframework.core.io.Resource` / `Files` (Spring-first, ADR-013/CC-05) — pas de
-  construction de chemin fragile. `platform-app` depend deja de `platform-reporting` (dependance legitime).
+  construction de chemin fragile. `platform-bootstrap` depend deja de `platform-reporting` (dependance legitime).
 - `Content-Type` selon `format` : `text/html`, `application/pdf`, `application/json`.
 - Fichier absent (rapport pas encore genere) → `404 Not Found` (l'IHM poll).
 - `format` invalide → `400`.
@@ -66,7 +66,7 @@ public class ReportController {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] `?format=html|pdf|json` → bytes avec bon Content-Type
 - [ ] Fichier absent → 404 ; format invalide → 400
 - [ ] Aucune generation declenchee par le controller (verifie : pas d'appel a GenerateReportUseCase ici)

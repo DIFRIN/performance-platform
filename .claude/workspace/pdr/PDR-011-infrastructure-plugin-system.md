@@ -3,7 +3,7 @@
 **Module Maven** : `platform-infrastructure`
 **Package** : `com.performance.platform.infrastructure.plugin`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/03-task-framework.md` §7 (complet), `.claude/knowledge/constraints.md` CF-04, CF-06, CF-07, ADR-007
+**Specs de référence** : `docs/knowledge/specs/03-task-framework.md` §7 (complet), `docs/knowledge/constraints.md` CF-04, CF-06, CF-07, ADR-007
 **Dépend de** : PDR-001, PDR-003, PDR-010
 **Issues** : ISSUE-046, ISSUE-047, ISSUE-048, ISSUE-049
 
@@ -81,7 +81,7 @@ Ce PDR utilise :
 
 Ce PDR est utilisé par :
   PDR-009 (agent runtime) → résolution finale d'un executor par name
-  PDR-018 (platform-app)  → bootstrap du PluginLoader au démarrage
+  PDR-018 (platform-bootstrap)  → bootstrap du PluginLoader au démarrage
 ```
 
 ---

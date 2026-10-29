@@ -3,7 +3,7 @@
 **Module Maven** : `platform-transport`
 **Package** : `com.performance.platform.transport.{kafka,rabbitmq,http,socket}`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/05-transport-layer.md` §4-6, ADR-002, ADR-009
+**Specs de référence** : `docs/knowledge/specs/05-transport-layer.md` §4-6, ADR-002, ADR-009
 **Dépend de** : PDR-001, PDR-002, PDR-007
 **Issues** : ISSUE-028, ISSUE-029, ISSUE-030, ISSUE-031, ISSUE-032
 
@@ -106,7 +106,7 @@ Ce PDR utilise :
   PDR-004 → AgentRegistryPort (pour HTTP transport)
 
 Ce PDR est utilisé par :
-  PDR-018 (platform-app) → assemblage selon TRANSPORT_TYPE
+  PDR-018 (platform-bootstrap) → assemblage selon TRANSPORT_TYPE
 ```
 
 ---

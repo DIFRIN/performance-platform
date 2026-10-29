@@ -16,10 +16,10 @@ Ajouter un `package-info.java` documentant les 4 catégories d'événements et u
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/event/
+core/platform-domain/src/main/java/com/performance/platform/domain/event/
   └── package-info.java            — documentation des catégories
 
-platform-domain/src/test/java/com/performance/platform/domain/event/
+core/platform-domain/src/test/java/com/performance/platform/domain/event/
   └── EventHierarchyArchTest.java  — NOUVEAU: test ArchUnit
 ```
 
@@ -81,5 +81,5 @@ class EventHierarchyArchTest {
 
 - [ ] `package-info.java` créé avec documentation des catégories
 - [ ] `EventHierarchyArchTest` créé avec tests de cohérence
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] Le test détecterait un event orphelin (sans interface) ou un `permits` désynchronisé

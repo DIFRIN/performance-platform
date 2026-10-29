@@ -1,7 +1,7 @@
 # ISSUE-181 — Remove TaskExecutorLookup.findAssertionExecutor
 
 **PDR** : PDR-037
-**Module** : `platform-execution-engine`, `platform-app`
+**Module** : `platform-execution-engine`, `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : —
@@ -20,10 +20,10 @@ Finaliser la migration assertion (A2) : supprimer `TaskExecutorLookup.findAssert
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/local/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/local/
   └── TaskExecutorLookup.java              — SUPPRIMER findAssertionExecutor
 
-platform-app/src/main/java/com/performance/platform/app/config/
+bootstrap/src/main/java/com/performance/platform/app/config/
   ├── RegistryTaskExecutorLookup.java      — SUPPRIMER findAssertionExecutor + injection AssertionExecutorRegistry
   └── RuntimeAssemblyConfiguration.java    — taskExecutorLookup(TaskExecutorRegistry) uniquement
 ```
@@ -38,6 +38,6 @@ platform-app/src/main/java/com/performance/platform/app/config/
 
 - [ ] `findAssertionExecutor` supprimé de `TaskExecutorLookup` + `RegistryTaskExecutorLookup`
 - [ ] `RuntimeAssemblyConfiguration` n'injecte plus `AssertionExecutorRegistry`
-- [ ] `mvn test -pl platform-execution-engine,platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine,:platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-181 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour (findAssertionExecutor → ❌ REMOVED)

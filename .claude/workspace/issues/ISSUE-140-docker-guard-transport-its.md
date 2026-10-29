@@ -18,8 +18,8 @@ Ajouter `@Testcontainers(disabledWithoutDocker = true)` aux 2 ITs Testcontainers
 
 ```
 MODIFIER (tests) :
-platform-transport/src/test/java/.../KafkaExecutionTransportIT.java
-platform-transport/src/test/java/.../RabbitMQExecutionTransportIT.java
+infra/platform-transport/src/test/java/.../KafkaExecutionTransportIT.java
+infra/platform-transport/src/test/java/.../RabbitMQExecutionTransportIT.java
   — remplacer @Testcontainers par @Testcontainers(disabledWithoutDocker = true)
 ```
 
@@ -40,8 +40,8 @@ class KafkaExecutionTransportIT { /* @Container ... inchangé */ }
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` (sans Docker) → vert, les 2 IT `skipped`
-- [ ] `mvn verify -pl platform-transport -P integration-tests` (avec Docker) → les 2 IT s'exécutent
+- [ ] `mvn test -pl :platform-transport -q` (sans Docker) → vert, les 2 IT `skipped`
+- [ ] `mvn verify -pl :platform-transport -P integration-tests` (avec Docker) → les 2 IT s'exécutent
 - [ ] Les 2 classes portent `@Testcontainers(disabledWithoutDocker = true)`
 - [ ] `.claude/workspace/progress.md` : géré par les scripts (`issue-finish.sh`)
 </content>

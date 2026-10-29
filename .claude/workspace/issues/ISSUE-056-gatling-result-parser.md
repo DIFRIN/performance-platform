@@ -16,12 +16,12 @@ Implémenter `GatlingResultParser` qui lit le `stats.json` Gatling et produit un
 ## Fichiers à Créer
 
 ```
-platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/result/
+infra/platform-injection-gatling/src/main/java/com/performance/platform/injection/gatling/result/
   ├── GatlingResultParser.java
   ├── DefaultGatlingResultParser.java
   └── ResultParsingException.java
 
-platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/result/
+infra/platform-injection-gatling/src/test/java/com/performance/platform/injection/gatling/result/
   └── DefaultGatlingResultParserTest.java — stats.json de référence → InjectionResult
 ```
 
@@ -46,7 +46,7 @@ public class ResultParsingException extends RuntimeException {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-injection-gatling -q` → 0 erreur
+- [ ] `mvn test -pl :platform-injection-gatling -q` → 0 erreur
 - [ ] Un `stats.json` de référence parse en `InjectionResult` correct
 - [ ] `.claude/progress.md` mis à jour : ISSUE-056 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `GatlingResultParser` → STABLE

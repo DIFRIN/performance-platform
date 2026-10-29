@@ -15,21 +15,21 @@ Finaliser l'intégration Spring Kafka dans la configuration du transport :
 1. Ajouter le `@Bean ConcurrentKafkaListenerContainerFactory<String,byte[]>` (transport interne, qualifié pour éviter collision avec les beans PDR-020)
 2. Supprimer définitivement `KafkaConsumerManager` s'il est encore présent (marqué @Deprecated dans ISSUE-090)
 3. Vérifier que `TransportConfiguration` câble correctement `KafkaExecutionTransport` avec les nouveaux beans Spring (`KafkaTemplate`, `ConcurrentKafkaListenerContainerFactory`)
-4. `mvn verify -pl platform-transport` passe avec tous les tests d'intégration
+4. `mvn verify -pl :platform-transport` passe avec tous les tests d'intégration
 
 ---
 
 ## Fichiers à Modifier
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/config/
+infra/platform-transport/src/main/java/com/performance/platform/transport/config/
   ├── KafkaTransportBeans.java    — MODIFIÉ : ajouter ConcurrentKafkaListenerContainerFactory
   └── TransportConfiguration.java — MODIFIÉ : câbler KafkaExecutionTransport avec nouveaux beans
 
-platform-transport/src/main/java/com/performance/platform/transport/kafka/
+infra/platform-transport/src/main/java/com/performance/platform/transport/kafka/
   └── KafkaConsumerManager.java   — SUPPRIMÉ définitivement
 
-platform-transport/pom.xml        — vérifier spring-kafka présent (ajouté par PDR-020 si même BOM)
+infra/platform-transport/pom.xml        — vérifier spring-kafka présent (ajouté par PDR-020 si même BOM)
 ```
 
 ---
@@ -96,14 +96,14 @@ public class KafkaTransportBeans {
 
 - **Qualifier obligatoire** sur tous les beans transport Kafka (préfixe `transport`) pour éviter collision avec les beans PDR-020 (`KafkaClusterConfiguration`) et les éventuels beans Spring Boot auto-configurés depuis `spring.kafka.*`.
 - **Suppression `KafkaConsumerManager`** : si encore présent, supprimer le fichier. Vérifier qu'aucune autre classe ne l'importe.
-- **`platform-transport/pom.xml`** : ajouter `spring-kafka` si pas déjà transitif. Sans version (BOM Spring Boot gère).
+- **`infra/platform-transport/pom.xml`** : ajouter `spring-kafka` si pas déjà transitif. Sans version (BOM Spring Boot gère).
 - **Test smoke** : un test `@SpringBootTest` minimal avec `@ConditionalOnProperty` désactivé suffit pour vérifier le câblage sans Kafka réel.
 
 ---
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur, 0 warning
 - [ ] `KafkaConsumerManager.java` n'existe plus dans le codebase
 - [ ] Aucun import de `KafkaConsumerManager` dans le module
 - [ ] `KafkaExecutionTransport` reçoit `KafkaTemplate` + `ConcurrentKafkaListenerContainerFactory` par constructeur

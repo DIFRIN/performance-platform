@@ -1,7 +1,7 @@
 # ISSUE-108 — Update README with Mock-as-Agent architecture documentation
 
 **PDR** : PDR-025
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : DONE
 **Priorite** : P2 (normal — documentation, non bloquant)
 **Bloquee par** : ISSUE-103, ISSUE-104, ISSUE-105, ISSUE-106, ISSUE-107 (documente les artefacts crees et le cleanup effectue)
@@ -11,7 +11,7 @@
 
 ## Objectif
 
-Mettre a jour le `README.md` existant dans `platform-deployment/examples/` pour documenter :
+Mettre a jour le `README.md` existant dans `distribution/examples/` pour documenter :
 
 1. L'architecture "Mock as Agent" (WireMock EMBEDDED dans un agent — PAS de service standalone)
 2. Le modele **configuration-driven** pour la specialisation des agents : `agent.supported-tasks` (pas d'auto-discovery, pas de `agentTags`)
@@ -25,7 +25,7 @@ Mettre a jour le `README.md` existant dans `platform-deployment/examples/` pour 
 ## Fichier a Modifier
 
 ```
-platform-deployment/examples/
+distribution/examples/
   └── README.md
 ```
 
@@ -129,7 +129,7 @@ Meme image Docker partout, config differente = role different.
 ### Demarrage du SUT
 
 ```bash
-docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
+docker compose -f distribution/examples/docker-compose-sut.yaml up -d
 ```
 
 Ports exposes :
@@ -171,10 +171,10 @@ Chaque agent declare ses taches via la configuration, pas via des annotations ou
 
 ```bash
 # 1. Builder l'image Docker de la plateforme
-docker build -f platform-deployment/docker/Dockerfile -t performance-platform:latest .
+docker build -f distribution/docker/Dockerfile -t performance-platform:latest .
 
 # 2. Demarrer la plateforme avec agents specialises
-docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml up -d
+docker compose -f distribution/examples/docker-compose-wiremock-agent.yaml up -d
 
 # 3. Verifier que tout est healthy (~90s)
 curl http://localhost:8080/actuator/health
@@ -187,13 +187,13 @@ curl http://localhost:8080/actuator/health
 # Specialisation non-pertinente — LocalAgent a tous les supportedTaskNames
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
-  --data-binary @platform-deployment/examples/scenarios/http-api-mock-agent-local.yaml
+  --data-binary @distribution/examples/scenarios/http-api-mock-agent-local.yaml
 
 # Mode DISTRIBUTED (agents specialises par configuration)
 # Routing par task name — broadcast + TaskSpecializationFilter cote agent
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
-  --data-binary @platform-deployment/examples/scenarios/http-api-mock-agent-distributed.yaml
+  --data-binary @distribution/examples/scenarios/http-api-mock-agent-distributed.yaml
 ```
 
 ### Deroulement du workflow (DISTRIBUTED)
@@ -223,10 +223,10 @@ Les rapports sont generes dans le volume `./reports/` (monte sur l'orchestrateur
 
 ```bash
 # Arreter le SUT IoT
-docker compose -f platform-deployment/examples/docker-compose-sut.yaml down -v
+docker compose -f distribution/examples/docker-compose-sut.yaml down -v
 
 # Arreter la plateforme Mock Agent
-docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yaml down -v
+docker compose -f distribution/examples/docker-compose-wiremock-agent.yaml down -v
 ```
 ```
 
@@ -261,5 +261,5 @@ docker compose -f platform-deployment/examples/docker-compose-wiremock-agent.yam
 - [ ] Aucune reference a `AGENT_TAGS` ou `agentTags`
 - [ ] Tous les chemins de fichiers references existent
 - [ ] Les commandes curl et docker sont correctes
-- [ ] `mvn test -pl platform-deployment -q` -> 0 erreur
+- [ ] `mvn test -pl distribution -q` -> 0 erreur
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-108 -> DONE

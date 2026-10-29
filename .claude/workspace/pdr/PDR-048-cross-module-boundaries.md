@@ -1,6 +1,6 @@
 # PDR-048 — Cross-Module Boundary Enforcement
 
-**Module Maven** : `platform-app` (ArchUnit), `platform-execution-engine`, `platform-assertion`, `platform-infrastructure`, `platform-reporting`, `platform-application`
+**Module Maven** : `platform-bootstrap` (ArchUnit), `platform-execution-engine`, `platform-assertion`, `platform-infrastructure`, `platform-reporting`, `platform-use-cases`
 **Package** : `com.performance.platform.app.arch` (test)
 **Statut** : WAITING
 **Specs de référence** : `improvements.md` A3, A5, T1 ; `ADR-007-plugin-jar-system.md` ; `ADR-026-assembly-strategy-thin-composition-root.md`
@@ -25,7 +25,7 @@ Les couplages réels (après correction de la review) :
 ## Interfaces Publiques
 
 ```java
-// platform-application — port extrait pour casser assertion → infrastructure
+// platform-use-cases — port extrait pour casser assertion → infrastructure
 package com.performance.platform.application.ports.out;
 
 public interface HttpTargetResolver {
@@ -48,7 +48,7 @@ L'engine ne connaît plus `platform-agent-runtime`.
   ni `platform-assertion` ni `platform-infrastructure` (main ET test).
 - `platform-reporting` ne doit pas dépendre de `platform-injection-gatling` (pom retiré).
 - `ModuleDependencyTest` (T1) encode le DAG cible et échoue si une arête interdite
-  réapparaît. Il vit dans `platform-app` (seul module qui voit tout le graphe Maven).
+  réapparaît. Il vit dans `platform-bootstrap` (seul module qui voit tout le graphe Maven).
 
 ---
 
@@ -72,4 +72,4 @@ Ce PDR est utilisé par :
 - [ ] `HttpTargetResolver` port + `HttpMockAssertionExecutor` découplé (ISSUE-178)
 - [ ] pom `reporting → injection-gatling` supprimé (ISSUE-179)
 - [ ] `ModuleDependencyTest` vert (ISSUE-180)
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur

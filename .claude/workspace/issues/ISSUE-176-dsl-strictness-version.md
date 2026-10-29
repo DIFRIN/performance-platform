@@ -17,14 +17,14 @@ requis, erreurs avec numéro de ligne. Ajouter `ScenarioStrictnessTest` (T7).
 ## Fichiers à Modifier
 
 ```
-platform-scenario-dsl/src/main/java/com/performance/platform/scenario/parser/
+performance/platform-scenario-dsl/src/main/java/com/performance/platform/scenario/parser/
   ├── YamlScenarioParser.java               — FAIL_ON_UNKNOWN_PROPERTIES=true + version requise + lignes
   └── (pas de nouvelle interface publique)
 
-platform-scenario-dsl/src/test/java/com/performance/platform/scenario/parser/
+performance/platform-scenario-dsl/src/test/java/com/performance/platform/scenario/parser/
   └── ScenarioStrictnessTest.java           — NOUVEAU (T7)
 
-platform-scenario-dsl/src/test/resources/
+performance/platform-scenario-dsl/src/test/resources/
   └── (corpus YAML : clé inconnue, typo, mauvais type, champ requis manquant)
 ```
 
@@ -39,5 +39,5 @@ platform-scenario-dsl/src/test/resources/
 - [ ] `ScenarioStrictnessTest` (T7) vert — chaque cas rejeté avec la ligne fautive
 - [ ] `FAIL_ON_UNKNOWN_PROPERTIES=true` + `version` requis
 - [ ] Scénarios d'exemple migrés
-- [ ] `mvn test -pl platform-scenario-dsl -q` → 0 erreur
+- [ ] `mvn test -pl :platform-scenario-dsl -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-176 → DONE

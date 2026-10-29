@@ -1,7 +1,7 @@
 # ISSUE-118 — End-to-end integration test: LOCAL mode executes all scenario tasks
 
 **PDR** : PDR-026
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorite** : P0 (verification bout-en-bout du mode LOCAL)
 **Bloquee par** : ISSUE-113 (LocalAgent cablage doit etre DONE)
@@ -23,10 +23,10 @@ Test d'integration complet en mode LOCAL qui verifie :
 ## Fichiers a Creer
 
 ```
-platform-app/src/test/java/com/performance/platform/e2e/
+bootstrap/src/test/java/com/performance/platform/e2e/
   └── LocalModeAllTasksE2ETest.java          — test E2E mode LOCAL
 
-platform-app/src/test/resources/
+bootstrap/src/test/resources/
   └── e2e-local-multi-tasks.yaml             — scenario YAML pour le test
 ```
 
@@ -131,11 +131,11 @@ class LocalModeAllTasksE2ETest {
 - Le scenario YAML de test doit etre minimal mais couvrir les 3 phases (PREPARATION, INJECTION, ASSERTION).
 - Tagger `@Tag("integration")`.
 - Le test doit verifier que `LocalAgent.canExecute()` retourne `true` pour chaque task du scenario.
-- Suivre le pattern du test E2E existant : `platform-app/src/test/.../LocalFlowE2ETest.java` (ISSUE-082, PDR-018).
+- Suivre le pattern du test E2E existant : `bootstrap/src/test/.../LocalFlowE2ETest.java` (ISSUE-082, PDR-018).
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-app -P integration-tests -q` → 0 erreur
+- [ ] `mvn verify -pl :platform-bootstrap -P integration-tests -q` → 0 erreur
 - [ ] 6 scenarios de test passent
 - [ ] Toutes les tasks du scenario YAML sont executees
 - [ ] `LocalAgent.canExecute()` = true pour tous les task names

@@ -1,9 +1,9 @@
 # PDR-004 — Application Ports & Use Cases
 
-**Module Maven** : `platform-application`
+**Module Maven** : `platform-use-cases`
 **Package** : `com.performance.platform.application`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/architecture.md` §2-3, `.claude/knowledge/specs/02-execution-engine.md` §2, `.claude/knowledge/specs/04-agent-runtime.md` §3, `.claude/knowledge/specs/08-report-engine.md` §2
+**Specs de référence** : `docs/knowledge/architecture.md` §2-3, `docs/knowledge/specs/02-execution-engine.md` §2, `docs/knowledge/specs/04-agent-runtime.md` §3, `docs/knowledge/specs/08-report-engine.md` §2
 **Dépend de** : PDR-001
 **Issues** : ISSUE-012, ISSUE-013, ISSUE-014
 
@@ -112,7 +112,7 @@ public class InvalidScenarioException extends RuntimeException {
 > `ScenarioParsingException` est défini dans PDR-005 (module scenario-dsl) mais référencé ici
 > par la signature de `ScenarioParsingUseCase` — l'import vient du module scenario-dsl, donc
 > `ScenarioParsingUseCase` est implémenté dans scenario-dsl. La signature ci-dessus dans
-> `platform-application` utilise une exception applicative générique ; voir ISSUE-012 règle d'import.
+> `platform-use-cases` utilise une exception applicative générique ; voir ISSUE-012 règle d'import.
 
 ---
 

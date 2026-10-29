@@ -1,7 +1,7 @@
-# ISSUE-144 — Composition root mince (platform-app) : glue lookup + scenario parsing + status + smoke tests
+# ISSUE-144 — Composition root mince (platform-bootstrap) : glue lookup + scenario parsing + status + smoke tests
 
 **PDR** : PDR-033
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1 (critique — assemble les modules framework-free + valide le démarrage)
 **Bloquée par** : ISSUE-143, ISSUE-145, ISSUE-146, ISSUE-147
@@ -11,7 +11,7 @@
 
 ## Objectif
 
-Réduire `platform-app` à un **composition root mince** (ADR-026) : ne câbler QUE ce qui ne peut
+Réduire `platform-bootstrap` à un **composition root mince** (ADR-026) : ne câbler QUE ce qui ne peut
 pas être self-wiré, à savoir (1) la glue cross-module `TaskExecutorLookup`, (2) le câblage des
 modules **framework-free** (`ScenarioParsingUseCase` depuis scenario-dsl, `GetExecutionStatusUseCase`
 depuis le read-model d'ISSUE-146). Plus **aucun** `@Bean` d'adaptation execute/cancel (les
@@ -22,13 +22,13 @@ leurs modules — ISSUE-143/147). Ajouter les smoke tests de démarrage des 3 mo
 
 ```
 CRÉER (main) :
-platform-app/src/main/java/com/performance/platform/app/config/
+bootstrap/src/main/java/com/performance/platform/app/config/
   ├── RuntimeAssemblyConfiguration.java     — @Bean TaskExecutorLookup (glue), ScenarioParsingUseCase
   │                                            (+ YamlScenarioParser + ScenarioValidator), GetExecutionStatusUseCase
   └── RegistryTaskExecutorLookup.java        — implements TaskExecutorLookup (bridge registres)
 
 CRÉER (test) :
-platform-app/src/test/java/com/performance/platform/app/config/
+bootstrap/src/test/java/com/performance/platform/app/config/
   ├── LocalContextStartupTest.java           — SpringApplicationBuilder(NONE) runtime.mode=LOCAL (H2)
   ├── OrchestratorContextStartupTest.java    — DISTRIBUTED/ORCHESTRATOR, transport.type=IN_MEMORY
   └── AgentContextStartupTest.java           — MODE=AGENT, aucun bean DB/web, DistributedAgentRuntime présent
@@ -53,7 +53,7 @@ public final class RegistryTaskExecutorLookup implements TaskExecutorLookup {
 @Configuration
 public class RuntimeAssemblyConfiguration {
 
-    // (1) Glue cross-module irréductible — seul platform-app dépend de engine+infra+assertion (ADR-026)
+    // (1) Glue cross-module irréductible — seul platform-bootstrap dépend de engine+infra+assertion (ADR-026)
     @Bean
     public TaskExecutorLookup taskExecutorLookup(TaskExecutorRegistry t, AssertionExecutorRegistry a) {
         return new RegistryTaskExecutorLookup(t, a);
@@ -103,9 +103,9 @@ public class RuntimeAssemblyConfiguration {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] Contexte démarre en **LOCAL** / **ORCHESTRATOR** / **AGENT** (3 smoke tests verts)
-- [ ] `platform-app` ne contient AUCUN `@Bean` execute/cancel, ni `ExecutionConfig`/`AgentRegistry`
+- [ ] `platform-bootstrap` ne contient AUCUN `@Bean` execute/cancel, ni `ExecutionConfig`/`AgentRegistry`
 - [ ] `ScenarioController` / `CliScenarioRunner` se câblent (ports in résolus)
 - [ ] Aucune annotation Spring ajoutée dans scenario-dsl / application
 - [ ] E2E existants verts (ou adaptés)

@@ -22,17 +22,17 @@ Le Developer produit : `KafkaClusterProperties`, `PlatformKafkaProperties`, `Kaf
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/kafka/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/kafka/
   ├── KafkaClusterProperties.java       — record + Map<String,String> topics
   ├── PlatformKafkaProperties.java      — @ConfigurationProperties(prefix="platform")
   ├── KafkaClusterRegistry.java         — registre + resolveTopic() + factory methods
   └── KafkaClusterConfiguration.java    — @Configuration @EnableConfigurationProperties
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/kafka/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/kafka/
   └── KafkaClusterRegistryTest.java     — tests unitaires (pas de Kafka réel)
 
-platform-app/src/main/resources/application-orchestrator.yaml  — ajouter bloc platform.kafka-clusters.*
-platform-app/src/main/resources/application-agent.yaml         — ajouter bloc platform.kafka-clusters.* (si pertinent)
+bootstrap/src/main/resources/application-orchestrator.yaml  — ajouter bloc platform.kafka-clusters.*
+bootstrap/src/main/resources/application-agent.yaml         — ajouter bloc platform.kafka-clusters.* (si pertinent)
 ```
 
 ---
@@ -141,7 +141,7 @@ platform:
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Test : binding depuis yaml → `KafkaClusterRegistry.get("iot-sut")` → non null
 - [ ] Test : `resolveTopic("iot-sut", "iot-commands")` → `"iot-commands-dev"` (quand mappé)
 - [ ] Test : `resolveTopic("iot-sut", "raw-topic")` → `"raw-topic"` (fallback)

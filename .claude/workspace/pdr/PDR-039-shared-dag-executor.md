@@ -3,7 +3,7 @@
 **Module Maven** : `platform-execution-engine`
 **Package** : `com.performance.platform.engine.shared`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/02-execution-engine.md`
+**Specs de reference** : `docs/knowledge/specs/02-execution-engine.md`
 **Depend de** : PDR-006 (ExecutionPlanBuilder, DagPhaseExecutor — déjà DONE)
 **Issues** : ISSUE-160, ISSUE-161, ISSUE-162
 
@@ -150,5 +150,5 @@ Ce PDR est utilisé par :
 - [ ] `LocalExecutionEngine` utilise `DagPhaseExecutor` + `LocalStepDispatcher` (ISSUE-160)
 - [ ] `RemoteExecutionEngine` refactoré pour utiliser `DagPhaseExecutor` (ISSUE-161)
 - [ ] Logique DAG dupliquée supprimée de `RemoteExecutionEngine` (ISSUE-162)
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] Tous les tests existants passent sans modification (refactor pur)

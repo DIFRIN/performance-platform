@@ -3,7 +3,7 @@
 **Module Maven** : `platform-plugin-api`
 **Package** : `com.performance.platform.plugin`
 **Status** : WAITING
-**Specs de reference** : `.claude/knowledge/specs/07-assertion-framework.md`, `.claude/workspace/assertion-distributed-analysis.md` section 2.4
+**Specs de reference** : `docs/knowledge/specs/07-assertion-framework.md`, `.claude/workspace/assertion-distributed-analysis.md` section 2.4
 **Depend de** : PDR-003 (deja DONE), PDR-034 (AssertionSummary)
 **Issues** : ISSUE-150
 
@@ -205,6 +205,6 @@ Ce PDR est utilise par :
 - [ ] `execute()` default method compile et reference `AssertionSummary`
 - [ ] `getSupportedTaskName()` default delegue a `getSupportedAssertionName()`
 - [ ] Les 6 executors d'assertion existants compilent sans modification
-- [ ] `mvn test -pl platform-plugin-api -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-plugin-api -q` -> 0 erreur
 - [ ] L'interface est dans `.claude/workspace/interfaces-registry.md` avec statut STABLE
 - [ ] ArchUnit : 0 annotation framework dans `platform-plugin-api`

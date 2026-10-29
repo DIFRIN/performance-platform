@@ -25,7 +25,7 @@ Test d'integration complet (Testcontainers Kafka + PostgreSQL) qui verifie le fl
 ## Fichiers a Creer
 
 ```
-platform-agent-runtime/src/test/java/com/performance/platform/agent/e2e/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/e2e/
   └── AgentConfigToExecutionE2ETest.java    — test E2E Testcontainers
 ```
 
@@ -94,7 +94,7 @@ La structure exacte du test (classes, mocks, assertions) est laissee au Develope
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-agent-runtime -P integration-tests -q` → 0 erreur
+- [ ] `mvn verify -pl :platform-agent-runtime -P integration-tests -q` → 0 erreur
 - [ ] 5 scenarios de test passent
 - [ ] `AgentRegistered.supportedTaskNames` = config YAML (pas registre)
 - [ ] Task non-supportee = pas d'execution

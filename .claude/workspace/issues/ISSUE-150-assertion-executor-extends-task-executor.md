@@ -16,10 +16,10 @@ Faire evoluer `AssertionExecutor` pour qu'il etende `TaskExecutor`. Ajouter une 
 ## Fichiers a Modifier
 
 ```
-platform-plugin-api/src/main/java/com/performance/platform/plugin/
+core/platform-plugin-api/src/main/java/com/performance/platform/plugin/
   └── AssertionExecutor.java     -- extends TaskExecutor, + execute() default, + getSupportedTaskName() default
 
-platform-plugin-api/src/test/java/com/performance/platform/plugin/
+core/platform-plugin-api/src/test/java/com/performance/platform/plugin/
   └── AssertionExecutorTest.java -- tests: execute() appelle evaluate(), getSupportedTaskName delegue, backward compat
 ```
 
@@ -44,14 +44,14 @@ platform-plugin-api/src/test/java/com/performance/platform/plugin/
 
 ## Criteres de Done
 
-- [ ] `mvn compile -pl platform-plugin-api -q` -> 0 erreur
-- [ ] `mvn test -pl platform-plugin-api -q` -> 0 erreur
+- [ ] `mvn compile -pl :platform-plugin-api -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-plugin-api -q` -> 0 erreur
 - [ ] `AssertionExecutor extends TaskExecutor` compile
 - [ ] La methode `execute()` default est testee avec un mock d'AssertionExecutor :
   - Verifie que `execute()` appelle `evaluate()` et retourne un `TaskResult` avec `AssertionSummary` dans outputs
   - Verifie que `getSupportedTaskName()` retourne la meme valeur que `getSupportedAssertionName()`
 - [ ] Test de backward compat : un stub implementant uniquement `evaluate()` et `getSupportedAssertionName()` compile et herite `execute()`
-- [ ] Les 6 implementations d'assertion existantes compilent sans modification (verifier via `mvn compile -pl platform-assertion -q`)
+- [ ] Les 6 implementations d'assertion existantes compilent sans modification (verifier via `mvn compile -pl :platform-assertion -q`)
 - [ ] ArchUnit : 0 annotation framework dans `platform-plugin-api`
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-150 -> DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis a jour : AssertionExecutor -> STABLE (etend TaskExecutor)

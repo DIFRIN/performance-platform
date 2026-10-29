@@ -17,12 +17,12 @@ Créer les records agent et un test ArchUnit garantissant 0 dépendance framewor
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/agent/
+core/platform-domain/src/main/java/com/performance/platform/domain/agent/
   ├── AgentDescriptor.java
   ├── AgentCapabilities.java
   └── AgentHeartbeat.java
 
-platform-domain/src/test/java/com/performance/platform/domain/
+core/platform-domain/src/test/java/com/performance/platform/domain/
   ├── agent/AgentDescriptorTest.java — canExecute(), copie défensive supportedTaskNames
   └── arch/DomainArchitectureTest.java — ArchUnit : 0 import Spring/JPA/Jackson
 ```
@@ -52,7 +52,7 @@ public record AgentHeartbeat(AgentId agentId, AgentState state, int activeTasks,
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `AgentDescriptor.canExecute("gatling")` reflète `supportedTaskNames`
 - [ ] Test ArchUnit passe (aucun import framework détecté)
 - [ ] `.claude/progress.md` mis à jour : ISSUE-007 → DONE

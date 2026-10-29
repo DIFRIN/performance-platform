@@ -1,9 +1,9 @@
 # PDR-043 — Safety Net: CI, Test Tiers, LOCAL≡DISTRIBUTED Equivalence
 
-**Module Maven** : root (`.github/workflows`), tous modules (poms), `platform-app`
+**Module Maven** : root (`.github/workflows`), tous modules (poms), `platform-bootstrap`
 **Package** : `com.performance.platform.app.e2e` (test)
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/00-overview.md`, `improvements.md` §1, §4 (T2, T9), §5 (P0)
+**Specs de référence** : `docs/knowledge/specs/00-overview.md`, `improvements.md` §1, §4 (T2, T9), §5 (P0)
 **Dépend de** : rien
 **Issues** : ISSUE-168, ISSUE-169, ISSUE-170
 
@@ -25,7 +25,7 @@ Ce PDR ne modifie AUCUN code de production. Il crée de la config CI + des tests
 Aucune interface publique de production. Nouveau type de test uniquement :
 
 ```java
-// platform-app/src/test/java/com/performance/platform/app/e2e/LocalDistributedEquivalenceTest.java
+// bootstrap/src/test/java/com/performance/platform/app/e2e/LocalDistributedEquivalenceTest.java
 @SpringBootTest(classes = PerformancePlatformApplication.class)
 class LocalDistributedEquivalenceTest {
     // @ParameterizedTest over { LOCAL (LocalExecutionEngine + InMemoryExecutionTransport),

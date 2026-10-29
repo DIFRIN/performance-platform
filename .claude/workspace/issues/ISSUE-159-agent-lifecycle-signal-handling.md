@@ -16,7 +16,7 @@ Implementer la reception et le traitement des `ExecutionLifecycleSignal` par les
 ## Fichiers a Creer
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
   └── lifecycle/
       └── DefaultLifecycleSignalHandler.java      — traitement des ExecutionLifecycleSignal
 ```
@@ -24,7 +24,7 @@ platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
 ## Fichiers a Modifier
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/runtime/
   ├── AgentRuntime.java                           — ajouter onLifecycleSignal(ExecutionLifecycleSignal)
   ├── DistributedAgentRuntime.java                — implementer onLifecycleSignal(), deleguer au handler
   └── LocalAgent.java                             — implementer onLifecycleSignal(), deleguer au handler
@@ -349,7 +349,7 @@ public void onLifecycleSignal(ExecutionLifecycleSignal signal) {
 
 Fichier a creer :
 ```
-platform-agent-runtime/src/test/java/com/performance/platform/agent/runtime/lifecycle/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/runtime/lifecycle/
   └── DefaultLifecycleSignalHandlerTest.java
 ```
 
@@ -376,6 +376,6 @@ Tests unitaires minimum :
 - [ ] Boucle de sampling avec Virtual Threads
 - [ ] Support des 3 stop behaviors : immediate, completeCurrentCycle, gracePeriod
 - [ ] Idempotence START et robustesse STOP sans START
-- [ ] `mvn test -pl platform-agent-runtime -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` -> 0 erreur
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-159 -> DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis a jour : `AgentRuntime.onLifecycleSignal`, `DefaultLifecycleSignalHandler`

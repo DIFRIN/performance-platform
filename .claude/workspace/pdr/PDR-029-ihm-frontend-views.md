@@ -1,6 +1,6 @@
 # PDR-029 — IHM Frontend Views (vanilla JS)
 
-**Module Maven** : `platform-app`
+**Module Maven** : `platform-bootstrap`
 **Package** : `src/main/resources/static` (assets), `src/test/java/com/performance/platform/e2e` (E2E)
 **Statut** : WAITING
 **Specs de reference** : Design valide utilisateur (Web IHM)
@@ -42,7 +42,7 @@ Plus un test E2E Testcontainers couvrant les nouveaux endpoints.
 ### Structure des assets statiques
 
 ```
-platform-app/src/main/resources/static/
+bootstrap/src/main/resources/static/
   ├── index.html                  (shell — livre en PDR-028)
   ├── assets/
   │   ├── css/app.css             (layout — livre en PDR-028, etendu ici)

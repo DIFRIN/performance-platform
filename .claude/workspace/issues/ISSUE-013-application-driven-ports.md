@@ -1,7 +1,7 @@
 # ISSUE-013 — Ports sortants (Repository / AgentRegistry / ReportPublisher)
 
 **PDR** : PDR-004
-**Module** : `platform-application`
+**Module** : `platform-use-cases`
 **Statut** : WAITING
 **Priorité** : P0
 **Bloquée par** : ISSUE-012, ISSUE-007
@@ -17,12 +17,12 @@ Créer les ports sortants (driven) : `ExecutionRepository`, `AgentRegistryPort`,
 ## Fichiers à Créer
 
 ```
-platform-application/src/main/java/com/performance/platform/application/ports/out/
+core/platform-use-cases/src/main/java/com/performance/platform/application/ports/out/
   ├── ExecutionRepository.java
   ├── AgentRegistryPort.java
   └── ReportPublisherPort.java
 
-platform-application/src/test/java/com/performance/platform/application/ports/out/
+core/platform-use-cases/src/test/java/com/performance/platform/application/ports/out/
   └── PortsCompileTest.java — vérifie que les signatures compilent (mock/no-op)
 ```
 
@@ -61,7 +61,7 @@ public interface ReportPublisherPort {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-application -q` → 0 erreur
+- [ ] `mvn test -pl :platform-use-cases -q` → 0 erreur
 - [ ] Les 3 ports compilent et sont mockables
 - [ ] `.claude/progress.md` mis à jour : ISSUE-013 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `ExecutionRepository`, `AgentRegistryPort`, `ReportPublisherPort` → STABLE

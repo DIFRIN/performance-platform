@@ -18,11 +18,11 @@ via endpoint.
 ## Fichiers à Créer
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/http/
+infra/platform-transport/src/main/java/com/performance/platform/transport/http/
   ├── HttpExecutionTransport.java
   └── HttpEventCallbackController.java   — reçoit les events des agents (POST /api/v1/events)
 
-platform-transport/src/test/java/com/performance/platform/transport/http/
+infra/platform-transport/src/test/java/com/performance/platform/transport/http/
   └── HttpExecutionTransportTest.java
 ```
 
@@ -46,7 +46,7 @@ public class HttpExecutionTransport implements ExecutionTransport {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] dispatch envoie à tous les agents capables (mock registry + serveur HTTP de test)
 - [ ] `getType()` == HTTP
 - [ ] `.claude/progress.md` mis à jour : ISSUE-031 → DONE

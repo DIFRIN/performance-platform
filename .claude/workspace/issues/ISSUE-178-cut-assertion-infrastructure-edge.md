@@ -1,7 +1,7 @@
 # ISSUE-178 — Cut assertion → infrastructure Edge (HttpTargetResolver port)
 
 **PDR** : PDR-048
-**Module** : `platform-application`, `platform-assertion`, `platform-infrastructure`
+**Module** : `platform-use-cases`, `platform-assertion`, `platform-infrastructure`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : —
@@ -13,7 +13,7 @@
 
 Supprimer l'arête `assertion → infrastructure` (A3) : `HttpMockAssertionExecutor`
 dépend de `HttpTargetRegistry`. Extraire un port `HttpTargetResolver` dans
-`platform-application`, faire implémenter ce port par `HttpTargetRegistry`
+`platform-use-cases`, faire implémenter ce port par `HttpTargetRegistry`
 (infrastructure), et découpler l'executor d'assertion.
 
 > ADR requise (ADR-036) : relocalisation du registry HTTP hors de la dépendance compile d'assertion.
@@ -21,16 +21,16 @@ dépend de `HttpTargetRegistry`. Extraire un port `HttpTargetResolver` dans
 ## Fichiers à Modifier
 
 ```
-platform-application/src/main/java/com/performance/platform/application/ports/out/
+core/platform-use-cases/src/main/java/com/performance/platform/application/ports/out/
   └── HttpTargetResolver.java              — NOUVEAU
 
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/http/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/http/
   └── HttpTargetRegistry.java              — implémenter HttpTargetResolver
 
-platform-assertion/src/main/java/com/performance/platform/assertion/httpmock/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/httpmock/
   └── HttpMockAssertionExecutor.java       — dépendre de HttpTargetResolver (plus de HttpTargetRegistry)
 
-platform-assertion/pom.xml                 — retirer la dépendance platform-infrastructure
+infra/platform-assertion-adapters/pom.xml                 — retirer la dépendance platform-infrastructure
 ```
 
 ## Interfaces à Implémenter
@@ -45,13 +45,13 @@ public interface HttpTargetResolver {
 ## Règles Spécifiques
 
 - `HttpTarget` reste un type du domaine/application (pas d'import infrastructure dans assertion).
-- Le bean `HttpTargetResolver` est fourni par infrastructure via la composition root (platform-app).
+- Le bean `HttpTargetResolver` est fourni par infrastructure via la composition root (platform-bootstrap).
 - Aucun changement de comportement de résolution HTTP.
 
 ## Critères de Done
 
 - [ ] `HttpMockAssertionExecutor` ne dépend plus de `platform-infrastructure`
-- [ ] `platform-assertion/pom.xml` ne référence plus `platform-infrastructure`
-- [ ] `mvn test -pl platform-assertion,platform-infrastructure,platform-application -q` → 0 erreur
+- [ ] `infra/platform-assertion-adapters/pom.xml` ne référence plus `platform-infrastructure`
+- [ ] `mvn test -pl :platform-assertion,:platform-infrastructure,:platform-use-cases -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-178 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour (HttpTargetResolver)

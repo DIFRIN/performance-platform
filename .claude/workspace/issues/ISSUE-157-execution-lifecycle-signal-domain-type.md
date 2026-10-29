@@ -16,7 +16,7 @@ Creer le type domaine `ExecutionLifecycleSignal` implementant `AgentSignal`, l'e
 ## Fichiers a Creer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/event/
+core/platform-domain/src/main/java/com/performance/platform/domain/event/
   ├── LifecycleAction.java              — nouvel enum (START, STOP)
   └── ExecutionLifecycleSignal.java     — nouveau record implementant AgentSignal
 ```
@@ -24,7 +24,7 @@ platform-domain/src/main/java/com/performance/platform/domain/event/
 ## Fichiers a Modifier
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/event/
+core/platform-domain/src/main/java/com/performance/platform/domain/event/
   └── AgentSignal.java                  — ajouter ExecutionLifecycleSignal a la clause permits
 ```
 
@@ -142,7 +142,7 @@ public sealed interface AgentSignal
 
 Fichier a creer :
 ```
-platform-domain/src/test/java/com/performance/platform/domain/event/
+core/platform-domain/src/test/java/com/performance/platform/domain/event/
   └── ExecutionLifecycleSignalTest.java
 ```
 
@@ -165,7 +165,7 @@ Tests unitaires a ecrire (minimum) :
 - [ ] `ExecutionLifecycleSignal.java` compile dans `platform-domain` (0 erreur)
 - [ ] `AgentSignal.java` permits mis a jour, compile toujours
 - [ ] `ScenarioRestartSignal.java` compile toujours (pas de breaking change)
-- [ ] `mvn test -pl platform-domain -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` -> 0 erreur
 - [ ] Tous les tests unitaires listes ci-dessus passent
 - [ ] ArchUnit test (existants dans platform-domain) : 0 annotation framework dans `event`
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-157 -> DONE

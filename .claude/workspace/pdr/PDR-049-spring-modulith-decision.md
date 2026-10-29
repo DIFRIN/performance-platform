@@ -1,6 +1,6 @@
 # PDR-049 — Spring Modulith Decision
 
-**Module Maven** : `platform-app` (retrait annotation + test)
+**Module Maven** : `platform-bootstrap` (retrait annotation + test)
 **Package** : `com.performance.platform` / `com.performance.platform.app.arch`
 **Statut** : WAITING
 **Specs de référence** : `improvements.md` A5 ; `ADR-001-java21-spring-modulith.md`
@@ -65,4 +65,4 @@ Ce PDR est utilisé par :
 - [ ] `@Modulith` retiré (ISSUE-183)
 - [ ] `ModulithVerificationTest` supprimé (ISSUE-183)
 - [ ] `ModuleDependencyTest` reste le gardien des frontières
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur

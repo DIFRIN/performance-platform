@@ -1,7 +1,7 @@
 # ISSUE-098 — SUT DB schema + seed 10k devices
 
 **PDR** : PDR-023
-**Module** : `platform-examples/sut-db/` (fichiers SQL uniquement — aucun code Java)
+**Module** : `distribution/examples/sut/sut-db/` (fichiers SQL uniquement — aucun code Java)
 **Statut** : WAITING
 **Priorité** : P0 (bloque ISSUE-096 et ISSUE-097)
 **Bloquée par** : aucune
@@ -22,7 +22,7 @@ Ces scripts sont montés comme volumes dans `docker-compose-sut.yaml` via le dos
 ## Fichiers à Créer
 
 ```
-platform-examples/sut-db/sql/
+distribution/examples/sut/sut-db/sql/
   ├── V1__devices_schema.sql
   └── V2__seed_10k_devices.sql
 ```

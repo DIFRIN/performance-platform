@@ -17,11 +17,11 @@ résout par `(Phase, name)`, gère les collisions (externe gagne, warning).
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/plugin/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/plugin/
   ├── PluginRegistry.java
   └── DefaultPluginRegistry.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/plugin/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/plugin/
   └── DefaultPluginRegistryTest.java — lookup, collision externe gagne
 ```
 
@@ -48,7 +48,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] lookup par phase+name retourne le bon executor
 - [ ] Collision : l'externe écrase l'interne + warning
 - [ ] `.claude/progress.md` mis à jour : ISSUE-047 → DONE

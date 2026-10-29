@@ -1,8 +1,8 @@
 # PDR-024 — Scénarios IoT + Docker Compose SUT
 
-**Module Maven** : `platform-deployment/examples/` (fichiers de déploiement et scénarios DSL — pas de code Java)
+**Module Maven** : `distribution/examples/` (fichiers de déploiement et scénarios DSL — pas de code Java)
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/01-scenario-dsl.md`, `.claude/knowledge/specs/09-deployment.md`
+**Specs de référence** : `docs/knowledge/specs/01-scenario-dsl.md`, `docs/knowledge/specs/09-deployment.md`
 **Dépend de** : PDR-020 DONE (cluster: ref dans scénarios), PDR-022 DONE (target: ref dans scénarios), PDR-023 DONE (services SUT buildables)
 **Issues** : ISSUE-099, ISSUE-100, ISSUE-101, ISSUE-102
 
@@ -40,7 +40,7 @@ Le SUT expose ses ports sur localhost. La plateforme (en LOCAL ou DISTRIBUTED) s
 ## Structure des Fichiers
 
 ```
-platform-deployment/examples/
+distribution/examples/
 ├── docker-compose-sut.yaml
 ├── wiremock/
 │   └── mappings/
@@ -52,7 +52,7 @@ platform-deployment/examples/
 │   └── device-api-distributed.yaml   SUT-B, plateforme en mode DISTRIBUTED
 └── README.md
 
-platform-app/src/main/resources/sql/
+bootstrap/src/main/resources/sql/
 └── seed-sut-devices.sql               copie classpath du script SUT V2 (INC-4 option A)
                                        — accessible via scriptPath: "classpath:sql/seed-sut-devices.sql"
 ```
@@ -68,8 +68,8 @@ platform-app/src/main/resources/sql/
 # Lancé SÉPARÉMENT de la plateforme de performance.
 #
 # Usage :
-#   docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
-#   docker compose -f platform-deployment/examples/docker-compose-sut.yaml down
+#   docker compose -f distribution/examples/docker-compose-sut.yaml up -d
+#   docker compose -f distribution/examples/docker-compose-sut.yaml down
 #
 # Services : iot-dispatcher, device-api, kafka-sut, postgres-sut, wiremock
 # Ports exposés : 9093 (kafka), 5433 (postgres), 8084 (device-api),
@@ -209,7 +209,7 @@ volumes:
 #
 # Prérequis :
 #   - docker compose -f examples/docker-compose-sut.yaml up -d
-#   - java -jar platform-app.jar (profil local, application-local.yaml ci-dessous)
+#   - java -jar platform-bootstrap.jar (profil local, application-local.yaml ci-dessous)
 #
 # application-local.yaml (configuration technique — ne pas modifier ce scénario)
 #   platform:
@@ -312,7 +312,7 @@ steps:
 #
 # Prérequis :
 #   - docker compose -f examples/docker-compose-sut.yaml up -d
-#   - java -jar platform-app.jar (profil local)
+#   - java -jar platform-bootstrap.jar (profil local)
 #
 # application-local.yaml (conf technique)
 #   platform:
@@ -459,31 +459,31 @@ steps:
 ## Démarrage rapide (5 étapes)
 
 ### 1. Démarrer les services SUT (System Under Test)
-docker compose -f platform-deployment/examples/docker-compose-sut.yaml up -d
+docker compose -f distribution/examples/docker-compose-sut.yaml up -d
 
 ### 2a. Mode LOCAL (un seul process)
-java -jar platform-app/target/performance-platform.jar \
+java -jar bootstrap/target/performance-platform.jar \
   --spring.profiles.active=local,examples-local
 
 ### 2b. Mode DISTRIBUTED (orchestrateur + agents)
-docker compose -f platform-deployment/docker/docker-compose.yaml up -d
+docker compose -f distribution/docker/docker-compose.yaml up -d
 
 ### 3. Soumettre un scénario
 # SUT-A : IoT Dispatcher (LOCAL)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
-  --data-binary @platform-deployment/examples/scenarios/iot-dispatcher-local.yaml
+  --data-binary @distribution/examples/scenarios/iot-dispatcher-local.yaml
 
 # SUT-B : Device API (LOCAL)
 curl -X POST http://localhost:8080/scenarios/run \
   -H "Content-Type: application/yaml" \
-  --data-binary @platform-deployment/examples/scenarios/device-api-local.yaml
+  --data-binary @distribution/examples/scenarios/device-api-local.yaml
 
 ### 4. Suivre l'exécution
 curl http://localhost:8080/executions/{id}/status
 
 ### 5. Arrêter le SUT
-docker compose -f platform-deployment/examples/docker-compose-sut.yaml down
+docker compose -f distribution/examples/docker-compose-sut.yaml down
 ```
 
 ---
@@ -491,7 +491,7 @@ docker compose -f platform-deployment/examples/docker-compose-sut.yaml down
 ## Règles de Comportement
 
 - **`docker-compose-sut.yaml` est 100% autonome** : peut démarrer sans la plateforme.
-- **Ports non-conflictuels** : SUT utilise 9093 (kafka), 5433 (postgres), 8083 (iot-dispatcher), 8084 (device-api), 8090 (wiremock) — différents des ports plateforme exposés sur l'hôte (9092 kafka, 5432 postgres, 8080 orchestrateur, 8081 agent-1, 8082 agent-2, 8090 wiremock plateforme). Note : device-api est sur 8084 (et non 8082) car la plateforme mappe déjà host 8082→agent-2 dans `platform-deployment/docker/docker-compose.yaml`.
+- **Ports non-conflictuels** : SUT utilise 9093 (kafka), 5433 (postgres), 8083 (iot-dispatcher), 8084 (device-api), 8090 (wiremock) — différents des ports plateforme exposés sur l'hôte (9092 kafka, 5432 postgres, 8080 orchestrateur, 8081 agent-1, 8082 agent-2, 8090 wiremock plateforme). Note : device-api est sur 8084 (et non 8082) car la plateforme mappe déjà host 8082→agent-2 dans `distribution/docker/docker-compose.yaml`.
 - **Les scénarios `*-local.yaml` et `*-distributed.yaml` sont identiques** sauf pour l'attribution des steps aux agents (`agentTags:` ajouté dans la version distributed).
 - **Aucune URL technique inline dans les scénarios** : uniquement des références logiques. Les URLs réelles sont dans `application-local.yaml` ou `application-orchestrator.yaml`.
 
@@ -504,7 +504,7 @@ Ce PDR utilise :
   PDR-020 (KafkaClusterRegistry)   → scénarios: cluster: iot-sut, topic: iot-commands
   PDR-022 (HttpTargetRegistry)     → scénarios: target: wiremock, path: reset-requests
   PDR-023 (SUT services)           → docker-compose-sut référence les images buildées
-  platform-deployment/docker/      → docker-compose.yaml existant pour la plateforme
+  distribution/docker/      → docker-compose.yaml existant pour la plateforme
 
 Ce PDR est utilisé par :
   Rien — terminal dans le graphe de dépendances

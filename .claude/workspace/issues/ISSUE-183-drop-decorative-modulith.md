@@ -1,7 +1,7 @@
 # ISSUE-183 — Drop Decorative @Modulith + ModulithVerificationTest
 
 **PDR** : PDR-049
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P3
 **Bloquée par** : ISSUE-180
@@ -20,8 +20,8 @@ supprimés ; `ModuleDependencyTest` (T1) devient l'unique enforcement.
 ## Fichiers à Modifier
 
 ```
-platform-app/src/main/java/com/performance/platform/PerformancePlatformApplication.java — retirer @Modulith
-platform-app/src/test/java/com/performance/platform/app/ModulithVerificationTest.java    — SUPPRIMER
+bootstrap/src/main/java/com/performance/platform/PerformancePlatformApplication.java — retirer @Modulith
+bootstrap/src/test/java/com/performance/platform/app/ModulithVerificationTest.java    — SUPPRIMER
 ```
 
 ## Règles Spécifiques
@@ -33,5 +33,5 @@ platform-app/src/test/java/com/performance/platform/app/ModulithVerificationTest
 
 - [ ] `@Modulith` retiré + `ModulithVerificationTest` supprimé
 - [ ] `ModuleDependencyTest` reste vert
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-183 → DONE

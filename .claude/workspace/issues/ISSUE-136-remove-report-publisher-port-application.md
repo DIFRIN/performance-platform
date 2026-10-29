@@ -1,7 +1,7 @@
-# ISSUE-136 — Supprimer ReportPublisherPort de platform-application
+# ISSUE-136 — Supprimer ReportPublisherPort de platform-use-cases
 
 **PDR** : PDR-031
-**Module** : `platform-application`
+**Module** : `platform-use-cases`
 **Statut** : DONE
 **Priorité** : P1 (critique)
 **Bloquée par** : ISSUE-135
@@ -19,10 +19,10 @@ ports. Conforme à ADR-022 (YAGNI : pas de port no-op « au cas où »).
 
 ```
 SUPPRIMER :
-platform-application/src/main/java/com/performance/platform/application/ports/out/ReportPublisherPort.java
+core/platform-use-cases/src/main/java/com/performance/platform/application/ports/out/ReportPublisherPort.java
 
 MODIFIER :
-platform-application/src/test/java/.../PortsCompileTest.java (ou équivalent)
+core/platform-use-cases/src/test/java/.../PortsCompileTest.java (ou équivalent)
   — retirer toute référence à ReportPublisherPort
 ```
 
@@ -37,15 +37,15 @@ public interface ReportPublisherPort { /* ... */ }
 
 ## Règles Spécifiques
 
-- Avant suppression, `grep -rn "ReportPublisherPort" platform-application platform-execution-engine
-  platform-app` → doit ne renvoyer que la définition + le test (aucun appelant métier). Si un
+- Avant suppression, `grep -rn "ReportPublisherPort" platform-use-cases platform-execution-engine
+  platform-bootstrap` → doit ne renvoyer que la définition + le test (aucun appelant métier). Si un
   appelant inattendu existe, **escalader Architect** (ADR-022 affirme l'absence d'appelant).
 - Nettoyer `PortsCompileTest` : retirer l'assertion/import sur `ReportPublisherPort`.
 - Ne pas toucher les autres ports out (`ExecutionRepository`, `AgentRegistry`, etc.).
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-application -q` → 0 erreur
+- [ ] `mvn test -pl :platform-use-cases -q` → 0 erreur
 - [ ] `ReportPublisherPort.java` n'existe plus
 - [ ] `grep -rn "ReportPublisherPort" .` → vide (hors ADR/PDR/Issue docs)
 - [ ] `.claude/workspace/progress.md` : géré par les scripts (`issue-finish.sh`)

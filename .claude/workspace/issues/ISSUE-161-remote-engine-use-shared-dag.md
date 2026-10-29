@@ -16,14 +16,14 @@ Refactorer `RemoteExecutionEngine` pour utiliser `DagPhaseExecutor` (du package 
 ## Fichiers à Créer
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
   └── RemoteStepDispatcher.java    — NOUVEAU: implémentation distribuée du StepDispatcher
 ```
 
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
   └── RemoteExecutionEngine.java   — utiliser DagPhaseExecutor + RemoteStepDispatcher
 ```
 
@@ -191,5 +191,5 @@ Les méthodes `checkFailedInPhase()`, `checkSkippedInAnyPhase()`, `checkSkippedI
 - [ ] `RemoteStepDispatcher` implémenté
 - [ ] `RemoteExecutionEngine.executePhase()` utilise `DagPhaseExecutor` + `RemoteStepDispatcher`
 - [ ] Logique DAG dupliquée supprimée de `RemoteExecutionEngine` (ISSUE-162, peut être fait ensemble)
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] Test d'intégration RemoteExecutionEngine (existant) passe sans modification

@@ -17,10 +17,10 @@ Créer le record `TaskResult` immuable avec ses factories. **`String taskName` r
 ## Fichiers à Créer
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/task/
+core/platform-domain/src/main/java/com/performance/platform/domain/task/
   └── TaskResult.java
 
-platform-domain/src/test/java/com/performance/platform/domain/task/
+core/platform-domain/src/test/java/com/performance/platform/domain/task/
   └── TaskResultTest.java — success/failed/skipped, isSuccess(), copie défensive outputs
 ```
 
@@ -60,7 +60,7 @@ public record TaskResult(
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-domain -q` → 0 erreur
+- [ ] `mvn test -pl :platform-domain -q` → 0 erreur
 - [ ] `TaskResult.success(id, "gatling", d, Map.of("k","v")).isSuccess()` == true
 - [ ] `TaskResult.failed(...).isSuccess()` == false
 - [ ] Aucune occurrence de `TaskType` dans le fichier

@@ -19,26 +19,33 @@ threads, dependent steps wait for their prerequisites.
 
 ```mermaid
 flowchart TB
-    subgraph CORE["Framework-free core"]
+    subgraph CORE["core/ - framework-free contracts"]
         DOMAIN["platform-domain"]
-        APP_PORTS["platform-application<br/>ports + use cases"]
+        APP_PORTS["platform-use-cases<br/>ports + use cases"]
         PLUGIN_API["platform-plugin-api<br/>contracts + annotations"]
-        DSL["platform-scenario-dsl"]
+        TRANSPORT_API["platform-transport-api"]
+        REPORT_API["platform-report-api"]
     end
 
-    subgraph RUNTIME["Execution"]
-        ENGINE["ExecutionEngine<br/>single engine"]
+    subgraph RUNTIME["execution/ - generic execution"]
         DISPATCH["StepDispatcher<br/>LOCAL | REMOTE"]
         AGENT["TaskAgentRuntime<br/>single runtime"]
-        EXECUTORS["TaskExecutors"]
-        TRANSPORT["platform-transport<br/>5 channels"]
     end
 
-    subgraph SUPPORT["Capabilities"]
+    subgraph PERF["performance/ - campaign policies"]
+        DSL["Scenario validation"]
+        ENGINE["Campaign ExecutionEngine"]
+        ASSERTIONS["Assertion sampling"]
+        REPORTING["Report assessment"]
+    end
+
+    subgraph SUPPORT["infra/ - technical adapters"]
+        EXECUTORS["TaskExecutors"]
+        TRANSPORT["Transport implementations"]
         INFRA["platform-infrastructure<br/>JPA · executors · plugins"]
         GATLING["platform-injection-gatling"]
-        ASSERTIONS["platform-assertion"]
-        REPORTING["platform-reporting"]
+        YAML["YAML parser"]
+        RENDER["HTML / PDF / JSON"]
         OBS["platform-observability"]
     end
 
@@ -56,28 +63,51 @@ flowchart TB
     APP_PORTS --- ENGINE
     PLUGIN_API --- EXECUTORS
     DOMAIN --- APP_PORTS
+    DISPATCH --> TRANSPORT_API
+    AGENT --> TRANSPORT_API
+    TRANSPORT --> TRANSPORT_API
+    YAML --> DSL
+    RENDER --> REPORT_API
+    REPORTING --> REPORT_API
 ```
 
-| Module | Responsibility |
+| Directory / module | Responsibility |
 |---|---|
-| `platform-domain` | Immutable records: scenario, plan, context, results, events (0 framework) |
-| `platform-application` | Ports and use cases (0 framework) |
-| `platform-plugin-api` | Public `TaskExecutor`/`AssertionExecutor` contracts and annotations |
-| `platform-scenario-dsl` | YAML parsing, strict validation, DAG checks, load models |
-| `platform-execution-engine` | One engine, DAG execution, dispatch strategies, retry, verdict |
-| `platform-agent-runtime` | One agent runtime, specialization filter, registration, TTL registry |
-| `platform-transport` | Five narrow channels and five implementations |
-| `platform-infrastructure` | Built-in executors, JPA persistence, plugin loading |
-| `platform-injection-gatling` | Gatling runner, load-model translation, result parsing |
-| `platform-assertion` | Assertion executors |
-| `platform-reporting` | Report model, verdict calculation, HTML/PDF/JSON renderers |
-| `platform-observability` | Micrometer metrics, MDC logging |
-| `platform-deployment` | Dockerfile, Compose stacks, Kubernetes manifests, demo scenarios |
-| `platform-app` | Spring Boot entry point, REST API, CLI, security, profiles |
+| `core/platform-domain` | Immutable scenario, task, execution, result and event models |
+| `core/platform-use-cases` | Framework-free ports and use cases (formerly `platform-application`) |
+| `core/platform-plugin-api` | Public executor contracts and annotations |
+| `core/platform-transport-api` | Framework-free channels, messages and subscriptions |
+| `core/platform-report-api` | Report models and rendering/output contracts |
+| `execution/platform-execution-engine` | Generic DAG scheduling, dispatch, retry and correlation |
+| `execution/platform-agent-runtime` | Generic workers, specialization, heartbeat and registration |
+| `performance/platform-campaign-engine` | Performance phases, load configuration, campaign state and verdict |
+| `performance/platform-scenario-dsl` | Scenario validation, DAG checks and load-model registry |
+| `performance/platform-assertion` | Assertion mapping and sampling policy |
+| `performance/platform-reporting` | SLI/SLO assessment and campaign report assembly |
+| `infra/platform-scenario-yaml` | SnakeYAML/Jackson scenario parser |
+| `infra/platform-transport` | In-memory, Kafka, RabbitMQ, HTTP and socket adapters |
+| `infra/platform-infrastructure` | Built-in task adapters, JPA persistence and plugin loading |
+| `infra/platform-injection-gatling` | Gatling injection and result parsing |
+| `infra/platform-assertion-adapters` | Database, file, Kafka, HTTP mock and Gatling assertions |
+| `infra/platform-report-renderers` | HTML/PDF/JSON rendering and file output |
+| `infra/platform-observability` | Micrometer metrics and MDC logging |
+| `bootstrap` (`platform-bootstrap`) | Only executable: Spring Boot assembly, REST, UI and CLI |
+| `distribution` | Docker, Compose, Kubernetes, scenarios and demo SUT applications |
 
-Detailed documentation: [architecture](.claude/knowledge/architecture.md),
-[component catalogue](.claude/knowledge/components.md),
-[specifications](.claude/knowledge/specs/00-overview.md).
+Project documentation lives in `docs/knowledge/`, independently of any agent
+harness. Harness workflows live in `.claude/skills/<name>/SKILL.md`.
+`distribution/examples/sut/` contains the independently built demo applications,
+not production platform modules. The single executable remains
+`bootstrap/target/performance-platform.jar`.
+
+The generic execution modules depend only on core platform contracts in production:
+they do not interpret load models, evaluate SLOs or construct assertion sampling.
+The performance campaign layer supplies these policies. See
+[ADR-045](docs/knowledge/adr/ADR-045-project-layout-and-execution-boundaries.md).
+
+Detailed documentation: [architecture](docs/knowledge/architecture.md),
+[component catalogue](docs/knowledge/components.md),
+[specifications](docs/knowledge/specs/00-overview.md).
 
 ---
 
@@ -97,8 +127,8 @@ exposes an API, UI, or CLI.
 ### CLI (headless)
 
 ```bash
-java -jar platform-app/target/performance-platform.jar \
-  --scenario=platform-deployment/examples/scenarios/device-api-local.yaml
+java -jar bootstrap/target/performance-platform.jar \
+  --scenario=file:distribution/examples/scenarios/device-api-local.yaml
 echo $?   # 0 success, 1 failed, 2 invalid arguments/scenario
 ```
 
@@ -108,7 +138,7 @@ When `--scenario=` is present the application runs once and exits
 ### REST API
 
 ```bash
-java -jar platform-app/target/performance-platform.jar
+java -jar bootstrap/target/performance-platform.jar
 
 curl -X POST http://localhost:8080/api/v1/scenarios \
   -H "Content-Type: application/yaml" --data-binary @scenario.yaml
@@ -126,7 +156,7 @@ Additional endpoints: `GET /api/v1/executions`, `DELETE /api/v1/executions/{id}`
 ### Web UI
 
 ```bash
-java -jar platform-app/target/performance-platform.jar --web.ui.enabled=true
+java -jar bootstrap/target/performance-platform.jar --web.ui.enabled=true
 # http://localhost:8080
 ```
 
@@ -149,9 +179,9 @@ mvn clean install
 ### Run in LOCAL mode
 
 ```bash
-java -jar platform-app/target/performance-platform.jar
+java -jar bootstrap/target/performance-platform.jar
 # or explicitly
-RUNTIME_MODE=LOCAL java -jar platform-app/target/performance-platform.jar
+RUNTIME_MODE=LOCAL java -jar bootstrap/target/performance-platform.jar
 ```
 
 LOCAL uses H2 in memory and the `IN_MEMORY` transport by default.
@@ -159,7 +189,7 @@ LOCAL uses H2 in memory and the `IN_MEMORY` transport by default.
 ### IDE profiles with Docker dependencies
 
 ```bash
-docker compose -f platform-deployment/local-dev/docker-compose.yaml up -d
+docker compose -f distribution/local-dev/docker-compose.yaml up -d
 ```
 
 Then run one of the Spring profiles from the IDE:
@@ -173,7 +203,7 @@ Then run one of the Spring profiles from the IDE:
 ### Operational demo stack
 
 ```bash
-cd platform-deployment/examples/demo-stack
+cd distribution/examples/demo-stack
 ./run-demo.sh
 ```
 
@@ -354,7 +384,7 @@ fast-fails its outstanding claims via heartbeat TTL detection.
 | `HTTP` | POST to agent callback URLs; events posted to `/api/v1/events` |
 | `SOCKET` | Persistent TCP connections; best-effort |
 
-gRPC is not supported. See the [transport spec](.claude/knowledge/specs/05-transport-layer.md)
+gRPC is not supported. See the [transport spec](docs/knowledge/specs/05-transport-layer.md)
 for current HTTP limitations.
 
 ---
@@ -373,8 +403,9 @@ verdict (`SUCCESS`/`WARNING`/`FAILED`) and builds a `CampaignReport`. Renderers 
 Output configuration: `reporting.output-directory` (default `reports`) and
 `reporting.formats` (default HTML, PDF, JSON).
 
-> Automatic writing to disk is not wired yet: `ReportFileWriter` exists but no production
-> listener subscribes `ReportGenerated`. See “Current limitations”.
+The performance report engine assembles the report after `ScenarioFinished`, delegates
+writing to the `ReportOutput` port and publishes `ReportGenerated` after output is ready.
+`ReportFileWriter` and the format renderers implement that output in `infra/`.
 
 ---
 
@@ -451,12 +482,12 @@ compatible). ArchUnit tests are vacuous on Java 25 and must not be used for new 
 
 | Topic | File |
 |---|---|
-| Architecture and mechanisms | `.claude/knowledge/architecture.md` |
-| Component catalogue | `.claude/knowledge/components.md` |
-| Specifications | `.claude/knowledge/specs/00-overview.md` |
-| Architecture decisions | `.claude/knowledge/adr/` |
-| Glossary | `.claude/knowledge/glossary.md` |
-| Constraints | `.claude/knowledge/constraints.md` |
+| Architecture and mechanisms | `docs/knowledge/architecture.md` |
+| Component catalogue | `docs/knowledge/components.md` |
+| Specifications | `docs/knowledge/specs/00-overview.md` |
+| Architecture decisions | `docs/knowledge/adr/` |
+| Glossary | `docs/knowledge/glossary.md` |
+| Constraints | `docs/knowledge/constraints.md` |
 
 ---
 

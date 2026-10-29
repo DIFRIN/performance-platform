@@ -3,7 +3,7 @@
 **Module Maven** : `platform-infrastructure`
 **Package** : `com.performance.platform.infrastructure.executor`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/03-task-framework.md` §1-6, ADR-007
+**Specs de référence** : `docs/knowledge/specs/03-task-framework.md` §1-6, ADR-007
 **Dépend de** : PDR-001, PDR-003, PDR-004
 **Issues** : ISSUE-039, ISSUE-040, ISSUE-041, ISSUE-042, ISSUE-043, ISSUE-044, ISSUE-045
 

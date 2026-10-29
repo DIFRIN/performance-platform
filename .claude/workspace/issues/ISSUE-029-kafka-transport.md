@@ -17,11 +17,11 @@ Implémenter `KafkaExecutionTransport` : broadcast via topic + consumer group un
 ## Fichiers à Créer
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/kafka/
+infra/platform-transport/src/main/java/com/performance/platform/transport/kafka/
   ├── KafkaExecutionTransport.java
   └── KafkaMessageCodec.java   — (de)sérialisation JSON
 
-platform-transport/src/test/java/com/performance/platform/transport/kafka/
+infra/platform-transport/src/test/java/com/performance/platform/transport/kafka/
   └── KafkaExecutionTransportIT.java   — Testcontainers Kafka, round-trip
 ```
 
@@ -45,7 +45,7 @@ public class KafkaExecutionTransport implements ExecutionTransport {
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-transport -P integration-tests` → IT Kafka passe
+- [ ] `mvn verify -pl :platform-transport -P integration-tests` → IT Kafka passe
 - [ ] Round-trip dispatchTask → receiveTask via Testcontainers Kafka
 - [ ] `getType()` == KAFKA
 - [ ] `.claude/progress.md` mis à jour : ISSUE-029 → DONE

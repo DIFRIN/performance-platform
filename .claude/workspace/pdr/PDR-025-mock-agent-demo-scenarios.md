@@ -1,9 +1,9 @@
 # PDR-025 — Mock Agent Demo Scenarios + Device Code Cleanup
 
-**Module Maven** : `platform-deployment` (scenarios, docker-compose), `platform-infrastructure` (cleanup)
+**Module Maven** : `distribution` (scenarios, docker-compose), `platform-infrastructure` (cleanup)
 **Package** : `com.performance.platform.infrastructure.executor.mock` (MockServerTaskExecutor — existant)
 **Statut** : IN PROGRESS
-**Specs de reference** : `.claude/knowledge/specs/01-scenario-dsl.md`, `.claude/knowledge/specs/04-agent-runtime.md`, `.claude/knowledge/specs/07-assertion-framework.md`, `.claude/knowledge/adr/ADR-015-configuration-driven-agent-specialization.md`
+**Specs de reference** : `docs/knowledge/specs/01-scenario-dsl.md`, `docs/knowledge/specs/04-agent-runtime.md`, `docs/knowledge/specs/07-assertion-framework.md`, `docs/knowledge/adr/ADR-015-configuration-driven-agent-specialization.md`
 **Depend de** : PDR-010 (Task Executors), PDR-013 (Gatling), PDR-014 (Assertion), PDR-018 (App Assembly), PDR-019 (Docker compose), PDR-022 (HttpTargetRegistry), PDR-023 (SUT Examples), PDR-024 (IoT Scenarios) — TOUS DONE
 **Issues** : ISSUE-103, ISSUE-104, ISSUE-105, ISSUE-106, ISSUE-107, ISSUE-108, ISSUE-109, ISSUE-110
 
@@ -13,7 +13,7 @@
 
 Ce PDR effectue un **cleanup architectural** et livre des scenarios de demonstration "WireMock as Agent" :
 
-1. **Supprime le code device example-only du module production** `platform-infrastructure`. Les `DevicePopulationTaskExecutor` et `DeviceCheckTaskExecutor` sont du code d'exemple incorrectement place dans le module de production. Ils sont supprimes. La simulation de devices vit exclusivement dans `platform-examples/` ou elle appartient en tant que code SUT de demo.
+1. **Supprime le code device example-only du module production** `platform-infrastructure`. Les `DevicePopulationTaskExecutor` et `DeviceCheckTaskExecutor` sont du code d'exemple incorrectement place dans le module de production. Ils sont supprimes. La simulation de devices vit exclusivement dans `distribution/examples/sut/` ou elle appartient en tant que code SUT de demo.
 2. **Supprime le service WireMock standalone** de `docker-compose-sut.yaml`. WireMock ne doit pas etre un service Docker separe — il s'execute EMBEDDED dans un agent via `MockServerTaskExecutor` en phase PREPARATION.
 3. **Cree les scenarios demo "Mock as Agent"** (LOCAL et DISTRIBUTED) qui demontrent le workflow complet : preparation (mock-server EMBEDDED) -> injection (Gatling HTTP) -> assertion (http-mock) -> rapport.
 4. **Supprime le scenario legacy** `device-check-perf.yaml` qui dependait des `DevicePopulationTaskExecutor`/`DeviceCheckTaskExecutor` supprimes.
@@ -135,7 +135,7 @@ Le routing est par `task:` name UNIQUEMENT. L'orchestrateur broadcast, les agent
 ```java
 // MockServerTaskExecutor existe deja dans platform-infrastructure.
 // Il supporte le mode EMBEDDED (WireMock in-process) pour l'agent model.
-// Voir PDR-010 et platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/mock/MockServerTaskExecutor.java
+// Voir PDR-010 et infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/mock/MockServerTaskExecutor.java
 
 // Le MockServerTaskExecutor existant :
 // @Preparation(name = "mock-server", version = "1.1.0")
@@ -189,7 +189,7 @@ Le routing est par `task:` name UNIQUEMENT. L'orchestrateur broadcast, les agent
 
 - **Communication mock-agent <-> autre agent** : Les agents communiquent via le reseau Docker (ex: `http://mock-agent:35421`). L'URL est stockee dans `ExecutionContext` et resolue via `HttpTargetRegistry` au runtime.
 
-- **Suppression du code device dans platform-infrastructure** : Les classes `DevicePopulationTaskExecutor` et `DeviceCheckTaskExecutor` sont supprimees. Ce sont des executors specifiques a une demo qui n'ont pas leur place dans le module de production. La simulation de devices existe dans `platform-examples/` (SUT iot-dispatcher, device-api).
+- **Suppression du code device dans platform-infrastructure** : Les classes `DevicePopulationTaskExecutor` et `DeviceCheckTaskExecutor` sont supprimees. Ce sont des executors specifiques a une demo qui n'ont pas leur place dans le module de production. La simulation de devices existe dans `distribution/examples/sut/` (SUT iot-dispatcher, device-api).
 
 - **Docker-compose SUT** : Supprimer le service `wiremock` standalone de `docker-compose-sut.yaml`. Les mocks sont maintenant geres par l'agent `mock-agent` en EMBEDDED. Garder uniquement `postgres-sut`, `kafka-sut`, `iot-dispatcher`, `device-api`.
 
@@ -204,7 +204,7 @@ Ce PDR utilise :
   PDR-010 (Task Executors)              -> MockServerTaskExecutor existant (EMBEDDED/EXTERNAL)
   PDR-013 (Gatling Injection)           -> GatlingTaskExecutor pour le load HTTP
   PDR-014 (Assertion Framework)         -> HttpMockAssertionExecutor pour assertions mock
-  PDR-018 (App Assembly)                -> platform-app pour lancer LOCAL/DISTRIBUTED
+  PDR-018 (App Assembly)                -> platform-bootstrap pour lancer LOCAL/DISTRIBUTED
   PDR-019 (Docker compose)              -> docker-compose.yaml modele pour wiremock-agent
   PDR-022 (HttpTargetRegistry)          -> target: mock pour resolution d'URL
   PDR-023 (SUT Examples)                -> references aux SUT existants
@@ -240,6 +240,6 @@ Suivi dans `progress.md` — ligne PDR-025.
 - [ ] Aucun champ `agentTags` dans les nouveaux scenarios
 - [ ] `README.md` mis a jour avec l'architecture Mock-as-Agent + modele configuration-driven
 - [ ] `interfaces-registry.md` nettoye des entrees device
-- [ ] `mvn test -pl platform-infrastructure,platform-deployment -q` -> 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure,distribution -q` -> 0 erreur
 - [ ] Aucune URL inline dans les nouveaux scenarios — uniquement `target:`, references logiques
 - [ ] Note dans `progress.md` pour le suivi PDR-009/PDR-018 (mecanisme `agent.supported-tasks`)

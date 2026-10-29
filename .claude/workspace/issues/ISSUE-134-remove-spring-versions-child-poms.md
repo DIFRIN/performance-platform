@@ -25,20 +25,20 @@ vérité (`spring-boot.version` au root).
 ## Fichiers à Créer / Modifier
 
 ```
-platform-infrastructure/pom.xml   — retirer versions : spring-context, spring-web, spring-jdbc,
+infra/platform-infrastructure/pom.xml   — retirer versions : spring-context, spring-web, spring-jdbc,
                                      spring-boot, spring-boot-autoconfigure, spring-data-jpa,
                                      spring-kafka (gérés par le BOM)
-platform-observability/pom.xml     — retirer version : spring-boot
-platform-app/pom.xml               — retirer versions des spring-boot-starter-* (web, core,
+infra/platform-observability/pom.xml     — retirer version : spring-boot
+bootstrap/pom.xml               — retirer versions des spring-boot-starter-* (web, core,
                                      security, oauth2-resource-server, actuator, test) ;
                                      CONSERVER ${spring-boot.version} sur le spring-boot-maven-plugin
-platform-transport/pom.xml         — retirer versions Spring/Spring Kafka si présentes
-platform-agent-runtime/pom.xml     — retirer versions Spring si présentes
-platform-scenario-dsl/pom.xml      — retirer versions Spring si présentes
-platform-injection-gatling/pom.xml — retirer versions Spring si présentes
-platform-assertion/pom.xml         — retirer versions Spring si présentes
-platform-reporting/pom.xml         — retirer versions Spring si présentes
-platform-application/pom.xml       — retirer versions Spring si présentes
+infra/platform-transport/pom.xml         — retirer versions Spring/Spring Kafka si présentes
+execution/platform-agent-runtime/pom.xml     — retirer versions Spring si présentes
+performance/platform-scenario-dsl/pom.xml      — retirer versions Spring si présentes
+infra/platform-injection-gatling/pom.xml — retirer versions Spring si présentes
+infra/platform-assertion-adapters/pom.xml         — retirer versions Spring si présentes
+infra/platform-report-renderers/pom.xml         — retirer versions Spring si présentes
+core/platform-use-cases/pom.xml       — retirer versions Spring si présentes
 ```
 
 ## Interfaces à Implémenter
@@ -71,7 +71,7 @@ platform-application/pom.xml       — retirer versions Spring si présentes
   (ex. ArchUnit, WireMock standalone, logstash-logback-encoder, OpenHTMLToPDF, kafka-clients si
   version spécifique, jakarta.persistence-api 3.2 override volontaire). En cas de doute :
   retirer, builder, et si la résolution change ou casse → remettre la version + commentaire.
-- **`platform-app`** : garder `${spring-boot.version}` **uniquement** sur le
+- **`platform-bootstrap`** : garder `${spring-boot.version}` **uniquement** sur le
   `spring-boot-maven-plugin` (plugin non géré par `<dependencyManagement>`). La property locale
   peut être supprimée au profit de celle du root si héritée.
 - **Ne pas toucher** `platform-domain` ni `platform-plugin-api` (aucune dépendance Spring).

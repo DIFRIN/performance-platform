@@ -17,10 +17,10 @@ Implémenter `HttpMockAssertionExecutor` : évalue les appels reçus par un Wire
 ## Fichiers à Créer
 
 ```
-platform-assertion/src/main/java/com/performance/platform/assertion/httpmock/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/httpmock/
   └── HttpMockAssertionExecutor.java
 
-platform-assertion/src/test/java/com/performance/platform/assertion/httpmock/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/httpmock/
   └── HttpMockAssertionExecutorTest.java — WireMock de test
 ```
 
@@ -42,7 +42,7 @@ public class HttpMockAssertionExecutor implements AssertionExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-assertion -q` → 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` → 0 erreur
 - [ ] `receivedCalls >= N` évalué via WireMock de test
 - [ ] `.claude/progress.md` mis à jour : ISSUE-063 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `HttpMockAssertionExecutor` → STABLE

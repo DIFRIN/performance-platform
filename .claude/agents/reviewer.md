@@ -43,7 +43,7 @@ bash .claude/scripts/issue-review.sh CHANGES_REQUESTED "raison"
 - `git diff HEAD` pour voir les changements
 - Vérifier :
   - Conformité archi (0 Spring dans domain, events uniquement inter-modules)
-  - Standards de code (`.claude/knowledge/glossary.md`, `.claude/knowledge/skills/precision-patterns.md`)
+  - Standards de code (`docs/knowledge/glossary.md`, `.claude/skills/precision-patterns/SKILL.md`)
   - Tests : 1 classe de test par classe de prod, cas nominaux + erreur + immutabilité
   - `mvn test -pl <module> -q` passe **pour le module modifié uniquement** — les échecs préexistants dans d'autres modules (WireMock, port binding flaky) sont HORS SCOPE et ne bloquent pas la review
 

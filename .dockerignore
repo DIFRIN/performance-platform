@@ -22,12 +22,12 @@ Jenkinsfile
 
 # Local workspace tooling
 .claude/
+docs/
 improvements.md
 
 # Not needed by the platform image
-platform-examples/
-platform-deployment/examples/
-platform-deployment/kubernetes/
+distribution/examples/
+distribution/kubernetes/
 
 # Test sources are not needed in the image (mvn -DskipTests still compiles them)
 **/src/test/

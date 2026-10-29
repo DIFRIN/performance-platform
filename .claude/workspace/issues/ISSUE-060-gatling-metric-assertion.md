@@ -17,11 +17,11 @@ une métrique (p95, errorRate, throughput...) avec un opérateur.
 ## Fichiers à Créer
 
 ```
-platform-assertion/src/main/java/com/performance/platform/assertion/gatling/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/gatling/
   ├── GatlingMetricAssertionExecutor.java
   └── MetricExtractor.java   — InjectionResult + nom de métrique → double
 
-platform-assertion/src/test/java/com/performance/platform/assertion/gatling/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/gatling/
   └── GatlingMetricAssertionExecutorTest.java
 ```
 
@@ -46,7 +46,7 @@ public class GatlingMetricAssertionExecutor implements AssertionExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-assertion -q` → 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` → 0 erreur
 - [ ] p95 < seuil → PASSED ; errorRate > seuil → FAILED avec evidence
 - [ ] `.claude/progress.md` mis à jour : ISSUE-060 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `GatlingMetricAssertionExecutor` → STABLE

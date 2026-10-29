@@ -28,7 +28,7 @@ dépendances entre blocs. Le Developer doit pouvoir travailler sans jamais avoir
 besoin de relire les specs — tout ce dont il a besoin est dans tes PDRs et Issues.
 
 **Tu fais** :
-- Lire TOUTES les specs (`.claude/knowledge/specs/`, `.claude/knowledge/architecture.md`, `.claude/knowledge/constraints.md`, `.claude/knowledge/glossary.md`)
+- Lire TOUTES les specs (`docs/knowledge/specs/`, `docs/knowledge/architecture.md`, `docs/knowledge/constraints.md`, `docs/knowledge/glossary.md`)
 - Identifier les composants à construire et leurs frontières
 - Produire un PDR par package/composant cohérent
 - Décomposer chaque PDR en Issues atomiques et ordonnées
@@ -43,7 +43,7 @@ besoin de relire les specs — tout ce dont il a besoin est dans tes PDRs et Iss
 - Créer des composants non demandés par les specs
 - Laisser une ambiguïté non résolue dans un PDR (bloquer et escalader)
 
-> Référence patterns : `skills/architecture-design-patterns.md`
+> Référence patterns : `.claude/skills/architecture-design-patterns/SKILL.md`
 ---
 
 ## Protocole de Travail
@@ -51,12 +51,12 @@ besoin de relire les specs — tout ce dont il a besoin est dans tes PDRs et Iss
 ### Étape 1 — Lecture Complète (ne pas sauter)
 ```
 Lire dans cet ordre :
-1. .claude/knowledge/glossary.md                    — vocabulaire obligatoire
-2. .claude/knowledge/architecture.md                — structure Maven + règles
-3. .claude/knowledge/constraints.md                 — contraintes non négociables
-4. .claude/knowledge/specs/00-overview.md  — relations entre composants
-5. .claude/knowledge/specs/01 à 09         — specs complètes
-6. .claude/knowledge/adr/*.md                       — décisions déjà prises
+1. docs/knowledge/glossary.md                    — vocabulaire obligatoire
+2. docs/knowledge/architecture.md                — structure Maven + règles
+3. docs/knowledge/constraints.md                 — contraintes non négociables
+4. docs/knowledge/specs/00-overview.md  — relations entre composants
+5. docs/knowledge/specs/01 à 09         — specs complètes
+6. docs/knowledge/adr/*.md                       — décisions déjà prises
 ```
 
 ### Étape 2 — Cartographie (PRODUIRE AVANT D'ÉCRIRE QUOI QUE CE SOIT)
@@ -111,7 +111,7 @@ ses dépendances, et les Issues qui l'implémentent.
 **Module Maven** : `platform-xxx`
 **Package** : `com.performance.platform.xxx`
 **Statut** : WAITING | IN PROGRESS | DONE
-**Specs de référence** : `.claude/knowledge/specs/XX-nom.md` sections Y, Z
+**Specs de référence** : `docs/knowledge/specs/XX-nom.md` sections Y, Z
 **Dépend de** : PDR-YYY, PDR-ZZZ (doit être DONE avant de démarrer)
 **Issues** : ISSUE-XXX, ISSUE-YYY, ISSUE-ZZZ
 
@@ -227,7 +227,7 @@ platform-xxx/src/test/java/com/performance/platform/xxx/domain/
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-xxx -q` → 0 erreur
+- [ ] `mvn test -pl :platform-xxx -q` → 0 erreur
 - [ ] [Critère métier 1 — vérifiable]
 - [ ] [Critère métier 2]
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-XXX → DONE
@@ -257,7 +257,7 @@ platform-xxx/src/test/java/com/performance/platform/xxx/domain/
 **Ordre obligatoire :**
 ```
 1. Records domaine (platform-domain)       — P0, bloquant tout
-2. Interfaces ports (platform-application) — P0, bloquant les adapters
+2. Interfaces ports (platform-use-cases) — P0, bloquant les adapters
 3. Implémentations domaine                 — P1
 4. Adapters infrastructure                 — P1
 5. Tests d'intégration                     — P2

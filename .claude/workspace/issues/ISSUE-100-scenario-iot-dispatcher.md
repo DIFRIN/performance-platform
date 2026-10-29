@@ -1,7 +1,7 @@
 # ISSUE-100 — Scénarios YAML iot-dispatcher (LOCAL + DISTRIBUTED)
 
 **PDR** : PDR-024
-**Module** : `platform-deployment/examples/scenarios/`
+**Module** : `distribution/examples/scenarios/`
 **Statut** : WAITING
 **Priorité** : P1
 **Bloquée par** : ISSUE-086 (cluster: ref), ISSUE-092 (target: ref), ISSUE-099 (SUT docker-compose)
@@ -26,11 +26,11 @@ Les scénarios doivent être **parsables par `ScenarioParser`** (syntaxe DSL val
 ## Fichiers à Créer
 
 ```
-platform-deployment/examples/scenarios/
+distribution/examples/scenarios/
   ├── iot-dispatcher-local.yaml
   └── iot-dispatcher-distributed.yaml
 
-platform-app/src/main/resources/
+bootstrap/src/main/resources/
   └── application-examples-local.yaml    — profil Spring pour les exemples en mode LOCAL
 ```
 

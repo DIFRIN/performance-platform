@@ -35,7 +35,7 @@
 **Cause** : Mapping manuel champ par champ dans `TransportAgentRegistration.toPayload()`. Pas de Jackson dans ce module à ce stade.
 **Workaround** : Commentaire `// NOTE: synchroniser avec AgentDescriptor si le record évolue` ajouté sur la méthode.
 **Résolution prévue** : ISSUE-028 (Transport properties + Configuration) — introduction de Jackson dans le module transport.
-**Fichiers concernés** : `platform-agent-runtime/.../registration/TransportAgentRegistration.java`
+**Fichiers concernés** : `execution/platform-agent-runtime/.../registration/TransportAgentRegistration.java`
 
 ---
 

@@ -1,7 +1,7 @@
 # ISSUE-082 — Test E2E mode LOCAL (submit → exécution → rapport)
 
 **PDR** : PDR-018
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : WAITING
 **Priorité** : P2
 **Bloquée par** : ISSUE-079, ISSUE-080, ISSUE-081, ISSUE-038, ISSUE-066
@@ -17,7 +17,7 @@ Test d'intégration E2E en mode LOCAL : soumettre un scénario YAML, exécuter l
 ## Fichiers à Créer
 
 ```
-platform-app/src/test/java/com/performance/platform/app/e2e/
+bootstrap/src/test/java/com/performance/platform/app/e2e/
   ├── LocalFlowE2ETest.java          — @SpringBootTest, profil local, Testcontainers PostgreSQL
   └── resources/scenarios/e2e-local.yaml
 ```
@@ -37,7 +37,7 @@ platform-app/src/test/java/com/performance/platform/app/e2e/
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-app -P integration-tests` → E2E passe
+- [ ] `mvn verify -pl :platform-bootstrap -P integration-tests` → E2E passe
 - [ ] Le rapport est généré et contient un verdict
 - [ ] `ExecutionState` persisté en COMPLETED
 - [ ] `.claude/progress.md` mis à jour : ISSUE-082 → DONE

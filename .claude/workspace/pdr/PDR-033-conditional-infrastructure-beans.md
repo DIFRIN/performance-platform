@@ -1,7 +1,7 @@
 # PDR-033 — Assemblage runtime : self-wiring par module + composition root mince
 
-**Module Maven** : `platform-execution-engine`, `platform-application`, `platform-agent-runtime`,
-`platform-app`, `platform-infrastructure`
+**Module Maven** : `platform-execution-engine`, `platform-use-cases`, `platform-agent-runtime`,
+`platform-bootstrap`, `platform-infrastructure`
 **Package** : selon module propriétaire (voir découpage)
 **Statut** : WAITING
 **Specs de référence** : **ADR-026** (stratégie d'assemblage — D1/D2), ADR-025 (beans
@@ -16,7 +16,7 @@ specs 00-overview (matrice modes), CF-01/CF-03/CC-04, CLAUDE.md §5
 
 Rendre l'artefact unique réellement **démarrable en LOCAL / ORCHESTRATOR / AGENT à partir d'un
 simple `application.yaml`**, en suivant la **stratégie d'assemblage d'ADR-026** : chaque module
-adapter possède son câblage conditionnel ; la racine `platform-app` reste mince ; les
+adapter possède son câblage conditionnel ; la racine `platform-bootstrap` reste mince ; les
 abstractions redondantes sont supprimées.
 
 Décisions structurantes (ADR-026) :
@@ -27,7 +27,7 @@ Décisions structurantes (ADR-026) :
 - **D2** : `platform-scenario-dsl` reste **framework-free** ; son câblage vit dans la racine.
 - **Possession par module** : `ExecutionConfig` → engine ; `AgentRegistry` → agent-runtime ;
   beans orchestrateur-only de l'engine → conditionnels DISTRIBUTED ; datasource/JPA → infra.
-- **Racine mince** : `platform-app` ne garde que la glue cross-module irréductible
+- **Racine mince** : `platform-bootstrap` ne garde que la glue cross-module irréductible
   (`TaskExecutorLookup`), le câblage des modules framework-free (scenario parsing, status
   read-model) et l'existant (web/sécurité/CLI/runtime-mode).
 
@@ -52,7 +52,7 @@ public class LocalExecutionEngine implements ExecuteScenarioUseCase, CancelExecu
 @ConditionalOnProperty(name = "runtime.mode", havingValue = "DISTRIBUTED")
 public class RemoteExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionUseCase { ... }
 
-// Read-model framework-free (platform-application)
+// Read-model framework-free (platform-use-cases)
 public final class GetExecutionStatusService implements GetExecutionStatusUseCase {
     private final ExecutionRepository repository;
     public ExecutionStatus getStatus(ExecutionId id) {
@@ -83,7 +83,7 @@ public final class RegistryTaskExecutorLookup implements TaskExecutorLookup {
 ## Règles de Comportement
 
 - **`@ConditionalOnProperty`/`@ConditionalOnBean`/`@ConditionalOnExpression` uniquement** (CF-03).
-- **Cœur framework-free inviolable** : `platform-application`, `platform-scenario-dsl`,
+- **Cœur framework-free inviolable** : `platform-use-cases`, `platform-scenario-dsl`,
   `platform-domain`, `platform-plugin-api` → 0 annotation Spring.
 - **Engines** : un seul bean de chaque port in par mode (déjà conditionnels). Les contrôleurs/CLI
   injectent les ports in directement.
@@ -103,10 +103,10 @@ public final class RegistryTaskExecutorLookup implements TaskExecutorLookup {
 | Issue | Module | Objet | Taille |
 |---|---|---|---|
 | ISSUE-143 | `platform-execution-engine` | Engines implémentent `ExecuteScenarioUseCase`+`CancelExecutionUseCase` ; suppression port `ExecutionEngine` ; `ExecutionConfig` via `@ConfigurationProperties` (DISTRIBUTED) ; availability checker + correlation tracker conditionnels DISTRIBUTED | L |
-| ISSUE-146 | `platform-application` | `GetExecutionStatusService` (read-model framework-free) implements `GetExecutionStatusUseCase` | S |
+| ISSUE-146 | `platform-use-cases` | `GetExecutionStatusService` (read-model framework-free) implements `GetExecutionStatusUseCase` | S |
 | ISSUE-147 | `platform-agent-runtime` | `@Configuration` conditionnelle exposant `AgentRegistry` (ORCHESTRATOR) | S |
 | ISSUE-145 | `platform-infrastructure` | `dataSource`/JPA/`JpaExecutionRepository` conditionnels (sans throw) + registries Kafka/HTTP | M |
-| ISSUE-144 | `platform-app` | Composition root mince : `RegistryTaskExecutorLookup` glue + câblage scenario parsing (framework-free) + câblage `GetExecutionStatusUseCase` + smoke tests LOCAL/ORCHESTRATOR/AGENT | L |
+| ISSUE-144 | `platform-bootstrap` | Composition root mince : `RegistryTaskExecutorLookup` glue + câblage scenario parsing (framework-free) + câblage `GetExecutionStatusUseCase` + smoke tests LOCAL/ORCHESTRATOR/AGENT | L |
 
 Ordre : 143, 145, 146, 147 parallélisables (`← ISSUE-134` pour celles touchant le classpath) ;
 **ISSUE-144 dépend de 143, 145, 146, 147** (la racine assemble tout).
@@ -117,7 +117,7 @@ Ordre : 143, 145, 146, 147 parallélisables (`← ISSUE-134` pour celles touchan
 
 ```
 Ce PDR utilise :
-  PDR-030 (BOM Spring cohérent), ports in/out (platform-application),
+  PDR-030 (BOM Spring cohérent), ports in/out (platform-use-cases),
   TaskExecutorRegistry (infra) + AssertionExecutorRegistry (assertion),
   YamlScenarioParser + DefaultScenarioValidator (scenario-dsl, framework-free),
   InMemoryAgentRegistry (agent-runtime), ExecutionConfig (application, record framework-free)
@@ -136,7 +136,7 @@ Ce PDR est utilisé par :
 - [ ] Port `ExecutionEngine` supprimé ; engines implémentent `ExecuteScenarioUseCase`+`CancelExecutionUseCase`
 - [ ] `GetExecutionStatusService` (framework-free) câblé ; `AgentRegistry` possédé par agent-runtime ;
       `ExecutionConfig` possédé par l'engine
-- [ ] `platform-app` ne contient AUCUN `@Bean` d'adaptation execute/cancel ni `ExecutionConfig`/`AgentRegistry`
+- [ ] `platform-bootstrap` ne contient AUCUN `@Bean` d'adaptation execute/cancel ni `ExecutionConfig`/`AgentRegistry`
 - [ ] App démarre en **LOCAL** (H2), **ORCHESTRATOR** (transport IN_MEMORY de test),
       **AGENT** (`WebApplicationType.NONE`, sans bean DB) — smoke tests verts (SpringApplicationBuilder)
 - [ ] Beans orchestrateur-only absents en LOCAL ; aucun `IllegalStateException` datasource

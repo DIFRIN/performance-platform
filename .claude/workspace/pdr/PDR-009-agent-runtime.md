@@ -3,7 +3,7 @@
 **Module Maven** : `platform-agent-runtime`
 **Package** : `com.performance.platform.agent`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/04-agent-runtime.md` (complet), ADR-008, ADR-011
+**Specs de référence** : `docs/knowledge/specs/04-agent-runtime.md` (complet), ADR-008, ADR-011
 **Dépend de** : PDR-001, PDR-002, PDR-004, PDR-007
 **Issues** : ISSUE-033, ISSUE-034, ISSUE-035, ISSUE-036, ISSUE-037, ISSUE-038
 
@@ -107,7 +107,7 @@ Ce PDR utilise :
 Ce PDR est utilisé par :
   PDR-006 (execution engine) → AgentAvailabilityChecker s'appuie sur AgentRegistry
   PDR-010 (task executors)   → l'agent invoque TaskExecutorRegistry
-  PDR-018 (platform-app)     → assemblage des modes
+  PDR-018 (platform-bootstrap)     → assemblage des modes
 ```
 
 ---

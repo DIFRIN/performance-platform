@@ -17,12 +17,12 @@ présence des agents et leur TTL, SANS aucune sélection (ADR-008).
 ## Fichiers à Créer
 
 ```
-platform-agent-runtime/src/main/java/com/performance/platform/agent/registry/
+execution/platform-agent-runtime/src/main/java/com/performance/platform/agent/registry/
   ├── AgentRegistry.java
   ├── InMemoryAgentRegistry.java
   └── AgentTtlMonitor.java   — détecte expiration TTL → onAgentExpired
 
-platform-agent-runtime/src/test/java/com/performance/platform/agent/registry/
+execution/platform-agent-runtime/src/test/java/com/performance/platform/agent/registry/
   └── InMemoryAgentRegistryTest.java — register, heartbeat refresh TTL, expiration, findByTaskName
 ```
 
@@ -45,7 +45,7 @@ public class InMemoryAgentRegistry implements AgentRegistry { /* ConcurrentHashM
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-agent-runtime -q` → 0 erreur
+- [ ] `mvn test -pl :platform-agent-runtime -q` → 0 erreur
 - [ ] `findByTaskName` retourne tous les agents compétents
 - [ ] TTL expiré → `onAgentExpired` déclenché
 - [ ] `.claude/progress.md` mis à jour : ISSUE-035 → DONE

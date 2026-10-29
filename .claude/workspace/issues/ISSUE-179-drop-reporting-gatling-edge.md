@@ -18,17 +18,17 @@ compilation inutile qui force Gatling sur le classpath d'un rapport.
 ## Fichiers à Modifier
 
 ```
-platform-reporting/pom.xml     — retirer la dépendance platform-injection-gatling
+infra/platform-report-renderers/pom.xml     — retirer la dépendance platform-injection-gatling
 ```
 
 ## Règles Spécifiques
 
 - Vérifier qu'aucun import `com.performance.platform.gatling` / injection-gatling
-  ne subsiste dans `platform-reporting/src/main` (la review dit zéro).
+  ne subsiste dans `infra/platform-report-renderers/src/main` (la review dit zéro).
 - Si un import de test subsiste, le passer en scope `test`.
 
 ## Critères de Done
 
-- [ ] `platform-reporting/pom.xml` ne référence plus `platform-injection-gatling`
-- [ ] `mvn test -pl platform-reporting -q` → 0 erreur
+- [ ] `infra/platform-report-renderers/pom.xml` ne référence plus `platform-injection-gatling`
+- [ ] `mvn test -pl :platform-reporting -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-179 → DONE

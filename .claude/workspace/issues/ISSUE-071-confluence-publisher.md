@@ -16,10 +16,10 @@ Implémenter `ConfluenceReportPublisher` : publie le rapport HTML comme page Con
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/confluence/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/publisher/confluence/
   └── ConfluenceReportPublisher.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/confluence/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/publisher/confluence/
   └── ConfluenceReportPublisherTest.java — mock HTTP server
 ```
 
@@ -42,7 +42,7 @@ public class ConfluenceReportPublisher implements ReportPublisher {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Création de page testée contre un serveur HTTP mock
 - [ ] `.claude/progress.md` mis à jour : ISSUE-071 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `ConfluenceReportPublisher` → STABLE

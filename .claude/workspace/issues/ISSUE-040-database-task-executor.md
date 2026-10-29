@@ -17,11 +17,11 @@ référençant une datasource configurée par nom.
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/database/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/database/
   ├── DatabaseTaskExecutor.java
   └── DatasourceProvider.java   — résout une datasource par nom (config globale)
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/database/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/database/
   └── DatabaseTaskExecutorIT.java — Testcontainers PostgreSQL : PURGE/POPULATE
 ```
 
@@ -46,7 +46,7 @@ public class DatabaseTaskExecutor implements TaskExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-infrastructure -P integration-tests` → IT passe
+- [ ] `mvn verify -pl :platform-infrastructure -P integration-tests` → IT passe
 - [ ] PURGE sur PostgreSQL retourne `rowsAffected`
 - [ ] Échec DB → `TaskResult.failed` (pas d'exception)
 - [ ] `.claude/progress.md` mis à jour : ISSUE-040 → DONE

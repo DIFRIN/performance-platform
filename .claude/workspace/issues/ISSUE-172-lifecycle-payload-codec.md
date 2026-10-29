@@ -18,11 +18,11 @@ par un codec typé (round-trip `AgentDescriptor`/`AgentHeartbeat`), ajouter le t
 ## Fichiers à Créer / Modifier
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/
+infra/platform-transport/src/main/java/com/performance/platform/transport/
   ├── AgentLifecycleEvent.java            — ajouter AGENT_LOST
   └── AgentLifecyclePayloadCodec.java     — NOUVEAU
 
-platform-transport/src/test/java/com/performance/platform/transport/
+infra/platform-transport/src/test/java/com/performance/platform/transport/
   └── AgentLifecycleRoundTripTest.java    — NOUVEAU (T8)
 ```
 

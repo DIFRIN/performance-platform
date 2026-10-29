@@ -18,11 +18,11 @@ la souscription transport en `TransportExecutionEventHandler` séparé.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/
   ├── ExecutionEngine.java                       — NOUVEAU (ExecuteScenarioUseCase + CancelExecutionUseCase)
   └── remote/TransportExecutionEventHandler.java — NOUVEAU (ExecutionEventHandler, DISTRIBUTED)
 
-platform-execution-engine/src/test/java/com/performance/platform/engine/
+execution/platform-execution-engine/src/test/java/com/performance/platform/engine/
   └── ExecutionEngineTest.java                   — NOUVEAU (unitaires partagés)
 ```
 
@@ -56,5 +56,5 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, CancelExecutionU
 
 - [ ] `ExecutionEngine` unique compile et passe les tests unitaires
 - [ ] `TransportExecutionEventHandler` extrait
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-184 → DONE

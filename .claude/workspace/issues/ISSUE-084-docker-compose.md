@@ -1,7 +1,7 @@
 # ISSUE-084 — docker-compose dev local (orchestrator + agents + kafka + postgres)
 
 **PDR** : PDR-019
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : WAITING
 **Priorité** : P2
 **Bloquée par** : ISSUE-083
@@ -17,7 +17,7 @@ PostgreSQL.
 ## Fichiers à Créer
 
 ```
-platform-deployment/docker/
+distribution/docker/
   └── docker-compose.yaml
 ```
 

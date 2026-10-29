@@ -1,7 +1,7 @@
 # ISSUE-085 — Manifests Kubernetes (StatefulSet + Deployment + HPA)
 
 **PDR** : PDR-019
-**Module** : `platform-deployment`
+**Module** : `distribution`
 **Statut** : WAITING
 **Priorité** : P2
 **Bloquée par** : ISSUE-083
@@ -17,7 +17,7 @@ Secret template, Service, avec probes readiness/liveness.
 ## Fichiers à Créer
 
 ```
-platform-deployment/kubernetes/
+distribution/kubernetes/
   ├── orchestrator-statefulset.yaml
   ├── agent-deployment.yaml
   ├── agent-hpa.yaml

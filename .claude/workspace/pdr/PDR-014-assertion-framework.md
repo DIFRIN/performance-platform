@@ -3,7 +3,7 @@
 **Module Maven** : `platform-assertion`
 **Package** : `com.performance.platform.assertion`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/07-assertion-framework.md` (complet)
+**Specs de référence** : `docs/knowledge/specs/07-assertion-framework.md` (complet)
 **Dépend de** : PDR-001, PDR-003, PDR-013
 **Issues** : ISSUE-059, ISSUE-060, ISSUE-061, ISSUE-062, ISSUE-063, ISSUE-064
 

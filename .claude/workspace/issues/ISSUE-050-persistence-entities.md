@@ -17,15 +17,15 @@ Créer les entities JPA (package `.persistence`) et les migrations Flyway. PK co
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/persistence/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/persistence/
   ├── ExecutionStateEntity.java
   ├── TaskResultEntity.java
   └── TaskResultId.java          — clé composite (executionId, taskId, agentId)
-platform-infrastructure/src/main/resources/db/migration/
+infra/platform-infrastructure/src/main/resources/db/migration/
   ├── V1__execution_state.sql
   └── V2__task_result.sql
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/persistence/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/persistence/
   └── EntitiesMappingIT.java     — Testcontainers : persist/read entity
 ```
 
@@ -52,7 +52,7 @@ CREATE TABLE task_result (
 
 ## Critères de Done
 
-- [ ] `mvn verify -pl platform-infrastructure -P integration-tests` → IT passe
+- [ ] `mvn verify -pl :platform-infrastructure -P integration-tests` → IT passe
 - [ ] Flyway applique V1 et V2 sur PostgreSQL Testcontainers
 - [ ] Insertion de 2 résultats même task, agents différents → 2 lignes
 - [ ] `.claude/progress.md` mis à jour : ISSUE-050 → DONE

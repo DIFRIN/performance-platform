@@ -17,13 +17,13 @@ qui collecte tous les `TaskExecutor` Spring et les résout par `String taskName`
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/pom.xml — dépend de domain, application, plugin-api
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/
+infra/platform-infrastructure/pom.xml — dépend de domain, application, plugin-api
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/
   ├── TaskExecutorRegistry.java
   ├── DefaultTaskExecutorRegistry.java
   └── UnsupportedTaskTypeException.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/
   └── DefaultTaskExecutorRegistryTest.java
 ```
 
@@ -54,7 +54,7 @@ public class UnsupportedTaskTypeException extends RuntimeException {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] `getFor("database")` retourne le bon executor ; `getFor("xxx")` lève l'exception
 - [ ] Aucun `if/switch` sur un type
 - [ ] `.claude/progress.md` mis à jour : ISSUE-039 → DONE

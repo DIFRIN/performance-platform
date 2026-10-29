@@ -1,9 +1,9 @@
 # PDR-019 — Deployment
 
-**Module Maven** : `platform-deployment`
+**Module Maven** : `distribution`
 **Package** : (artefacts non-Java : Dockerfile, manifests K8s)
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/specs/09-deployment.md` (complet), `.claude/knowledge/constraints.md` CD-01, CD-02, CD-03
+**Specs de référence** : `docs/knowledge/specs/09-deployment.md` (complet), `docs/knowledge/constraints.md` CD-01, CD-02, CD-03
 **Dépend de** : PDR-018
 **Issues** : ISSUE-083, ISSUE-084, ISSUE-085
 
@@ -21,7 +21,7 @@ Java métier — uniquement infrastructure de déploiement.
 ## Livrables (pas d'interface Java)
 
 ```
-platform-deployment/
+distribution/
   docker/
     Dockerfile                 — eclipse-temurin:25-jre-alpine, user non-root, healthcheck
     docker-compose.yaml        — dev local : orchestrator, agent-1, agent-2, kafka, postgres

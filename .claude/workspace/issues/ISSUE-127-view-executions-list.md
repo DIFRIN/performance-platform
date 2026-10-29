@@ -1,7 +1,7 @@
 # ISSUE-127: Vue liste des executions (polling 3s, filtre statut, cancel/delete)
 
 **PDR** : PDR-029
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-126
@@ -21,11 +21,11 @@ que le filtre fonctionne, et que cancel/delete agissent puis rafraichissent.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/resources/static/assets/js/
+bootstrap/src/main/resources/static/assets/js/
   ├── api.js                            — client fetch /api/v1/** (list, status, tasks, cancel, delete, agents, upload, report)
   └── views/executions.js               — vue liste : mount(el) → renvoie cleanup()
 
-platform-app/src/main/resources/static/assets/css/
+bootstrap/src/main/resources/static/assets/css/
   └── app.css                           — MODIF : styles table executions, badges statut, barre progress
 ```
 
@@ -60,7 +60,7 @@ export function mount(el) {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning
 - [ ] Liste rafraichie toutes les 3s, intervalle nettoye au changement de route
 - [ ] Filtre actives/terminees fonctionnel
 - [ ] Barre de progression alimentee par le champ serveur uniquement

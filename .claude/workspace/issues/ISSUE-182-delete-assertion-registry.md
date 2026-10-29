@@ -21,12 +21,12 @@ est désormais la seule source de résolution.
 ## Fichiers à Supprimer / Modifier
 
 ```
-platform-assertion/src/main/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/main/java/com/performance/platform/assertion/
   ├── AssertionExecutorRegistry.java           — SUPPRIMER
   ├── DefaultAssertionExecutorRegistry.java    — SUPPRIMER
   └── UnsupportedAssertionNameException.java   — SUPPRIMER (si plus utilisé)
 
-platform-assertion/src/test/java/com/performance/platform/assertion/
+infra/platform-assertion-adapters/src/test/java/com/performance/platform/assertion/
   ├── DefaultAssertionExecutorRegistryTest.java — SUPPRIMER
   └── AssertionTaskNameUniquenessTest.java      — conserver (garantit l'unicité des noms d'assertion)
 ```
@@ -42,6 +42,6 @@ platform-assertion/src/test/java/com/performance/platform/assertion/
 
 - [ ] `AssertionExecutorRegistry`/`DefaultAssertionExecutorRegistry` supprimés
 - [ ] Aucune référence restante dans le repo
-- [ ] `mvn test -pl platform-assertion -q` → 0 erreur
+- [ ] `mvn test -pl :platform-assertion -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-182 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour (registry → ❌ REMOVED)

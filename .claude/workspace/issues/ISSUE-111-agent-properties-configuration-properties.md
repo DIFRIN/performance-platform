@@ -1,7 +1,7 @@
 # ISSUE-111 — Create AgentProperties @ConfigurationProperties record
 
 **PDR** : PDR-026
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : WAITING
 **Priorite** : P0 (bloquant tout le cablage agent)
 **Bloquee par** : aucune
@@ -16,10 +16,10 @@ Creer le record `AgentProperties` avec `@ConfigurationProperties(prefix = "agent
 ## Fichiers a Creer
 
 ```
-platform-app/src/main/java/com/performance/platform/app/config/
+bootstrap/src/main/java/com/performance/platform/app/config/
   └── AgentProperties.java           — @ConfigurationProperties record
 
-platform-app/src/test/java/com/performance/platform/app/config/
+bootstrap/src/test/java/com/performance/platform/app/config/
   └── AgentPropertiesTest.java       — tests de binding YAML + env var
 ```
 
@@ -97,7 +97,7 @@ Utiliser `SpringBootTest` ou `ConfigurationPropertiesBindTest` (test de binding 
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur
 - [ ] `AgentProperties` enregistre dans Spring (verifie par test de binding)
 - [ ] `AGENT_SUPPORTED_TASKS` env var mappe correctement a `agent.supported-tasks`
 - [ ] `.claude/workspace/progress.md` mis a jour : ISSUE-111 → DONE

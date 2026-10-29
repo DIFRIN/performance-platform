@@ -18,7 +18,7 @@ puis consomme le résultat et appelle `tracker.remove(...)` (éviction).
 ## Fichiers à Modifier
 
 ```
-platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
+execution/platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
   └── RemoteStepDispatcher.java        — remplacer awaitCompletion (polling) par signal + remove
 ```
 
@@ -31,5 +31,5 @@ platform-execution-engine/src/main/java/com/performance/platform/engine/remote/
 ## Critères de Done
 
 - [ ] `RemoteStepDispatcher` sans polling
-- [ ] `mvn test -pl platform-execution-engine -q` → 0 erreur
+- [ ] `mvn test -pl :platform-execution-engine -q` → 0 erreur
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-190 → DONE

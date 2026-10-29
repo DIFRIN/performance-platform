@@ -17,10 +17,10 @@ WireMock externe.
 ## Fichiers à Créer
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/mock/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/mock/
   └── MockServerTaskExecutor.java
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/mock/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/mock/
   └── MockServerTaskExecutorTest.java — START embedded → outputs port/url
 ```
 
@@ -43,7 +43,7 @@ public class MockServerTaskExecutor implements TaskExecutor {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] START embedded → outputs `port` et `url`
 - [ ] cleanup arrête le serveur
 - [ ] `.claude/progress.md` mis à jour : ISSUE-042 → DONE

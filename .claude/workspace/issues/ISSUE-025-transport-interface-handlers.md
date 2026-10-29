@@ -17,8 +17,8 @@ Créer le module `platform-transport` et l'interface publique critique `Executio
 ## Fichiers à Créer
 
 ```
-platform-transport/pom.xml — dépend de platform-domain
-platform-transport/src/main/java/com/performance/platform/transport/
+infra/platform-transport/pom.xml — dépend de platform-domain
+infra/platform-transport/src/main/java/com/performance/platform/transport/
   ├── ExecutionTransport.java
   ├── TaskRequestHandler.java
   ├── AgentSignalHandler.java
@@ -26,7 +26,7 @@ platform-transport/src/main/java/com/performance/platform/transport/
   ├── Subscription.java
   └── TransportException.java
 
-platform-transport/src/test/java/com/performance/platform/transport/
+infra/platform-transport/src/test/java/com/performance/platform/transport/
   └── TransportInterfaceTest.java — vérifie signatures compilent (impl no-op)
 ```
 
@@ -61,7 +61,7 @@ public class TransportException extends RuntimeException {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] Une impl no-op compile
 - [ ] `.claude/progress.md` mis à jour : ISSUE-025 → DONE
 - [ ] `.claude/context/interfaces-registry.md` : `ExecutionTransport` ⚡ → STABLE

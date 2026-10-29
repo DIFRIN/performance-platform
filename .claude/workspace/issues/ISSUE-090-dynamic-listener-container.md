@@ -22,12 +22,12 @@ Un container Spring Kafka gère le thread de polling, le rebalance, la reconnexi
 ## Fichiers à Créer / Modifier
 
 ```
-platform-transport/src/main/java/com/performance/platform/transport/kafka/
+infra/platform-transport/src/main/java/com/performance/platform/transport/kafka/
   ├── DynamicKafkaListenerRegistry.java   — NOUVEAU : remplace KafkaConsumerManager
   ├── KafkaConsumerManager.java           — SUPPRIMÉ (ou marqué @Deprecated si conservé temporairement)
   └── KafkaExecutionTransport.java        — MODIFIÉ : utilise DynamicKafkaListenerRegistry
 
-platform-transport/src/test/java/com/performance/platform/transport/kafka/
+infra/platform-transport/src/test/java/com/performance/platform/transport/kafka/
   └── DynamicKafkaListenerRegistryTest.java — tests unitaires (mock containers)
 ```
 
@@ -177,7 +177,7 @@ public class KafkaExecutionTransport implements ExecutionTransport {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-transport -q` → 0 erreur
+- [ ] `mvn test -pl :platform-transport -q` → 0 erreur
 - [ ] `KafkaConsumerManager` supprimé ou marqué `@Deprecated` avec TODO
 - [ ] Aucun `Thread.new(...)` manuel dans platform-transport (hors Virtual Threads)
 - [ ] Aucun `while(running)` polling loop manuel dans platform-transport

@@ -1,7 +1,7 @@
 # ISSUE-120: Use cases ListExecutions/DeleteExecution + ExecutionProgress serveur
 
 **PDR** : PDR-027
-**Module** : `platform-application`
+**Module** : `platform-use-cases`
 **Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : ISSUE-119
@@ -22,20 +22,20 @@ statut reel des tasks.
 ## Fichiers à Créer / Modifier
 
 ```
-platform-domain/src/main/java/com/performance/platform/domain/execution/
+core/platform-domain/src/main/java/com/performance/platform/domain/execution/
   └── ExecutionProgress.java           — record pur {total, ok, ko, running} (0 annotation)
 
-platform-application/src/main/java/com/performance/platform/application/ports/in/
+core/platform-use-cases/src/main/java/com/performance/platform/application/ports/in/
   ├── ListExecutionsUseCase.java       — port in
   └── DeleteExecutionUseCase.java      — port in
 
-platform-application/src/main/java/com/performance/platform/application/usecase/
+core/platform-use-cases/src/main/java/com/performance/platform/application/usecase/
   ├── ListExecutionsService.java       — impl (delegue ExecutionRepository.findAll)
   ├── DeleteExecutionService.java      — impl (garde de statut + delegue ExecutionRepository.deleteById)
   ├── ExecutionProgressCalculator.java — derive ExecutionProgress (state + taskResults — ADR-020)
   └── ExecutionNotDeletableException.java — levee si delete sur execution active (ADR-020)
 
-platform-application/src/test/java/com/performance/platform/application/usecase/
+core/platform-use-cases/src/test/java/com/performance/platform/application/usecase/
   ├── ListExecutionsServiceTest.java
   ├── DeleteExecutionServiceTest.java
   └── ExecutionProgressCalculatorTest.java
@@ -55,7 +55,7 @@ public record ExecutionProgress(int total, int ok, int ko, int running) {
     }
 }
 
-// platform-application — ports in
+// platform-use-cases — ports in
 public interface ListExecutionsUseCase {
     List<ExecutionState> list(int limit);   // defaut applique si limit <= 0
 }
@@ -85,7 +85,7 @@ public interface DeleteExecutionUseCase {
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-application -q` → 0 erreur, 0 warning
+- [ ] `mvn test -pl :platform-use-cases -q` → 0 erreur, 0 warning
 - [ ] `ExecutionProgress` cree dans platform-domain (ArchUnit domaine OK, 0 annotation)
 - [ ] `list(limit)` applique un defaut si limit <= 0, delegue findAll
 - [ ] `delete(id)` leve ExecutionNotDeletableException si STARTED/RUNNING ; sinon delegue deleteById (ADR-020)

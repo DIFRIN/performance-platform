@@ -23,10 +23,10 @@ Rétrocompatibilité : si `wiremockUrl` est fourni sans `target`, utiliser l'URL
 ## Fichiers à Modifier
 
 ```
-platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/mock/
+infra/platform-infrastructure/src/main/java/com/performance/platform/infrastructure/executor/mock/
   └── MockServerTaskExecutor.java        — injecter HttpTargetRegistry, adapter la résolution URL
 
-platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/mock/
+infra/platform-infrastructure/src/test/java/com/performance/platform/infrastructure/executor/mock/
   └── MockServerTaskExecutorTest.java    — adapter les tests
 ```
 
@@ -103,7 +103,7 @@ parameters:
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-infrastructure -q` → 0 erreur
+- [ ] `mvn test -pl :platform-infrastructure -q` → 0 erreur
 - [ ] Test : `target: wiremock` → `HttpTargetRegistry.clientFor("wiremock")` appelé
 - [ ] Test : `wiremockUrl: http://...` (legacy) → log WARN émis, client éphémère créé
 - [ ] Test : ni `target:` ni `wiremockUrl:` → `TaskResult.failed`

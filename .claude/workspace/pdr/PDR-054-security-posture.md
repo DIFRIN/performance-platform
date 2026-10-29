@@ -1,6 +1,6 @@
 # PDR-054 — Security Posture Decision
 
-**Module Maven** : `platform-app`
+**Module Maven** : `platform-bootstrap`
 **Package** : `com.performance.platform.app.security`
 **Statut** : WAITING
 **Specs de référence** : `improvements.md` D4 ; `ADR-019-web-ui-serving-and-security.md` ; `constraints.md` CNF-03
@@ -53,4 +53,4 @@ Ce PDR est utilisé par :
 
 - [ ] Posture documentée + WARN explicite (ISSUE-196)
 - [ ] Rôles sur `/api/**` quand la sécurité est activée (ISSUE-196)
-- [ ] `mvn test -pl platform-app -q` → 0 erreur
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur

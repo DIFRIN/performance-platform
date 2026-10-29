@@ -1,9 +1,9 @@
 # PDR-018 — Application Assembly (Bootstrap & Config)
 
-**Module Maven** : `platform-app`
+**Module Maven** : `platform-bootstrap`
 **Package** : `com.performance.platform.app`
 **Statut** : WAITING
-**Specs de référence** : `.claude/knowledge/architecture.md` §1, §5, `.claude/knowledge/specs/09-deployment.md` §1, ADR-005, ADR-006, `.claude/knowledge/constraints.md` CF-01
+**Specs de référence** : `docs/knowledge/architecture.md` §1, §5, `docs/knowledge/specs/09-deployment.md` §1, ADR-005, ADR-006, `docs/knowledge/constraints.md` CF-01
 **Dépend de** : PDR-005, PDR-006, PDR-008, PDR-009, PDR-010, PDR-011, PDR-012, PDR-013, PDR-014, PDR-015, PDR-016, PDR-017
 **Issues** : ISSUE-077, ISSUE-078, ISSUE-079, ISSUE-080, ISSUE-081, ISSUE-082
 

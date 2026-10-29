@@ -1,7 +1,7 @@
 # ISSUE-126: Shell index.html + CSS layout + nav + routeur a hash
 
 **PDR** : PDR-028
-**Module** : `platform-app`
+**Module** : `platform-bootstrap`
 **Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-125
@@ -21,7 +21,7 @@ les liens de routes, et que le routeur mappe `/#/route` vers une fonction de ren
 ## Fichiers à Créer / Modifier
 
 ```
-platform-app/src/main/resources/static/
+bootstrap/src/main/resources/static/
   ├── index.html                        — shell SPA (charge css + js, conteneur #app, #nav)
   └── assets/
       ├── css/app.css                   — layout de base (header, nav, contenu, etats ok/ko/running)
@@ -58,7 +58,7 @@ export function renderNav(navEl, { orchestrator }) { /* liens; "agents" visible 
 
 ## Critères de Done
 
-- [ ] `mvn test -pl platform-app -q` → 0 erreur, 0 warning (les tests web restent verts)
+- [ ] `mvn test -pl :platform-bootstrap -q` → 0 erreur, 0 warning (les tests web restent verts)
 - [ ] `/` (web.ui.enabled=true) sert index.html avec nav et conteneur #app
 - [ ] Routeur a hash dispatche vers des fonctions de rendu et nettoie la vue precedente
 - [ ] Aucun fichier de build front (pas de package.json)
