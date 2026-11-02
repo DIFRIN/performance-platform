@@ -1,0 +1,116 @@
+# =============================================================================
+# Scenario 1 - Kafka injection -> SUT -> DB lookup -> HTTP to device address
+# =============================================================================
+# DISTRIBUTED platform mode.
+#
+# Routing (broadcast + agent.supported-tasks, ADR-015):
+#   mock-server/http-mock -> mock-agent
+#   database              -> agent-kafka
+#   http-client           -> agent-http
+#   kafka-producer        -> agent-kafka
+#   shell                 -> agent-kafka
+#
+# Submit:
+#   curl -X POST http://localhost:8080/api/v1/scenarios \
+#     -H 'Content-Type: application/yaml' \
+#     --data-binary @distribution/example/scenarios/01-kafka-to-http-distributed.yaml
+# =============================================================================
+scenario:
+  id: 01-kafka-to-http-distributed
+  name: "Kafka injection -> SUT -> DB -> HTTP device endpoint (DISTRIBUTED)"
+  version: "1.0.0"
+  tags: [example, kafka, http, distributed]
+  metadata:
+    owner: perf-team
+    sut: sut
+  execution: { mode: DISTRIBUTED }
+
+  steps:
+    - id: start-mock
+      task: mock-server
+      phase: PREPARATION
+      parameters:
+        deployment: EMBEDDED
+        action: START
+        port: 8090
+        mappingsPath: classpath:mock
+      timeout: 30s
+
+    - id: reset-sut-db
+      task: database
+      phase: PREPARATION
+      parameters:
+        datasource: sut-db
+        operation: PURGE
+        table: devices
+      timeout: 30s
+
+    - id: seed-sut-db
+      task: database
+      phase: PREPARATION
+      dependsOn: [reset-sut-db]
+      requiredContexts: [reset-sut-db]
+      parameters:
+        datasource: sut-db
+        operation: POPULATE
+        scriptPath: "classpath:sql/seed-sut-devices.sql"
+      timeout: 2m
+
+    - id: check-sut
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [seed-sut-db, start-mock]
+      requiredContexts: [seed-sut-db, start-mock]
+      parameters:
+        target: sut-api
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: inject-commands
+      task: kafka-producer
+      phase: INJECTION
+      dependsOn: [check-sut]
+      requiredContexts: [check-sut]
+      parameters:
+        cluster: iot-sut
+        topic: iot-commands
+        operation: PRODUCE
+        messageCount: 5000
+        messageTemplate: '{"device_id":"device-{index:4}","command":"ping"}'
+      timeout: 2m
+
+    - id: wait-dispatch
+      task: shell
+      phase: ASSERTION
+      dependsOn: [inject-commands]
+      requiredContexts: [inject-commands]
+      parameters:
+        command: sleep
+        args: ["8"]
+      timeout: 20s
+
+    # The SUT calls the mock address stored in devices.device_dns (published
+    # port 8090 of mock-agent). mock-agent owns the assertion.
+    - id: assert-mock-called
+      task: http-mock
+      phase: ASSERTION
+      dependsOn: [wait-dispatch]
+      requiredContexts: [wait-dispatch]
+      parameters:
+        target: wiremock
+        metric: receivedCalls
+        operator: GTE
+        value: 1
+      timeout: 1m
+
+    - id: stop-mock
+      task: mock-server
+      phase: ASSERTION
+      dependsOn: [assert-mock-called]
+      requiredContexts: [assert-mock-called]
+      parameters:
+        deployment: EMBEDDED
+        action: STOP
+      timeout: 10s

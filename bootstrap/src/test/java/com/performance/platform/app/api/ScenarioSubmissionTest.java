@@ -87,7 +87,7 @@ class ScenarioSubmissionTest {
         var mvc = MockMvcBuilders.standaloneSetup(
                 new ScenarioController(parsing, engine, null, engine, repository, new ExecutionProgressCalculator()),
                 new ScenarioUploadController(parsing, engine),
-                new ExecutionController(null, null, repository, new ExecutionProgressCalculator())).build();
+                new ExecutionController(null, null, repository, new ExecutionProgressCalculator(), null, null)).build();
 
         try {
             mvc.perform(post("/api/v1/scenarios").contentType(MediaType.TEXT_PLAIN).content(yaml))

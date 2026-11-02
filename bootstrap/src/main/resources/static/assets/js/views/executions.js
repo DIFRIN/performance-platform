@@ -4,9 +4,10 @@
  *
  * Mounts the executions list with:
  * - Polling every 3 seconds (setInterval / clearInterval)
- * - Client-side status filter: active (STARTED|RUNNING) vs completed (COMPLETED|FAILED|CANCELLED) vs all
+ * - Client-side status filter: all (default) vs active (STARTED|RUNNING) vs completed (COMPLETED|FAILED|CANCELLED)
  * - Progress bar per row from server-computed {@code progress {total, ok, ko, running}}
  * - Cancel button for active executions (POST /cancel → 202)
+ * - Rerun button for completed executions (POST /rerun → 202, opens the new execution)
  * - Delete button for completed executions (DELETE → 204, with confirmation)
  * - Row click → hash navigation to /#/executions/{id}
  *
@@ -17,7 +18,7 @@
  * when the router switches to another view.
  */
 
-import { listExecutions, cancelExecution, deleteExecution } from "/assets/js/api.js";
+import { listExecutions, cancelExecution, deleteExecution, rerunExecution } from "/assets/js/api.js";
 
 /** Polling interval in milliseconds. */
 const POLL_INTERVAL_MS = 3000;
@@ -39,7 +40,7 @@ const COMPLETED_STATUSES = new Set(["COMPLETED", "FAILED", "CANCELLED"]);
  */
 export function mount(el) {
     /* ---- State ---- */
-    let filter = "active";
+    let filter = "all";
     let intervalId = null;
     let executions = [];
     let error = null;
@@ -132,10 +133,10 @@ function buildSkeleton() {
         '<div class="card">' +
         '  <div class="flex-between mb-2">' +
         '    <div class="card__title">Executions</div>' +
-        '    <div class="exec-filter-group">' +
-        '      <button class="btn btn--sm btn--primary" data-exec-filter="active">Active</button>' +
-        '      <button class="btn btn--sm" data-exec-filter="completed">Completed</button>' +
-        '      <button class="btn btn--sm" data-exec-filter="all">All</button>' +
+        '    <div class="segmented" role="group" aria-label="Filter by status">' +
+        '      <button class="segmented__btn is-active" data-exec-filter="all">All</button>' +
+        '      <button class="segmented__btn" data-exec-filter="active">Active</button>' +
+        '      <button class="segmented__btn" data-exec-filter="completed">Completed</button>' +
         '    </div>' +
         '  </div>' +
         '  <div id="exec-list-body"></div>' +
@@ -149,11 +150,7 @@ function buildSkeleton() {
  */
 function highlightFilterButtons(el, activeFilter) {
     el.querySelectorAll("[data-exec-filter]").forEach(function (btn) {
-        if (btn.dataset.execFilter === activeFilter) {
-            btn.classList.add("btn--primary");
-        } else {
-            btn.classList.remove("btn--primary");
-        }
+        btn.classList.toggle("is-active", btn.dataset.execFilter === activeFilter);
     });
 }
 
@@ -333,18 +330,23 @@ function renderActions(exec) {
     }
     if (COMPLETED_STATUSES.has(exec.status)) {
         buttons.push(
+            '<button class="btn btn--sm" data-exec-action="rerun"' +
+            ' data-exec-id="' + escapeAttr(exec.executionId) + '"' +
+            ' title="Start a new execution from the same scenario">Rerun</button>'
+        );
+        buttons.push(
             '<button class="btn btn--sm btn--danger" data-exec-action="delete"' +
             ' data-exec-id="' + escapeAttr(exec.executionId) + '">Delete</button>'
         );
     }
-    return buttons.join(" ");
+    return '<div class="table-actions">' + buttons.join("") + '</div>';
 }
 
 /**
- * Handle a cancel or delete action: call the API, then re-fetch the list.
+ * Handle a cancel, rerun or delete action: call the API, then re-fetch the list.
  * Delete shows a confirmation dialog before proceeding.
  *
- * @param {string} action — "cancel" or "delete"
+ * @param {string} action — "cancel", "rerun" or "delete"
  * @param {string} id — execution identifier
  */
 async function handleAction(action, id) {
@@ -356,6 +358,10 @@ async function handleAction(action, id) {
             await deleteExecution(id);
         } else if (action === "cancel") {
             await cancelExecution(id);
+        } else if (action === "rerun") {
+            var result = await rerunExecution(id);
+            window.location.hash = "#/executions/" + encodeURIComponent(result.executionId);
+            return;
         }
     } catch (e) {
         alert("Action failed: " + (e.message || "Unknown error"));

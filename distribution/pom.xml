@@ -15,7 +15,7 @@
 
     <name>Platform Distribution</name>
     <description>
-        Artefacts de deploiement : Dockerfile multi-stage, docker-compose dev local, manifests Kubernetes.
+        Artefacts de deploiement : Dockerfile multi-stage et un exemple executable (compose local/distributed).
         Aucun code Java metier — uniquement infrastructure de deploiement.
     </description>
 

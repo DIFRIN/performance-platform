@@ -20,24 +20,24 @@ public final class TestPaths {
 
     /**
      * Repository root: the nearest ancestor that contains {@code pom.xml} and
-     * {@code distribution/examples/scenarios}.
+     * {@code distribution/example/scenarios}.
      */
     public static Path repositoryRoot() {
         Path current = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
         for (Path candidate = current; candidate != null; candidate = candidate.getParent()) {
             if (Files.isRegularFile(candidate.resolve("pom.xml"))
-                    && Files.isDirectory(candidate.resolve("distribution/examples/scenarios"))) {
+                    && Files.isDirectory(candidate.resolve("distribution/example/scenarios"))) {
                 return candidate;
             }
         }
         throw new IllegalStateException(
                 "Cannot locate the repository root from user.dir=" + current
-                        + " (expected pom.xml and distribution/examples/scenarios)");
+                        + " (expected pom.xml and distribution/example/scenarios)");
     }
 
     /** Shared example scenarios from {@code distribution}. */
     public static Path exampleScenarios() {
-        return repositoryRoot().resolve("distribution/examples/scenarios");
+        return repositoryRoot().resolve("distribution/example/scenarios");
     }
 
     /**

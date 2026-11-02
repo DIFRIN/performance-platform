@@ -10,6 +10,7 @@ import io.gatling.core.cli.GatlingArgs;
 import io.gatling.core.config.GatlingConfiguration;
 import io.gatling.netty.util.Transports;
 import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.OpenSsl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.util.Either;
@@ -35,6 +36,9 @@ import java.util.concurrent.TimeUnit;
  */
 final class EmbeddedGatlingLauncher {
 
+    /** Gatling config key selecting the Netty BoringSSL provider over JDK SSL. */
+    static final String USE_OPEN_SSL_PROPERTY = "gatling.ssl.useOpenSsl";
+
     private static final Logger log = LoggerFactory.getLogger(EmbeddedGatlingLauncher.class);
 
     private EmbeddedGatlingLauncher() {
@@ -51,11 +55,35 @@ final class EmbeddedGatlingLauncher {
     private static int start(GatlingArgs gatlingArgs) {
         // Same workaround as Gatling for https://github.com/gatling/gatling/issues/3411
         FileSystems.getDefault();
+        configureSslProvider();
         GatlingConfiguration configuration = GatlingConfiguration.load();
         RunResult runResult = gatlingArgs.reportsOnly().isDefined()
                 ? new RunResult(gatlingArgs.reportsOnly().get(), true)
                 : runSimulation(gatlingArgs, configuration);
         return new RunResultProcessor(gatlingArgs, configuration).processRunResult(runResult).code();
+    }
+
+    /**
+     * BoringSSL (netty-tcnative) is not available on every platform — notably
+     * Alpine/musl, where the glibc native library cannot be loaded. Gatling
+     * defaults {@code gatling.ssl.useOpenSsl=true} and
+     * {@code GatlingConfiguration.load()} then throws
+     * "BoringSSL is enabled in your configuration, yet it's not available...".
+     * Fall back to the JDK SSL provider, unless the operator explicitly set
+     * the property (scenario {@code systemProperties} win).
+     */
+    private static void configureSslProvider() {
+        if (shouldFallbackToJdkSsl(OpenSsl.isAvailable(),
+                System.getProperty(USE_OPEN_SSL_PROPERTY))) {
+            var cause = OpenSsl.unavailabilityCause();
+            log.warn("action=gatling_openssl_unavailable cause={} fallback=JDK_SSL",
+                    cause == null ? "unknown" : cause.getMessage());
+            System.setProperty(USE_OPEN_SSL_PROPERTY, "false");
+        }
+    }
+
+    static boolean shouldFallbackToJdkSsl(boolean openSslAvailable, String configuredValue) {
+        return !openSslAvailable && configuredValue == null;
     }
 
     private static RunResult runSimulation(GatlingArgs gatlingArgs, GatlingConfiguration configuration) {

@@ -52,7 +52,7 @@ class ExecutionProgressApiTest {
                 Map.of(AgentId.of("local"), TaskResult.success(
                         TaskId.of("warmup"), "http-client", Duration.ZERO, Map.of()))));
         var mvc = MockMvcBuilders.standaloneSetup(
-                new ExecutionController(null, null, repository, new ExecutionProgressCalculator())).build();
+                new ExecutionController(null, null, repository, new ExecutionProgressCalculator(), null, null)).build();
 
         mvc.perform(get("/api/v1/executions/" + id.value() + "/tasks"))
                 .andExpect(status().isOk())
@@ -92,7 +92,7 @@ class ExecutionProgressApiTest {
         var calculator = new ExecutionProgressCalculator();
         var mvc = MockMvcBuilders.standaloneSetup(
                 new ScenarioController(null, null, statusUseCase, null, repository, calculator),
-                new ExecutionController(listUseCase, null, repository, calculator)).build();
+                new ExecutionController(listUseCase, null, repository, calculator, null, null)).build();
 
         mvc.perform(get("/api/v1/executions/" + id.value()))
                 .andExpect(status().isOk())

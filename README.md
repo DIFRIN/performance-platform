@@ -92,12 +92,12 @@ flowchart TB
 | `infra/platform-report-renderers` | HTML/PDF/JSON rendering and file output |
 | `infra/platform-observability` | Micrometer metrics and MDC logging |
 | `bootstrap` (`platform-bootstrap`) | Only executable: Spring Boot assembly, REST, UI and CLI |
-| `distribution` | Docker, Compose, Kubernetes, scenarios and demo SUT applications |
+| `distribution` | Docker image and one runnable example stack (`example/`) with its mode opératoire |
 
 Project documentation lives in `docs/knowledge/`, independently of any agent
 harness. Harness workflows live in `.claude/skills/<name>/SKILL.md`.
-`distribution/examples/sut/` contains the independently built demo applications,
-not production platform modules. The single executable remains
+`distribution/example/sut/` contains the independently built SUT stub,
+not a production platform module. The single executable remains
 `bootstrap/target/performance-platform.jar`.
 
 The generic execution modules depend only on core platform contracts in production:
@@ -128,7 +128,7 @@ exposes an API, UI, or CLI.
 
 ```bash
 java -jar bootstrap/target/performance-platform.jar \
-  --scenario=file:distribution/examples/scenarios/device-api-local.yaml
+  --scenario=file:distribution/example/scenarios/01-kafka-to-http-local.yaml
 echo $?   # 0 success, 1 failed, 2 invalid arguments/scenario
 ```
 
@@ -150,8 +150,14 @@ curl -X POST http://localhost:8080/api/v1/executions/{executionId}/cancel
 ```
 
 Additional endpoints: `GET /api/v1/executions`, `DELETE /api/v1/executions/{id}`,
+`POST /api/v1/executions/{id}/rerun` (new execution from the retained YAML),
 `POST /api/v1/scenarios/upload` (multipart `file` or form field `yaml`),
+`GET /api/v1/catalog` (scenarios from `SCENARIOS_DIR`, no execution),
+`POST /api/v1/catalog/{key}/run` (execute a catalog scenario),
 `GET /api/v1/agents`, `GET /api/v1/executions/{id}/report?format=html|pdf|json`.
+
+Set `SCENARIOS_DIR=/path/to/scenarios` to populate the **Scenarios** view in the
+web UI; each entry shows its steps and has its own **Run** button.
 
 ### Web UI
 
@@ -168,7 +174,7 @@ java -jar bootstrap/target/performance-platform.jar --web.ui.enabled=true
 
 - Java 25
 - Maven 3.9+
-- Docker (optional, for PostgreSQL/Kafka/WireMock and the demo stack)
+- Docker (for the example stack's PostgreSQL, Kafka and SUT stub)
 
 ### Build
 
@@ -186,32 +192,39 @@ RUNTIME_MODE=LOCAL java -jar bootstrap/target/performance-platform.jar
 
 LOCAL uses H2 in memory and the `IN_MEMORY` transport by default.
 
-### IDE profiles with Docker dependencies
+### Example stack (LOCAL and DISTRIBUTED)
+
+The only deployment example lives in `distribution/example/`; its full runbook is
+[MODOP.md](distribution/example/MODOP.md). It contains:
+
+- one config-driven SUT stub (`sut/`) combining "Kafka → DB → HTTP" and
+  "HTTP → DB → Kafka" behaviours;
+- two scenarios, each runnable in LOCAL or DISTRIBUTED mode;
+- `docker-compose-local.yaml` and `docker-compose-distributed.yaml`.
+
+LOCAL mode uses the same `application-local.yaml` from the IDE and from Docker:
 
 ```bash
-docker compose -f distribution/local-dev/docker-compose.yaml up -d
+# Docker LOCAL
+docker compose -f distribution/example/docker-compose-local.yaml up -d \
+  postgres postgres-sut kafka sut
+docker compose -f distribution/example/docker-compose-local.yaml \
+  run --rm -e SCENARIO_FILE=01-kafka-to-http-local.yaml platform
+
+# IDE LOCAL (same config file, localhost defaults)
+java -jar bootstrap/target/performance-platform.jar \
+  --spring.profiles.active=local \
+  --scenario=file:distribution/example/scenarios/01-kafka-to-http-local.yaml
 ```
 
-Then run one of the Spring profiles from the IDE:
-
-| Profile | Role |
-|---|---|
-| `ide-orchestrator` | DISTRIBUTED + ORCHESTRATOR, local PostgreSQL/Kafka/WireMock |
-| `agent-injector` | DISTRIBUTED + AGENT for preparation/injection tasks |
-| `agent-asserter` | DISTRIBUTED + AGENT for assertion tasks |
-
-### Operational demo stack
+DISTRIBUTED mode uses the `example` profile shared by the orchestrator and agents:
 
 ```bash
-cd distribution/examples/demo-stack
-./run-demo.sh
+docker compose -f distribution/example/docker-compose-distributed.yaml up -d
+curl -X POST http://localhost:8080/api/v1/scenarios \
+  -H 'Content-Type: application/yaml' \
+  --data-binary @distribution/example/scenarios/01-kafka-to-http-distributed.yaml
 ```
-
-The stack runs:
-
-- `scenarios/remote-demo.yaml` — DISTRIBUTED, covering database, Kafka producer/consumer,
-  HTTP client, WireMock and assertions;
-- `scenarios/local-demo.yaml` — the same coverage through the headless CLI.
 
 ---
 
@@ -237,8 +250,8 @@ RUNTIME_MODE=DISTRIBUTED MODE=AGENT TRANSPORT_TYPE=KAFKA \
   java -jar performance-platform.jar
 ```
 
-Provided Spring profiles: `local`, `orchestrator`, `agent`, `ide-orchestrator`,
-`agent-injector`, `agent-asserter`, `examples-local`. A profile whose name starts with
+Provided Spring profiles: `local`, `orchestrator`, `agent`, plus `example` (SUT
+resources for the distributed example). A profile whose name starts with
 `agent` forces `WebApplicationType.NONE`.
 
 ---
@@ -273,7 +286,7 @@ scenario:
         deployment: EMBEDDED
         action: START
         port: 8090
-        mappingsPath: wiremock/mappings
+        mappingsPath: classpath:mock
 
     - id: inject
       task: gatling

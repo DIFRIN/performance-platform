@@ -54,7 +54,7 @@ jobs:
       # -Dskip.unit.tests=true : les tests unitaires ont deja tourne dans le job
       # "unit" (profile skip-unit-tests du pom racine). Failsafe lance **/*IT.java.
       - name: Run integration tests
-        run: mvn -B -ntp verify -P integration-tests -Dskip.unit.tests=true
+        run: mvn -B -ntp -T1C verify -P integration-tests -Dskip.unit.tests=true
 
       - name: Upload test reports
         if: failure()

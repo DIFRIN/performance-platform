@@ -26,7 +26,8 @@ configuration; the agent constructed assertion sampling directly.
   adapters, Gatling, report rendering/output and observability.
 - `bootstrap/` (`platform-bootstrap`) is the composition root and exposes REST,
   UI and CLI. It remains the only production executable.
-- `distribution/` combines Docker, Kubernetes, example scenarios and demo SUTs.
+- `distribution/` contains the Docker image and one runnable example (compose files,
+  scenarios, SUT stub and mode opératoire).
   Demo applications remain independently built systems under test, outside the
   platform Maven reactor.
 

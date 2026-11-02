@@ -1,0 +1,109 @@
+# =============================================================================
+# Scenario 2 - HTTP injection -> SUT endpoint -> DB lookup -> Kafka produce
+# =============================================================================
+# LOCAL platform mode (all tasks in one JVM).
+#
+# Flow:
+#   1. platform seeds devices
+#   2. Gatling injects POST /api/events?device_id=... on the SUT
+#   3. SUT checks the device in the DB and publishes an event to device-events
+#   4. platform asserts the Kafka topic contains the expected events
+#
+# Run:
+#   docker compose -f distribution/example/docker-compose-local.yaml \
+#     run --rm -e SCENARIO_FILE=02-http-to-kafka-local.yaml platform
+# =============================================================================
+scenario:
+  id: 02-http-to-kafka-local
+  name: "HTTP injection -> SUT -> DB -> Kafka (LOCAL)"
+  version: "1.0.0"
+  tags: [example, http, kafka, local]
+  metadata:
+    owner: perf-team
+    sut: sut
+  execution: { mode: LOCAL }
+
+  steps:
+    - id: reset-sut-db
+      task: database
+      phase: PREPARATION
+      parameters:
+        datasource: sut-db
+        operation: PURGE
+        table: devices
+      timeout: 30s
+
+    - id: seed-sut-db
+      task: database
+      phase: PREPARATION
+      dependsOn: [reset-sut-db]
+      requiredContexts: [reset-sut-db]
+      parameters:
+        datasource: sut-db
+        operation: POPULATE
+        scriptPath: "classpath:sql/seed-sut-devices.sql"
+      timeout: 2m
+
+    - id: check-sut
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [seed-sut-db]
+      requiredContexts: [seed-sut-db]
+      parameters:
+        target: sut-api
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: inject-events
+      task: gatling
+      phase: INJECTION
+      dependsOn: [check-sut]
+      requiredContexts: [check-sut]
+      parameters:
+        target: sut-api
+        path: submit-event
+        method: POST
+        queryParams:
+          device_id: "device-{index:4}"
+        headers:
+          X-Request-Id: "{uuid}"
+        expectedStatus: 200
+        loadModel:
+          type: RAMP
+          parameters: { from: 1, to: 200, durationSeconds: 30 }
+      timeout: 5m
+
+    - id: wait-events
+      task: shell
+      phase: ASSERTION
+      dependsOn: [inject-events]
+      requiredContexts: [inject-events]
+      parameters:
+        command: sleep
+        args: ["3"]
+      timeout: 15s
+
+    - id: count-events
+      task: kafka-consumer
+      phase: ASSERTION
+      dependsOn: [wait-events]
+      requiredContexts: [wait-events]
+      parameters:
+        cluster: iot-sut
+        topic: device-events
+        operation: COUNT
+      timeout: 1m
+
+    - id: assert-events-produced
+      task: kafka
+      phase: ASSERTION
+      dependsOn: [count-events]
+      requiredContexts: [count-events]
+      parameters:
+        metric: consumedCount
+        refTaskId: count-events
+        operator: GTE
+        value: 1000
+      timeout: 2m

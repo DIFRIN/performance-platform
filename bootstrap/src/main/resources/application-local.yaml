@@ -7,7 +7,12 @@
 # Mode LOCAL: tous les composants dans la meme JVM.
 # Transport: IN_MEMORY uniquement.
 # Securite: desactivee.
-# Datasource: H2 en memoire pour le developpement.
+#
+# This single file is used by both execution modes of the example:
+#   - Docker: docker-compose-local.yaml overrides the *_URL variables below
+#     with container service names.
+#   - IDE:    the defaults (localhost) work once the compose infrastructure
+#     is running and the ports are published.
 # =============================================================================
 
 runtime:
@@ -21,7 +26,8 @@ platform:
   security:
     enabled: false
 
-  # Datasource H2 en memoire pour le dev local
+  # Platform database. H2 in the IDE; docker-compose-local.yaml overrides it
+  # with PostgreSQL through PLATFORM_DATASOURCES_DEFAULT_* variables.
   datasources:
     default:
       url: jdbc:h2:mem:performance-platform;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
@@ -33,26 +39,51 @@ platform:
         minimum-idle: 1
         connection-timeout: 10000
 
-  # Named HTTP targets for local development
+    # SUT database used by the `database` / `database-assertion` tasks.
+    sut-db:
+      url: ${SUT_DB_URL:jdbc:postgresql://localhost:5433/sut_devices}
+      username: ${SUT_DB_USERNAME:postgres}
+      password: ${SUT_DB_PASSWORD:changeme}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+
+  # Named HTTP targets
   http-targets:
+    # Embedded WireMock started by the `mock-server` scenario step. In Docker
+    # LOCAL mode it lives in the same container, hence localhost.
     wiremock:
       base-url: ${WIREMOCK_URL:http://localhost:8090}
+      connection-timeout: 2s
+      read-timeout: 5s
       paths:
         reset-requests: /__admin/requests
         count-requests: /__admin/requests/count
-    device-api:
-      base-url: ${DEVICE_API_URL:http://localhost:8082}
+
+    # SUT HTTP API (scenario 2 injection and health checks).
+    sut-api:
+      base-url: ${SUT_API_URL:http://localhost:8084}
+      connection-timeout: 2s
+      read-timeout: 10s
       paths:
         submit-event: /api/events
+        health: /api/health
 
-  # Named Kafka clusters for local development (the kafka-producer/consumer
-  # executors need a cluster reference even when the transport is IN_MEMORY).
+  # Named Kafka clusters. The example SUT and the platform share one broker.
   kafka-clusters:
     default:
       bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
       producer-acks: all
       consumer-group: perf-consumer-local
       topics: {}
+    iot-sut:
+      bootstrap-servers: ${IOT_KAFKA_SERVERS:localhost:9092}
+      producer-acks: "1"
+      consumer-group: perf-example-consumer
+      topics:
+        iot-commands: iot-commands
+        device-events: device-events
 
 # ---- Logging plus verbeux en local ----
 logging:

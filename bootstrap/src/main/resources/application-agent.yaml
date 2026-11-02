@@ -79,12 +79,15 @@ platform:
     enabled: true
 
   # Named HTTP targets used by http-client / http-mock on agents.
+  # The mock is the WireMock EMBEDDED server started by a mock-server step,
+  # exposed on the fixed port 8090 of the agent responsible for it.
   http-targets:
     wiremock:
-      base-url: ${WIREMOCK_URL:http://wiremock:8080}
+      base-url: ${WIREMOCK_URL:http://mock-agent:8090}
       connection-timeout: 2s
       read-timeout: 5s
       paths:
+        reset-requests: /__admin/requests
         count-requests: /__admin/requests/count
 
   # Agent — pas de datasource propre par defaut.

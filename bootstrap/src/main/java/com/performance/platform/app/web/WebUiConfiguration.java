@@ -40,7 +40,7 @@ public class WebUiConfiguration implements WebMvcConfigurer {
         registry.addResourceHandler("/assets/**")
                 .addResourceLocations("classpath:/static/assets/");
         registry.addResourceHandler("/index.html")
-                .addResourceLocations("classpath:/static/index.html");
+                .addResourceLocations("classpath:/static/");
         log.info("action=resource_handlers_registered paths=/assets/**,/index.html");
     }
 

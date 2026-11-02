@@ -16,8 +16,16 @@ import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Map;
@@ -37,7 +45,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>{@code deployment} — EMBEDDED (default) or EXTERNAL</li>
  *   <li>{@code port} — port number for embedded mode (default 8090)</li>
- *   <li>{@code mappingsPath} — optional path to stub mappings directory</li>
+ *   <li>{@code mappingsPath} — optional WireMock root directory (contains a
+ *       {@code mappings/} sub-directory). Supports {@code classpath:} roots, in
+ *       which case the mappings are copied to a temporary directory so that they
+ *       also load from a Spring Boot executable JAR.</li>
  *   <li>{@code action} — START, STOP, RESET, or VERIFY</li>
  *   <li>{@code target} — (recommended, EXTERNAL) HttpTargetRegistry target name</li>
  *   <li>{@code wiremockUrl} — (deprecated, EXTERNAL) direct WireMock admin URL</li>
@@ -63,6 +74,8 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
     private static final Logger log = LoggerFactory.getLogger(MockServerTaskExecutor.class);
 
     private static final int DEFAULT_PORT = 8090;
+    private static final String CLASSPATH_PREFIX = "classpath:";
+    private static final String MAPPINGS_SUBDIR = "mappings";
     private static final String DEPLOYMENT_EMBEDDED = "EMBEDDED";
     private static final String DEPLOYMENT_EXTERNAL = "EXTERNAL";
     private static final String ACTION_START = "START";
@@ -84,6 +97,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
     private static final String DEFAULT_EXECUTION_KEY = "default";
 
     private final Map<String, WireMockServer> serversByExecution = new ConcurrentHashMap<>();
+    private final Map<String, Path> tempMappingRoots = new ConcurrentHashMap<>();
     private final HttpTargetRegistry targetRegistry;
 
     public MockServerTaskExecutor(HttpTargetRegistry targetRegistry) {
@@ -149,7 +163,12 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
 
         var config = WireMockConfiguration.wireMockConfig().port(port);
         if (mappingsPath != null && !mappingsPath.isBlank()) {
-            config.usingFilesUnderDirectory(mappingsPath);
+            MappingsRoot root = resolveMappingsRoot(mappingsPath);
+            config.usingFilesUnderDirectory(root.path());
+            if (root.tempDir() != null) {
+                Path previous = tempMappingRoots.put(executionKey, root.tempDir());
+                deleteRecursively(previous);
+            }
         }
 
         var server = new WireMockServer(config);
@@ -179,11 +198,13 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
         if (server != null && server.isRunning()) {
             int port = server.port();
             server.stop();
+            deleteTempRoot(executionKey);
             var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             log.info("action=mock_server_stopped executionKey={} port={} duration={}",
                     executionKey, port, formatDuration(elapsed));
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.of());
         }
+        deleteTempRoot(executionKey);
         log.info("action=mock_server_stop_noop executionKey={}", executionKey);
         var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.of());
@@ -368,6 +389,8 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
             log.info("action=mock_server_cleanup_all activeServers={}", serversByExecution.size());
             serversByExecution.values().forEach(this::stopServer);
             serversByExecution.clear();
+            tempMappingRoots.values().forEach(MockServerTaskExecutor::deleteRecursively);
+            tempMappingRoots.clear();
         } else {
             String key = executionId.value();
             WireMockServer server = serversByExecution.remove(key);
@@ -375,6 +398,28 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
                 log.info("action=mock_server_cleanup executionId={}", key);
                 stopServer(server);
             }
+            deleteTempRoot(key);
+        }
+    }
+
+    private void deleteTempRoot(String executionKey) {
+        deleteRecursively(tempMappingRoots.remove(executionKey));
+    }
+
+    private static void deleteRecursively(Path root) {
+        if (root == null) {
+            return;
+        }
+        try (var paths = Files.walk(root)) {
+            paths.sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException e) {
+                    log.warn("action=mock_server_temp_cleanup_failed path={}", path, e);
+                }
+            });
+        } catch (IOException e) {
+            log.warn("action=mock_server_temp_cleanup_failed path={}", root, e);
         }
     }
 
@@ -389,6 +434,53 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
     }
 
     // ─────────────────────────────── HELPERS ───────────────────────────────
+
+    /** WireMock root directory; {@code tempDir} is set only for classpath roots. */
+    private record MappingsRoot(String path, Path tempDir) {
+    }
+
+    /**
+     * Resolves the WireMock root directory passed as {@code mappingsPath}.
+     * <p>
+     * A plain filesystem path is used as-is. A {@code classpath:} root is
+     * materialised into a temporary directory because WireMock's own
+     * {@code usingFilesUnderClasspath} cannot list resources inside a Spring
+     * Boot nested JAR.
+     */
+    private static MappingsRoot resolveMappingsRoot(String mappingsPath) {
+        if (!mappingsPath.startsWith(CLASSPATH_PREFIX)) {
+            return new MappingsRoot(mappingsPath, null);
+        }
+        String classpathRoot = mappingsPath.substring(CLASSPATH_PREFIX.length())
+                .replaceAll("/+$", "");
+        try {
+            var resolver = new PathMatchingResourcePatternResolver();
+            Resource[] resources = resolver.getResources(
+                    "classpath*:" + classpathRoot + "/" + MAPPINGS_SUBDIR + "/*");
+            if (resources.length == 0) {
+                throw new IllegalArgumentException(
+                        "No mappings found on classpath under "
+                                + classpathRoot + "/" + MAPPINGS_SUBDIR);
+            }
+
+            Path root = Files.createTempDirectory("perf-mock-mappings-");
+            Path mappingsDir = Files.createDirectories(root.resolve(MAPPINGS_SUBDIR));
+            for (Resource resource : resources) {
+                String filename = resource.getFilename();
+                if (filename == null) {
+                    continue;
+                }
+                try (InputStream in = resource.getInputStream()) {
+                    Files.copy(in, mappingsDir.resolve(filename),
+                            StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+            return new MappingsRoot(root.toString(), root);
+        } catch (IOException e) {
+            throw new UncheckedIOException(
+                    "Failed to load classpath mappings from " + classpathRoot, e);
+        }
+    }
 
     private static String paramString(StepDefinition step, String key, String defaultValue) {
         Object value = step.parameters().get(key);

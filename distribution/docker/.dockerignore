@@ -51,8 +51,8 @@ Thumbs.db
 # === Repertoire .claude (hors contexte build) ===
 .claude/
 
-# === Kubernetes manifests (pas dans l'image) ===
-distribution/kubernetes/
+# === Example stack (not in the platform image) ===
+distribution/example/
 
 # === Tests (non necessaires dans le build Docker) ===
 src/test/

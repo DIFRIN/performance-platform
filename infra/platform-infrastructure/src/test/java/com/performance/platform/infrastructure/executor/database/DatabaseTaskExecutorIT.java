@@ -112,10 +112,10 @@ class DatabaseTaskExecutorIT {
             statement.execute("DROP TABLE IF EXISTS devices");
             try {
                 statement.execute(Files.readString(root.resolve(
-                        "distribution/examples/sut/sut-db/sql/V1__devices_schema.sql")));
+                        "distribution/example/sut-db/sql/V1__devices_schema.sql")));
                 for (String script : new String[] {
                         "bootstrap/src/main/resources/sql/seed-sut-devices.sql",
-                        "distribution/examples/sut/sut-db/sql/V2__seed_10k_devices.sql"}) {
+                        "distribution/example/sut-db/sql/V2__seed_10k_devices.sql"}) {
                     statement.execute("TRUNCATE devices");
                     String seed = Files.readString(root.resolve(script));
                     statement.execute(seed);

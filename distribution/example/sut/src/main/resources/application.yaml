@@ -1,0 +1,44 @@
+spring:
+  application.name: sut
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${SUT_KAFKA_GROUP_ID:sut-consumer}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: "1"
+  datasource:
+    url: ${SUT_DB_URL:jdbc:postgresql://localhost:5433/sut_devices}
+    username: ${SUT_DB_USERNAME:postgres}
+    password: ${SUT_DB_PASSWORD:changeme}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  sql:
+    init:
+      mode: never
+
+# Which stub behaviours are active. Both can run in one instance, or be split
+# across two instances of the same image (see MODOP.md).
+sut:
+  kafka-consumer:
+    enabled: ${SUT_KAFKA_CONSUMER_ENABLED:true}
+    concurrency: ${SUT_KAFKA_CONCURRENCY:3}
+  http-api:
+    enabled: ${SUT_HTTP_API_ENABLED:true}
+  topics:
+    commands: ${IOT_TOPIC_COMMANDS:iot-commands}
+    events: ${DEVICE_TOPIC_EVENTS:device-events}
+  http:
+    command-path: ${SUT_COMMAND_PATH:/command}
+
+server:
+  port: ${SERVER_PORT:8084}
+
+logging:
+  level:
+    com.performance.examples: INFO

@@ -10,12 +10,34 @@
  */
 
 /**
- * Route definitions. Each entry={path, label, orchestratorOnly}.
+ * Route definitions. Each entry={path, label, icon, orchestratorOnly}.
+ * Icons are static inline SVGs (16×16, stroke = currentColor).
  */
 const NAV_ITEMS = [
-    { path: "executions", label: "Executions", orchestratorOnly: false },
-    { path: "upload",     label: "Upload",     orchestratorOnly: false },
-    { path: "agents",     label: "Agents",     orchestratorOnly: true  },
+    {
+        path: "scenarios",
+        label: "Scenarios",
+        orchestratorOnly: false,
+        icon: '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+              '<path d="M3 3.5h10M3 8h10M3 12.5h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    },
+    {
+        path: "executions",
+        label: "Executions",
+        orchestratorOnly: false,
+        icon: '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+              '<circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/>' +
+              '<path d="M6.8 5.8 10 8l-3.2 2.2V5.8Z" fill="currentColor"/></svg>'
+    },
+    {
+        path: "agents",
+        label: "Agents",
+        orchestratorOnly: true,
+        icon: '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+              '<rect x="2.5" y="3" width="11" height="4" rx="1.2" stroke="currentColor" stroke-width="1.5"/>' +
+              '<rect x="2.5" y="9" width="11" height="4" rx="1.2" stroke="currentColor" stroke-width="1.5"/>' +
+              '<path d="M5 5h.01M5 11h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+    }
 ];
 
 /**
@@ -42,7 +64,18 @@ export function renderNav(navEl, { orchestrator }) {
         const a = document.createElement("a");
         a.href = "#/" + item.path;
         a.className = "nav-link";
-        a.textContent = item.label;
+        a.setAttribute("aria-current", currentPath === item.path ? "page" : "false");
+
+        const icon = document.createElement("span");
+        icon.className = "nav-link__icon";
+        icon.innerHTML = item.icon;
+
+        const label = document.createElement("span");
+        label.className = "nav-link__label";
+        label.textContent = item.label;
+
+        a.appendChild(icon);
+        a.appendChild(label);
 
         // Highlight active route
         if (currentPath === item.path) {

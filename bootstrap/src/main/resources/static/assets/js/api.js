@@ -37,7 +37,9 @@ async function request(url, options = {}) {
         } catch {
             message = res.statusText;
         }
-        throw new Error("API " + res.status + ": " + message);
+        const err = new Error("API " + res.status + ": " + message);
+        err.status = res.status;
+        throw err;
     }
 
     // 204 No Content — nothing to parse
@@ -135,6 +137,46 @@ export async function deleteExecution(id) {
     });
 }
 
+/**
+ * Rerun a terminal execution from its retained source YAML.
+ * POST /api/v1/executions/{id}/rerun
+ *
+ * @param {string} id — execution identifier
+ * @returns {Promise<{executionId: string, status: string}>} the new execution
+ */
+export async function rerunExecution(id) {
+    return request(BASE + "/executions/" + encodeURIComponent(id) + "/rerun", {
+        method: "POST",
+    });
+}
+
+// ---- Scenario catalog ----
+
+/**
+ * List the scenarios loaded from the configured directory (no execution).
+ * GET /api/v1/catalog
+ *
+ * @returns {Promise<Array<{key: string, scenarioId: string, name: string, version: string,
+ *   tags: string[], executionMode: string, stepCount: number, valid: boolean,
+ *   error: string|null, steps: Array}>>}
+ */
+export async function listCatalog() {
+    return request(BASE + "/catalog");
+}
+
+/**
+ * Submit a catalog scenario for execution.
+ * POST /api/v1/catalog/{key}/run
+ *
+ * @param {string} key — catalog file name
+ * @returns {Promise<{executionId: string, status: string}>}
+ */
+export async function runCatalogScenario(key) {
+    return request(BASE + "/catalog/" + encodeURIComponent(key) + "/run", {
+        method: "POST",
+    });
+}
+
 // ---- Agents ----
 
 /**
@@ -202,6 +244,7 @@ export async function uploadScenario({ file, yaml } = {}) {
 
     // 400 → ValidationErrorResponse or generic error
     const err = new Error(body.message || body.error || "Upload failed");
+    err.status = res.status;
     err.code = body.error;
     err.details = body.details || [];
     throw err;

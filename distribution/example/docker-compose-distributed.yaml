@@ -1,0 +1,255 @@
+# =============================================================================
+# Example - DISTRIBUTED platform mode
+# =============================================================================
+# Orchestrator + three specialised agents (same image, different
+# AGENT_SUPPORTED_TASKS). The SUT stub, PostgreSQL and Kafka run alongside.
+#
+# Routing (ADR-015):
+#   mock-agent : mock-server, http-mock   (embedded WireMock, port 8090)
+#   agent-http : gatling, http-client     (HTTP injection, SUT health)
+#   agent-kafka: database, database-assertion, kafka-producer,
+#                kafka-consumer, kafka, shell
+#
+# Usage:
+#   docker compose -f distribution/example/docker-compose-distributed.yaml build
+#   docker compose -f distribution/example/docker-compose-distributed.yaml up -d
+#   curl -X POST http://localhost:8080/api/v1/scenarios \
+#     -H 'Content-Type: application/yaml' \
+#     --data-binary @distribution/example/scenarios/01-kafka-to-http-distributed.yaml
+# =============================================================================
+
+x-platform-image: &platform-image
+  image: performance-platform:example
+  build:
+    context: ../..
+    dockerfile: distribution/docker/Dockerfile
+
+x-sut-image: &sut-image
+  image: performance-sut:example
+  build:
+    context: ./sut
+    dockerfile: Dockerfile
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: example-postgres
+    environment:
+      POSTGRES_DB: performance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - example_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d performance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - example-net
+
+  postgres-sut:
+    image: postgres:16-alpine
+    container_name: example-postgres-sut
+    environment:
+      POSTGRES_DB: sut_devices
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5433:5432"
+    volumes:
+      - example_sut_postgres_data:/var/lib/postgresql/data
+      - ./sut-db/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sut_devices"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - example-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: example-kafka
+    environment:
+      CLUSTER_ID: "perf-example"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+    networks:
+      - example-net
+
+  # Single stub image, both behaviours enabled by configuration.
+  sut:
+    <<: *sut-image
+    container_name: example-sut
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      SUT_DB_URL: "jdbc:postgresql://postgres-sut:5432/sut_devices"
+      SUT_DB_USERNAME: postgres
+      SUT_DB_PASSWORD: changeme
+      SERVER_PORT: "8084"
+      SUT_KAFKA_CONSUMER_ENABLED: "true"
+      SUT_HTTP_API_ENABLED: "true"
+    # The SUT reaches the embedded WireMock at host.docker.internal:8090
+    # (address stored in devices.device_dns, published by mock-agent).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8084/api/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      postgres-sut:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - example-net
+
+  orchestrator:
+    <<: *platform-image
+    container_name: example-orchestrator
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: ORCHESTRATOR
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: orchestrator,example
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      IOT_KAFKA_SERVERS: "kafka:29092"
+      DB_URL: "jdbc:postgresql://postgres:5432/performance"
+      DB_USERNAME: postgres
+      DB_PASSWORD: changeme
+      PLATFORM_SECURITY_ENABLED: "false"
+      REPORTING_OUTPUT_DIR: /reports
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./scenarios:/scenarios:ro
+      - ./reports:/reports
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - example-net
+
+  mock-agent:
+    <<: *platform-image
+    container_name: example-mock-agent
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: AGENT
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: agent
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      IOT_KAFKA_SERVERS: "kafka:29092"
+      AGENT_ID: mock-agent
+      AGENT_SUPPORTED_TASKS: "mock-server,http-mock"
+      PLATFORM_SECURITY_ENABLED: "false"
+      # Only this agent resolves the wiremock target.
+      WIREMOCK_URL: "http://mock-agent:8090"
+    ports:
+      # Published so the SUT reaches the embedded mock via host.docker.internal.
+      - "8090:8090"
+    healthcheck:
+      disable: true
+    depends_on:
+      kafka:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - example-net
+
+  agent-http:
+    <<: *platform-image
+    container_name: example-agent-http
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: AGENT
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: agent,example
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      IOT_KAFKA_SERVERS: "kafka:29092"
+      AGENT_ID: agent-http
+      AGENT_SUPPORTED_TASKS: "gatling,http-client"
+      PLATFORM_SECURITY_ENABLED: "false"
+      SUT_API_URL: "http://sut:8084"
+      SPRING_FLYWAY_ENABLED: "false"
+    healthcheck:
+      disable: true
+    depends_on:
+      kafka:
+        condition: service_healthy
+      sut:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - example-net
+
+  agent-kafka:
+    <<: *platform-image
+    container_name: example-agent-kafka
+    environment:
+      RUNTIME_MODE: DISTRIBUTED
+      MODE: AGENT
+      TRANSPORT_TYPE: KAFKA
+      SPRING_PROFILES_ACTIVE: agent,example
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      IOT_KAFKA_SERVERS: "kafka:29092"
+      AGENT_ID: agent-kafka
+      AGENT_SUPPORTED_TASKS: "database,database-assertion,kafka-producer,kafka-consumer,kafka,shell"
+      PLATFORM_SECURITY_ENABLED: "false"
+      SUT_DB_URL: "jdbc:postgresql://postgres-sut:5432/sut_devices"
+      SUT_DB_USERNAME: postgres
+      SUT_DB_PASSWORD: changeme
+      SPRING_FLYWAY_ENABLED: "false"
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres-sut:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - example-net
+
+networks:
+  example-net:
+    driver: bridge
+
+volumes:
+  example_postgres_data:
+  example_sut_postgres_data:

@@ -30,6 +30,7 @@ export function mount(el) {
     let intervalId = null;
     let agents = [];
     let error = null;
+    let unavailable = false;
 
     /* ---- Skeleton ---- */
     el.innerHTML = buildSkeleton();
@@ -42,12 +43,27 @@ export function mount(el) {
         try {
             agents = await listAgents();
             error = null;
+            unavailable = false;
         } catch (e) {
             console.error("agents: fetch failed", e);
-            error = e.message || "Failed to load agents";
-            // Keep previous agents so the table does not blank
+            if (e.status === 404) {
+                // LOCAL mode: the registry endpoint only exists in ORCHESTRATOR.
+                unavailable = true;
+                error = null;
+                stopPolling();
+            } else {
+                error = e.message || "Failed to load agents";
+                // Keep previous agents so the table does not blank
+            }
         }
-        renderBody(bodyEl, agents, error);
+        renderBody(bodyEl, agents, error, unavailable);
+    }
+
+    function stopPolling() {
+        if (intervalId !== null) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
     }
 
     // Initial fetch
@@ -59,10 +75,7 @@ export function mount(el) {
     /* ---- Cleanup ---- */
     return {
         cleanup: function () {
-            if (intervalId !== null) {
-                clearInterval(intervalId);
-                intervalId = null;
-            }
+            stopPolling();
         }
     };
 }
@@ -92,11 +105,23 @@ function buildSkeleton() {
  * @param {Array} agents — raw list from API
  * @param {string|null} error — fetch error message, if any
  */
-function renderBody(bodyEl, agents, error) {
+function renderBody(bodyEl, agents, error, unavailable) {
     // Update count in header
     const countEl = document.getElementById("agents-count");
     if (countEl) {
-        countEl.textContent = agents.length + " agent" + (agents.length !== 1 ? "s" : "");
+        countEl.textContent = unavailable
+            ? ""
+            : agents.length + " agent" + (agents.length !== 1 ? "s" : "");
+    }
+
+    // LOCAL mode has no agent registry endpoint — render a neutral state, not an error.
+    if (unavailable) {
+        bodyEl.innerHTML = '' +
+            '<div class="empty-state">' +
+            '  <div class="empty-state__text">Agents are not available in LOCAL mode</div>' +
+            '  <p class="empty-state__hint text-muted">The agent registry is only exposed by an ORCHESTRATOR.</p>' +
+            '</div>';
+        return;
     }
 
     // Initial load failure (no data yet)

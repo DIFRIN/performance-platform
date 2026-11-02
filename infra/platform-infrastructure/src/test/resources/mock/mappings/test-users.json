@@ -1,0 +1,16 @@
+{
+  "name": "GET /api/test",
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/test"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "ok": true
+    }
+  }
+}

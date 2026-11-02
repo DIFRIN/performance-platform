@@ -10,6 +10,8 @@
  * - errorMessage displayed for KO tasks
  * - Summary view by default; full detail (errorMessage long, timings) via row expansion
  * - Report navigation stays disabled until execution is terminal
+ * - Rerun (terminal only) starts a new execution from the retained YAML
+ * - Abort (active only) cancels the execution
  * - Back link to /#/executions; report route /#/executions/{id}/report
  *
  * Public API:
@@ -19,7 +21,7 @@
  * when the router switches to another view.
  */
 
-import { getExecutionStatus, listExecutionTasks, getExecutionScenario } from "/assets/js/api.js";
+import { getExecutionStatus, listExecutionTasks, getExecutionScenario, cancelExecution, rerunExecution } from "/assets/js/api.js";
 
 /** Polling interval in milliseconds. */
 const POLL_INTERVAL_MS = 3000;
@@ -54,10 +56,13 @@ export function mount(el, executionId) {
     const bodyEl = el.querySelector("#exec-detail-body");
     const backLink = el.querySelector("[data-exec-back]");
     const reportLink = el.querySelector("[data-exec-report]");
+    const rerunBtn = el.querySelector("[data-exec-rerun]");
+    const abortBtn = el.querySelector("[data-exec-abort]");
     const scenarioPanel = el.querySelector("[data-scenario-source]");
     const scenarioCode = el.querySelector("[data-scenario-code]");
     let sourceLoaded = false;
     let sourceLoading = false;
+    let actionInFlight = false;
 
     scenarioPanel.addEventListener("toggle", async function () {
         if (!scenarioPanel.open || sourceLoaded || sourceLoading) return;
@@ -98,6 +103,50 @@ export function mount(el, executionId) {
         });
     }
 
+    // Rerun this execution from its retained source YAML
+    if (rerunBtn) {
+        rerunBtn.addEventListener("click", async function () {
+            if (rerunBtn.disabled || actionInFlight) return;
+            actionInFlight = true;
+            rerunBtn.disabled = true;
+            rerunBtn.textContent = "Starting...";
+            try {
+                const result = await rerunExecution(executionId);
+                window.location.hash = "#/executions/" + encodeURIComponent(result.executionId);
+            } catch (e) {
+                alert("Rerun failed: " + (e.message || "Unknown error"));
+            } finally {
+                actionInFlight = false;
+                if (!disposed) {
+                    rerunBtn.textContent = "Rerun";
+                    rerunBtn.disabled = false;
+                }
+            }
+        });
+    }
+
+    // Abort (cancel) an active execution
+    if (abortBtn) {
+        abortBtn.addEventListener("click", async function () {
+            if (abortBtn.disabled || actionInFlight) return;
+            if (!confirm("Abort execution " + executionId + "?")) return;
+            actionInFlight = true;
+            abortBtn.disabled = true;
+            abortBtn.textContent = "Aborting...";
+            try {
+                await cancelExecution(executionId);
+            } catch (e) {
+                alert("Abort failed: " + (e.message || "Unknown error"));
+            } finally {
+                actionInFlight = false;
+                if (!disposed) {
+                    abortBtn.textContent = "Abort";
+                }
+                fetchAndRender();
+            }
+        });
+    }
+
     // Delegated click handler on body for row expansion
     bodyEl.addEventListener("click", function (e) {
         var toggleBtn = e.target.closest("[data-task-toggle]");
@@ -130,6 +179,28 @@ export function mount(el, executionId) {
         }
     }
 
+    /**
+     * Enable/disable Rerun and Abort according to the current execution status.
+     * @param {Object|null} current
+     */
+    function updateActionButtons(current) {
+        const terminal = !!current && TERMINAL_STATUSES.has(current.status);
+        const active = !!current && RUNNING_STATUSES.has(current.status);
+
+        if (rerunBtn) {
+            rerunBtn.disabled = actionInFlight || !terminal;
+            rerunBtn.title = terminal
+                ? "Start a new execution from the same scenario"
+                : "Available when execution has finished";
+        }
+        if (abortBtn) {
+            abortBtn.disabled = actionInFlight || !active;
+            abortBtn.title = active
+                ? "Cancel this execution"
+                : "Available while execution is running";
+        }
+    }
+
     async function fetchAndRender() {
         if (inFlight || disposed) return;
         inFlight = true;
@@ -148,6 +219,7 @@ export function mount(el, executionId) {
             reportLink.title = reportLink.disabled
                 ? "Available when execution has finished"
                 : "View execution report";
+            updateActionButtons(detail);
 
             var snapshot = JSON.stringify([detail, tasksData, error]);
             if (snapshot !== lastSnapshot) {
@@ -197,6 +269,8 @@ function buildSkeleton(executionId) {
         '      <h1 class="detail-header__title">Execution <span class="text-mono">' + escapeHtml(executionId) + '</span></h1>' +
         '    </div>' +
         '    <div class="detail-header__right">' +
+        '      <button type="button" class="btn" data-exec-rerun disabled title="Available when execution has finished">Rerun</button>' +
+        '      <button type="button" class="btn btn--warning" data-exec-abort disabled title="Available while execution is running">Abort</button>' +
         '      <button type="button" class="btn btn--primary" data-exec-report disabled title="Available when execution has finished">View Report</button>' +
         '    </div>' +
         '  </div>' +

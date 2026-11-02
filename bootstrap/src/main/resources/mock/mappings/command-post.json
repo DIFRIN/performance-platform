@@ -1,0 +1,17 @@
+{
+  "name": "POST /command",
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPath": "/command"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "status": "accepted"
+    }
+  }
+}

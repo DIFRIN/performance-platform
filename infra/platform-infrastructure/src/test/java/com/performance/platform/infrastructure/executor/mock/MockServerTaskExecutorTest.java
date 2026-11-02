@@ -133,6 +133,29 @@ class MockServerTaskExecutorTest {
             assertThat(result.outputs()).containsKey(MockServerTaskExecutor.OUTPUT_PORT);
             assertThat(result.outputs()).containsKey(MockServerTaskExecutor.OUTPUT_URL);
         }
+
+        @Test
+        @DisplayName("should load mappings from a classpath root")
+        void shouldLoadMappingsFromClasspath() throws Exception {
+            var step = new StepDefinition(
+                    TaskId.of("step-005"), "mock-server", Phase.PREPARATION,
+                    Map.of("deployment", "EMBEDDED", "action", "START", "port", 0,
+                            "mappingsPath", "classpath:mock"),
+                    null, null, Duration.ofSeconds(10), null);
+
+            TaskResult result = executor.execute(emptyContext(), step);
+            assertThat(result.isSuccess()).isTrue();
+
+            String url = (String) result.outputs().get(MockServerTaskExecutor.OUTPUT_URL);
+            try (var client = java.net.http.HttpClient.newHttpClient()) {
+                var request = java.net.http.HttpRequest.newBuilder(
+                        java.net.URI.create(url + "/api/test")).GET().build();
+                var response = client.send(request,
+                        java.net.http.HttpResponse.BodyHandlers.ofString());
+                assertThat(response.statusCode()).isEqualTo(200);
+                assertThat(response.body()).contains("\"ok\":true");
+            }
+        }
     }
 
     @Nested

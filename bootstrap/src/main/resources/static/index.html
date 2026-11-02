@@ -12,9 +12,17 @@
 <div id="app">
     <!-- Header -->
     <header class="app-header">
-        <div>
-            <span class="app-header__title">Performance Platform</span>
-            <span class="app-header__subtitle" id="runtime-badge"></span>
+        <div class="app-header__brand">
+            <span class="app-header__mark" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="16" height="16" fill="none">
+                    <path d="M2 13V9M6 13V6M10 13V8M14 13V3" stroke="currentColor"
+                          stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <div class="app-header__info">
+                <span class="app-header__title">Performance Platform</span>
+                <span class="app-header__subtitle" id="runtime-badge"></span>
+            </div>
         </div>
     </header>
 
@@ -36,9 +44,9 @@
     import { renderNav } from "/assets/js/nav.js";
     import { mount as mountExecutions } from "/assets/js/views/executions.js";
     import { mount as mountExecutionDetail } from "/assets/js/views/execution-detail.js";
+    import { mount as mountScenarios } from "/assets/js/views/scenarios.js";
     import { mount as mountAgents } from "/assets/js/views/agents.js";
     import { mount as mountReport } from "/assets/js/views/report.js";
-    import { mount as mountUpload } from "/assets/js/views/upload.js";
 
     // ----------------------------------------------------------------
     // Orchestrator detection — placeholder (ISSUE-126).
@@ -68,12 +76,12 @@
         return { cleanup: null };
     }
 
+    registerRoute("scenarios", (el, params) => mountScenarios(el));
     registerRoute("executions", (el, params) => mountExecutions(el));
     registerRoute("executions/{id}", (el, params) =>
         mountExecutionDetail(el, params.id));
     registerRoute("executions/{id}/report", (el, params) =>
         mountReport(el, params.id));
-    registerRoute("upload", (el, params) => mountUpload(el));
     registerRoute("agents", (el, params) => mountAgents(el));
 
     // ----------------------------------------------------------------

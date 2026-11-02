@@ -1,8 +1,8 @@
 # Spec 09 — Deployment
 
 **Module** : `distribution`
-**Artefacts** : `docker/Dockerfile`, `docker/docker-compose.yaml`, `kubernetes/*`,
-`local-dev/docker-compose.yaml`, `examples/demo-stack/*`
+**Artefacts** : `docker/Dockerfile`, `example/docker-compose-{local,distributed}.yaml`,
+`example/scenarios/*`, `example/sut/*`, `example/MODOP.md`
 
 ---
 
@@ -44,153 +44,102 @@ Points importants :
 | `AGENT_SUPPORTED_TASKS` | liste CSV | spécialisation d'agent (ADR-015) ; remplace `AGENT_TAGS` |
 | `AGENT_ID` | string | identité stable (consumer group Kafka) |
 | `KAFKA_BOOTSTRAP_SERVERS` | host:port | brokers |
-| `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | — | PostgreSQL |
-| `WIREMOCK_URL` / `DEVICE_API_URL` | URL | cibles HTTP nommées |
+| `IOT_KAFKA_SERVERS` | host:port | broker de la cible `iot-sut` |
+| `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | — | PostgreSQL de la plateforme |
+| `SUT_DB_URL` / `SUT_DB_USERNAME` / `SUT_DB_PASSWORD` | — | PostgreSQL du SUT (datasource `sut-db`) |
+| `SUT_API_URL` | URL | cible HTTP `sut-api` |
+| `WIREMOCK_URL` | URL | cible HTTP `wiremock` (WireMock EMBEDDED) |
 | `REPORTING_OUTPUT_DIR` | chemin | sortie des rapports |
 | `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI` | URL | OAuth2/JWT (sécurité activée) |
-| `SPRING_PROFILES_ACTIVE` | `local`, `orchestrator`, `agent`, … | profil Spring |
+| `SPRING_PROFILES_ACTIVE` | `local`, `orchestrator`, `agent`, `example` | profils Spring |
 
 Règle (ADR-006) : une variable d'environnement définie gagne toujours sur la property
 correspondante, via `RuntimeConfigEnvironmentPostProcessor`.
 
+`WIREMOCK_URL` n'est nécessaire que sur l'agent qui résout la cible `wiremock`
+(`http-mock`, `http-client` ou `gatling` avec `target: wiremock`). L'orchestrateur
+n'exécute aucune tâche et n'en a pas besoin.
+
 ---
 
-## 2. Docker Compose
+## 2. Exemple exécutable (`example/`)
 
-### 2.1 Dépendances de développement IDE (`local-dev/docker-compose.yaml`)
+Le seul exemple de déploiement conservé est `distribution/example/`. Le mode
+opératoire complet est dans [`example/MODOP.md`](../../../distribution/example/MODOP.md).
 
-Uniquement l'infrastructure externe, la plateforme tourne depuis l'IDE :
-
-| Service | Port hôte | Identifiants |
+| Fichier | Mode | Services |
 |---|---|---|
-| PostgreSQL 16 | 5432 | `postgres` / `changeme`, base `performance` |
-| Kafka KRaft 7.7.1 | 9092 | — |
-| WireMock 3.12.1 | 8090 | mappings du demo-stack |
+| `docker-compose-local.yaml` | LOCAL | PostgreSQL, PostgreSQL SUT, Kafka, SUT, plateforme headless (un JVM) |
+| `docker-compose-distributed.yaml` | DISTRIBUTED | PostgreSQL, PostgreSQL SUT, Kafka, SUT, orchestrateur, `mock-agent`, `agent-http`, `agent-kafka` |
 
-```bash
-docker compose -f distribution/local-dev/docker-compose.yaml up -d
-docker compose -f distribution/local-dev/docker-compose.yaml down -v
-```
+Deux scénarios, chacun fourni en LOCAL et DISTRIBUTED :
 
-Profils IDE fournis dans `bootstrap/src/main/resources` :
-`application-ide-orchestrator.yaml`, `application-agent-injector.yaml`,
-`application-agent-asserter.yaml`.
-
-### 2.2 Stack de démonstration (`examples/demo-stack/docker-compose.yaml`)
-
-Services : PostgreSQL, Kafka, WireMock, orchestrateur, `agent-1`, plus un `local-runner`
-sous profil `runner`. Deux scénarios :
-
-| Scénario | Mode | Couverture |
+| Scénario | Flux | Assertion |
 |---|---|---|
-| `scenarios/remote-demo.yaml` | DISTRIBUTED | base de données, Kafka producer/consumer, mock HTTP, assertions |
-| `scenarios/local-demo.yaml` | LOCAL | mêmes tâches, exécution dans l'orchestrateur |
+| `01-kafka-to-http-*` | Kafka → SUT → DB → HTTP vers `device_dns` | `http-mock` sur le WireMock EMBEDDED |
+| `02-http-to-kafka-*` | HTTP → SUT → DB → Kafka | `kafka-consumer` + `kafka` |
 
-```bash
-cd distribution/examples/demo-stack
-./run-demo.sh                      # remote puis local
-```
+Points structurants :
+- **Aucun service WireMock standalone** : le mock est démarré par la tâche
+  `mock-server` (`deployment: EMBEDDED`, port `8090`) dans un agent de la plateforme.
+- **Un seul SUT stub** : les comportements sont activés par configuration
+  (`SUT_KAFKA_CONSUMER_ENABLED`, `SUT_HTTP_API_ENABLED`), avec la même image.
+- **Un seul `application-local.yaml`** pour Docker LOCAL et l'IDE ; les URLs de
+  conteneurs sont injectées par variables d'environnement, les défauts pointent vers
+  `localhost`.
+- En DISTRIBUTED, le profil `example` ajoute la datasource `sut-db` et la cible
+  `sut-api` aux profils `orchestrator`/`agent`.
 
-Exemple d'agent spécialisé :
+### Spécialisation des agents (DISTRIBUTED)
 
 ```yaml
-agent-1:
+mock-agent:
   environment:
-    RUNTIME_MODE: DISTRIBUTED
-    MODE: AGENT
-    AGENT_SUPPORTED_TASKS: "database,database-assertion,kafka-producer,kafka,http-client,http-mock"
+    AGENT_SUPPORTED_TASKS: "mock-server,http-mock"
+    WIREMOCK_URL: "http://mock-agent:8090"
+agent-http:
+  environment:
+    AGENT_SUPPORTED_TASKS: "gatling,http-client"
+    SUT_API_URL: "http://sut:8084"
+agent-kafka:
+  environment:
+    AGENT_SUPPORTED_TASKS: "database,database-assertion,kafka-producer,kafka-consumer,kafka,shell"
+    SUT_DB_URL: "jdbc:postgresql://postgres-sut:5432/sut_devices"
 ```
 
 > `AGENT_TAGS` n'existe plus : le routage se fait uniquement par nom de tâche
 > (`agent.supported-tasks`, ADR-015).
 
-```mermaid
-flowchart LR
-    subgraph COMPOSE["Docker Compose — demo-stack"]
-        PG[("PostgreSQL")]
-        KAFKA[("Kafka")]
-        WM["WireMock"]
-        ORCH["orchestrator<br/>MODE=ORCHESTRATOR"]
-        AG["agent-1<br/>MODE=AGENT"]
-        RUN["local-runner<br/>profil runner"]
-        ORCH --- PG
-        ORCH --- KAFKA
-        ORCH --- WM
-        AG --- KAFKA
-        RUN --- PG
-        RUN --- KAFKA
-        RUN --- WM
-    end
-    subgraph K8S["Kubernetes"]
-        KORCH["orchestrator StatefulSet"]
-        KAG["agent Deployment + HPA"]
-        KSVC["Service API / Actuator"]
-        KORCH --- KSVC
-        KORCH -.->|"events / tasks"| KAG
-    end
-```
-
-### 2.3 Compose historique (`docker/docker-compose.yaml`)
-
-Orchestrateur + agents + Kafka + PostgreSQL. Les variables `MODE`, `RUNTIME_MODE`,
-`TRANSPORT_TYPE`, `DB_URL` y sont utilisées de la même manière.
-
 ---
 
-## 3. Kubernetes
-
-Manifests dans `distribution/kubernetes/` :
-
-| Fichier | Contenu |
-|---|---|
-| `orchestrator-statefulset.yaml` | StatefulSet orchestrateur, `MODE=ORCHESTRATOR` |
-| `agent-deployment.yaml` | Deployment agents, `MODE=AGENT`, `AGENT_SUPPORTED_TASKS` |
-| `agent-hpa.yaml` | HPA CPU sur le Deployment agent |
-| `service.yaml` | Service API/Actuator |
-| `configmap.yaml` | configuration commune (transport, topics, datasource) |
-| `secret-template.yaml` | template des secrets (DB, OAuth2) |
-
-Probes : `/actuator/health/readiness` (initialDelay 30 s) et
-`/actuator/health/liveness` (initialDelay 60 s). Les agents n'ont pas de Service ni de
-probe HTTP : ils n'exposent aucun serveur web (ADR-019) — surveiller leur état via le
-registre orchestrateur et les logs.
-
-Recommandations :
-- `execution.task-availability-timeout` ≥ 120 s en K8s (cold start d'un agent).
-- `agent.supported-tasks` explicite par type d'agent (injecteur vs asserteur).
-- Consumer group Kafka unique par pod (défaut `${AGENT_ID:agent}-${random.uuid}`).
-- Secrets OAuth2/JWT fournis via `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_*` ;
-  ne pas déclarer de valeur vide (Spring échoue au démarrage).
-
----
-
-## 4. Modes de lancement
+## 3. Modes de lancement
 
 ```bash
 # LOCAL (défaut) — H2 en mémoire, transport IN_MEMORY
 java -jar bootstrap/target/performance-platform.jar
 
-# LOCAL avec dépendances Docker (PostgreSQL/Kafka/WireMock)
-java -jar app.jar --spring.profiles.active=local
+# LOCAL avec les dépendances Docker de l'exemple (PostgreSQL/Kafka/SUT)
+java -jar bootstrap/target/performance-platform.jar \
+  --spring.profiles.active=local \
+  --scenario=file:distribution/example/scenarios/01-kafka-to-http-local.yaml
 
-# CLI headless (run-and-exit, codes 0/1/2 — ADR-021)
-java -jar app.jar --scenario=distribution/examples/scenarios/device-api-local.yaml
-
-# ORCHESTRATOR distribué
-MODE=ORCHESTRATOR RUNTIME_MODE=DISTRIBUTED TRANSPORT_TYPE=KAFKA java -jar app.jar
+# ORCHESTRATOR distribué (profil example = ressources SUT)
+MODE=ORCHESTRATOR RUNTIME_MODE=DISTRIBUTED TRANSPORT_TYPE=KAFKA \
+  SPRING_PROFILES_ACTIVE=orchestrator,example java -jar app.jar
 
 # AGENT distribué (aucun serveur web)
 MODE=AGENT RUNTIME_MODE=DISTRIBUTED TRANSPORT_TYPE=KAFKA \
-  AGENT_SUPPORTED_TASKS=mock-server,http-client java -jar app.jar
+  SPRING_PROFILES_ACTIVE=agent,example \
+  AGENT_SUPPORTED_TASKS=mock-server,http-mock java -jar app.jar
 ```
 
 ---
 
-## 5. Sécurité de déploiement
+## 4. Sécurité de déploiement
 
 - `platform.security.enabled=false` : autorisé mais WARN explicite (posture permissive,
   ADR-038).
 - `true` : `/api/**` exige un JWT avec rôle `USER` ou `ADMIN` ; endpoints publics
   `/actuator/health/**`, `/`, `/index.html`, `/assets/**`.
-- Secrets jamais dans les YAML : variables d'environnement ou Secrets Kubernetes.
+- Secrets jamais dans les YAML : variables d'environnement.
 - API REST stateless, CSRF désactivé.

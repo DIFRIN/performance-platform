@@ -1,0 +1,200 @@
+# =============================================================================
+# Example - LOCAL platform mode
+# =============================================================================
+# One platform JVM executes the whole scenario in-process (IN_MEMORY transport,
+# embedded WireMock). The SUT stub, PostgreSQL and Kafka run in containers.
+#
+# Usage:
+#   docker compose -f distribution/example/docker-compose-local.yaml build
+#   docker compose -f distribution/example/docker-compose-local.yaml up -d \
+#     postgres postgres-sut kafka sut
+#
+#   docker compose -f distribution/example/docker-compose-local.yaml \
+#     run --rm -e SCENARIO_FILE=01-kafka-to-http-local.yaml platform
+#   docker compose -f distribution/example/docker-compose-local.yaml \
+#     run --rm -e SCENARIO_FILE=02-http-to-kafka-local.yaml platform
+#
+# Web UI (launch executions from the browser instead of the CLI):
+#   docker compose -f distribution/example/docker-compose-local.yaml \
+#     --profile ui up -d platform-ui
+#   open http://localhost:8080        # Scenarios / Executions / Upload views
+#   The container reuses ./scenarios as the read-only scenario catalog.
+#   Set WEB_UI_ENABLED=false to start the same service without serving the UI.
+#   The "ui" profile keeps platform-ui out of a plain `up`, so it never
+#   competes with the CLI service for port 8090.
+#
+# The same bootstrap/src/main/resources/application-local.yaml is used when the
+# platform runs from the IDE (defaults point at localhost:5432/5433/9092/8084).
+# =============================================================================
+
+x-platform-image: &platform-image
+  image: performance-platform:example
+  build:
+    context: ../..
+    dockerfile: distribution/docker/Dockerfile
+
+x-sut-image: &sut-image
+  image: performance-sut:example
+  build:
+    context: ./sut
+    dockerfile: Dockerfile
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: example-postgres
+    environment:
+      POSTGRES_DB: performance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
+    volumes:
+      - example_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d performance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - example-net
+
+  postgres-sut:
+    image: postgres:16-alpine
+    container_name: example-postgres-sut
+    environment:
+      POSTGRES_DB: sut_devices
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5433:5432"
+    volumes:
+      - example_sut_postgres_data:/var/lib/postgresql/data
+      - ./sut-db/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sut_devices"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - example-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: example-kafka
+    environment:
+      CLUSTER_ID: "perf-example"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+    networks:
+      - example-net
+
+  # Single stub image, both behaviours enabled by configuration.
+  sut:
+    <<: *sut-image
+    container_name: example-sut
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      SUT_DB_URL: "jdbc:postgresql://postgres-sut:5432/sut_devices"
+      SUT_DB_USERNAME: postgres
+      SUT_DB_PASSWORD: changeme
+      SERVER_PORT: "8084"
+      SUT_KAFKA_CONSUMER_ENABLED: "true"
+      SUT_HTTP_API_ENABLED: "true"
+    # The SUT reaches the embedded WireMock at host.docker.internal:8090
+    # (address stored in devices.device_dns).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8084/api/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      postgres-sut:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - example-net
+
+
+  # LOCAL platform as a long-running server (no --scenario=): API REST + IHM.
+  # Executions are launched from http://localhost:8080 (Scenarios, Upload, or
+  # Rerun on an existing execution). Same in-process model as the CLI service.
+  platform-ui:
+    <<: *platform-image
+    container_name: example-platform-ui
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      PLATFORM_SECURITY_ENABLED: "false"
+      WEB_UI_ENABLED: "${WEB_UI_ENABLED:-true}"
+      SERVER_PORT: "8080"
+      # Read-only scenario catalog displayed by the Scenarios view.
+      SCENARIOS_DIR: /scenarios
+      # Override the H2 default of application-local.yaml with PostgreSQL.
+      PLATFORM_DATASOURCES_DEFAULT_URL: "jdbc:postgresql://postgres:5432/performance"
+      PLATFORM_DATASOURCES_DEFAULT_USERNAME: postgres
+      PLATFORM_DATASOURCES_DEFAULT_PASSWORD: changeme
+      PLATFORM_DATASOURCES_DEFAULT_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SUT_DB_URL: "jdbc:postgresql://postgres-sut:5432/sut_devices"
+      SUT_DB_USERNAME: postgres
+      SUT_DB_PASSWORD: changeme
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      IOT_KAFKA_SERVERS: "kafka:29092"
+      SUT_API_URL: "http://sut:8084"
+      WIREMOCK_URL: "http://localhost:8090"
+      REPORTING_OUTPUT_DIR: /reports
+    ports:
+      - "8080:8080"
+      # Published so the SUT container can reach the embedded mock through
+      # host.docker.internal:8090.
+      - "8090:8090"
+    volumes:
+      - ./scenarios:/scenarios:ro
+      - ./reports:/reports
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-sut:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      sut:
+        condition: service_healthy
+    networks:
+      - example-net
+
+networks:
+  example-net:
+    driver: bridge
+
+volumes:
+  example_postgres_data:
+  example_sut_postgres_data:

@@ -20,7 +20,7 @@
 | `06-injection-gatling.md` | Injection de charge Gatling | `platform-injection-gatling` | `GatlingTaskExecutor`, `GatlingRunner`, `LoadModelTranslator` |
 | `07-assertion-framework.md` | Assertions post-injection | `platform-assertion` | `AssertionExecutor`, `AssertionResult`, `AssertionSummary` |
 | `08-report-engine.md` | Rapport de campagne | `platform-reporting` | `DefaultReportEngine`, `CampaignReport`, renderers, `ReportFileWriter` |
-| `09-deployment.md` | Docker, Kubernetes, stacks locales | `distribution` | Dockerfile, Compose, K8s, profils Spring |
+| `09-deployment.md` | Docker, compose LOCAL/DISTRIBUTED et exemple | `distribution` | Dockerfile, compose, profils Spring |
 
 > Il n'existe **pas** de module publisher : la sortie des rapports est locale
 > (`reporting.output-directory`, ADR-022). Les anciens Confluence/S3/Git/SharePoint/Nexus

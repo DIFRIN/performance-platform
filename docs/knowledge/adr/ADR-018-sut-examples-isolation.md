@@ -3,21 +3,23 @@
 **Date** : 2026-06-21
 **Statut** : ACCEPTED
 **Décideurs** : Architect
-**PDRs concernés** : PDR-023 (services SUT), PDR-024 (docker-compose-sut + scénarios)
+**PDRs concernés** : PDR-023 (services SUT), PDR-024 (compose files de l'exemple + scénarios)
 
 ## Contexte
 
-PDR-023 introduit deux microservices (`iot-dispatcher`, `device-api`) servant de
+PDR-023 introduit un stub SUT (`distribution/example/sut/`) servant de
 **Système Sous Test (SUT)** pour démontrer la plateforme. Décisions structurantes
 proposées par le System Designer :
 
-- Ils vivent dans `distribution/examples/sut/`, **hors du `pom.xml` multi-module** de la
+- Il vit dans `distribution/example/sut/`, **hors du `pom.xml` multi-module** de la
   plateforme.
-- Ils sont en **Spring Boot 3.4.x**, alors que la plateforme impose **Spring Boot 4.x
+- Il est en **Spring Boot 3.4.x**, alors que la plateforme impose **Spring Boot 4.x
   / Java 25** (CLAUDE.md §4, stack NON NÉGOCIABLE).
-- Ils ont leur propre `docker-compose-sut.yaml` (PDR-024), lancé séparément, avec sa
-  propre infrastructure (kafka-sut:9093, postgres-sut:5433, wiremock:8090).
-- Ils sont volontairement simples (pas de couche service, pas de repo pattern,
+- Il est lancé par les compose files de l'exemple (`docker-compose-local.yaml`,
+  `docker-compose-distributed.yaml`) avec sa propre infrastructure (PostgreSQL SUT,
+  Kafka partagé). Le mock HTTP n'est pas un service : il est démarré EMBEDDED par un
+  agent de la plateforme (port 8090).
+- Il est volontairement simple (pas de couche service, pas de repo pattern,
   JdbcTemplate direct) — ce qui **viole délibérément** les règles architecturales de
   la plateforme (hexagonale, domaine sans framework, etc.).
 
@@ -36,10 +38,10 @@ runtime.**
 
 Règles normatives :
 
-1. **Hors build Maven plateforme** — `distribution/examples/sut/` n'est PAS un module du
+1. **Hors build Maven plateforme** — `distribution/example/sut/` n'est PAS un module du
    `pom.xml` racine. `mvn clean install` à la racine NE construit JAMAIS le SUT.
-   Chaque service SUT a son `pom.xml` autonome, buildé explicitement
-   (`mvn -f distribution/examples/sut/<svc>/pom.xml package`).
+   Le SUT a son `pom.xml` autonome, buildé explicitement
+   (`mvn -f distribution/example/sut/pom.xml package`).
 
 2. **Stack indépendante** — le SUT peut utiliser une stack différente (Spring Boot
    3.4.x ici). La contrainte « Spring Boot 4.x / Java 25 » de CLAUDE.md §4 s'applique
@@ -47,17 +49,18 @@ Règles normatives :
 
 3. **Règles architecturales NON applicables au SUT** — hexagonale, `platform-domain`
    sans Spring, communication par events, ExecutionContext immuable, registries
-   nommés : AUCUNE de ces règles ne s'applique à `distribution/examples/sut/`. Le SUT est
+   nommés : AUCUNE de ces règles ne s'applique à `distribution/example/sut/`. Le SUT est
    volontairement naïf (JdbcTemplate dans un controller, etc.) pour rester lisible et
    réaliste comme cible de test.
 
-4. **Runtime isolé** — le SUT a son `docker-compose-sut.yaml` propre, sur des ports
-   non conflictuels avec la plateforme (9093/5433/8082/8083/8090 vs 9092/5432/8080…).
+4. **Runtime isolé** — le SUT a ses compose files propres
+   (`example/docker-compose-local.yaml`, `example/docker-compose-distributed.yaml`),
+   sur des ports dédiés (8084, 5433), séparés de l'API plateforme (8080).
    Il démarre et s'arrête indépendamment de la plateforme.
 
 5. **Couplage uniquement par contrat externe** — la plateforme ne connaît le SUT que
    via ses endpoints/topics, configurés côté plateforme par registries nommés
-   (`platform.kafka-clusters.iot-sut`, `platform.http-targets.device-api`, ADR-015).
+   (`platform.kafka-clusters.iot-sut`, `platform.http-targets.sut-api`, ADR-015).
    Aucune dépendance de code, aucun import croisé, dans les deux sens.
 
 6. **Packages distincts** — `com.performance.examples.*` (et non
@@ -85,9 +88,9 @@ Règles normatives :
 
 ## Règles pour le Developer
 
-- NE PAS ajouter `distribution/examples/sut/` au `pom.xml` racine multi-module.
+- NE PAS ajouter `distribution/example/sut/` au `pom.xml` racine multi-module.
 - NE PAS appliquer les règles architecturales plateforme (hexagonale, domaine pur,
-  registries, ArchUnit) au code de `distribution/examples/sut/`. Ces services sont
+  registries, ArchUnit) au code de `distribution/example/sut/`. Ces services sont
   volontairement simples.
 - NE PAS « upgrader » le SUT vers Spring Boot 4.x / Java 25 pour « cohérence » — c'est
   intentionnellement une stack tierce.
@@ -96,7 +99,7 @@ Règles normatives :
   rien du SUT. Le seul couplage est le contrat réseau (topics/endpoints) via les
   registries nommés (ADR-015).
 - Le Reviewer NE doit PAS signaler les « violations » architecturales dans
-  `distribution/examples/sut/` — elles sont autorisées par cet ADR.
+  `distribution/example/sut/` — elles sont autorisées par cet ADR.
 
 ## Alternatives Considérées
 

@@ -59,8 +59,9 @@ class RepositoryStructureTest {
         assertThat(root.resolve("docs/knowledge/architecture.md")).isRegularFile();
         assertThat(root.resolve(".claude/knowledge")).doesNotExist();
         assertThat(root.resolve(".claude/skills/testing-strategy/SKILL.md")).isRegularFile();
-        assertThat(root.resolve("distribution/examples/sut/device-api/pom.xml")).isRegularFile();
-        assertThat(root.resolve("distribution/examples/scenarios/device-api-local.yaml")).isRegularFile();
+        assertThat(root.resolve("distribution/example/sut/pom.xml")).isRegularFile();
+        assertThat(root.resolve("distribution/example/scenarios/01-kafka-to-http-local.yaml")).isRegularFile();
+        assertThat(root.resolve("distribution/example/MODOP.md")).isRegularFile();
     }
 
     @Test

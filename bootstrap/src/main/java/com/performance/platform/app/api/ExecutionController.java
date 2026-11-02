@@ -5,11 +5,15 @@ import com.performance.platform.app.api.dto.ProgressResponse;
 import com.performance.platform.app.api.dto.TaskListResponse;
 import com.performance.platform.app.api.dto.TaskSummaryResponse;
 import com.performance.platform.app.api.dto.ScenarioSourceResponse;
+import com.performance.platform.app.api.dto.SubmitResponse;
 import com.performance.platform.application.ports.in.DeleteExecutionUseCase;
 import com.performance.platform.application.ports.in.ListExecutionsUseCase;
+import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.application.usecase.ExecutionProgressCalculator;
 import com.performance.platform.domain.execution.ExecutionProgress;
+import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.TaskId;
@@ -20,10 +24,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,16 +67,22 @@ public class ExecutionController {
     private final DeleteExecutionUseCase deleteUseCase;
     private final ExecutionRepository executionRepository;
     private final ExecutionProgressCalculator progressCalculator;
+    private final ScenarioParsingUseCase parsingUseCase;
+    private final SubmitScenarioUseCase submitUseCase;
 
     public ExecutionController(
             ListExecutionsUseCase listUseCase,
             DeleteExecutionUseCase deleteUseCase,
             ExecutionRepository executionRepository,
-            ExecutionProgressCalculator progressCalculator) {
+            ExecutionProgressCalculator progressCalculator,
+            ScenarioParsingUseCase parsingUseCase,
+            SubmitScenarioUseCase submitUseCase) {
         this.listUseCase = listUseCase;
         this.deleteUseCase = deleteUseCase;
         this.executionRepository = executionRepository;
         this.progressCalculator = progressCalculator;
+        this.parsingUseCase = parsingUseCase;
+        this.submitUseCase = submitUseCase;
     }
 
     /**
@@ -169,6 +181,55 @@ public class ExecutionController {
         deleteUseCase.delete(ExecutionId.of(id));
         log.info("action=delete_execution_done executionId={}", id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Relance une execution terminee a partir de son YAML d'origine.
+     * Le YAML source est celui conserve avec l'execution ; une nouvelle
+     * execution est creee (l'ancienne n'est pas modifiee).
+     *
+     * @param id identifiant de l'execution a relancer
+     * @return 202 Accepted avec le nouvel identifiant d'execution,
+     *         404 si l'execution est inconnue, 409 si elle est encore active
+     *         ou si son YAML source n'est pas disponible
+     */
+    @PostMapping("/executions/{id}/rerun")
+    public ResponseEntity<?> rerun(@PathVariable("id") String id) {
+        log.info("action=rerun_execution executionId={}", id);
+        var executionId = ExecutionId.of(id);
+        var existing = executionRepository.findById(executionId);
+        if (existing.isEmpty()) {
+            log.warn("action=rerun_execution_not_found executionId={}", id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of(
+                            "error", "EXECUTION_NOT_FOUND",
+                            "message", "No execution with id '" + id + "'"));
+        }
+
+        var state = existing.get();
+        if (state.status() == ExecutionStatus.STARTED || state.status() == ExecutionStatus.RUNNING) {
+            log.warn("action=rerun_execution_active executionId={} status={}", id, state.status());
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of(
+                            "error", "EXECUTION_STILL_ACTIVE",
+                            "message", "Cancel the execution before rerunning it"));
+        }
+
+        String sourceYaml = state.scenarioYaml();
+        if (sourceYaml == null || sourceYaml.isBlank()) {
+            log.warn("action=rerun_execution_source_unavailable executionId={}", id);
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of(
+                            "error", "SCENARIO_SOURCE_UNAVAILABLE",
+                            "message", "The original scenario YAML was not retained for this execution"));
+        }
+
+        var scenario = parsingUseCase.parse(sourceYaml);
+        var newExecutionId = submitUseCase.submit(scenario);
+        log.info("action=rerun_execution_accepted executionId={} newExecutionId={}",
+                id, newExecutionId.value());
+        return ResponseEntity.accepted()
+                .body(new SubmitResponse(newExecutionId.value(), "ACCEPTED"));
     }
 
     // ---- Helpers ----

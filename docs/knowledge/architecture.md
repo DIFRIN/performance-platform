@@ -19,7 +19,7 @@ Le POM racine agrege directement les 20 modules.
 | `performance/` | `platform-scenario-dsl`, `platform-campaign-engine`, `platform-assertion`, `platform-reporting` |
 | `infra/` | `platform-scenario-yaml`, `platform-transport`, `platform-infrastructure`, `platform-injection-gatling`, `platform-assertion-adapters`, `platform-report-renderers`, `platform-observability` |
 | `bootstrap/` | `platform-bootstrap`, seul executable |
-| `distribution/` | `platform-distribution`, Docker/Compose/K8s et exemples ; les SUTs sont dans `examples/sut/` hors reactor |
+| `distribution/` | `platform-distribution`, image Docker et un exemple exécutable ; le SUT est dans `example/sut/` hors reactor |
 
 La documentation projet appartient a `docs/knowledge/`, pas au harness.
 Les skills sont decouvrables sous `.claude/skills/<nom>/SKILL.md`.
@@ -241,7 +241,7 @@ transport/
 | `platform-report-renderers` | Renderers HTML/PDF/JSON, `ReportFileWriter` implementant `ReportOutput` |
 | `platform-observability` | `ObservabilityEventListener`, `MicrometerExecutionMetrics`, `ExecutionContextMdcFilter` |
 | `platform-bootstrap` | `PerformancePlatformApplication`, contrôleurs REST, `CliScenarioRunner`, configuration d'assemblage, sécurité, IHM, bootstrap plugins, résolution runtime |
-| `distribution` | Dockerfile, Compose, manifests K8s, stack de démo, profils de dev local |
+| `distribution` | Dockerfile, compose LOCAL/DISTRIBUTED et exemple exécutable (`example/`) |
 
 ---
 
@@ -370,9 +370,7 @@ choisir `WebApplicationType` : un profil `agent*` force `NONE` (ADR-019/ADR-032)
 | `local` | Défaut ; H2 en mémoire, transport `IN_MEMORY`, HTTP targets et cluster Kafka locaux |
 | `orchestrator` | `DISTRIBUTED` + `ORCHESTRATOR`, Kafka, PostgreSQL, sécurité activée |
 | `agent` | `DISTRIBUTED` + `AGENT`, Kafka, `web.ui.enabled=false`, `agent.supported-tasks` |
-| `ide-orchestrator` | Orchestrateur lancé depuis l'IDE contre PostgreSQL/Kafka/WireMock Docker locaux |
-| `agent-injector` / `agent-asserter` | Deux agents IDE spécialisés, consumer groups distincts |
-| `examples-local` | Démonstrations locales avec les SUT d'exemple |
+| `example` | Ressources SUT de l'exemple (`sut-db`, cible `sut-api`), chargée avec `orchestrator`/`agent` |
 
 Les profils `agent-*` sont reconnus par `RuntimeConfigResolver.isAgentProfile(...)`.
 

@@ -290,7 +290,8 @@ class WebUiApiIT {
                 parsingUseCase, executeUseCase);
 
         var executionController = new ExecutionController(
-                listUseCase, deleteUseCase, executionRepository, progressCalculator);
+                listUseCase, deleteUseCase, executionRepository, progressCalculator,
+                parsingUseCase, executeUseCase);
 
         var agentController = new AgentController(agentRegistry);
 

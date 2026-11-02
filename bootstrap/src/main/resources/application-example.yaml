@@ -1,0 +1,33 @@
+# =============================================================================
+# Performance Engineering Platform — Profil EXAMPLE (DISTRIBUTED)
+# =============================================================================
+# Shared by the orchestrator and the agents of distribution/example.
+# Activate with: --spring.profiles.active=orchestrator,example
+#                --spring.profiles.active=agent,example
+#
+# Defines only the SUT-specific resources. Mode, role and transport come from
+# the orchestrator/agent profiles; the Kafka clusters come from the base
+# profiles (IOT_KAFKA_SERVERS / KAFKA_BOOTSTRAP_SERVERS).
+# =============================================================================
+
+platform:
+  datasources:
+    # Used by `database` / `database-assertion` on the agent that owns them.
+    sut-db:
+      url: ${SUT_DB_URL:jdbc:postgresql://localhost:5433/sut_devices}
+      username: ${SUT_DB_USERNAME:postgres}
+      password: ${SUT_DB_PASSWORD:changeme}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+
+  http-targets:
+    # SUT HTTP API (scenario 2 injection and health checks).
+    sut-api:
+      base-url: ${SUT_API_URL:http://localhost:8084}
+      connection-timeout: 2s
+      read-timeout: 10s
+      paths:
+        submit-event: /api/events
+        health: /api/health

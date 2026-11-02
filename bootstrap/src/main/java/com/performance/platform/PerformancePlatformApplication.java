@@ -1,5 +1,6 @@
 package com.performance.platform;
 
+import com.performance.platform.app.catalog.ScenarioCatalogProperties;
 import com.performance.platform.app.cli.CliScenarioRunner;
 import com.performance.platform.app.config.AgentProperties;
 import com.performance.platform.app.plugin.PluginProperties;
@@ -44,7 +45,8 @@ import org.springframework.context.ConfigurableApplicationContext;
  * Sans {@code --scenario=}, le comportement serveur reste inchange.
  */
 @SpringBootApplication
-@EnableConfigurationProperties({PluginProperties.class, AgentProperties.class, ReportProperties.class, WebUiProperties.class})
+@EnableConfigurationProperties({PluginProperties.class, AgentProperties.class, ReportProperties.class,
+        WebUiProperties.class, ScenarioCatalogProperties.class})
 public class PerformancePlatformApplication {
 
     private static final Logger log = LoggerFactory.getLogger(PerformancePlatformApplication.class);

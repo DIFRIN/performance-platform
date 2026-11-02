@@ -67,7 +67,7 @@ scenario:
       parameters:
         deployment: EMBEDDED
         port: 8090
-        mappingsPath: wiremock/mappings
+        mappingsPath: classpath:mock
 
     - id: customer-api-load
       task: gatling

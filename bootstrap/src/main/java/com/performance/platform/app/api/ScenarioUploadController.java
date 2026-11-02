@@ -24,7 +24,8 @@ import java.util.List;
  * <p>
  * Accepts either a multipart file ({@code file}) or a form text parameter ({@code yaml}).
  * Validates the scenario and executes it immediately, returning {@code 202 Accepted}
- * with the execution identifier. No scenario catalog is maintained.
+ * with the execution identifier. Uploading does not alter the read-only catalog
+ * served from {@code platform.scenarios.directory} (see {@link ScenarioCatalogController}).
  */
 @RestController
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)

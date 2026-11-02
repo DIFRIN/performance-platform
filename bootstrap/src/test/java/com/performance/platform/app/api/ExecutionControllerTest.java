@@ -3,6 +3,8 @@ package com.performance.platform.app.api;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.ports.in.DeleteExecutionUseCase;
 import com.performance.platform.application.ports.in.ListExecutionsUseCase;
+import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
+import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.application.usecase.ExecutionNotDeletableException;
 import com.performance.platform.application.usecase.ExecutionProgressCalculator;
@@ -37,11 +39,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.Optional;
 import com.performance.platform.domain.execution.ExecutionTask;
+import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
+import com.performance.platform.domain.scenario.ScenarioDefinition;
 
 @DisplayName("ExecutionController")
 class ExecutionControllerTest {
@@ -50,6 +55,8 @@ class ExecutionControllerTest {
     private final DeleteExecutionUseCase deleteUseCase = mock(DeleteExecutionUseCase.class);
     private final ExecutionRepository executionRepository = mock(ExecutionRepository.class);
     private final ExecutionProgressCalculator progressCalculator = mock(ExecutionProgressCalculator.class);
+    private final ScenarioParsingUseCase parsingUseCase = mock(ScenarioParsingUseCase.class);
+    private final SubmitScenarioUseCase submitUseCase = mock(SubmitScenarioUseCase.class);
 
     private MockMvc mockMvc;
 
@@ -62,7 +69,8 @@ class ExecutionControllerTest {
         when(executionRepository.findAllTaskResults(any())).thenReturn(Map.of());
         when(progressCalculator.calculate(any(), any())).thenReturn(new ExecutionProgress(0, 0, 0, 0));
         var controller = new ExecutionController(
-                listUseCase, deleteUseCase, executionRepository, progressCalculator);
+                listUseCase, deleteUseCase, executionRepository, progressCalculator,
+                parsingUseCase, submitUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
@@ -312,7 +320,89 @@ class ExecutionControllerTest {
         }
     }
 
+    @Nested
+    @DisplayName("POST /executions/{id}/rerun")
+    class RerunExecution {
+
+        private static final String SOURCE_YAML = "scenario:\n  id: sc-001\n";
+
+        @Test
+        @DisplayName("should return 202 with the new execution id")
+        void shouldReturn202WithNewExecutionId() throws Exception {
+            var executionId = ExecutionId.of(EXEC_ID);
+            var state = buildTerminalStateWithYaml(executionId, ExecutionStatus.COMPLETED, SOURCE_YAML);
+            var scenario = scenarioDefinition(SOURCE_YAML);
+            when(executionRepository.findById(executionId)).thenReturn(Optional.of(state));
+            when(parsingUseCase.parse(SOURCE_YAML)).thenReturn(scenario);
+            when(submitUseCase.submit(scenario)).thenReturn(ExecutionId.of("exec-002"));
+
+            mockMvc.perform(post("/api/v1/executions/{id}/rerun", EXEC_ID))
+                    .andExpect(status().isAccepted())
+                    .andExpect(jsonPath("$.executionId").value("exec-002"))
+                    .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+            verify(parsingUseCase).parse(SOURCE_YAML);
+            verify(submitUseCase).submit(scenario);
+        }
+
+        @Test
+        @DisplayName("should return 404 when execution does not exist")
+        void shouldReturn404WhenNotFound() throws Exception {
+            when(executionRepository.findById(ExecutionId.of(EXEC_ID))).thenReturn(Optional.empty());
+
+            mockMvc.perform(post("/api/v1/executions/{id}/rerun", EXEC_ID))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.error").value("EXECUTION_NOT_FOUND"));
+        }
+
+        @Test
+        @DisplayName("should return 409 when execution is still active")
+        void shouldReturn409WhenActive() throws Exception {
+            var executionId = ExecutionId.of(EXEC_ID);
+            when(executionRepository.findById(executionId))
+                    .thenReturn(Optional.of(buildState(executionId, ExecutionStatus.RUNNING)));
+
+            mockMvc.perform(post("/api/v1/executions/{id}/rerun", EXEC_ID))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.error").value("EXECUTION_STILL_ACTIVE"));
+        }
+
+        @Test
+        @DisplayName("should return 409 when the source YAML was not retained")
+        void shouldReturn409WhenSourceUnavailable() throws Exception {
+            var executionId = ExecutionId.of(EXEC_ID);
+            when(executionRepository.findById(executionId))
+                    .thenReturn(Optional.of(buildState(executionId, ExecutionStatus.COMPLETED)));
+
+            mockMvc.perform(post("/api/v1/executions/{id}/rerun", EXEC_ID))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.error").value("SCENARIO_SOURCE_UNAVAILABLE"));
+        }
+    }
+
     // ---- Helpers ----
+
+    private static ScenarioDefinition scenarioDefinition(String yaml) {
+        return new ScenarioDefinition(
+                ScenarioId.of(SCENARIO_ID), "scenario", "1.0.0",
+                List.of(), Map.of(), ExecutionMode.LOCAL, List.of(), Map.of(), yaml);
+    }
+
+    private static ExecutionState buildTerminalStateWithYaml(ExecutionId executionId,
+                                                             ExecutionStatus status,
+                                                             String yaml) {
+        return new ExecutionState(
+                executionId,
+                ScenarioId.of(SCENARIO_ID),
+                status,
+                Map.of(),
+                ExecutionContext.initial(executionId, ScenarioId.of(SCENARIO_ID)),
+                NOW,
+                NOW,
+                0,
+                List.of(),
+                yaml);
+    }
 
     private static ExecutionState buildState(ExecutionId executionId, ExecutionStatus status) {
         return new ExecutionState(

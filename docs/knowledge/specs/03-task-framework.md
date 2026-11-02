@@ -187,11 +187,14 @@ Outputs : `messagesConsumed`, `lag`.
     deployment: EMBEDDED        # EMBEDDED | EXTERNAL
     action: START               # START | STOP | RESET | VERIFY
     port: 8090                  # EMBEDDED
-    mappingsPath: wiremock/mappings
+    mappingsPath: classpath:mock
     target: wiremock            # EXTERNAL : cible nommée
     wiremockUrl: http://mock:8080  # EXTERNAL (legacy)
 ```
 Outputs : `port`, `url`, `totalRequests` (VERIFY). Un port `0` demande un port éphémère.
+`mappingsPath` désigne une racine WireMock contenant un sous-répertoire `mappings/`.
+Une racine `classpath:` (ex. `classpath:mock`) charge les mappings embarqués dans
+l'application, y compris depuis un JAR Spring Boot exécutable.
 
 ### `http-client` — PREPARATION
 ```yaml

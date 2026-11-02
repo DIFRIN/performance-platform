@@ -46,6 +46,14 @@ platform:
   security:
     enabled: false
 
+  # ---- Catalogue de scenarios (IHM, lecture seule) ----
+  # Repertoire scanne pour alimenter la vue "Scenarios". Les fichiers *.yaml
+  # et *.yml du premier niveau sont parses au chargement de la vue, sans
+  # execution. Un repertoire vide ou absent produit un catalogue vide.
+  # Surcharge via la variable d'environnement SCENARIOS_DIR (ADR-006).
+  scenarios:
+    directory: ${SCENARIOS_DIR:}
+
 # ---- Transport ----
 # InMemory par defaut (LOCAL). TransportConfiguration selectionne
 # le bean selon transport.type (IN_MEMORY / KAFKA / RABBITMQ / HTTP / SOCKET).
