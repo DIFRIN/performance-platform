@@ -1,0 +1,126 @@
+name: performance-tls-example
+
+x-platform: &platform
+  image: performance-platform:tls-example
+  build:
+    context: ../../..
+    dockerfile: distribution/docker/Dockerfile
+    args:
+      MAVEN_TLS_INSECURE: ${MAVEN_TLS_INSECURE:-false}
+
+services:
+  certificates-init:
+    <<: *platform
+    user: "0:0"
+    entrypoint:
+      - sh
+      - -ec
+      - >-
+        chmod 755 /certificates;
+        chown perf:perf /certificates/server.key /certificates/agent.key /certificates/ui.key;
+        chmod 600 /certificates/server.key /certificates/agent.key /certificates/ui.key
+    volumes:
+      - ./generated:/certificates
+    network_mode: none
+    healthcheck:
+      disable: true
+    restart: "no"
+
+  reports-init:
+    <<: *platform
+    user: "0:0"
+    entrypoint: [sh, -ec, "chown perf:perf /reports; chmod u+rwx /reports"]
+    volumes:
+      - reports:/reports
+    network_mode: none
+    healthcheck:
+      disable: true
+    restart: "no"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: performance
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${TLS_EXAMPLE_DB_PASSWORD:?Set TLS_EXAMPLE_DB_PASSWORD}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d performance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  orchestrator:
+    <<: *platform
+    environment:
+      MODE: ORCHESTRATOR
+      TRANSPORT_TYPE: HTTP
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/config/transport-pem.yaml,file:/config/web-pem.yaml
+      TRANSPORT_TLS_CERT: file:/certificates/transport.crt
+      TRANSPORT_TLS_KEY: file:/certificates/transport.key
+      TRANSPORT_TLS_CA: file:/certificates/ca.crt
+      WEB_TLS_CERT: file:/certificates/web.crt
+      WEB_TLS_KEY: file:/certificates/web.key
+      WEB_UI_ENABLED: "true"
+      TRANSPORT_HTTP_LISTENER_PORT: "8091"
+      TRANSPORT_HTTP_LISTENER_ADVERTISED_URL: https://orchestrator:8091
+      DB_URL: jdbc:postgresql://postgres:5432/performance
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${TLS_EXAMPLE_DB_PASSWORD:?Set TLS_EXAMPLE_DB_PASSWORD}
+      REPORTING_OUTPUT_DIR: /reports
+    ports:
+      - "8443:8443"
+      - "8444:8091"
+    volumes:
+      - ./transport-pem.yaml:/config/transport-pem.yaml:ro
+      - ./web-pem.yaml:/config/web-pem.yaml:ro
+      - ./generated/server.crt:/certificates/transport.crt:ro
+      - ./generated/server.key:/certificates/transport.key:ro
+      - ./generated/ui.crt:/certificates/web.crt:ro
+      - ./generated/ui.key:/certificates/web.key:ro
+      - ./generated/ca.crt:/certificates/ca.crt:ro
+      - reports:/reports
+    depends_on:
+      certificates-init:
+        condition: service_completed_successfully
+      reports-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --cacert, /certificates/ca.crt, "https://localhost:8443/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  agent:
+    <<: *platform
+    environment:
+      MODE: AGENT
+      TRANSPORT_TYPE: HTTP
+      AGENT_SUPPORTED_TASKS: http-client,shell
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/config/transport-pem.yaml
+      TRANSPORT_TLS_CERT: file:/certificates/transport.crt
+      TRANSPORT_TLS_KEY: file:/certificates/transport.key
+      TRANSPORT_TLS_CA: file:/certificates/ca.crt
+      TRANSPORT_HTTP_LISTENER_PORT: "8091"
+      TRANSPORT_HTTP_LISTENER_ADVERTISED_URL: https://agent:8091
+      TRANSPORT_HTTP_LISTENER_ORCHESTRATOR_URL: https://orchestrator:8091
+    volumes:
+      - ./transport-pem.yaml:/config/transport-pem.yaml:ro
+      - ./generated/agent.crt:/certificates/transport.crt:ro
+      - ./generated/agent.key:/certificates/transport.key:ro
+      - ./generated/ca.crt:/certificates/ca.crt:ro
+    depends_on:
+      certificates-init:
+        condition: service_completed_successfully
+      orchestrator:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+
+volumes:
+  reports:
+  postgres:

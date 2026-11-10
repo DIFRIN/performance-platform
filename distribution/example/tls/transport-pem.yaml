@@ -1,0 +1,18 @@
+spring:
+  ssl:
+    bundle:
+      pem:
+        transport:
+          keystore:
+            certificate: ${TRANSPORT_TLS_CERT}
+            private-key: ${TRANSPORT_TLS_KEY}
+          truststore:
+            certificate: ${TRANSPORT_TLS_CA}
+          options:
+            enabled-protocols: [TLSv1.3, TLSv1.2]
+
+transport:
+  tls:
+    enabled: true
+    bundle: transport
+    client-auth: ${TRANSPORT_TLS_CLIENT_AUTH:NEED}

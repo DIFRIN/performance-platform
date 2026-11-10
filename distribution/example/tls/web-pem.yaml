@@ -1,0 +1,17 @@
+spring:
+  ssl:
+    bundle:
+      pem:
+        web:
+          keystore:
+            certificate: ${WEB_TLS_CERT}
+            private-key: ${WEB_TLS_KEY}
+          options:
+            enabled-protocols: [TLSv1.3, TLSv1.2]
+
+server:
+  port: ${WEB_TLS_PORT:8443}
+  ssl:
+    enabled: true
+    bundle: web
+    client-auth: NONE

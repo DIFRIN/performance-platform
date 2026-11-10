@@ -140,6 +140,38 @@ class DistributedAgentRuntimeTest {
     // === Lifecycle tests ===
 
     @Test
+    void shouldReceiveTasksAndSignalsDispatchedImmediatelyOnRegistration() {
+        var delegate = registrationPort;
+        var request = createRequest("http-get", ExecutionId.generate());
+        var signal = ExecutionLifecycleSignal.start(SignalId.generate(), request.executionId(),
+                request.step().id(), Map.of("taskName", "http-get"));
+        var claimed = new java.util.concurrent.CountDownLatch(1);
+        transport.connect();
+        transport.subscribe(event -> {
+            if (event.eventType().equals(ExecutionEvent.TASK_CLAIMED)) {
+                claimed.countDown();
+            }
+        });
+        registrationPort = new AgentRegistrationPort() {
+            public void register(AgentDescriptor d) {
+                delegate.register(d);
+                transport.dispatchTask(request);
+                transport.broadcastSignal(signal);
+            }
+            public void deregister(AgentId id) { delegate.deregister(id); }
+            public void sendHeartbeat(AgentId id, com.performance.platform.domain.agent.AgentHeartbeat heartbeat) {
+                delegate.sendHeartbeat(id, heartbeat);
+            }
+        };
+        runtime = createRuntime();
+
+        runtime.start();
+
+        assertThat(claimed.getCount()).isZero();
+        org.mockito.Mockito.verify(lifecyclePolicy).onLifecycleSignal(signal);
+    }
+
+    @Test
     void delegatesDirectLifecycleSignalsToTheInjectedPolicy() {
         runtime = createRuntime();
         var signal = ExecutionLifecycleSignal.start(SignalId.generate(), ExecutionId.generate(),

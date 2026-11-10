@@ -23,14 +23,33 @@ x-platform-image: &platform-image
   build:
     context: ../..
     dockerfile: distribution/docker/Dockerfile
+    args:
+      MAVEN_TLS_INSECURE: ${MAVEN_TLS_INSECURE:-false}
 
 x-sut-image: &sut-image
   image: performance-sut:example
   build:
     context: ./sut
     dockerfile: Dockerfile
+    args:
+      MAVEN_TLS_INSECURE: ${MAVEN_TLS_INSECURE:-false}
 
 services:
+
+  # Only this one-shot container runs as root; the application stays non-root.
+  reports-init:
+    <<: *platform-image
+    user: "0:0"
+    entrypoint:
+      - sh
+      - -ec
+      - "chown perf:perf /reports; chmod u+rwx /reports; su -s /bin/sh perf -c 'test -w /reports'"
+    volumes:
+      - ./reports:/reports
+    network_mode: none
+    healthcheck:
+      disable: true
+    restart: "no"
 
   postgres:
     image: postgres:16-alpine
@@ -155,6 +174,8 @@ services:
       - ./scenarios:/scenarios:ro
       - ./reports:/reports
     depends_on:
+      reports-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       kafka:

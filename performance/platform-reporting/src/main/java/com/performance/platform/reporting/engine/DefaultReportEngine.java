@@ -83,6 +83,7 @@ public class DefaultReportEngine implements ReportEngine {
      * @param event l'événement de fin de scénario
      */
     @EventListener
+    @org.springframework.core.annotation.Order(0)
     public void onScenarioFinished(ScenarioFinished event) {
         ExecutionId executionId = event.executionId();
         log.info("action=scenario_finished executionId={} verdict={}", executionId.value(), event.verdict());

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.performance.platform.domain.event.AgentSignal;
-import com.performance.platform.domain.event.ScenarioRestartSignal;
+import com.performance.platform.transport.codec.AgentSignalDecoder;
 import com.performance.platform.transport.AgentLifecycleEvent;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.message.ExecutionEvent;
@@ -119,7 +119,7 @@ public final class RabbitMQMessageCodec {
                 case TYPE_AGENT_LIFECYCLE_EVENT ->
                         mapper.convertValue(map, AgentLifecycleEvent.class);
                 case TYPE_SIGNAL ->
-                        mapper.convertValue(map, ScenarioRestartSignal.class);
+                        AgentSignalDecoder.decode(mapper, map);
                 default ->
                         throw new TransportException("Unknown message type: " + type);
             };

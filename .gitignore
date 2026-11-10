@@ -3,5 +3,6 @@
 target/
 plugins/*.jar
 reports/
+distribution/example/tls/generated/
 .vscode/
 .claude/settings.local.json.claude/settings.local.json

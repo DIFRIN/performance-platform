@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.performance.platform.domain.event.AgentSignal;
-import com.performance.platform.domain.event.ScenarioRestartSignal;
+import com.performance.platform.transport.codec.AgentSignalDecoder;
 import com.performance.platform.transport.AgentLifecycleEvent;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.message.ExecutionEvent;
@@ -149,8 +149,7 @@ public final class KafkaMessageCodec {
             if (!TYPE_SIGNAL.equals(type)) {
                 throw new TransportException("Unexpected signal type: " + type);
             }
-            // Currently the only permitted subtype is ScenarioRestartSignal
-            return mapper.convertValue(map, ScenarioRestartSignal.class);
+            return AgentSignalDecoder.decode(mapper, map);
         } catch (TransportException e) {
             throw e;
         } catch (Exception e) {

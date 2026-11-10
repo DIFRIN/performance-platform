@@ -50,7 +50,8 @@ class KafkaExecutionTransportIT {
     @Container
     @SuppressWarnings("deprecation")
     static KafkaContainer kafka =
-            new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.8.0"));
+            new KafkaContainer(DockerImageName.parse(
+                    System.getProperty("test.kafka.image", "confluentinc/cp-kafka:7.8.0")));
 
     private KafkaExecutionTransport transport;
     private KafkaTransportProperties props;
@@ -316,6 +317,37 @@ class KafkaExecutionTransportIT {
     }
 
     // === Graceful disconnect with handlers ===
+
+    @Test
+    void shouldNotReplayCommandsPublishedBeforeSubscription() {
+        var oldRequest = sampleRequest();
+        var oldSignal = sampleSignal();
+        transport.dispatchTask(oldRequest);
+        transport.broadcastSignal(oldSignal);
+        var requests = new CopyOnWriteArrayList<TaskExecutionRequest>();
+        var signals = new CopyOnWriteArrayList<AgentSignal>();
+
+        transport.receiveTask(requests::add);
+        transport.receiveSignal(signals::add);
+
+        var newRequest = sampleRequest();
+        var start = com.performance.platform.domain.event.ExecutionLifecycleSignal.start(
+                SignalId.generate(), newRequest.executionId(), newRequest.step().id(), Map.of("taskName", "gatling"));
+        var stop = com.performance.platform.domain.event.ExecutionLifecycleSignal.stop(
+                SignalId.generate(), newRequest.executionId(), newRequest.step().id(), Map.of("stopBehavior", "immediate"));
+        transport.dispatchTask(newRequest);
+        transport.broadcastSignal(start);
+        transport.broadcastSignal(stop);
+
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(requests).extracting(TaskExecutionRequest::id).containsExactly(newRequest.id());
+            assertThat(signals).extracting(AgentSignal::id).containsExactly(start.id(), stop.id());
+        });
+        await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3)).untilAsserted(() -> {
+            assertThat(requests).hasSize(1);
+            assertThat(signals).hasSize(2);
+        });
+    }
 
     @Test
     @DisplayName("should gracefully disconnect with registered handlers")

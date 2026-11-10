@@ -5,6 +5,7 @@ import com.performance.platform.domain.event.ScenarioRestartSignal;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.plugin.StatefulResourceCleaner;
+import com.performance.platform.plugin.ExecutionCompletionCleaner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +68,10 @@ public class ScenarioRestartHandler {
 
         var executionId = signal.executionId();
         var allCleanup = executionId == null;
+        boolean finished = "EXECUTION_FINISHED".equals(signal.reason());
+        if (finished && allCleanup) {
+            throw new IllegalArgumentException("EXECUTION_FINISHED requires a targeted executionId");
+        }
 
         log.info("action=scenario_restart_handler agentId={} executionId={} reason={} cleanerCount={}",
                 agentId.value(),
@@ -76,6 +81,9 @@ public class ScenarioRestartHandler {
 
         // 1. Cleanup des ressources stateful (best-effort par cleaner)
         for (var cleaner : cleaners) {
+            if (finished && !(cleaner instanceof ExecutionCompletionCleaner)) {
+                continue;
+            }
             try {
                 cleaner.cleanup(executionId);
                 log.debug("action=cleaner_cleanup agentId={} cleaner={} executionId={}",
@@ -86,6 +94,10 @@ public class ScenarioRestartHandler {
                         agentId.value(), cleaner.getClass().getSimpleName(),
                         allCleanup ? "ALL" : executionId.value(), e);
             }
+        }
+
+        if (finished) {
+            return;
         }
 
         // 2. Annuler les tâches correspondant à l'executionId (ou toutes si null)

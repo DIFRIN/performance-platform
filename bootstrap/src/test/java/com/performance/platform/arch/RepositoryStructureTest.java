@@ -108,6 +108,99 @@ class RepositoryStructureTest {
         }
     }
 
+    @Test
+    void reportVolumesAreInitializedBeforeNonRootReportProducersStart() throws Exception {
+        Path root = repositoryRoot();
+        assertThat(Files.readString(root.resolve("distribution/docker/Dockerfile"))).contains("USER perf");
+        for (String mode : Set.of("local", "distributed")) {
+            try (var input = Files.newInputStream(root.resolve(
+                    "distribution/example/docker-compose-" + mode + ".yaml"))) {
+                Map<?, ?> document = new Yaml().load(input);
+                Map<?, ?> services = (Map<?, ?>) document.get("services");
+                Map<?, ?> initializer = (Map<?, ?>) services.get("reports-init");
+                assertThat(initializer.get("user")).isEqualTo("0:0");
+                assertThat(initializer.get("restart")).isEqualTo("no");
+                assertThat(initializer.get("network_mode")).isEqualTo("none");
+                assertThat(initializer.get("volumes")).isEqualTo(java.util.List.of("./reports:/reports"));
+                assertThat(initializer.get("entrypoint")).isEqualTo(java.util.List.of("sh", "-ec",
+                        "chown perf:perf /reports; chmod u+rwx /reports; su -s /bin/sh perf -c 'test -w /reports'"));
+                Map<?, ?> healthcheck = (Map<?, ?>) initializer.get("healthcheck");
+                assertThat(healthcheck.get("disable")).isEqualTo(true);
+                int reportProducers = 0;
+                for (Object value : services.values()) {
+                    if (value instanceof Map<?, ?> service
+                            && service.get("environment") instanceof Map<?, ?> environment
+                            && "/reports".equals(environment.get("REPORTING_OUTPUT_DIR"))) {
+                        assertThat(service.containsKey("user")).isFalse();
+                        assertThat(service.get("image")).isEqualTo(initializer.get("image"));
+                        assertThat(service.get("volumes")).isInstanceOf(java.util.List.class);
+                        assertThat(((java.util.List<?>) service.get("volumes")).contains("./reports:/reports")).isTrue();
+                        Map<?, ?> dependencies = (Map<?, ?>) service.get("depends_on");
+                        Map<?, ?> initialization = (Map<?, ?>) dependencies.get("reports-init");
+                        assertThat(initialization.get("condition")).isEqualTo("service_completed_successfully");
+                        reportProducers++;
+                    }
+                }
+                assertThat(reportProducers).isPositive();
+            }
+        }
+    }
+
+    @Test
+    void alpineTlsBypassIsConditionalAndLimitedToTheBuilder() throws Exception {
+        String dockerfile = Files.readString(repositoryRoot().resolve("distribution/docker/Dockerfile"))
+                .replace("\r\n", "\n");
+        String builder = dockerfile.substring(0, dockerfile.lastIndexOf("\nFROM "));
+        String runtime = dockerfile.substring(dockerfile.lastIndexOf("\nFROM "));
+        assertThat(builder).contains("ARG MAVEN_TLS_INSECURE=false");
+        assertThat(builder).contains("""
+                RUN if [ "$MAVEN_TLS_INSECURE" = "true" ]; then \\
+                      echo "WARNING: TLS certificate verification disabled for build dependency downloads" >&2; \\
+                      apk --no-check-certificate add --no-cache maven; \\
+                    else \\
+                      apk add --no-cache maven; \\
+                    fi""");
+        assertThat(runtime).doesNotContain("--no-check-certificate", "MAVEN_TLS_INSECURE");
+    }
+
+    @Test
+    void mavenTlsBypassIsOptInAndCoversBothImageBuilds() throws Exception {
+        Path root = repositoryRoot();
+        for (String file : Set.of("distribution/docker/Dockerfile", "distribution/example/sut/Dockerfile")) {
+            String dockerfile = Files.readString(root.resolve(file));
+            assertThat(dockerfile).contains("ARG MAVEN_TLS_INSECURE=false");
+            String builder = dockerfile.substring(0, dockerfile.lastIndexOf("\nFROM "));
+            String runtime = dockerfile.substring(dockerfile.lastIndexOf("\nFROM "));
+            assertThat(runtime).doesNotContain("MAVEN_TLS_INSECURE", "maven.wagon.http.ssl");
+            var commands = builder.replace("\\\r\n", "").replace("\\\n", "").lines()
+                    .filter(line -> line.startsWith("RUN mvn ")).toList();
+            assertThat(commands).hasSize(file.contains("/sut/") ? 2 : 1);
+            for (String command : commands) {
+                assertThat(command).contains(
+                        "-Dmaven.resolver.transport=wagon",
+                        "-Dmaven.wagon.http.ssl.insecure=${MAVEN_TLS_INSECURE}",
+                        "-Dmaven.wagon.http.ssl.allowall=${MAVEN_TLS_INSECURE}");
+            }
+        }
+        for (String mode : Set.of("local", "distributed")) {
+            try (var input = Files.newInputStream(root.resolve(
+                    "distribution/example/docker-compose-" + mode + ".yaml"))) {
+                Map<?, ?> document = new Yaml().load(input);
+                Map<?, ?> services = (Map<?, ?>) document.get("services");
+                int imageBuilds = 0;
+                for (Object value : services.values()) {
+                    if (value instanceof Map<?, ?> service && service.get("build") instanceof Map<?, ?> build) {
+                        assertThat(build.get("args")).isInstanceOf(Map.class);
+                        Map<?, ?> args = (Map<?, ?>) build.get("args");
+                        assertThat(args.get("MAVEN_TLS_INSECURE")).isEqualTo("${MAVEN_TLS_INSECURE:-false}");
+                        imageBuilds++;
+                    }
+                }
+                assertThat(imageBuilds).isGreaterThanOrEqualTo(2);
+            }
+        }
+    }
+
     private static Element readPom(Path path) throws Exception {
         var factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);

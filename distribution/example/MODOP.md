@@ -26,9 +26,30 @@ The **same** `application-local.yaml` is used by the Docker LOCAL container and
 by an IDE run: Docker overrides the `*_URL` variables with service names, while
 the defaults (`localhost:5432/5433/9092/8084/8090`) work from the IDE.
 
+Optional HTTP/Kafka/RabbitMQ/Socket transport mTLS and independent one-way UI
+HTTPS are documented in [tls/README.md](tls/README.md). The TLS demo uses its own
+Compose project and leaves the existing example stack unchanged.
+
 ---
 
 ## 1. Scenarios
+
+All four scenarios declare `metadata.executionGroup: example-sut`. Within one
+orchestrator, runs in this group wait before preparation, protecting the shared
+mock port and SUT database. Different groups (or no group) can run concurrently.
+This does not coordinate multiple orchestrators or separate LOCAL JVMs.
+The API persists queued runs immediately; steps stay pending until the group
+is acquired (`execution_group_wait` / `execution_group_acquired` in logs).
+
+Execution-scoped embedded mocks are cleaned after report generation,
+including on failure or cancellation, even if the scenario's STOP step was
+skipped. A remote mock START can wait for asynchronous cleanup up to its timeout.
+Upgrade orchestrator and agents together and re-upload the scenario YAML to
+update already stored scenarios. Recreating mock-agent once releases mocks
+leaked by the previous version; no volume deletion is required.
+New Kafka agent consumer groups start on future tasks/signals only; they no
+longer replay historical START commands when an agent is recreated. The agent
+registers only after both command subscriptions are ready.
 
 ### Scenario 1 — Kafka injection → SUT → DB → HTTP → embedded mock
 
@@ -99,6 +120,39 @@ docker build -f distribution/docker/Dockerfile -t performance-platform:example .
 docker build -f distribution/example/sut/Dockerfile -t performance-sut:example distribution/example/sut
 ```
 
+### Certificate errors during Docker builds
+
+For `PKIX path building failed` behind a TLS-inspecting proxy, the preferred
+fix is to trust the proxy/company CA in the build JVM. As a temporary workaround
+in a trusted development environment, explicitly disable Maven certificate and
+hostname verification for **both** image builds. The same flag also disables
+certificate verification for the Alpine `apk` command installing Maven in the
+platform builder (`TLS: server certificate not trusted`):
+
+```bash
+MAVEN_TLS_INSECURE=true docker compose -f distribution/example/docker-compose-distributed.yaml up --build -d
+# LOCAL mode uses the same build argument:
+MAVEN_TLS_INSECURE=true docker compose -f distribution/example/docker-compose-local.yaml build
+```
+
+PowerShell:
+
+```powershell
+$env:MAVEN_TLS_INSECURE = "true"
+docker compose -f distribution\example\docker-compose-distributed.yaml up --build -d
+Remove-Item Env:\MAVEN_TLS_INSECURE
+```
+
+For a direct `docker build`, pass `--build-arg MAVEN_TLS_INSECURE=true`.
+Verification stays enabled by default (`false`). The flag covers dependency
+prefetch and packaging, including parent POM resolution. Maven uses the Wagon
+transport because its `maven.wagon.http.ssl.*` flags do not apply to the native
+Resolver HTTP transport. HTTPS encryption remains enabled; server identity
+verification is bypassed, exposing dependency downloads to interception.
+Do not use this workaround for production builds. No application/runtime TLS
+settings are changed. Rebuild without the flag (use `--no-cache` to replace
+previously cached build layers) after configuring the CA.
+
 ---
 
 ## 4. LOCAL mode
@@ -131,9 +185,12 @@ The `platform` container is a run-and-exit headless CLI (ADR-021). Exit code
 failed assertion or a technical error. Reports are written to
 `distribution/example/reports/`.
 
-> The bind-mounted `reports/` directory must be writable by the container user
-> (`perf`). Create it once with `mkdir -p distribution/example/reports` and
-> `chmod 777 distribution/example/reports` if your host permissions are strict.
+The `reports-init` one-shot service assigns the bind-mounted `reports/`
+directory to the image's `perf` user and checks that it is writable before the
+LOCAL UI or DISTRIBUTED orchestrator starts. Only initialization runs as root;
+the platform remains non-root. No `chmod 777` or recursive ownership change is
+used. If the host filesystem refuses the ownership change, initialization
+fails and blocks platform startup; check `docker compose ... logs reports-init`.
 
 Reset between runs:
 
@@ -224,6 +281,20 @@ curl http://localhost:8080/api/v1/executions/<executionId>
 
 Reports are written to `distribution/example/reports/`.
 
+If an existing deployment has `/reports` owned by root and reports return 404,
+apply the updated Compose configuration without deleting database volumes:
+
+```bash
+docker compose -f distribution/example/docker-compose-distributed.yaml up -d reports-init orchestrator
+docker compose -f distribution/example/docker-compose-distributed.yaml exec orchestrator \
+  sh -ec 'id; ls -ld /reports; test -w /reports'
+```
+
+For LOCAL, use `docker-compose-local.yaml` and `platform-ui` instead of
+`orchestrator`. Rerun the scenario afterwards: fixing permissions does not
+regenerate reports for past executions. Check `report_generated` or
+`report_generation_failed` in platform logs for the new execution ID.
+
 Reset:
 
 ```bash
@@ -241,6 +312,24 @@ docker compose -f distribution/example/docker-compose-distributed.yaml down -v
 Only `mock-agent` receives `WIREMOCK_URL`; it is the only agent resolving the
 `wiremock` HTTP target. `agent-http` receives `SUT_API_URL`; `agent-kafka`
 receives `SUT_DB_URL`. The orchestrator executes no task and receives neither.
+
+After restarting only the orchestrator, running agents reappear on their next
+heartbeat (normally within 10 seconds, plus Kafka consumer startup). Heartbeats
+carry the registration metadata needed to rebuild the in-memory registry.
+When upgrading an older deployment, rebuild and recreate **both** orchestrator
+and agents once; old agents send heartbeats without this metadata:
+
+```bash
+docker compose -f distribution/example/docker-compose-distributed.yaml up -d --build \
+  orchestrator mock-agent agent-http agent-kafka
+```
+
+For an older image, restarting the agents also republishes their initial
+registration. This is a workaround, not a requirement after upgrading:
+
+```bash
+docker compose -f distribution/example/docker-compose-distributed.yaml restart mock-agent agent-http agent-kafka
+```
 
 ---
 

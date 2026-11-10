@@ -5,6 +5,7 @@ import com.performance.platform.transport.AgentLifecycleEventHandler;
 import com.performance.platform.transport.AgentSignalHandler;
 import com.performance.platform.transport.ExecutionEventHandler;
 import com.performance.platform.transport.TaskRequestHandler;
+import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.message.ExecutionEvent;
 
 import org.slf4j.Logger;
@@ -13,8 +14,15 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.listener.MessageListener;
+import org.springframework.kafka.listener.ConsumerAwareRebalanceListener;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -137,7 +145,7 @@ public class DynamicKafkaListenerRegistry {
 
         if (hasSignalContainer.putIfAbsent(agentId, Boolean.TRUE) == null) {
             KafkaMessageListenerContainer<String, byte[]> container =
-                    createContainer(signalsTopic, agentId, record -> {
+                    createContainer(signalsTopic, agentId + "-signals", record -> {
                         try {
                             var signal = codec.decodeSignal(record.value());
                             List<AgentSignalHandler> handlers = signalHandlersByAgent.get(agentId);
@@ -319,9 +327,36 @@ public class DynamicKafkaListenerRegistry {
         props.setGroupId(groupId);
         props.setMessageListener(listener);
         props.setAckMode(ContainerProperties.AckMode.RECORD);
+        boolean agentCommands = topic.equals(tasksTopic) || topic.equals(signalsTopic);
+        var assigned = new CountDownLatch(1);
+        if (agentCommands) {
+            props.getKafkaConsumerProperties().setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+            props.setConsumerRebalanceListener(new ConsumerAwareRebalanceListener() {
+                @Override
+                public void onPartitionsAssigned(Consumer<?, ?> consumer, Collection<TopicPartition> partitions) {
+                    if (!partitions.isEmpty()) {
+                        // Resolve the initial offsets before advertising the agent as ready.
+                        partitions.forEach(consumer::position);
+                        assigned.countDown();
+                    }
+                }
+            });
+        }
         KafkaMessageListenerContainer<String, byte[]> container =
                 new KafkaMessageListenerContainer<>(consumerFactory, props);
         container.start();
+        if (agentCommands) {
+            try {
+                if (!assigned.await(30, TimeUnit.SECONDS)) {
+                    container.stop();
+                    throw new TransportException("Timed out waiting for Kafka command subscription: " + topic);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                container.stop();
+                throw new TransportException("Interrupted waiting for Kafka command subscription: " + topic, e);
+            }
+        }
         return container;
     }
 }

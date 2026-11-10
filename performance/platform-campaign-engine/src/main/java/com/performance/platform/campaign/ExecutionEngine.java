@@ -84,6 +84,7 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
 
     /** Suivi en memoire des executions actives. Cle : executionId.value(). */
     private final Map<String, ActiveExecution> activeExecutions = new ConcurrentHashMap<>();
+    private final ExecutionGroups executionGroups = new ExecutionGroups();
 
     public ExecutionEngine(
             ExecutionPlanBuilder planBuilder,
@@ -112,14 +113,15 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
 
     @Override
     public ExecutionId execute(ScenarioDefinition scenario) throws ExecutionException {
-        return runExecution(prepareExecution(scenario));
+        return runExecution(prepareExecution(scenario), scenario.metadata().get("executionGroup"));
     }
 
     @Override
     public ExecutionId submit(ScenarioDefinition scenario) {
         ExecutionPlan plan = prepareExecution(scenario);
         try {
-            Thread.ofVirtual().name("execution-" + plan.id().value()).start(() -> runExecution(plan));
+            Thread.ofVirtual().name("execution-" + plan.id().value()).start(
+                    () -> runExecution(plan, scenario.metadata().get("executionGroup")));
         } catch (RuntimeException e) {
             applyVerdict(plan.id(), plan.scenarioId(), plan.initialContext(), Verdict.FAILED, false);
             finalizeExecution(plan.id(), plan.scenarioId(), Verdict.FAILED, Instant.now());
@@ -137,6 +139,34 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
         }
 
         return initializeExecution(scenario);
+    }
+
+    private ExecutionId runExecution(ExecutionPlan plan, String group) {
+        boolean acquired = false;
+        try {
+            if (group != null && !group.isBlank()) {
+                log.info("action=execution_group_wait executionId={} group={}", plan.id().value(), group);
+                acquired = executionGroups.acquire(group, cancelFlags(plan.id()));
+                if (!acquired) {
+                    applyVerdict(plan.id(), plan.scenarioId(), plan.initialContext(), Verdict.FAILED, true);
+                    finalizeExecution(plan.id(), plan.scenarioId(), Verdict.FAILED, Instant.now());
+                    return plan.id();
+                }
+                log.info("action=execution_group_acquired executionId={} group={}", plan.id().value(), group);
+            }
+            return runExecution(plan);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("action=execution_group_interrupted executionId={} group={}", plan.id().value(), group, e);
+            applyVerdict(plan.id(), plan.scenarioId(), plan.initialContext(), Verdict.FAILED, true);
+            finalizeExecution(plan.id(), plan.scenarioId(), Verdict.FAILED, Instant.now());
+            return plan.id();
+        } finally {
+            if (acquired) {
+                executionGroups.release(group);
+                log.info("action=execution_group_released executionId={} group={}", plan.id().value(), group);
+            }
+        }
     }
 
     private ExecutionId runExecution(ExecutionPlan plan) {

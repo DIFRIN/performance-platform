@@ -23,6 +23,7 @@ scenario:
   version: "1.0.0"
   tags: [example, kafka, http, local]
   metadata:
+    executionGroup: example-sut
     owner: perf-team
     sut: sut
   execution: { mode: LOCAL }

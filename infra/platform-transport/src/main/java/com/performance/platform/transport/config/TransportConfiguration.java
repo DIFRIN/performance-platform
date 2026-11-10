@@ -6,12 +6,15 @@ import com.performance.platform.transport.http.HttpExecutionTransport;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 import com.performance.platform.transport.rabbitmq.RabbitMQExecutionTransport;
 import com.performance.platform.transport.socket.SocketExecutionTransport;
+import com.performance.platform.transport.tls.TransportTls;
 
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * Configuration automatique du transport.
@@ -34,10 +37,12 @@ import org.springframework.context.annotation.Configuration;
  * {@code ConcurrentKafkaListenerContainerFactory} qualifies.
  */
 @Configuration
+@Import(TransportTlsConfiguration.class)
 @EnableConfigurationProperties({
         KafkaTransportProperties.class,
         RabbitMQTransportProperties.class,
         HttpTransportProperties.class,
+        HttpListenerProperties.class,
         SocketTransportProperties.class
 })
 public class TransportConfiguration {
@@ -63,8 +68,8 @@ public class TransportConfiguration {
      */
     @Bean
     @ConditionalOnProperty(name = "transport.type", havingValue = "RABBITMQ")
-    public ExecutionTransport rabbitMQExecutionTransport(RabbitMQTransportProperties props) {
-        return new RabbitMQExecutionTransport(props);
+    public ExecutionTransport rabbitMQExecutionTransport(RabbitMQTransportProperties props, TransportTls tls) {
+        return new RabbitMQExecutionTransport(props, tls);
     }
 
     /**
@@ -78,8 +83,9 @@ public class TransportConfiguration {
     @Bean
     @ConditionalOnProperty(name = "transport.type", havingValue = "HTTP")
     public ExecutionTransport httpExecutionTransport(HttpTransportProperties props,
-            ObjectProvider<AgentRegistryPort> registryProvider) {
-        return new HttpExecutionTransport(props, registryProvider.getIfAvailable());
+            ObjectProvider<AgentRegistryPort> registryProvider, HttpListenerProperties listener,
+            TransportTls tls, @Value("${runtime.role:ORCHESTRATOR}") String role) {
+        return new HttpExecutionTransport(props, registryProvider.getIfAvailable(), listener, tls, role);
     }
 
     /**
@@ -92,7 +98,8 @@ public class TransportConfiguration {
      */
     @Bean
     @ConditionalOnProperty(name = "transport.type", havingValue = "SOCKET")
-    public ExecutionTransport socketExecutionTransport(SocketTransportProperties props) {
-        return new SocketExecutionTransport(props);
+    public ExecutionTransport socketExecutionTransport(SocketTransportProperties props, TransportTls tls,
+            @Value("${runtime.role:AUTO}") String role) {
+        return new SocketExecutionTransport(props, tls, role);
     }
 }

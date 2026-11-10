@@ -13,6 +13,7 @@ import com.performance.platform.infrastructure.executor.http.HttpTargetRegistry;
 import com.performance.platform.infrastructure.executor.http.HttpTargetProperties;
 import com.performance.platform.plugin.Preparation;
 import com.performance.platform.plugin.StatefulResourceCleaner;
+import com.performance.platform.plugin.ExecutionCompletionCleaner;
 import com.performance.platform.plugin.TaskExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +70,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Preparation(name = "mock-server", version = "1.1.0", description = "WireMock embedded/external with HttpTargetRegistry")
 @Component
-public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCleaner {
+public class MockServerTaskExecutor implements TaskExecutor, ExecutionCompletionCleaner {
 
     private static final Logger log = LoggerFactory.getLogger(MockServerTaskExecutor.class);
 
@@ -129,6 +130,11 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
             } else {
                 return executeExternal(step, action, startNanos, context.executionId().value());
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("action=mock_server_wait_interrupted executionId={} stepId={}",
+                    context.executionId().value(), step.id().value(), e);
+            return fail(step, startNanos, "Interrupted while waiting for embedded mock port", e);
         } catch (Exception e) {
             log.error("action=mock_server_error executionId={} deployment={} action={} stepId={}",
                     context.executionId().value(), deployment, action, step.id().value(), e);
@@ -138,7 +144,8 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
 
     // ─────────────────────────────── EMBEDDED ───────────────────────────────
 
-    private TaskResult executeEmbedded(StepDefinition step, String action, long startNanos, ExecutionId executionId) {
+    private synchronized TaskResult executeEmbedded(StepDefinition step, String action, long startNanos, ExecutionId executionId)
+            throws InterruptedException {
         String executionKey = executionId != null ? executionId.value() : DEFAULT_EXECUTION_KEY;
 
         return switch (action) {
@@ -150,9 +157,24 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
         };
     }
 
-    private TaskResult startEmbedded(StepDefinition step, long startNanos, String executionKey) {
+    private TaskResult startEmbedded(StepDefinition step, long startNanos, String executionKey)
+            throws InterruptedException {
         int port = paramInt(step, PARAM_PORT, DEFAULT_PORT);
         String mappingsPath = paramString(step, PARAM_MAPPINGS_PATH, null);
+
+        long remaining = step.timeout() != null ? step.timeout().toNanos() : Duration.ofSeconds(30).toNanos();
+        long deadline = System.nanoTime() + remaining;
+        while (port != 0 && serversByExecution.entrySet().stream().anyMatch(entry ->
+                !entry.getKey().equals(executionKey) && entry.getValue().isRunning()
+                        && entry.getValue().port() == port)) {
+            if (remaining <= 0) {
+                return fail(step, startNanos, "Timed out waiting for embedded mock port " + port
+                        + "; use the same metadata.executionGroup for scenarios sharing this port");
+            }
+            log.info("action=mock_server_wait_port executionId={} port={}", executionKey, port);
+            java.util.concurrent.TimeUnit.NANOSECONDS.timedWait(this, remaining);
+            remaining = deadline - System.nanoTime();
+        }
 
         // Stop any previously running server for this execution key
         WireMockServer existing = serversByExecution.remove(executionKey);
@@ -176,7 +198,18 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
         log.info("action=mock_server_start embedded=true port={} mappingsPath={} stepId={}",
                 port, mappingsPath, step.id().value());
 
-        server.start();
+        try {
+            server.start();
+        } catch (RuntimeException e) {
+            try {
+                server.stop();
+            } catch (RuntimeException cleanupFailure) {
+                e.addSuppressed(cleanupFailure);
+            }
+            deleteTempRoot(executionKey);
+            notifyAll();
+            throw e;
+        }
         int actualPort = server.port();
         String url = server.baseUrl();
         serversByExecution.put(executionKey, server);
@@ -199,6 +232,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
             int port = server.port();
             server.stop();
             deleteTempRoot(executionKey);
+            notifyAll();
             var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             log.info("action=mock_server_stopped executionKey={} port={} duration={}",
                     executionKey, port, formatDuration(elapsed));
@@ -384,7 +418,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
     // ─────────────────────────────── CLEANUP ───────────────────────────────
 
     @Override
-    public void cleanup(ExecutionId executionId) {
+    public synchronized void cleanup(ExecutionId executionId) {
         if (executionId == null) {
             log.info("action=mock_server_cleanup_all activeServers={}", serversByExecution.size());
             serversByExecution.values().forEach(this::stopServer);
@@ -400,6 +434,7 @@ public class MockServerTaskExecutor implements TaskExecutor, StatefulResourceCle
             }
             deleteTempRoot(key);
         }
+        notifyAll();
     }
 
     private void deleteTempRoot(String executionKey) {

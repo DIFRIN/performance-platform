@@ -15,6 +15,8 @@ import com.performance.platform.transport.Subscription;
 import com.performance.platform.transport.TaskRequestHandler;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.config.HttpTransportProperties;
+import com.performance.platform.transport.config.HttpListenerProperties;
+import com.performance.platform.transport.tls.TransportTls;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 
@@ -83,8 +85,13 @@ public class HttpExecutionTransport implements ExecutionTransport {
     private final HttpTransportProperties props;
     private final AgentRegistryPort registry;
     private final ObjectMapper objectMapper;
-    private final HttpClient httpClient;
+    private HttpClient httpClient;
+    private java.util.concurrent.ExecutorService clientExecutor;
     private final AtomicBoolean connected = new AtomicBoolean(false);
+    private final HttpListenerProperties listenerProperties;
+    private final TransportTls tls;
+    private final boolean agent;
+    private HttpTransportListener listener;
 
     // Handler registries (thread-safe)
     private final List<TaskRequestHandler> taskHandlers = new CopyOnWriteArrayList<>();
@@ -99,35 +106,91 @@ public class HttpExecutionTransport implements ExecutionTransport {
      * @param registry registre des agents; nullable dans les tests sans registre
      */
     public HttpExecutionTransport(HttpTransportProperties props, AgentRegistryPort registry) {
+        this(props, registry, HttpListenerProperties.disabled(), TransportTls.disabled(), "ORCHESTRATOR");
+    }
+
+    public HttpExecutionTransport(HttpTransportProperties props, AgentRegistryPort registry,
+            HttpListenerProperties listenerProperties, TransportTls tls, String role) {
         this.props = props;
         this.registry = registry;
+        this.listenerProperties = listenerProperties;
+        this.tls = tls;
+        this.agent = "AGENT".equals(role);
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule());
-        int timeout = props.requestTimeoutSeconds() > 0
-                ? props.requestTimeoutSeconds() : 30;
-        this.httpClient = HttpClient.newBuilder()
-                .executor(Executors.newVirtualThreadPerTaskExecutor())
-                .connectTimeout(Duration.ofSeconds(timeout))
-                .build();
+        if (listenerProperties.enabled()) {
+            String basePath = callbackPath();
+            if (!basePath.startsWith("/") || basePath.endsWith("/")) {
+                throw new IllegalArgumentException("HTTP callback-base-path must start with / and not end with /");
+            }
+            if (agent) {
+                if (listenerProperties.advertisedUrl() == null || listenerProperties.advertisedUrl().isBlank()) {
+                    throw new IllegalArgumentException("HTTP agent requires transport.http.listener.advertised-url");
+                }
+                if (listenerProperties.orchestratorUrl() == null || listenerProperties.orchestratorUrl().isBlank()) {
+                    throw new IllegalArgumentException("HTTP agent requires transport.http.listener.orchestrator-url");
+                }
+                validateOrigin(listenerProperties.orchestratorUrl());
+            }
+            if (listenerProperties.advertisedUrl() != null) {
+                validateOrigin(listenerProperties.advertisedUrl());
+            }
+        }
+    }
+
+    private void createClient() {
+        clientExecutor = Executors.newVirtualThreadPerTaskExecutor();
+        int timeout = props.requestTimeoutSeconds() > 0 ? props.requestTimeoutSeconds() : 30;
+        var client = HttpClient.newBuilder().executor(clientExecutor)
+                .connectTimeout(Duration.ofSeconds(timeout));
+        if (tls.enabled()) {
+            client.sslContext(tls.context()).sslParameters(tls.parameters(true));
+        }
+        httpClient = client.build();
     }
 
     // === ExecutionTransport ===
 
     @Override
-    public void connect() throws TransportException {
+    public synchronized void connect() throws TransportException {
         if (connected.get()) {
             return;
         }
-        connected.set(true);
+        createClient();
+        if (listenerProperties.enabled()) {
+            try {
+                listener = new HttpTransportListener(listenerProperties, tls, callbackPath(),
+                        agent, objectMapper, this);
+                connected.set(true);
+                listener.start();
+            } catch (java.io.IOException | RuntimeException e) {
+                connected.set(false);
+                if (listener != null) {
+                    listener.close();
+                    listener = null;
+                }
+                httpClient.close();
+                clientExecutor.shutdown();
+                throw new TransportException("Failed to start dedicated HTTP transport listener", e);
+            }
+        } else {
+            connected.set(true);
+        }
         log.info("action=connect transport=HTTP broadcastMode={}", props.broadcastMode());
     }
 
     @Override
-    public void disconnect() {
+    public synchronized void disconnect() {
         if (!connected.compareAndSet(true, false)) {
             return;
         }
         log.info("action=disconnect transport=HTTP");
+        if (listener != null) {
+            listener.close();
+            listener = null;
+        }
+        httpClient.close();
+        clientExecutor.shutdown();
     }
 
     @Override
@@ -183,7 +246,7 @@ public class HttpExecutionTransport implements ExecutionTransport {
         // Wait for all POSTs to complete (Virtual Threads — blocking is fine)
         try {
             CompletableFuture.allOf(futures.toArray(CompletableFuture<?>[]::new)).join();
-        } catch (Exception e) {
+        } catch (java.util.concurrent.CompletionException e) {
             throw new TransportException("Failed to dispatch task to agents: " + e.getMessage(), e);
         }
 
@@ -236,7 +299,7 @@ public class HttpExecutionTransport implements ExecutionTransport {
 
         try {
             CompletableFuture.allOf(futures.toArray(CompletableFuture<?>[]::new)).join();
-        } catch (Exception e) {
+        } catch (java.util.concurrent.CompletionException e) {
             throw new TransportException("Failed to broadcast signal: " + e.getMessage(), e);
         }
 
@@ -250,6 +313,14 @@ public class HttpExecutionTransport implements ExecutionTransport {
             throw new TransportException("event must not be null");
         }
         ensureConnected();
+        if (agent && listenerProperties.enabled()) {
+            postToOrchestrator("/events", event);
+            return;
+        }
+        acceptEvent(event);
+    }
+
+    void acceptEvent(ExecutionEvent event) {
         log.debug("action=publish_event executionId={} eventId={} agentId={} type={} subscriberCount={}",
                 event.executionId().value(), event.id().value(),
                 event.agentId() != null ? event.agentId().value() : "null",
@@ -267,6 +338,14 @@ public class HttpExecutionTransport implements ExecutionTransport {
             throw new TransportException("event must not be null");
         }
         ensureConnected();
+        if (agent && listenerProperties.enabled()) {
+            postToOrchestrator("/agents", event);
+            return;
+        }
+        acceptAgentEvent(event);
+    }
+
+    void acceptAgentEvent(AgentLifecycleEvent event) {
         log.debug("action=publish_agent_event eventId={} agentId={} type={} subscriberCount={}",
                 event.id().value(), event.agentId().value(),
                 event.eventType(), agentSubscriptions.size());
@@ -315,6 +394,67 @@ public class HttpExecutionTransport implements ExecutionTransport {
 
     // === Internal ===
 
+    void acceptTask(TaskExecutionRequest request) {
+        taskHandlers.forEach(handler -> handler.onRequest(request));
+    }
+
+    void acceptSignal(AgentSignal signal) {
+        signalHandlers.forEach(handler -> handler.onSignal(signal));
+    }
+
+    public String callbackUrl() {
+        if (!listenerProperties.enabled()) {
+            return null;
+        }
+        String advertised = listenerProperties.advertisedUrl();
+        if (advertised == null || advertised.isBlank()) {
+            int port = listener != null ? listener.port() : listenerProperties.port();
+            if (port == 0) {
+                throw new IllegalStateException("Dynamic HTTP transport port is unavailable before connect");
+            }
+            advertised = (tls.enabled() ? "https" : "http") + "://localhost:" + port;
+        }
+        return advertised.replaceAll("/+$", "") + callbackPath();
+    }
+
+    private String callbackPath() {
+        return props.callbackBasePath() == null || props.callbackBasePath().isBlank()
+                ? "/api/callback" : props.callbackBasePath();
+    }
+
+    private void postToOrchestrator(String path, Object event) {
+        try {
+            String json = objectMapper.writeValueAsString(event);
+            String url = listenerProperties.orchestratorUrl().replaceAll("/+$", "") + callbackPath() + path;
+            var response = httpClient.send(buildPostRequest(url, json), HttpResponse.BodyHandlers.discarding());
+            if (response.statusCode() != 202) {
+                throw new TransportException("HTTP transport rejected event with status " + response.statusCode());
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new TransportException("Interrupted posting transport event", e);
+        } catch (java.io.IOException e) {
+            throw new TransportException("Failed to post transport event", e);
+        }
+    }
+
+    private void validateUrl(String url) {
+        var uri = URI.create(url);
+        String requiredScheme = tls.enabled() ? "https" : "http";
+        if (!requiredScheme.equals(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null) {
+            throw new IllegalArgumentException("HTTP transport URL must use " + requiredScheme + " with a valid host");
+        }
+    }
+
+    private void validateOrigin(String url) {
+        validateUrl(url);
+        var uri = URI.create(url);
+        if ((uri.getPath() != null && !uri.getPath().isEmpty() && !uri.getPath().equals("/"))
+                || uri.getQuery() != null || uri.getFragment() != null) {
+            throw new IllegalArgumentException("HTTP transport listener URLs must be origins without a callback path");
+        }
+    }
+
     /**
      * Selectionne les agents cibles selon le mode de broadcast.
      * Filtre les agents sans {@code httpCallbackUrl}.
@@ -359,16 +499,21 @@ public class HttpExecutionTransport implements ExecutionTransport {
                     } else {
                         log.warn("action=post_unexpected_status executionId={} taskName={} agentId={} url={} status={}",
                                 executionId, taskName, agentId, url, status);
+                        throw new TransportException("HTTP transport rejected command with status " + status);
                     }
                 })
-                .exceptionally(ex -> {
-                    log.error("action=post_failed executionId={} taskName={} agentId={} url={} error={}",
-                            executionId, taskName, agentId, url, ex.getMessage(), ex);
-                    return null; // ne pas propager — les autres POST continuent
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("action=post_failed executionId={} taskName={} agentId={} url={} error={}",
+                                executionId, taskName, agentId, url, ex.getMessage(), ex);
+                    }
                 });
     }
 
     private HttpRequest buildPostRequest(String url, String json) {
+        if (tls.enabled()) {
+            validateUrl(url);
+        }
         int timeout = props.requestTimeoutSeconds() > 0
                 ? props.requestTimeoutSeconds() : 30;
         return HttpRequest.newBuilder()

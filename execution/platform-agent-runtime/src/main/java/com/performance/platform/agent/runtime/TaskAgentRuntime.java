@@ -189,14 +189,17 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
 
             if (distributed) {
                 currentState.set(AgentState.REGISTERING);
+            }
+            taskChannel.receiveTask(this::onTaskReceived);
+            signalChannel.receiveSignal(this::onSignalReceived);
+            currentState.set(AgentState.IDLE);
+
+            if (distributed) {
                 registrationPort.register(getDescriptor());
                 heartbeatScheduler.start();
                 log.info("action=agent_registered agentId={} name={}",
                         staticDescriptor.id().value(), staticDescriptor.name());
             }
-
-            taskChannel.receiveTask(this::onTaskReceived);
-            signalChannel.receiveSignal(this::onSignalReceived);
 
             long cleanupIntervalSeconds = Math.max(60, taskExecutionTimeout.toSeconds() * 2);
             cleanupFuture = cleanupScheduler.scheduleAtFixedRate(
@@ -205,7 +208,6 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
                     cleanupIntervalSeconds,
                     TimeUnit.SECONDS);
 
-            currentState.set(AgentState.IDLE);
             log.info("action=agent_started agentId={} state=IDLE distributed={}",
                     staticDescriptor.id().value(), distributed);
         } catch (TransportException | RegistrationException e) {

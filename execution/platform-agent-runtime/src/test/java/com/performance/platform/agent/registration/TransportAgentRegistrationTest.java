@@ -185,6 +185,35 @@ class TransportAgentRegistrationTest {
     class SendHeartbeat {
 
         @Test
+        void shouldIncludeRegisteredDescriptorWithCurrentHeartbeatValues() {
+            registration.register(descriptor);
+            var events = captureEvents();
+            var heartbeat = new AgentHeartbeat(agentId, AgentState.EXECUTING, 3,
+                    descriptor.lastHeartbeatAt().plusSeconds(60));
+
+            registration.sendHeartbeat(agentId, heartbeat);
+
+            var payload = events.getFirst().payload();
+            assertThat(payload).containsEntry("name", descriptor.name())
+                    .containsEntry("httpCallbackUrl", descriptor.httpCallbackUrl())
+                    .containsEntry("supportedTaskNames", descriptor.supportedTaskNames())
+                    .containsEntry("state", "EXECUTING")
+                    .containsEntry("activeTasks", 3)
+                    .containsEntry("lastHeartbeatAt", heartbeat.sentAt().toString());
+        }
+
+        @Test
+        void shouldForgetDescriptorAfterDeregistration() {
+            registration.register(descriptor);
+            registration.deregister(agentId);
+            var events = captureEvents();
+
+            registration.sendHeartbeat(agentId, new AgentHeartbeat(agentId, AgentState.IDLE, 0, Instant.now()));
+
+            assertThat(events.getFirst().payload()).doesNotContainKey("supportedTaskNames");
+        }
+
+        @Test
         @DisplayName("should publish AGENT_HEARTBEAT event")
         void shouldPublishAgentHeartbeatEvent() {
             var events = captureEvents();

@@ -10,6 +10,7 @@ import com.performance.platform.transport.Subscription;
 import com.performance.platform.transport.TaskRequestHandler;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.config.RabbitMQTransportProperties;
+import com.performance.platform.transport.tls.TransportTls;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 
@@ -68,9 +69,16 @@ public class RabbitMQExecutionTransport implements ExecutionTransport {
     private Channel producerChannel;
     private RabbitMQConsumerManager consumerManager;
     private String queueName;
+    private final TransportTls tls;
 
     public RabbitMQExecutionTransport(RabbitMQTransportProperties props) {
+        this(props, TransportTls.disabled());
+    }
+
+    public RabbitMQExecutionTransport(RabbitMQTransportProperties props,
+            TransportTls tls) {
         this.props = props;
+        this.tls = tls;
         this.codec = new RabbitMQMessageCodec();
     }
 
@@ -220,6 +228,15 @@ public class RabbitMQExecutionTransport implements ExecutionTransport {
         factory.setPort(props.port());
         factory.setUsername(props.username());
         factory.setPassword(props.password());
+        if (tls.enabled()) {
+            factory.useSslProtocol(tls.context());
+            factory.enableHostnameVerification();
+            factory.setSocketConfigurator(socket -> {
+                if (socket instanceof javax.net.ssl.SSLSocket sslSocket) {
+                    sslSocket.setSSLParameters(tls.parameters(true));
+                }
+            });
+        }
         if (props.virtualHost() != null && !props.virtualHost().isBlank()) {
             factory.setVirtualHost(props.virtualHost());
         }

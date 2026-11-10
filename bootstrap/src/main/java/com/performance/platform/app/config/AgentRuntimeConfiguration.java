@@ -152,7 +152,8 @@ public class AgentRuntimeConfiguration {
                 resolveAgentName(),
                 resolveAgentHost(),
                 resolveAgentPort(),
-                null,
+                transport instanceof com.performance.platform.transport.http.HttpExecutionTransport http
+                        ? http.callbackUrl() : null,
                 supportedTaskNames,              // depuis la config
                 new AgentCapabilities(0, "1.0.0"),
                 AgentState.OFFLINE,

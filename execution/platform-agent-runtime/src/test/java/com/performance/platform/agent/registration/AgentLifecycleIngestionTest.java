@@ -10,6 +10,7 @@ import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.EventId;
 import com.performance.platform.transport.AgentLifecycleEvent;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
+import com.performance.platform.transport.kafka.KafkaMessageCodec;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,6 +98,60 @@ class AgentLifecycleIngestionTest {
     @Nested
     @DisplayName("heartbeat")
     class HeartbeatTests {
+
+        @Test
+        void shouldRecoverAfterOrchestratorRestartFromTheNextHeartbeat() {
+            var registration = new TransportAgentRegistration(transport);
+            registration.register(descriptor);
+            assertThat(registry.findById(descriptor.id())).contains(descriptor);
+
+            ingestion.destroy();
+            registry = new InMemoryAgentRegistry();
+            ingestion = new AgentLifecycleIngestion(transport, registry, publishedEvents::add);
+            ingestion.afterPropertiesSet();
+            assertThat(registry.findAll()).isEmpty();
+
+            var events = new ArrayList<AgentLifecycleEvent>();
+            transport.subscribeAgentEvents(events::add);
+            var heartbeat = new AgentHeartbeat(descriptor.id(), AgentState.EXECUTING, 2, Instant.now());
+            registration.sendHeartbeat(descriptor.id(), heartbeat);
+
+            var recovered = registry.findById(descriptor.id()).orElseThrow();
+            assertThat(recovered.name()).isEqualTo(descriptor.name());
+            assertThat(recovered.host()).isEqualTo(descriptor.host());
+            assertThat(recovered.port()).isEqualTo(descriptor.port());
+            assertThat(recovered.supportedTaskNames()).isEqualTo(descriptor.supportedTaskNames());
+            assertThat(recovered.capabilities()).isEqualTo(descriptor.capabilities());
+            assertThat(recovered.registrationTtl()).isEqualTo(descriptor.registrationTtl());
+            assertThat(recovered.registeredAt()).isEqualTo(descriptor.registeredAt());
+            assertThat(recovered.state()).isEqualTo(heartbeat.state());
+            assertThat(recovered.lastHeartbeatAt()).isEqualTo(heartbeat.sentAt());
+            assertThat(registry.findExpired(heartbeat.sentAt())).isEmpty();
+            assertThat(registry.hasAgentFor("gatling")).isTrue();
+
+            // Kafka converts sets and nested maps to JSON collections.
+            var codec = new KafkaMessageCodec();
+            var decoded = codec.decodeEvent(codec.encodeAgentLifecycleEvent(events.getFirst()));
+            assertThat(decoded).isInstanceOf(AgentLifecycleEvent.class);
+            var freshRegistry = new InMemoryAgentRegistry();
+            var freshIngestion = new AgentLifecycleIngestion(transport, freshRegistry, publishedEvents::add);
+            freshIngestion.onEvent((AgentLifecycleEvent) decoded);
+            assertThat(freshRegistry.findById(descriptor.id())).contains(recovered);
+        }
+
+        @Test
+        void shouldRecoverAnExpiredAgentWithoutRestartingIt() {
+            var registration = new TransportAgentRegistration(transport);
+            registration.register(descriptor);
+            registry.onAgentExpired(descriptor.id());
+
+            var heartbeat = new AgentHeartbeat(descriptor.id(), AgentState.IDLE, 0, Instant.now());
+            registration.sendHeartbeat(descriptor.id(), heartbeat);
+
+            assertThat(registry.findById(descriptor.id())).isPresent();
+            assertThat(registry.findExpired(heartbeat.sentAt())).isEmpty();
+            assertThat(registry.findByTaskName("database-assertion")).hasSize(1);
+        }
 
         @Test
         @DisplayName("should refresh state and heartbeat timestamp")

@@ -77,6 +77,18 @@ public class AgentLifecycleIngestion
                         event.agentId().value(), descriptor.supportedTaskNames().size());
             }
             case AgentLifecycleEvent.AGENT_HEARTBEAT -> {
+                if (registry.findById(event.agentId()).isEmpty()) {
+                    if (!event.payload().containsKey("supportedTaskNames")) {
+                        log.warn("action=agent_heartbeat_unknown agentId={} reason=missing_descriptor",
+                                event.agentId().value());
+                        return;
+                    }
+                    var descriptor = AgentLifecyclePayloadCodec.decodeDescriptor(
+                            event.agentId(), event.payload());
+                    registry.onAgentRegistered(descriptor);
+                    log.info("action=agent_recovered_from_heartbeat agentId={} supportedTasks={}",
+                            event.agentId().value(), descriptor.supportedTaskNames().size());
+                }
                 var heartbeat = AgentLifecyclePayloadCodec.decodeHeartbeat(
                         event.agentId(), event.payload());
                 registry.onAgentHeartbeat(event.agentId(), heartbeat);

@@ -317,6 +317,33 @@ class SocketExecutionTransportTest {
     class SignalRoundTrip {
 
         @Test
+        void shouldDeliverStartAndStopWithoutTreatingThemAsRestartSignals() throws Exception {
+            var received = new CopyOnWriteArrayList<AgentSignal>();
+            var latch = new CountDownLatch(2);
+            agent.receiveSignal(signal -> {
+                received.add(signal);
+                latch.countDown();
+            });
+            var execution = ExecutionId.generate();
+            var task = TaskId.of("inject");
+            var start = com.performance.platform.domain.event.ExecutionLifecycleSignal.start(
+                    SignalId.generate(), execution, task, Map.of("taskName", "gatling"));
+            var stop = com.performance.platform.domain.event.ExecutionLifecycleSignal.stop(
+                    SignalId.generate(), execution, task, Map.of("stopBehavior", "immediate"));
+
+            orchestrator.broadcastSignal(start);
+            orchestrator.broadcastSignal(stop);
+
+            assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(received).usingRecursiveFieldByFieldElementComparatorIgnoringFields("issuedAt")
+                    .containsExactly(start, stop);
+            assertThat(received.getFirst().issuedAt()).isCloseTo(start.issuedAt(),
+                    org.assertj.core.api.Assertions.within(1, java.time.temporal.ChronoUnit.MILLIS));
+            assertThat(received.getLast().issuedAt()).isCloseTo(stop.issuedAt(),
+                    org.assertj.core.api.Assertions.within(1, java.time.temporal.ChronoUnit.MILLIS));
+        }
+
+        @Test
         @DisplayName("should deliver broadcast signal to agent handler")
         void shouldDeliverBroadcastSignalToAgentHandler() throws Exception {
             var latch = new CountDownLatch(1);

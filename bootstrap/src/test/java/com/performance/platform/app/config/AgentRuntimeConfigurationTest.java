@@ -17,8 +17,10 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.plugin.TaskExecutor;
+import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
+import com.performance.platform.transport.http.HttpExecutionTransport;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +47,19 @@ import static org.mockito.Mockito.when;
  */
 @DisplayName("AgentRuntimeConfiguration")
 class AgentRuntimeConfigurationTest {
+
+    @Test
+    void distributedHttpAgentAdvertisesDedicatedCallbackInsteadOfUiAddress() {
+        var transport = mock(HttpExecutionTransport.class);
+        when(transport.callbackUrl()).thenReturn("https://agent.example.net:8091/api/callback");
+        var cleaners = new org.springframework.beans.factory.support.DefaultListableBeanFactory()
+                .getBeanProvider(StatefulResourceCleaner.class);
+        var runtime = new AgentRuntimeConfiguration().distributedAgentRuntime(
+                transport, new AgentProperties(List.of("http-client")), mock(AgentRegistrationPort.class),
+                List.of(stubExecutor("http-client")), cleaners);
+        assertThat(runtime.getDescriptor().httpCallbackUrl())
+                .isEqualTo("https://agent.example.net:8091/api/callback");
+    }
 
     /**
      * TaskExecutor factice pour les tests. Retourne un nom de tache fixe.

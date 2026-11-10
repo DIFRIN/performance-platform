@@ -53,6 +53,28 @@ class ScenarioRestartHandlerTest {
 
     // === Cleanup ===
 
+    @Test
+    void finishedExecutionShouldCleanOnlyItsResourcesWithoutCancellingOtherTasks() {
+        var cleaned = new java.util.ArrayList<ExecutionId>();
+        com.performance.platform.plugin.ExecutionCompletionCleaner completionCleaner = cleaned::add;
+        var unrelatedCleanup = new AtomicBoolean();
+        handler = new ScenarioRestartHandler(List.of(completionCleaner, id -> unrelatedCleanup.set(true)));
+        var task = new java.util.concurrent.FutureTask<Void>(() -> null);
+        activeTasks.put(MessageId.generate(), task);
+        activeTaskCount.set(1);
+        var executionId = ExecutionId.generate();
+
+        handler.onSignal(new ScenarioRestartSignal(SignalId.generate(), executionId,
+                "EXECUTION_FINISHED", Instant.now()), activeTasks, activeTaskCount, currentState, agentId);
+
+        assertThat(cleaned).containsExactly(executionId);
+        assertThat(unrelatedCleanup).isFalse();
+        assertThat(task.isCancelled()).isFalse();
+        assertThat(activeTasks).hasSize(1);
+        assertThat(activeTaskCount.get()).isEqualTo(1);
+        assertThat(currentState.get()).isEqualTo(AgentState.EXECUTING);
+    }
+
     @Nested
     @DisplayName("cleaner invocation")
     class CleanerInvocation {

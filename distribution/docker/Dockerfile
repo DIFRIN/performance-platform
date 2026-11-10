@@ -10,9 +10,15 @@
 # STAGE 1: Build — compile le projet et produit le fat JAR
 # ========================================================================================
 FROM eclipse-temurin:25-jdk-alpine AS build
+ARG MAVEN_TLS_INSECURE=false
 
 # Installer Maven (package Alpine officiel)
-RUN apk add --no-cache maven
+RUN if [ "$MAVEN_TLS_INSECURE" = "true" ]; then \
+      echo "WARNING: TLS certificate verification disabled for build dependency downloads" >&2; \
+      apk --no-check-certificate add --no-cache maven; \
+    else \
+      apk add --no-cache maven; \
+    fi
 
 WORKDIR /app
 
@@ -64,7 +70,10 @@ COPY infra/platform-observability/src infra/platform-observability/src
 COPY bootstrap/src bootstrap/src
 
 # Builder le fat JAR (skip tests dans l'image Docker — les tests tournent dans la CI)
-RUN mvn clean package -pl :platform-bootstrap -am -DskipTests -B -q
+RUN mvn -Dmaven.resolver.transport=wagon \
+    -Dmaven.wagon.http.ssl.insecure=${MAVEN_TLS_INSECURE} \
+    -Dmaven.wagon.http.ssl.allowall=${MAVEN_TLS_INSECURE} \
+    clean package -pl :platform-bootstrap -am -DskipTests -B -q
 
 # ========================================================================================
 # STAGE 2: Runtime — image minimale avec JRE Alpine uniquement

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.performance.platform.domain.event.AgentSignal;
-import com.performance.platform.domain.event.ScenarioRestartSignal;
+import com.performance.platform.transport.codec.AgentSignalDecoder;
 import com.performance.platform.transport.AgentLifecycleEvent;
 import com.performance.platform.transport.AgentLifecycleEventHandler;
 import com.performance.platform.transport.AgentSignalHandler;
@@ -15,6 +15,7 @@ import com.performance.platform.transport.Subscription;
 import com.performance.platform.transport.TaskRequestHandler;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.config.SocketTransportProperties;
+import com.performance.platform.transport.tls.TransportTls;
 import com.performance.platform.transport.message.ExecutionEvent;
 import com.performance.platform.transport.message.TaskExecutionRequest;
 
@@ -31,6 +32,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -83,6 +85,8 @@ public class SocketExecutionTransport implements ExecutionTransport {
     static final String TYPE_AGENT_EVENT = "AGENT_EVENT";
 
     private final SocketTransportProperties props;
+    private final TransportTls tls;
+    private final String role;
     private final ObjectMapper objectMapper;
     private final AtomicBoolean connected = new AtomicBoolean(false);
     private final AtomicBoolean orchestratorMode = new AtomicBoolean(false);
@@ -114,7 +118,18 @@ public class SocketExecutionTransport implements ExecutionTransport {
      * @param props proprietes de configuration du transport socket
      */
     public SocketExecutionTransport(SocketTransportProperties props) {
+        this(props, TransportTls.disabled(), "AUTO");
+    }
+
+    public SocketExecutionTransport(SocketTransportProperties props,
+            TransportTls tls, String role) {
         this.props = props;
+        this.tls = tls;
+        this.role = role;
+        if (!Set.of("AUTO", "AGENT", "ORCHESTRATOR").contains(role)
+                || (tls.enabled() && "AUTO".equals(role))) {
+            throw new IllegalArgumentException("TLS Socket transport requires runtime.role=AGENT or ORCHESTRATOR");
+        }
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule());
     }
@@ -131,18 +146,36 @@ public class SocketExecutionTransport implements ExecutionTransport {
         if (connected.get()) {
             return;
         }
+        if ("AGENT".equals(role)) {
+            connectAsAgent();
+            return;
+        }
 
         try {
-            serverSocket = new ServerSocket(props.orchestratorPort(), props.backlog());
+            if (tls.enabled()) {
+                tls.requireIdentity();
+                var sslServer = (javax.net.ssl.SSLServerSocket) tls.context().getServerSocketFactory()
+                        .createServerSocket(props.orchestratorPort(), props.backlog());
+                sslServer.setSSLParameters(tls.parameters(false));
+                serverSocket = sslServer;
+            } else {
+                serverSocket = new ServerSocket(props.orchestratorPort(), props.backlog());
+            }
             orchestratorMode.set(true);
             connected.set(true);
             startAcceptLoop();
             log.info("action=connect transport=SOCKET mode=ORCHESTRATOR port={}",
                     props.orchestratorPort());
         } catch (BindException e) {
+            if ("ORCHESTRATOR".equals(role)) {
+                throw new TransportException("Cannot bind orchestrator transport socket", e);
+            }
             // Port deja utilise → mode agent
             connectAsAgent();
         } catch (IOException e) {
+            if (!"AUTO".equals(role)) {
+                throw new TransportException("Cannot bind orchestrator transport socket", e);
+            }
             // Autre erreur → tenter le mode agent
             log.warn("action=bind_failed port={} error={} — falling back to agent mode",
                     props.orchestratorPort(), e.getMessage());
@@ -152,7 +185,7 @@ public class SocketExecutionTransport implements ExecutionTransport {
 
     private void connectAsAgent() throws TransportException {
         try {
-            agentSocket = new Socket(props.orchestratorHost(), props.orchestratorPort());
+            agentSocket = openAgentSocket();
             agentSocket.setKeepAlive(props.keepAlive());
             agentWriter = new BufferedWriter(
                     new OutputStreamWriter(agentSocket.getOutputStream()));
@@ -166,6 +199,27 @@ public class SocketExecutionTransport implements ExecutionTransport {
                     "Failed to connect to orchestrator at " +
                     props.orchestratorHost() + ":" + props.orchestratorPort() +
                     ": " + e.getMessage(), e);
+        }
+    }
+
+    private Socket openAgentSocket() throws IOException {
+        Socket socket = tls.enabled() ? tls.context().getSocketFactory().createSocket() : new Socket();
+        try {
+            socket.connect(new java.net.InetSocketAddress(props.orchestratorHost(), props.orchestratorPort()), 10000);
+            if (socket instanceof javax.net.ssl.SSLSocket sslSocket) {
+                sslSocket.setSSLParameters(tls.parameters(true));
+                sslSocket.setSoTimeout(10000);
+                sslSocket.startHandshake();
+                sslSocket.setSoTimeout(0);
+            }
+            return socket;
+        } catch (IOException | RuntimeException e) {
+            try {
+                socket.close();
+            } catch (IOException closeFailure) {
+                e.addSuppressed(closeFailure);
+            }
+            throw e;
         }
     }
 
@@ -392,13 +446,7 @@ public class SocketExecutionTransport implements ExecutionTransport {
             while (acceptRunning.get() && !serverSocket.isClosed()) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    clientSocket.setKeepAlive(props.keepAlive());
-                    var connection = connectionRegistry.register(clientSocket);
-                    log.info("action=agent_connected remote={} total={}",
-                            clientSocket.getRemoteSocketAddress(),
-                            connectionRegistry.getActiveCount());
-                    // Demarrer la lecture pour cette connexion
-                    startConnectionRead(clientSocket, connection);
+                    acceptExecutor.submit(() -> acceptConnection(clientSocket));
                 } catch (SocketException e) {
                     if (acceptRunning.get()) {
                         log.warn("action=accept_error error={}", e.getMessage());
@@ -411,6 +459,29 @@ public class SocketExecutionTransport implements ExecutionTransport {
             }
             log.info("action=accept_loop_stop");
         });
+    }
+
+    private void acceptConnection(Socket socket) {
+        try {
+            socket.setKeepAlive(props.keepAlive());
+            if (socket instanceof javax.net.ssl.SSLSocket sslSocket) {
+                sslSocket.setSoTimeout(10000);
+                sslSocket.startHandshake();
+                sslSocket.setSoTimeout(0);
+            }
+            var connection = connectionRegistry.register(socket);
+            log.info("action=agent_connected remote={} total={}", socket.getRemoteSocketAddress(),
+                    connectionRegistry.getActiveCount());
+            startConnectionRead(socket, connection);
+        } catch (IOException e) {
+            log.warn("action=transport_socket_rejected remote={} error={}",
+                    socket.getRemoteSocketAddress(), e.getMessage());
+            try {
+                socket.close();
+            } catch (IOException closeFailure) {
+                log.warn("action=transport_socket_close_failed", closeFailure);
+            }
+        }
     }
 
     private void stopAcceptLoop() {
@@ -540,8 +611,7 @@ public class SocketExecutionTransport implements ExecutionTransport {
                 while (connected.get() && !Thread.currentThread().isInterrupted()) {
                     try {
                         Thread.sleep(interval);
-                        agentSocket = new Socket(
-                                props.orchestratorHost(), props.orchestratorPort());
+                        agentSocket = openAgentSocket();
                         agentSocket.setKeepAlive(props.keepAlive());
                         agentWriter = new BufferedWriter(
                                 new OutputStreamWriter(agentSocket.getOutputStream()));
@@ -618,17 +688,13 @@ public class SocketExecutionTransport implements ExecutionTransport {
                 log.warn("action=signal_message_missing_payload");
                 return;
             }
-            // AgentSignal is a sealed interface — currently the only
-            // permitted subtype is ScenarioRestartSignal (matching
-            // KafkaMessageCodec.decodeSignal approach).
-            AgentSignal signal = objectMapper.treeToValue(
-                    payload, ScenarioRestartSignal.class);
+            AgentSignal signal = AgentSignalDecoder.decode(objectMapper, payload);
             log.debug("action=signal_received signalType={}",
                     signal.getClass().getSimpleName());
             for (AgentSignalHandler handler : signalHandlers) {
                 handler.onSignal(signal);
             }
-        } catch (JsonProcessingException e) {
+        } catch (IllegalArgumentException e) {
             log.warn("action=signal_deserialize_error error={}", e.getMessage());
         }
     }

@@ -15,6 +15,7 @@ import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("DynamicKafkaListenerRegistry")
 @ExtendWith(MockitoExtension.class)
@@ -38,12 +39,46 @@ class DynamicKafkaListenerRegistryTest {
         registry = new DynamicKafkaListenerRegistry(consumerFactory, codec, TASKS, SIGNALS, EVENTS);
     }
 
+    private static void readyContainer(KafkaMessageListenerContainer container, MockedConstruction.Context context) {
+        var properties = (org.springframework.kafka.listener.ContainerProperties) context.arguments().get(1);
+        if (java.util.List.of(properties.getTopics()).contains(SIGNALS)) {
+            assertThat(properties.getGroupId()).endsWith("-signals");
+        }
+        doAnswer(invocation -> {
+            if (properties.getConsumerRebalanceListener()
+                    instanceof org.springframework.kafka.listener.ConsumerAwareRebalanceListener listener) {
+                listener.onPartitionsAssigned(mock(org.apache.kafka.clients.consumer.Consumer.class),
+                        java.util.List.of(new org.apache.kafka.common.TopicPartition("commands", 0)));
+                assertThat(properties.getKafkaConsumerProperties().getProperty("auto.offset.reset")).isEqualTo("latest");
+            }
+
+            return null;
+        }).when(container).start();
+    }
+
+    @Test
+    void shouldFailAndStopWhenSubscriptionReadinessIsInterrupted() {
+        try (MockedConstruction<KafkaMessageListenerContainer> mocked =
+                     mockConstruction(KafkaMessageListenerContainer.class)) {
+            Thread.currentThread().interrupt();
+            try {
+                assertThatThrownBy(() -> registry.registerTaskListener(AGENT, request -> {}))
+                        .isInstanceOf(com.performance.platform.transport.TransportException.class)
+                        .hasMessageContaining("Interrupted waiting");
+                verify(mocked.constructed().getFirst()).stop();
+                assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            } finally {
+                Thread.interrupted();
+            }
+        }
+    }
+
     @Test
     @DisplayName("registerTaskListener creates container and calls start")
     void shouldCreateTaskContainerOnFirstRegister() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerTaskListener(AGENT, req -> {});
 
@@ -57,7 +92,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldNotCreateSecondContainerForSameAgent() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerTaskListener(AGENT, req -> {});
             registry.registerTaskListener(AGENT, req -> {});
@@ -71,7 +106,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldCreateSeparateContainersForDifferentAgents() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerTaskListener("agent-A", req -> {});
             registry.registerTaskListener("agent-B", req -> {});
@@ -85,7 +120,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldCreateSignalContainer() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerSignalListener(AGENT, sig -> {});
 
@@ -98,7 +133,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldCreateSeparateTaskAndSignalContainers() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerTaskListener(AGENT, req -> {});
             registry.registerSignalListener(AGENT, sig -> {});
@@ -112,7 +147,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldReturnCleanupRunnable() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             Runnable cleanup = registry.registerExecutionHandler(ORCH, evt -> {});
 
@@ -126,7 +161,7 @@ class DynamicKafkaListenerRegistryTest {
     void cleanupShouldStopContainer() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             Runnable cleanup = registry.registerExecutionHandler(ORCH, evt -> {});
             cleanup.run();
@@ -140,7 +175,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldShareEventContainer() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerExecutionHandler(ORCH, evt -> {});
             registry.registerAgentLifecycleHandler(ORCH, evt -> {});
@@ -154,7 +189,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldStopContainersOnUnregister() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerTaskListener(AGENT, req -> {});
             registry.registerSignalListener(AGENT, sig -> {});
@@ -177,7 +212,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldStopAllContainers() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerTaskListener("a1", req -> {});
             registry.registerSignalListener("a2", sig -> {});
@@ -195,7 +230,7 @@ class DynamicKafkaListenerRegistryTest {
     void shouldNoopOnDoubleStopAll() throws Exception {
         try (MockedConstruction<KafkaMessageListenerContainer> mocked =
                      mockConstruction(KafkaMessageListenerContainer.class,
-                             (mock, ctx) -> doNothing().when(mock).start())) {
+                             DynamicKafkaListenerRegistryTest::readyContainer)) {
 
             registry.registerTaskListener(AGENT, req -> {});
             registry.stopAll();

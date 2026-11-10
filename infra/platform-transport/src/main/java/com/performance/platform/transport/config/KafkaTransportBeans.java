@@ -1,6 +1,8 @@
 package com.performance.platform.transport.config;
 
 import com.performance.platform.transport.kafka.KafkaExecutionTransport;
+import com.performance.platform.transport.kafka.BundleSslEngineFactory;
+import com.performance.platform.transport.tls.TransportTls;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -8,6 +10,7 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +23,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 
 import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Beans Spring pour le transport Kafka.
@@ -35,6 +39,25 @@ import java.util.Map;
 @ConditionalOnProperty(name = "transport.type", havingValue = "KAFKA")
 public class KafkaTransportBeans {
 
+    private final ObjectProvider<TransportTls> tlsProvider;
+
+    public KafkaTransportBeans(ObjectProvider<TransportTls> tlsProvider) {
+        this.tlsProvider = tlsProvider;
+    }
+
+    private Map<String, Object> withTls(Map<String, Object> base) {
+        var tls = tlsProvider.getIfAvailable(TransportTls::disabled);
+        if (!tls.enabled()) {
+            return base;
+        }
+        var config = new HashMap<>(base);
+        config.put("security.protocol", "SSL");
+        config.put("ssl.engine.factory.class", BundleSslEngineFactory.class);
+        config.put(BundleSslEngineFactory.BUNDLE_CONFIG, tls.bundle());
+        config.put("ssl.endpoint.identification.algorithm", "HTTPS");
+        return config;
+    }
+
     @Bean("transportProducerFactory")
     public ProducerFactory<String, byte[]> transportProducerFactory(
             KafkaTransportProperties props) {
@@ -44,7 +67,7 @@ public class KafkaTransportBeans {
                 ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class,
                 ProducerConfig.ACKS_CONFIG, props.producerAcks()
         );
-        return new DefaultKafkaProducerFactory<>(config);
+        return new DefaultKafkaProducerFactory<>(withTls(config));
     }
 
     @Bean("transportKafkaTemplate")
@@ -64,7 +87,7 @@ public class KafkaTransportBeans {
                 ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
                 ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"
         );
-        return new DefaultKafkaConsumerFactory<>(config);
+        return new DefaultKafkaConsumerFactory<>(withTls(config));
     }
 
     @Bean("transportContainerFactory")

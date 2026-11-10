@@ -1,0 +1,21 @@
+spring:
+  ssl:
+    bundle:
+      jks:
+        transport:
+          keystore:
+            type: PKCS12
+            location: ${TRANSPORT_TLS_KEYSTORE}
+            password: ${TRANSPORT_TLS_STORE_PASSWORD}
+          truststore:
+            type: PKCS12
+            location: ${TRANSPORT_TLS_TRUSTSTORE}
+            password: ${TRANSPORT_TLS_TRUSTSTORE_PASSWORD}
+          options:
+            enabled-protocols: [TLSv1.3, TLSv1.2]
+
+transport:
+  tls:
+    enabled: true
+    bundle: transport
+    client-auth: ${TRANSPORT_TLS_CLIENT_AUTH:NEED}

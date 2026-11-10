@@ -1,0 +1,18 @@
+spring:
+  ssl:
+    bundle:
+      jks:
+        web:
+          keystore:
+            type: PKCS12
+            location: ${WEB_TLS_KEYSTORE}
+            password: ${WEB_TLS_STORE_PASSWORD}
+          options:
+            enabled-protocols: [TLSv1.3, TLSv1.2]
+
+server:
+  port: ${WEB_TLS_PORT:8443}
+  ssl:
+    enabled: true
+    bundle: web
+    client-auth: NONE

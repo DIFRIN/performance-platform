@@ -7,6 +7,14 @@
 
 ## 1. Objectif
 
+TLS optionnel pour HTTP, Kafka, RabbitMQ et Socket : voir
+[ADR-047](../adr/ADR-047-optional-transport-mtls-and-independent-web-tls.md) et le
+[guide de configuration TLS](../../../distribution/example/tls/README.md).
+`transport.tls.enabled=false` par defaut. Le bundle Spring Boot de transport est
+independant de `server.ssl.bundle` (UI/API HTTPS sans certificat client).
+HTTP utilise un listener dedie, y compris en AGENT sans serveur servlet.
+Les clients visant le SUT ne sont pas modifies.
+
 Abstraire le mécanisme de communication entre orchestrateur et agents. Changer de
 transport = changer `transport.type` ; aucun changement de code métier.
 
@@ -372,6 +380,12 @@ Clé d'idempotence : `TaskExecutionRequest.id`. Un agent ne ré-exécute jamais 
 ---
 
 ## 7. Enregistrement des agents
+
+Les signaux Kafka, RabbitMQ et Socket distinguent les deux sous-types de
+`AgentSignal` : `ExecutionLifecycleSignal` (`action`/`taskId`, START ou STOP)
+et `ScenarioRestartSignal` (`reason`). Le décodage conserve le format existant,
+y compris les messages déjà en file ; aucun champ `reason` artificiel n'est
+ajouté aux signaux START/STOP. Les payloads invalides ou ambigus sont rejetés.
 
 L'enregistrement passe par le **canal lifecycle** (ADR-012), pas par le canal exécution :
 

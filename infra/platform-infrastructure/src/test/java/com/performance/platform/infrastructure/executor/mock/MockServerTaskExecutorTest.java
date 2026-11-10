@@ -479,6 +479,45 @@ class MockServerTaskExecutorTest {
     class Cleanup {
 
         @Test
+        void shouldWaitForPortUntilPreviousExecutionIsCleanedUp() throws Exception {
+            var dynamic = new StepDefinition(TaskId.of("first"), "mock-server", Phase.PREPARATION,
+                    Map.of("port", 0), null, null, Duration.ofSeconds(10), null);
+            var first = executor.execute(contextWithId("port-owner"), dynamic);
+            assertThat(first.isSuccess()).isTrue();
+            int port = (Integer) first.outputs().get("port");
+            var fixed = new StepDefinition(TaskId.of("second"), "mock-server", Phase.PREPARATION,
+                    Map.of("port", port), null, null, Duration.ofSeconds(10), null);
+            try (var threads = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
+                var entered = new java.util.concurrent.CountDownLatch(1);
+                var waiting = threads.submit(() -> {
+                    entered.countDown();
+                    return executor.execute(contextWithId("port-waiter"), fixed);
+                });
+                assertThat(entered.await(2, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                assertThatThrownBy(() -> waiting.get(200, java.util.concurrent.TimeUnit.MILLISECONDS))
+                        .isInstanceOf(java.util.concurrent.TimeoutException.class);
+                executor.cleanup(ExecutionId.of("port-owner"));
+                assertThat(waiting.get(10, java.util.concurrent.TimeUnit.SECONDS).isSuccess()).isTrue();
+            }
+        }
+
+        @Test
+        void shouldReportPortWaitTimeoutWithoutStoppingItsOwner() {
+            var dynamic = new StepDefinition(TaskId.of("first"), "mock-server", Phase.PREPARATION,
+                    Map.of("port", 0), null, null, Duration.ofSeconds(10), null);
+            var first = executor.execute(contextWithId("owner"), dynamic);
+            int port = (Integer) first.outputs().get("port");
+            var fixed = new StepDefinition(TaskId.of("second"), "mock-server", Phase.PREPARATION,
+                    Map.of("port", port), null, null, Duration.ofMillis(100), null);
+
+            var result = executor.execute(contextWithId("waiter"), fixed);
+
+            assertThat(result.isSuccess()).isFalse();
+            assertThat(result.errorMessage()).contains("Timed out waiting");
+            assertThat(portInUse(port)).isTrue();
+        }
+
+        @Test
         @DisplayName("should stop all running servers on global cleanup")
         void shouldStopAllRunningServersOnGlobalCleanup() {
             // Start two servers

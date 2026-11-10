@@ -178,7 +178,9 @@ Le claim `TASK_CLAIMED` est publié par le runtime **avant** la soumission du pi
 Côté agent (`TransportAgentRegistration`, `LifecycleChannel`) :
 - `register` → `AgentLifecycleEvent(type=AGENT_REGISTERED, payload=AgentDescriptor)`
   (codec typé `AgentLifecyclePayloadCodec`) ;
-- `sendHeartbeat` → `AGENT_HEARTBEAT` ;
+- `sendHeartbeat` → `AGENT_HEARTBEAT` : après un `register` réussi, le payload
+  inclut aussi le descripteur enregistré. L'état et `lastHeartbeatAt` sont
+  actualisés avec le heartbeat courant ;
 - `deregister` → `AGENT_DEREGISTERED`.
 
 `HeartbeatScheduler` :
@@ -192,6 +194,10 @@ Côté orchestrateur (`AgentRegistryConfiguration`, actif DISTRIBUTED + ORCHESTR
   `AgentRegistryPort`) ;
 - `AgentLifecycleIngestion` s'abonne au `LifecycleChannel` et alimente le registre
   (`registered`, `heartbeat`, `deregistered`, `lost`) ;
+- après un redémarrage de l'orchestrateur ou une expiration TTL, un heartbeat
+  auto-descriptif réinscrit un agent inconnu sans redémarrer les agents ni relire
+  les anciens événements Kafka. Un ancien heartbeat sans descripteur met
+  uniquement à jour un agent déjà connu ; sinon il est ignoré avec un warning ;
 - `AgentTtlMonitor` vérifie périodiquement les TTL expirés
   (`agent.registry.ttl-check-interval-seconds`, défaut 10 s) et publie `AgentLost` ;
 - `AgentLost` déclenche le fast-fail des steps en cours (ADR-033).

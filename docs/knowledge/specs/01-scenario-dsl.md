@@ -19,6 +19,11 @@ La section optionnelle `scenario.report` definit le contexte du rapport et ses
 preuves/criteres ; elle ne configure pas Spring ni un collecteur. Contrat et
 exemple : [Spec 08 - report evidence](08-report-engine.md#8-configuration-des-preuves-et-criteres).
 
+`scenario.metadata.executionGroup` (chaîne optionnelle) sérialise les tirs
+partageant une ressource : le groupe est acquis avant PREPARATION et libéré après
+les événements de fin, reporting et nettoyage. Sans groupe, les tirs restent
+parallèles. La coordination est limitée à une instance d'orchestrateur.
+
 ```yaml
 scenario:
   id: customer-api-perf                # REQUIRED - unique
@@ -28,6 +33,7 @@ scenario:
     - performance
     - regression
   metadata:
+    executionGroup: customer-perf-env   # optionnel : tirs exclusifs sur ce SUT
     owner: team-a
     jira: PERF-123
     description: "Test de performance de l'API client"

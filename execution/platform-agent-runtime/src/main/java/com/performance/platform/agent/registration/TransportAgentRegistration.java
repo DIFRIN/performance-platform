@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Implémentation de {@link AgentRegistrationPort} qui publie les événements
@@ -27,6 +29,7 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
     private static final Logger log = LoggerFactory.getLogger(TransportAgentRegistration.class);
 
     private final LifecycleChannel transport;
+    private final ConcurrentMap<AgentId, AgentDescriptor> descriptors = new ConcurrentHashMap<>();
 
     public TransportAgentRegistration(LifecycleChannel transport) {
         this.transport = Objects.requireNonNull(transport, "transport must not be null");
@@ -44,6 +47,7 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
                     Instant.now()
             );
             transport.publishAgentEvent(event);
+            descriptors.put(descriptor.id(), descriptor);
             log.info("action=agent_registered agentId={} name={} supportedTasks={}",
                     descriptor.id().value(), descriptor.name(), descriptor.supportedTaskNames().size());
         } catch (TransportException e) {
@@ -64,6 +68,7 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
                     Instant.now()
             );
             transport.publishAgentEvent(event);
+            descriptors.remove(agentId);
             log.info("action=agent_deregistered agentId={}", agentId.value());
         } catch (TransportException e) {
             log.error("action=agent_deregistration_failed agentId={}", agentId.value(), e);
@@ -76,11 +81,20 @@ public class TransportAgentRegistration implements AgentRegistrationPort {
         Objects.requireNonNull(agentId, "agentId must not be null");
         Objects.requireNonNull(heartbeat, "heartbeat must not be null");
         try {
+            var descriptor = descriptors.get(agentId);
+            var payload = descriptor == null
+                    ? AgentLifecyclePayloadCodec.encode(heartbeat)
+                    : AgentLifecyclePayloadCodec.encode(descriptor);
+            if (descriptor != null) {
+                // A fresh orchestrator can rebuild its registry from this heartbeat alone.
+                payload.putAll(AgentLifecyclePayloadCodec.encode(heartbeat));
+                payload.put("lastHeartbeatAt", heartbeat.sentAt().toString());
+            }
             var event = new AgentLifecycleEvent(
                     EventId.generate(),
                     agentId,
                     AgentLifecycleEvent.AGENT_HEARTBEAT,
-                    AgentLifecyclePayloadCodec.encode(heartbeat),
+                    payload,
                     Instant.now()
             );
             transport.publishAgentEvent(event);
