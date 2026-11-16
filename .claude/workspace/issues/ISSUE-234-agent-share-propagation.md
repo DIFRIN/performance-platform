@@ -2,7 +2,7 @@
 
 **PDR** : PDR-060
 **Module** : `platform-agent-runtime`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-227, ISSUE-231
 **Estime** : S (< 1h)

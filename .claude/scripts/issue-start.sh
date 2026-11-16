@@ -55,7 +55,7 @@ is_status_in_table() {
     local issue_id="$1"
     local expected_status="$2"
     sed -n '/^## Issues/,/^## PDRs/p' "$PROGRESS" \
-        | grep -qP "^\| ${issue_id} \| .* \| ${expected_status} \|"
+        | grep -P "^\| ${issue_id} \| .* \| ${expected_status} \|" >/dev/null
 }
 
 # ── Helper: vérifier que toutes les dépendances d'une Issue sont DONE ────────────

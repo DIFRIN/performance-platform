@@ -210,7 +210,7 @@
 | ISSUE-195 | Migrate Context Consumers | DONE | PDR-053 | ISSUE-194 |
 | ISSUE-196 | Security Posture Decision | DONE | PDR-054 | - |
 | ISSUE-197 | Interface ExecutorAvailability | DONE | PDR-055 | - |
-| ISSUE-198 | Refus de claim si executor indisponible | WAITING | PDR-055 | ISSUE-197 |
+| ISSUE-198 | Refus de claim si executor indisponible | APPROVED | PDR-055 | ISSUE-197 |
 | ISSUE-199 | Limite de concurrence d'injection par agent | WAITING | PDR-055 | ISSUE-197 |
 | ISSUE-200 | InjectionWorkerMain et run directory | WAITING | PDR-055 | ISSUE-199 |
 | ISSUE-201 | Lanceur de worker et bascule de l'executor | WAITING | PDR-055 | ISSUE-200 |
@@ -246,7 +246,7 @@
 | ISSUE-231 | Codec transport du GrantShare | DONE | PDR-060 | ISSUE-227 |
 | ISSUE-232 | Moteur : calcul des parts et minAgents | DONE | PDR-060 | ISSUE-227, ISSUE-228 |
 | ISSUE-233 | Moteur : politique de perte d'agent | WAITING | PDR-060 | ISSUE-232, ISSUE-202 |
-| ISSUE-234 | Agent : propagation du share à l'executor | APPROVED | PDR-060 | ISSUE-227, ISSUE-231 |
+| ISSUE-234 | Agent : propagation du share à l'executor | DONE | PDR-060 | ISSUE-227, ISSUE-231 |
 | ISSUE-235 | Mise à l'échelle du plan par le share | WAITING | PDR-060 | ISSUE-234, ISSUE-213 |
 | ISSUE-236 | Compteurs partitionnés, graines et garde-fou sur la part | WAITING | PDR-060 | ISSUE-235, ISSUE-214 |
 | ISSUE-237 | Test d'intégration : scope global distribué | WAITING | PDR-060 | ISSUE-233, ISSUE-236 |
@@ -1115,3 +1115,7 @@
 | 2026-11-16 | ISSUE-234 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-16 | ISSUE-234 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-16 | ISSUE-234 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-16 | ISSUE-234 | APPROVED → DONE | issue-next.sh |
+| 2026-11-16 | ISSUE-198 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-16 | ISSUE-198 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-16 | ISSUE-198 | IN_REVIEW → APPROVED | Reviewer approved |

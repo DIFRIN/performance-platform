@@ -15,6 +15,7 @@ import com.performance.platform.domain.event.ScenarioRestartSignal;
 import com.performance.platform.domain.event.TaskGrantSignal;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.plugin.StatefulResourceCleaner;
+import com.performance.platform.plugin.ExecutorAvailability;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.ConnectionLifecycle;
 import com.performance.platform.transport.EventChannel;
@@ -91,6 +92,9 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
     private final ConcurrentMap<MessageId, Future<?>> activeTasks = new ConcurrentHashMap<>();
 
     /** Claims en attente de grant (ADR-055) : messageId -> requete. */
+    /** Executors par taskName, pour consulter {@link ExecutorAvailability} avant claim. */
+    private final java.util.Map<String, TaskExecutor> executorsByName;
+
     private final ConcurrentMap<MessageId, TaskExecutionRequest> pendingClaims = new ConcurrentHashMap<>();
     private static final Duration CLAIM_EXPIRY = Duration.ofSeconds(30);
 
@@ -156,6 +160,8 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
                                     "Duplicate TaskExecutor for taskName=" + a.getSupportedTaskName());
                         }
                 ));
+
+        this.executorsByName = executorMap;
 
         this.taskPipeline = new TaskExecutionPipeline(
                 eventChannel, executorMap, descriptor.id(),
@@ -343,6 +349,15 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
         var filterResult = filter.filter(request);
         if (filterResult instanceof TaskFilterResult.NotResponsible) {
             log.debug("action=task_not_responsible agentId={} messageId={} taskName={}",
+                    staticDescriptor.id().value(), request.id().value(),
+                    request.step().taskName());
+            return;
+        }
+
+        // Executor indisponible : pas de claim, la tache reste disponible pour un autre agent.
+        if (executorsByName.get(request.step().taskName()) instanceof ExecutorAvailability availability
+                && !availability.canAcceptNewTask()) {
+            log.info("action=claim_skipped agentId={} messageId={} taskName={} reason=executor_unavailable",
                     staticDescriptor.id().value(), request.id().value(),
                     request.step().taskName());
             return;
