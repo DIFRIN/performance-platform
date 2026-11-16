@@ -283,4 +283,36 @@ class StepDefinitionTest {
             assertNotEquals(s1, s2);
         }
     }
+
+    @Nested
+    @DisplayName("minAgents et onAgentLoss")
+    class AgentLoss {
+
+        @Test
+        @DisplayName("défauts : minAgents=1, ABORT")
+        void defaults() {
+            var s = new StepDefinition(validTaskId(), "t", Phase.INJECTION, null, null, null, null, null);
+            assertEquals(1, s.minAgents());
+            assertEquals(AgentLossPolicy.ABORT, s.onAgentLoss());
+        }
+
+        @Test
+        @DisplayName("valeurs explicites conservées, onAgentLoss null => ABORT")
+        void explicit() {
+            var s = new StepDefinition(validTaskId(), "t", Phase.INJECTION, null, null, null, null, null,
+                    FanOut.ALL, null, null, null, 3, AgentLossPolicy.CONTINUE);
+            assertEquals(3, s.minAgents());
+            assertEquals(AgentLossPolicy.CONTINUE, s.onAgentLoss());
+            var d = new StepDefinition(validTaskId(), "t", Phase.INJECTION, null, null, null, null, null,
+                    FanOut.ALL, null, null, null, 2, null);
+            assertEquals(AgentLossPolicy.ABORT, d.onAgentLoss());
+        }
+
+        @Test
+        @DisplayName("minAgents < 1 rejeté")
+        void invalidMinAgents() {
+            assertThrows(IllegalArgumentException.class, () -> new StepDefinition(validTaskId(), "t",
+                    Phase.INJECTION, null, null, null, null, null, FanOut.ALL, null, null, null, 0, null));
+        }
+    }
 }

@@ -35,7 +35,9 @@ public record StepDefinition(
     FanOut fanOut,
     List<String> requiredContexts,
     Duration timeout,
-    RetryPolicy retryPolicy
+    RetryPolicy retryPolicy,
+    int minAgents,
+    AgentLossPolicy onAgentLoss
 ) {
 
     public StepDefinition {
@@ -55,8 +57,23 @@ public record StepDefinition(
             throw new IllegalArgumentException("drain must not be negative");
         }
         fanOut = fanOut == null ? FanOut.ONE : fanOut;
+        if (minAgents < 1) {
+            throw new IllegalArgumentException("minAgents must be >= 1");
+        }
+        onAgentLoss = onAgentLoss == null ? AgentLossPolicy.ABORT : onAgentLoss;
         // timeout peut être null (défaut géré à l'exécution)
         // retryPolicy peut être null (pas de retry)
+    }
+
+    /**
+     * Ancienne signature : {@code minAgents = 1}, {@code onAgentLoss = ABORT}.
+     */
+    public StepDefinition(TaskId id, String taskName, Phase phase, Map<String, Object> parameters,
+                          List<TaskId> dependsOn, TaskId ref, ServiceScope during, Duration drain,
+                          FanOut fanOut, List<String> requiredContexts, Duration timeout,
+                          RetryPolicy retryPolicy) {
+        this(id, taskName, phase, parameters, dependsOn, ref, during, drain, fanOut,
+                requiredContexts, timeout, retryPolicy, 1, AgentLossPolicy.ABORT);
     }
 
     /**
@@ -66,7 +83,7 @@ public record StepDefinition(
                           List<TaskId> dependsOn, List<String> requiredContexts,
                           Duration timeout, RetryPolicy retryPolicy) {
         this(id, taskName, phase, parameters, dependsOn, null, null, null, FanOut.ONE,
-                requiredContexts, timeout, retryPolicy);
+                requiredContexts, timeout, retryPolicy, 1, AgentLossPolicy.ABORT);
     }
 
     /** Une étape de service ne participe pas à l'ordonnancement des phases. */

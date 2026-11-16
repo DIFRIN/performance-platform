@@ -239,8 +239,8 @@
 | ISSUE-224 | Verdict INVALID dans le moteur de rapport | WAITING | PDR-059 | ISSUE-223 |
 | ISSUE-225 | Rendu HTML/PDF du verdict INVALID | WAITING | PDR-059 | ISSUE-224 |
 | ISSUE-226 | API, IHM et CLI : verdict INVALID | WAITING | PDR-059 | ISSUE-224 |
-| ISSUE-227 | GrantShare, signal de grant et contexte | APPROVED | PDR-060 | - |
-| ISSUE-228 | StepDefinition : minAgents et onAgentLoss | WAITING | PDR-060 | - |
+| ISSUE-227 | GrantShare, signal de grant et contexte | DONE | PDR-060 | - |
+| ISSUE-228 | StepDefinition : minAgents et onAgentLoss | APPROVED | PDR-060 | - |
 | ISSUE-229 | Parsing YAML : scope, minAgents, onAgentLoss | WAITING | PDR-060 | ISSUE-228, ISSUE-206 |
 | ISSUE-230 | Validation : scope global et minAgents | WAITING | PDR-060 | ISSUE-228, ISSUE-207 |
 | ISSUE-231 | Codec transport du GrantShare | WAITING | PDR-060 | ISSUE-227 |
@@ -1099,3 +1099,7 @@
 | 2026-11-16 | ISSUE-227 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-16 | ISSUE-227 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-16 | ISSUE-227 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-16 | ISSUE-227 | APPROVED → DONE | issue-next.sh |
+| 2026-11-16 | ISSUE-228 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-16 | ISSUE-228 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-16 | ISSUE-228 | IN_REVIEW → APPROVED | Reviewer approved |
