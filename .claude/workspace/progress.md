@@ -216,7 +216,7 @@
 | ISSUE-201 | Lanceur de worker et bascule de l'executor | WAITING | PDR-055 | ISSUE-200 |
 | ISSUE-202 | Annulation et arrêt du worker | WAITING | PDR-055 | ISSUE-201 |
 | ISSUE-203 | Test d'intégration worker en mode LOCAL | WAITING | PDR-055 | ISSUE-202 |
-| ISSUE-204 | Records WorkloadPlan et codec | APPROVED | PDR-056 | - |
+| ISSUE-204 | Records WorkloadPlan et codec | DONE | PDR-056 | - |
 | ISSUE-205 | Presets : expansion des 8 types | WAITING | PDR-056 | ISSUE-204 |
 | ISSUE-206 | Parsing YAML de workload et presets | WAITING | PDR-056 | ISSUE-205 |
 | ISSUE-207 | Validation du plan au parsing | WAITING | PDR-056 | ISSUE-204 |
@@ -239,7 +239,7 @@
 | ISSUE-224 | Verdict INVALID dans le moteur de rapport | WAITING | PDR-059 | ISSUE-223 |
 | ISSUE-225 | Rendu HTML/PDF du verdict INVALID | WAITING | PDR-059 | ISSUE-224 |
 | ISSUE-226 | API, IHM et CLI : verdict INVALID | WAITING | PDR-059 | ISSUE-224 |
-| ISSUE-227 | GrantShare, signal de grant et contexte | WAITING | PDR-060 | - |
+| ISSUE-227 | GrantShare, signal de grant et contexte | APPROVED | PDR-060 | - |
 | ISSUE-228 | StepDefinition : minAgents et onAgentLoss | WAITING | PDR-060 | - |
 | ISSUE-229 | Parsing YAML : scope, minAgents, onAgentLoss | WAITING | PDR-060 | ISSUE-228, ISSUE-206 |
 | ISSUE-230 | Validation : scope global et minAgents | WAITING | PDR-060 | ISSUE-228, ISSUE-207 |
@@ -1095,3 +1095,7 @@
 | 2026-11-16 | ISSUE-204 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-16 | ISSUE-204 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-16 | ISSUE-204 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-16 | ISSUE-204 | APPROVED → DONE | issue-next.sh |
+| 2026-11-16 | ISSUE-227 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-16 | ISSUE-227 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-16 | ISSUE-227 | IN_REVIEW → APPROVED | Reviewer approved |

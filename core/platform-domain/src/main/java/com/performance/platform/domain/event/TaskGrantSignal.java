@@ -1,5 +1,6 @@
 package com.performance.platform.domain.event;
 
+import com.performance.platform.domain.execution.GrantShare;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.MessageId;
@@ -27,6 +28,7 @@ import java.util.Objects;
  * @param agentId     agent destinataire du verdict
  * @param granted     true si l'agent doit executer la tache
  * @param issuedAt    instant d'emission
+ * @param share       part de charge accordee (ADR-067) ; {@link GrantShare#single()} par defaut
  */
 public record TaskGrantSignal(
         SignalId id,
@@ -35,7 +37,8 @@ public record TaskGrantSignal(
         MessageId messageId,
         AgentId agentId,
         boolean granted,
-        Instant issuedAt
+        Instant issuedAt,
+        GrantShare share
 ) implements AgentSignal {
 
     public TaskGrantSignal {
@@ -45,5 +48,13 @@ public record TaskGrantSignal(
         Objects.requireNonNull(messageId, "messageId required");
         Objects.requireNonNull(agentId, "agentId required");
         Objects.requireNonNull(issuedAt, "issuedAt required");
+        Objects.requireNonNull(share, "share required");
+    }
+
+    /** Compatibilite : share = {@link GrantShare#single()}. */
+    public TaskGrantSignal(SignalId id, ExecutionId executionId, TaskId taskId,
+                           MessageId messageId, AgentId agentId, boolean granted,
+                           Instant issuedAt) {
+        this(id, executionId, taskId, messageId, agentId, granted, issuedAt, GrantShare.single());
     }
 }

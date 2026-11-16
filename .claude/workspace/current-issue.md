@@ -1,11 +1,11 @@
-# ISSUE-204: Records WorkloadPlan et codec
+# ISSUE-227: GrantShare, signal de grant et contexte
 **Status**: APPROVED
-**PDR**: PDR-056
+**PDR**: PDR-060
 **Module**: platform-domain
-**Started**: 2026-11-16T22:46+01:00
-**IssueFile**: issues/ISSUE-204-workload-plan-records.md
+**Started**: 2026-11-16T22:50+01:00
+**IssueFile**: issues/ISSUE-227-grant-share-domain.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-204-workload-plan-records.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-227-grant-share-domain.md`
 
 ## Reviewer Feedback
 (None yet)

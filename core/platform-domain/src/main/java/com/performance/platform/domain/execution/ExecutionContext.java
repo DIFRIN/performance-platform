@@ -30,7 +30,8 @@ import java.util.Set;
 public record ExecutionContext(
     ExecutionId executionId,
     ScenarioId scenarioId,
-    Map<String, Map<String, TaskResult>> store
+    Map<String, Map<String, TaskResult>> store,
+    GrantShare share
 ) {
 
     public ExecutionContext {
@@ -41,6 +42,23 @@ public record ExecutionContext(
         } else if (!(store instanceof PersistentStore)) {
             store = PersistentStore.of(store);
         }
+        if (share == null) {
+            share = GrantShare.single();
+        }
+    }
+
+    /** Compatibilite : share = {@link GrantShare#single()}. */
+    public ExecutionContext(ExecutionId executionId, ScenarioId scenarioId,
+                            Map<String, Map<String, TaskResult>> store) {
+        this(executionId, scenarioId, store, GrantShare.single());
+    }
+
+    /**
+     * Retourne une copie avec la part de grant donnee (ADR-067).
+     */
+    public ExecutionContext withShare(GrantShare share) {
+        Objects.requireNonNull(share, "share required");
+        return new ExecutionContext(executionId, scenarioId, store, share);
     }
 
     /**
@@ -68,7 +86,7 @@ public record ExecutionContext(
         PersistentStore persistent = store instanceof PersistentStore p
                 ? p
                 : PersistentStore.of(store);
-        return new ExecutionContext(executionId, scenarioId, persistent.with(taskId, agentId, result));
+        return new ExecutionContext(executionId, scenarioId, persistent.with(taskId, agentId, result), share);
     }
 
     /**
