@@ -516,3 +516,26 @@
 | `LocalLifecycleDispatcher` (déplacé engine → app) | ⬜ PLANNED | PDR-048 | ISSUE-177 |
 
 - `LocalDistributedEquivalenceIT` (T2) — test de garde LOCAL ≡ DISTRIBUTED (ISSUE-170).
+
+## Injection architecture (ADR-064..070) — PLANNED
+
+| Classe / Interface | Module | Statut | PDR | Issue |
+|---|---|---|---|---|
+| `ExecutorAvailability` | platform-plugin-api | ✅ DONE | PDR-055 | ISSUE-197 |
+| `InjectionWorkerLauncher`, `WorkerHandle`, `WorkerRunSpec`, `WorkerOutcome`, `InjectionWorkerMain` | platform-injection-gatling | ⬜ PLANNED | PDR-055 | ISSUE-200, ISSUE-201 |
+| `WorkloadPlan`, `Stage` (`Ramp`, `Hold`, `Burst`, `Pause`), `ArrivalModel`, `LoadScope`, `WorkloadPlanCodec` | platform-domain | ⬜ PLANNED | PDR-056 | ISSUE-204 |
+| `LoadPresets` | platform-domain | ⬜ PLANNED | PDR-056 | ISSUE-205 |
+| `WorkloadPlanTranslator` | platform-injection-gatling | ⬜ PLANNED | PDR-056 | ISSUE-208 |
+| `LoadModel`, `LoadModelType`, `LoadModelTranslator` | platform-domain / gatling | ⚠️ BREAKING → ❌ REMOVED | PDR-056 | ISSUE-208, ISSUE-210 |
+| `InjectionCapabilities`, `InjectionCapabilityProvider` | platform-plugin-api | ⬜ PLANNED | PDR-057 | ISSUE-212 |
+| `PlanAdmission`, `InjectionLimits` | platform-injection-gatling | ⬜ PLANNED | PDR-057 | ISSUE-213, ISSUE-214 |
+| `LatencyHistogram`, `LoadWindow`, `GeneratorHealth`, `InjectionResult` (étendu) | platform-domain | ⬜ PLANNED | PDR-058 | ISSUE-215 |
+| `Reduction.MERGE`, `MetricCatalog` (métriques injection) | platform-domain | ⬜ PLANNED | PDR-058 | ISSUE-216 |
+| `InjectionAggregator` | platform-assertion | ⬜ PLANNED | PDR-058 | ISSUE-219 |
+| `Verdict.INVALID`, `AssertionFamily.INTEGRITY`, `IntegrityTolerances` | platform-domain | ⬜ PLANNED | PDR-059 | ISSUE-221 |
+| `IntegrityCheckFactory`, `IntegrityInput` | platform-assertion | ⬜ PLANNED | PDR-059 | ISSUE-223 |
+| `GrantShare`, `TaskGrantSignal.share`, `ExecutionContext.share()` | platform-domain | ⬜ PLANNED | PDR-060 | ISSUE-227 |
+| `AgentLossPolicy`, `StepDefinition.minAgents/onAgentLoss` | platform-domain | ⬜ PLANNED | PDR-060 | ISSUE-228 |
+| `PlanScaler` | platform-injection-gatling | ⬜ PLANNED | PDR-060 | ISSUE-235 |
+| `RequestStats`, `InjectionResult.perRequest` | platform-domain | ⬜ PLANNED | PDR-061 | ISSUE-238 |
+| `RequestMix`, `WeightedRequest` | platform-injection-gatling | ⬜ PLANNED | PDR-061 | ISSUE-240 |

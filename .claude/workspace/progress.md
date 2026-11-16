@@ -209,6 +209,54 @@
 | ISSUE-194 | ExecutionContext Named Outputs + Persistent Store | DONE | PDR-053 | - |
 | ISSUE-195 | Migrate Context Consumers | DONE | PDR-053 | ISSUE-194 |
 | ISSUE-196 | Security Posture Decision | DONE | PDR-054 | - |
+| ISSUE-197 | Interface ExecutorAvailability | APPROVED | PDR-055 | - |
+| ISSUE-198 | Refus de claim si executor indisponible | WAITING | PDR-055 | ISSUE-197 |
+| ISSUE-199 | Limite de concurrence d'injection par agent | WAITING | PDR-055 | ISSUE-197 |
+| ISSUE-200 | InjectionWorkerMain et run directory | WAITING | PDR-055 | ISSUE-199 |
+| ISSUE-201 | Lanceur de worker et bascule de l'executor | WAITING | PDR-055 | ISSUE-200 |
+| ISSUE-202 | Annulation et arrêt du worker | WAITING | PDR-055 | ISSUE-201 |
+| ISSUE-203 | Test d'intégration worker en mode LOCAL | WAITING | PDR-055 | ISSUE-202 |
+| ISSUE-204 | Records WorkloadPlan et codec | WAITING | PDR-056 | - |
+| ISSUE-205 | Presets : expansion des 8 types | WAITING | PDR-056 | ISSUE-204 |
+| ISSUE-206 | Parsing YAML de workload et presets | WAITING | PDR-056 | ISSUE-205 |
+| ISSUE-207 | Validation du plan au parsing | WAITING | PDR-056 | ISSUE-204 |
+| ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | WAITING | PDR-056 | ISSUE-206, ISSUE-201 |
+| ISSUE-209 | Modèle fermé (utilisateurs concurrents) | WAITING | PDR-056 | ISSUE-208 |
+| ISSUE-210 | Suppression de LoadModel et LoadModelType | WAITING | PDR-056 | ISSUE-207, ISSUE-208 |
+| ISSUE-211 | Plan résolu et hash dans le rapport | WAITING | PDR-056 | ISSUE-208 |
+| ISSUE-212 | InjectionCapabilities dans plugin-api | WAITING | PDR-057 | ISSUE-204 |
+| ISSUE-213 | Admission du plan et simulations opaques | WAITING | PDR-057 | ISSUE-212, ISSUE-208 |
+| ISSUE-214 | Garde-fou de débit par agent | WAITING | PDR-057 | ISSUE-213 |
+| ISSUE-215 | Histogramme, fenêtres et santé dans InjectionResult | WAITING | PDR-058 | ISSUE-204 |
+| ISSUE-216 | Reduction.MERGE et catalogue de métriques | WAITING | PDR-058 | ISSUE-215 |
+| ISSUE-217 | Parser : histogramme et fenêtres | WAITING | PDR-058 | ISSUE-215, ISSUE-208 |
+| ISSUE-218 | Santé du générateur et sorties du résultat | WAITING | PDR-058 | ISSUE-217, ISSUE-202 |
+| ISSUE-219 | Réduction multi-agents : MERGE et fenêtre commune | WAITING | PDR-058 | ISSUE-216, ISSUE-218 |
+| ISSUE-220 | Rapport : charge planifiée, réalisée et distributions | WAITING | PDR-058 | ISSUE-219 |
+| ISSUE-221 | Verdict INVALID et famille INTEGRITY | WAITING | PDR-059 | ISSUE-216 |
+| ISSUE-222 | Bloc integrity : validation scénario | WAITING | PDR-059 | ISSUE-221, ISSUE-207 |
+| ISSUE-223 | IntegrityCheckFactory | WAITING | PDR-059 | ISSUE-221, ISSUE-219 |
+| ISSUE-224 | Verdict INVALID dans le moteur de rapport | WAITING | PDR-059 | ISSUE-223 |
+| ISSUE-225 | Rendu HTML/PDF du verdict INVALID | WAITING | PDR-059 | ISSUE-224 |
+| ISSUE-226 | API, IHM et CLI : verdict INVALID | WAITING | PDR-059 | ISSUE-224 |
+| ISSUE-227 | GrantShare, signal de grant et contexte | WAITING | PDR-060 | - |
+| ISSUE-228 | StepDefinition : minAgents et onAgentLoss | WAITING | PDR-060 | - |
+| ISSUE-229 | Parsing YAML : scope, minAgents, onAgentLoss | WAITING | PDR-060 | ISSUE-228, ISSUE-206 |
+| ISSUE-230 | Validation : scope global et minAgents | WAITING | PDR-060 | ISSUE-228, ISSUE-207 |
+| ISSUE-231 | Codec transport du GrantShare | WAITING | PDR-060 | ISSUE-227 |
+| ISSUE-232 | Moteur : calcul des parts et minAgents | WAITING | PDR-060 | ISSUE-227, ISSUE-228 |
+| ISSUE-233 | Moteur : politique de perte d'agent | WAITING | PDR-060 | ISSUE-232, ISSUE-202 |
+| ISSUE-234 | Agent : propagation du share à l'executor | WAITING | PDR-060 | ISSUE-227, ISSUE-231 |
+| ISSUE-235 | Mise à l'échelle du plan par le share | WAITING | PDR-060 | ISSUE-234, ISSUE-213 |
+| ISSUE-236 | Compteurs partitionnés, graines et garde-fou sur la part | WAITING | PDR-060 | ISSUE-235, ISSUE-214 |
+| ISSUE-237 | Test d'intégration : scope global distribué | WAITING | PDR-060 | ISSUE-233, ISSUE-236 |
+| ISSUE-238 | RequestStats et résultats par requête | WAITING | PDR-061 | ISSUE-215 |
+| ISSUE-239 | Validation du bloc requests | WAITING | PDR-061 | ISSUE-207 |
+| ISSUE-240 | Mix pondéré HTTP | WAITING | PDR-061 | ISSUE-208 |
+| ISSUE-241 | Mix pondéré Kafka | WAITING | PDR-061 | ISSUE-240 |
+| ISSUE-242 | Résultats par nom de requête | WAITING | PDR-061 | ISSUE-240, ISSUE-218, ISSUE-238 |
+| ISSUE-243 | Métriques d'assertion par requête | WAITING | PDR-061 | ISSUE-242, ISSUE-219 |
+| ISSUE-244 | Documentation, exemples et acceptation des ADR | WAITING | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -267,6 +315,14 @@
 | PDR-052 | Transport Interface Segregation | platform-transport | DONE | ISSUE-191,192,193 | PDR-007, PDR-008 |
 | PDR-053 | ExecutionContext Named Outputs | platform-domain | DONE | ISSUE-194,195 | PDR-001 |
 | PDR-054 | Security Posture | platform-bootstrap | DONE | ISSUE-196 | PDR-018 |
+| PDR-055 | Injection Worker Process | platform-injection-gatling | WAITING | ISSUE-197..203 | — |
+| PDR-056 | Composable Workload Plan | platform-domain | WAITING | ISSUE-204..211 | PDR-055 |
+| PDR-057 | Injection Capabilities & Guardrails | platform-plugin-api | WAITING | ISSUE-212..214 | PDR-056 |
+| PDR-058 | Mergeable Injection Measurements | platform-domain | WAITING | ISSUE-215..220 | PDR-056, PDR-055 |
+| PDR-059 | Experiment Integrity & INVALID Verdict | platform-domain | WAITING | ISSUE-221..226 | PDR-058 |
+| PDR-060 | Grant Share & Global Load Scope | platform-domain | WAITING | ISSUE-227..237 | PDR-056, PDR-057, PDR-055 |
+| PDR-061 | Weighted Request Mix | platform-injection-gatling | WAITING | ISSUE-238..243 | PDR-056, PDR-058 |
+| PDR-062 | Injection Docs & ADR Acceptance | docs/knowledge | WAITING | ISSUE-244 | PDR-055, PDR-056, PDR-057, PDR-058, PDR-059, PDR-060, PDR-061 |
 | — | **NOTE: Configuration-driven model** | — | — | — | — |
 | — | `agent.supported-tasks` config → `AgentDescriptor.supportedTaskNames` | PDR-009,PDR-018 | ⚠️ VERIFY | — | PDR-009 + PDR-018 must implement config-driven model, NOT auto-discovery from annotations |
 | — | Annotations ONLY for PluginLoader (task-name → impl resolution) | PDR-003,PDR-011 | — | — | — |
@@ -1032,3 +1088,6 @@
 | 2026-10-20 | ISSUE-191..193 | WAITING → DONE | 5 ports étroits, façade composite, getType() supprimé, consommateurs migrés (ADR-028). |
 
 | 2026-10-20 | ISSUE-194,195 | WAITING → DONE | Outputs nommés + store persistant O(path), suppression des getters type-erasés, consommateurs migrés (ADR-031). |
+| 2026-11-16 | ISSUE-197 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-16 | ISSUE-197 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-16 | ISSUE-197 | IN_REVIEW → APPROVED | Reviewer approved |
