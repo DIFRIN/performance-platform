@@ -390,14 +390,15 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
             return;
         }
 
-        log.info("action=grant_received agentId={} executionId={} messageId={} taskName={}",
+        var share = grant.share();
+        log.info("action=task_granted agentId={} executionId={} messageId={} taskName={} shareIndex={} shareCount={}",
                 staticDescriptor.id().value(), request.executionId().value(),
-                request.id().value(), request.step().taskName());
+                request.id().value(), request.step().taskName(), share.index(), share.count());
 
         currentState.compareAndSet(AgentState.IDLE, AgentState.EXECUTING);
         activeTaskCount.incrementAndGet();
 
-        var future = taskExecutorService.submit(() -> taskPipeline.execute(request));
+        var future = taskExecutorService.submit(() -> taskPipeline.execute(request, share));
         activeTasks.put(request.id(), future);
     }
 

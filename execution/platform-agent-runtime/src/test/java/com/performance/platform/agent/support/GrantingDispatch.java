@@ -1,6 +1,7 @@
 package com.performance.platform.agent.support;
 
 import com.performance.platform.domain.event.TaskGrantSignal;
+import com.performance.platform.domain.execution.GrantShare;
 import com.performance.platform.domain.id.SignalId;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.message.ExecutionEvent;
@@ -26,6 +27,11 @@ public final class GrantingDispatch {
     }
 
     public static void dispatchAndGrant(ExecutionTransport transport, TaskExecutionRequest request) {
+        dispatchAndGrant(transport, request, GrantShare.single());
+    }
+
+    public static void dispatchAndGrant(ExecutionTransport transport, TaskExecutionRequest request,
+                                        GrantShare share) {
         var granted = new AtomicBoolean();
         var subscription = transport.subscribe(event -> {
             if (ExecutionEvent.TASK_CLAIMED.equals(event.eventType())
@@ -34,7 +40,7 @@ public final class GrantingDispatch {
                     && granted.compareAndSet(false, true)) {
                 transport.broadcastSignal(new TaskGrantSignal(SignalId.generate(),
                         request.executionId(), request.step().id(), request.id(),
-                        event.agentId(), true, Instant.now()));
+                        event.agentId(), true, Instant.now(), share));
             }
         });
         try {

@@ -84,6 +84,12 @@ public class TaskExecutionPipeline {
      * et le nettoyage final (décrément du compteur, transition d'état).
      */
     public void execute(TaskExecutionRequest request) {
+        execute(request, com.performance.platform.domain.execution.GrantShare.single());
+    }
+
+    /** Variante portant le share du grant, propagé à l'executor via le contexte (ADR-067). */
+    public void execute(TaskExecutionRequest request,
+                        com.performance.platform.domain.execution.GrantShare share) {
         var startTime = Instant.now();
         var step = request.step();
         var executionId = request.executionId();
@@ -115,7 +121,7 @@ public class TaskExecutionPipeline {
             }
 
             // Construire l'ExecutionContext à partir du PartialExecutionContext
-            var executionContext = toExecutionContext(request.context());
+            var executionContext = toExecutionContext(request.context()).withShare(share);
 
             // Exécuter la tâche : service (ADR-054) ou action
             TaskResult result;

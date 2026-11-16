@@ -1,11 +1,11 @@
-# ISSUE-232: Moteur : calcul des parts et minAgents
+# ISSUE-234: Agent : propagation du share à l'executor
 **Status**: APPROVED
 **PDR**: PDR-060
-**Module**: platform-execution-engine
-**Started**: 2026-11-16T23:06+01:00
-**IssueFile**: issues/ISSUE-232-engine-shares-min-agents.md
+**Module**: platform-agent-runtime
+**Started**: 2026-11-16T23:15+01:00
+**IssueFile**: issues/ISSUE-234-agent-share-propagation.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-232-engine-shares-min-agents.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-234-agent-share-propagation.md`
 
 ## Reviewer Feedback
 (None yet)

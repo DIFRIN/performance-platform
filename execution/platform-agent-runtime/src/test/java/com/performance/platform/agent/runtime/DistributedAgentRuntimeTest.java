@@ -368,6 +368,31 @@ class DistributedAgentRuntimeTest {
     class TaskExecution {
 
         @Test
+        @DisplayName("should propagate grant share to executor context")
+        void shouldPropagateGrantShareToExecutor() {
+            var seen = new AtomicReference<com.performance.platform.domain.execution.GrantShare>();
+            var executor = new TaskExecutor() {
+                @Override
+                public TaskResult execute(ExecutionContext ctx, StepDefinition step) {
+                    seen.set(ctx.share());
+                    return TaskResult.success(step.id(), step.taskName(), Duration.ofMillis(1), Map.of());
+                }
+                @Override
+                public String getSupportedTaskName() {
+                    return "http-get";
+                }
+            };
+            runtime = createRuntime(List.of(executor));
+            runtime.start();
+
+            GrantingDispatch.dispatchAndGrant(transport, createRequest("http-get", ExecutionId.generate()),
+                    com.performance.platform.domain.execution.GrantShare.equal(2, 4));
+
+            await().atMost(10, TimeUnit.SECONDS).until(() -> seen.get() != null);
+            assertThat(seen.get()).isEqualTo(com.performance.platform.domain.execution.GrantShare.equal(2, 4));
+        }
+
+        @Test
         @DisplayName("should execute supported task and publish TASK_COMPLETED")
         void shouldExecuteSupportedTaskAndPublishCompleted() {
             var events = captureExecutionEvents();
