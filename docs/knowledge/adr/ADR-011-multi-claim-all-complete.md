@@ -1,7 +1,7 @@
 # ADR-011 — Multi-Claim : L'Orchestrateur Accepte Tous les Claims
 
 **Date** : 2026-06-08
-**Statut** : ACCEPTED
+**Statut** : SUPERSEDED BY ADR-055 (partiellement : fan-out par étape)
 **Décideurs** : Architect
 **Contexte** : Plusieurs agents peuvent être spécialisés pour la même task.
 En broadcast, tous peuvent répondre simultanément.

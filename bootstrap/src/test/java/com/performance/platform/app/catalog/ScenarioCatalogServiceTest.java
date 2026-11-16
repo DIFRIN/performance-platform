@@ -3,7 +3,6 @@ package com.performance.platform.app.catalog;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
@@ -118,9 +117,8 @@ class ScenarioCatalogServiceTest {
                 "1.0.0",
                 List.of("test"),
                 Map.of(),
-                ExecutionMode.LOCAL,
                 List.of(step),
-                Map.of(),
-                yaml);
+                yaml,
+                null);
     }
 }

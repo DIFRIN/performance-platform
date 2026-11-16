@@ -1,5 +1,8 @@
 # ADR-022 (BOM Spring) — RENUMÉROTÉ → ADR-024
 
+**Status** : SUPERSEDED BY ADR-024  
+**Date** : 2026-10-31
+
 > **Ce fichier est un tombstone.** Le numéro **ADR-022** entrait en collision avec
 > `ADR-022-report-output-local-only.md`. La décision « Spring Boot 4 BOM, source unique de
 > vérité des versions Spring » a été **renumérotée ADR-024**.

@@ -65,11 +65,11 @@ Les agents n'ont pas besoin de ces fichiers pour travailler.
 |---|---|---|
 | Runtime | Java | 25 (LTS) — Virtual Threads natifs |
 | Framework | Spring Boot | 4.x |
-| Modularity | Spring Modulith | dernière stable |
+| Modularity | Frontières Maven + test bytecode ASM (`ModuleDependencyTest`) | ADR-035 |
 | Build | Maven | multi-module |
 | Load injection | Gatling | 3.x Java DSL uniquement |
 | Persistence | PostgreSQL | 15+ |
-| Messaging | `ExecutionTransport` abstraction | — |
+| Messaging | `ExecutionTransport` abstraction (IN_MEMORY, HTTP, KAFKA) | ADR-028, ADR-056 |
 | Reporting | OpenHTMLToPDF | — |
 | Observability | Micrometer + OpenTelemetry | — |
 | Config | Jackson + SnakeYAML | — |
@@ -82,7 +82,7 @@ Les agents n'ont pas besoin de ces fichiers pour travailler.
 | Règle | Violation détectée par |
 |---|---|
 | `platform-domain` : 0 annotation Spring/JPA/Jackson | ArchUnit test |
-| Modules Modulith : communication via events uniquement | ArchUnit test |
+| Frontières inter-modules : test bytecode ASM (ADR-035), pas de dépendance cyclique | `ModuleDependencyTest` |
 | Nouveau `TaskExecutor` : Spring Bean auto-découverte, pas de if/switch | Code review |
 | Nouveau transport : `@ConditionalOnProperty` uniquement | Code review |
 | Modification interface publique : ADR obligatoire | Reviewer |
@@ -151,7 +151,6 @@ com.performance.platform.<module>/
 | Reporting | `docs/knowledge/specs/08-report-engine.md` | — |
 | Docker / K8s | `docs/knowledge/specs/09-deployment.md` | — |
 | Architecture hexagonale | `.claude/skills/hexagonal-architecture/SKILL.md` | complet |
-| Spring Modulith | `.claude/skills/spring-modulith/SKILL.md` | complet |
 | Stratégie de tests | `.claude/skills/testing-strategy/SKILL.md` | complet |
 | Interfaces implémentées | `.claude/workspace/interfaces-registry.md` | module concerné |
 | Décisions passées | `.claude/workspace/decisions-log.md` | sujet concerné |
@@ -169,7 +168,15 @@ com.performance.platform.<module>/
 | Spécialisation configuration-driven + `agent.supported-tasks` + supression `agentTags` | `docs/knowledge/adr/ADR-015-configuration-driven-agent-specialization.md` | — |
 | Consumer group Kafka par agent | `docs/knowledge/adr/ADR-009-kafka-consumer-group-per-agent.md` | — |
 | PartialExecutionContext | `docs/knowledge/adr/ADR-010-partial-execution-context.md` | — |
-| Multi-claim orchestrateur | `docs/knowledge/adr/ADR-011-multi-claim-all-complete.md` | — |
+| Modèle de scénario simplifié (ref, dependsOn intra-phase, pas de mode) | `docs/knowledge/adr/ADR-053-scenario-model-simplification.md` | — |
+| Service steps (`during`, `drain`) | `docs/knowledge/adr/ADR-054-service-steps-and-reactive-behaviour.md` | — |
+| Fan-out par étape (`fanOut: one|all`), claim/grant | `docs/knowledge/adr/ADR-055-single-claim-dispatch-by-default.md` | — |
+| Transports supportés (IN_MEMORY, HTTP, KAFKA) | `docs/knowledge/adr/ADR-056-reduced-transport-surface.md` | — |
+| Exécuteurs en modules de capacité | `docs/knowledge/adr/ADR-057-executors-as-capability-modules.md` | — |
+| Orchestrateur unique et modèle d'échec | `docs/knowledge/adr/ADR-058-single-orchestrator-failure-model.md` | — |
+| LOCAL = moteur distribué + transport mémoire + agent embarqué | `docs/knowledge/adr/ADR-059-local-mode-as-in-process-distributed.md` | — |
+| Domaine plateforme minimal | `docs/knowledge/adr/ADR-060-minimal-platform-domain.md` | — |
+| Multi-claim orchestrateur (ADR-011, SUPERSEDED partiellement par ADR-055) | `docs/knowledge/adr/ADR-011-multi-claim-all-complete.md` | historique uniquement |
 | AgentLifecycleEvent séparé de ExecutionEvent | `docs/knowledge/adr/ADR-012-agent-lifecycle-event.md` | — |
 | Spring-first infra | `docs/knowledge/adr/ADR-013-spring-first-infrastructure.md` | — |
 | Config datasources | `docs/knowledge/adr/ADR-014-datasource-configuration.md` | — |
@@ -197,6 +204,7 @@ MODE=AGENT java -jar bootstrap/target/*.jar
 bash .claude/scripts/dev-loop.sh                     # boucle autonome Developer→Reviewer→Tester
 bash .claude/scripts/dev-loop.sh --dry-run            # dry-run du dev-loop
 bash .claude/scripts/dev-loop.sh --max 3              # limiter à 3 Issues
+bash .claude/scripts/check-adr-hygiene.sh             # numéros ADR uniques + statut obligatoire (ADR-061)
 ```
 
 ---
@@ -204,7 +212,7 @@ bash .claude/scripts/dev-loop.sh --max 3              # limiter à 3 Issues
 ## 10. Signaux d'Alarme → Escalade Architect Immédiate
 
 - Annotation Spring/JPA dans `platform-domain` ou `platform-plugin-api`
-- Appel direct entre deux modules Spring Modulith
+- Dépendance inter-modules interdite non couverte par `ModuleDependencyTest` (ADR-035)
 - `if/switch` sur le `name` ou le type dans le registre des executors
 - `TaskExecutor` sans annotation `@Preparation`, `@Injection`, ou `@Assertion`
 - Modification de `TaskExecutor`, `ExecutionTransport`, `ReportPublisher`, ou des 3 annotations
@@ -219,3 +227,11 @@ bash .claude/scripts/dev-loop.sh --max 3              # limiter à 3 Issues
 - Utilisation de `agentTags` dans un scénario YAML — supprimé, le routing est par `task:` name uniquement (ADR-015)
 - Utilisation de `AGENT_TAGS` env var — remplacé par `AGENT_SUPPORTED_TASKS` (ADR-015)
 - Auto-discovery des `supportedTaskNames` depuis les annotations — les noms viennent de la config `agent.supported-tasks` uniquement (ADR-015)
+- `execution.mode` dans un scénario YAML ou `ScenarioDefinition.executionMode` — supprimé (ADR-053)
+- `parameters.loadModel` référençant un `loadModels` de racine — seul le modèle inline existe (ADR-053)
+- `parameters.refTaskId` ou `parameters.linkedTo` — remplacés par `ref` / service steps (ADR-053, ADR-054)
+- `Action: START/STOP` sur `mock-server` — service step avec `during` (ADR-054)
+- `completion-policy` / `result-selection-policy` — supprimés au profit de `fanOut` par étape (ADR-055)
+- `work-in-progress-reset-interval` — supprimé (ADR-058)
+- Transport RabbitMQ ou socket dans le build cœur — plugins externes via CUSTOM (ADR-056)
+- `LocalStepDispatcher`, `LocalLifecycleDispatcher`, publication d'outcomes LOCAL — supprimés (ADR-059)

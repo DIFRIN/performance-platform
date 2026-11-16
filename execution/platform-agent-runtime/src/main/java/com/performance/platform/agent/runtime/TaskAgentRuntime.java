@@ -12,6 +12,7 @@ import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.event.AgentSignal;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
+import com.performance.platform.domain.event.TaskGrantSignal;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
@@ -88,6 +89,10 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
 
     private final Set<MessageId> processedMessageIds = ConcurrentHashMap.newKeySet();
     private final ConcurrentMap<MessageId, Future<?>> activeTasks = new ConcurrentHashMap<>();
+
+    /** Claims en attente de grant (ADR-055) : messageId -> requete. */
+    private final ConcurrentMap<MessageId, TaskExecutionRequest> pendingClaims = new ConcurrentHashMap<>();
+    private static final Duration CLAIM_EXPIRY = Duration.ofSeconds(30);
 
     private final ScheduledExecutorService progressScheduler =
             Executors.newSingleThreadScheduledExecutor(Thread.ofVirtual().factory());
@@ -316,11 +321,18 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
 
     @Override
     public void onLifecycleSignal(ExecutionLifecycleSignal signal) {
+        // Un STOP de service est traite par le pipeline (ADR-054) ; les autres
+        // signaux restent du ressort du handler de cycle de vie (assertions).
+        taskPipeline.stopService(signal.executionId(), signal.taskId());
         lifecycleSignalHandler.onLifecycleSignal(signal);
     }
 
     // === Reception de tache (broadcast) ===
 
+    /**
+     * Un agent ne revendique que s'il est competent et n'a pas deja vu le
+     * message ; il n'execute qu'apres reception d'un grant (ADR-055).
+     */
     private void onTaskReceived(TaskExecutionRequest request) {
         if (currentState.get() == AgentState.OFFLINE || currentState.get() == AgentState.DRAINING) {
             log.debug("action=task_ignored agentId={} messageId={} state={}",
@@ -347,7 +359,40 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
                 staticDescriptor.id().value(), request.executionId().value(),
                 request.id().value(), request.step().taskName());
 
+        pendingClaims.put(request.id(), request);
         taskPipeline.publishClaimEvent(request);
+
+        // Un claim sans grant ne doit jamais fuir en memoire.
+        cleanupScheduler.schedule(() -> {
+            if (pendingClaims.remove(request.id()) != null) {
+                log.warn("action=claim_expired agentId={} messageId={} taskName={}",
+                        staticDescriptor.id().value(), request.id().value(), request.step().taskName());
+            }
+        }, CLAIM_EXPIRY.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private void onGrantReceived(TaskGrantSignal grant) {
+        if (grant == null || !staticDescriptor.id().equals(grant.agentId())) {
+            return;
+        }
+
+        TaskExecutionRequest request = pendingClaims.remove(grant.messageId());
+        if (request == null) {
+            log.debug("action=grant_ignored agentId={} messageId={} reason=no_pending_claim",
+                    staticDescriptor.id().value(), grant.messageId().value());
+            return;
+        }
+
+        if (!grant.granted()) {
+            log.info("action=claim_rejected agentId={} executionId={} messageId={} taskName={}",
+                    staticDescriptor.id().value(), request.executionId().value(),
+                    request.id().value(), request.step().taskName());
+            return;
+        }
+
+        log.info("action=grant_received agentId={} executionId={} messageId={} taskName={}",
+                staticDescriptor.id().value(), request.executionId().value(),
+                request.id().value(), request.step().taskName());
 
         currentState.compareAndSet(AgentState.IDLE, AgentState.EXECUTING);
         activeTaskCount.incrementAndGet();
@@ -364,6 +409,8 @@ public class TaskAgentRuntime implements AgentRuntime, LifecycleSignalHandler {
             onScenarioRestart(restartSignal);
         } else if (signal instanceof ExecutionLifecycleSignal lifecycleSignal) {
             onLifecycleSignal(lifecycleSignal);
+        } else if (signal instanceof TaskGrantSignal grantSignal) {
+            onGrantReceived(grantSignal);
         }
     }
 

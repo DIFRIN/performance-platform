@@ -1,18 +1,25 @@
-/**
- * Hash-based SPA router.
- * PDR-028 — ISSUE-126
+﻿/**
+ * Hash-based SPA router with query-string state and focus management.
  *
  * Public API:
- *   registerRoute(pattern, renderFn) — register a view for a hash pattern
- *   startRouter(mountEl)           — begin listening to hashchange
+ *   registerRoute(pattern, renderFn) - register a view for a hash pattern
+ *   startRouter(mountEl)             - begin listening to hashchange
+ *   readQueryParams()                - URLSearchParams of the current hash query
+ *   updateQueryParams(patch, opts)   - merge query state without remounting
  *
  * Pattern syntax:
  *   - Static: "executions"
  *   - Parameterized: "executions/{id}"
  *
- * The router calls a cleanup hook on the previous view before rendering
- * the new one (to stop polling, clear timers, etc.).
+ * The hash may carry a query string: #/executions?status=active&scenario=foo
+ * Query parameters are read-only view state (filters, paging); they are updated
+ * with history.replaceState so they never trigger a remount.
+ *
+ * Accessibility: after each route change, focus moves to the page heading
+ * (or the mount container) and the new page name is announced via aria-live.
  */
+
+import { announce } from "/assets/js/ui.js";
 
 /** @type {Map<string, {pattern: string, paramNames: string[], renderFn: Function}>} */
 const routes = new Map();
@@ -20,12 +27,13 @@ const routes = new Map();
 /** @type {{cleanup: Function|null, renderFn: Function|null}} */
 let currentView = { cleanup: null, renderFn: null };
 
-/**
- * Build a regex from a pattern string.
- * Static segments match literally; "{param}" segments become capture groups.
- * @param {string} pattern
- * @returns {{regex: RegExp, paramNames: string[]}}
- */
+const PAGE_LABELS = {
+    scenarios: "Scenarios",
+    executions: "Executions",
+    agents: "Agents",
+    report: "Report"
+};
+
 function buildPattern(pattern) {
     const paramNames = [];
     const parts = pattern.split("/");
@@ -42,25 +50,83 @@ function buildPattern(pattern) {
 }
 
 /**
- * Extract the hash path without the leading "#".
- * Returns "" when there is no hash.
- * @returns {string}
+ * Split the current hash into a path and its query parameters.
+ * @returns {{path: string, query: URLSearchParams}}
  */
-function getHashPath() {
+function parseHash() {
     const hash = window.location.hash;
-    if (!hash || hash === "#") return "";
-    return hash.startsWith("#/") ? hash.slice(2) : hash.slice(1);
+    let raw = !hash || hash === "#" ? "" : (hash.startsWith("#/") ? hash.slice(2) : hash.slice(1));
+    const question = raw.indexOf("?");
+    let query = new URLSearchParams();
+    if (question !== -1) {
+        query = new URLSearchParams(raw.slice(question + 1));
+        raw = raw.slice(0, question);
+    }
+    return { path: raw, query };
 }
 
 /**
- * Parse the current hash and call the matching render function.
- * Calls cleanup on the previous view before rendering the new one.
- * @param {HTMLElement} mountEl — the container where the view is mounted
+ * Read the query parameters of the current route.
+ * @returns {URLSearchParams}
  */
-function dispatch(mountEl) {
-    const path = getHashPath();
+export function readQueryParams() {
+    return parseHash().query;
+}
 
-    // Call cleanup of previous view
+/**
+ * Merge the given values into the current hash query without remounting the view.
+ * A null/undefined/empty value removes the parameter.
+ *
+ * @param {Object<string, string|number|null|undefined>} patch
+ * @param {{replace?: boolean}} [options] - replace defaults to true
+ */
+export function updateQueryParams(patch, options) {
+    const replace = !options || options.replace !== false;
+    const { path, query } = parseHash();
+    Object.keys(patch || {}).forEach(function (key) {
+        const value = patch[key];
+        if (value === null || value === undefined || value === "") {
+            query.delete(key);
+        } else {
+            query.set(key, String(value));
+        }
+    });
+    const qs = query.toString();
+    const newHash = "#/" + (path || "executions") + (qs ? "?" + qs : "");
+    if (replace) {
+        window.history.replaceState(null, "", window.location.pathname + window.location.search + newHash);
+    } else {
+        window.location.hash = newHash;
+    }
+}
+
+function pageLabel(path) {
+    const first = (path || "executions").split("/")[0];
+    return PAGE_LABELS[first] || first;
+}
+
+/**
+ * Move focus to the page heading so keyboard and screen-reader users land on
+ * the new view. Uses preventScroll to avoid jumping past the header.
+ */
+function focusHeading(mountEl) {
+    const heading = mountEl.querySelector("[data-page-heading], h1");
+    const target = heading || mountEl;
+    if (!target) return;
+    if (!target.hasAttribute("tabindex")) {
+        target.setAttribute("tabindex", "-1");
+    }
+    try {
+        target.focus({ preventScroll: true });
+    } catch {
+        target.focus();
+    }
+}
+
+function dispatch(mountEl) {
+    const location = parseHash();
+    const path = location.path;
+
     if (currentView.cleanup) {
         try {
             currentView.cleanup();
@@ -70,39 +136,34 @@ function dispatch(mountEl) {
     }
     currentView = { cleanup: null, renderFn: null };
 
-    // Empty path or no hash → default to "executions"
     const effectivePath = path || "executions";
 
     for (const entry of routes.values()) {
         const match = effectivePath.match(entry.regex);
         if (match) {
-            // Build params object from named groups
             const params = {};
             entry.paramNames.forEach((name, i) => {
                 params[name] = match[i + 1];
             });
 
-            // Render
             const result = entry.renderFn(mountEl, params);
             if (result && typeof result.cleanup === "function") {
                 currentView.cleanup = result.cleanup;
             }
             currentView.renderFn = entry.renderFn;
+
+            focusHeading(mountEl);
+            announce(pageLabel(effectivePath) + " page loaded");
             return;
         }
     }
 
-    // No match — render empty content
     mountEl.innerHTML = "";
     console.warn("router: no route matched path=" + effectivePath);
 }
 
 /**
  * Register a route pattern with its render function.
- *
- * @param {string} pattern — e.g. "executions", "executions/{id}"
- * @param {function(HTMLElement, Object): {cleanup?: Function}|void} renderFn
- *   Called with (mountEl, params). May return {cleanup} for teardown.
  */
 export function registerRoute(pattern, renderFn) {
     const { regex, paramNames } = buildPattern(pattern);
@@ -111,8 +172,6 @@ export function registerRoute(pattern, renderFn) {
 
 /**
  * Start the router: listen for hash changes and perform the initial dispatch.
- *
- * @param {HTMLElement} mountEl — the container element for all views
  */
 export function startRouter(mountEl) {
     window.addEventListener("hashchange", () => dispatch(mountEl));

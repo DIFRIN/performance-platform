@@ -11,7 +11,6 @@ import com.performance.platform.domain.id.SignalId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.transport.TransportException;
 import com.performance.platform.transport.kafka.KafkaMessageCodec;
-import com.performance.platform.transport.rabbitmq.RabbitMQMessageCodec;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -49,13 +48,6 @@ class AgentSignalDecoderTest {
 
     @ParameterizedTest
     @MethodSource("signals")
-    void shouldRoundTripEverySignalOverRabbitMq(AgentSignal signal) {
-        var codec = new RabbitMQMessageCodec();
-        assertThat(codec.decodeMessage(codec.encodeSignal(signal))).isEqualTo(signal);
-    }
-
-    @ParameterizedTest
-    @MethodSource("signals")
     void shouldDecodeSocketJsonPayload(AgentSignal signal) throws Exception {
         var node = mapper.readTree(mapper.writeValueAsBytes(signal));
         assertThat(AgentSignalDecoder.decode(mapper, node)).isEqualTo(signal);
@@ -80,8 +72,6 @@ class AgentSignalDecoderTest {
     void shouldRejectInvalidSignalsRatherThanInventRestartReasons(String json) {
         var bytes = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
         assertThatThrownBy(() -> new KafkaMessageCodec().decodeSignal(bytes))
-                .isInstanceOf(TransportException.class);
-        assertThatThrownBy(() -> new RabbitMQMessageCodec().decodeMessage(bytes))
                 .isInstanceOf(TransportException.class);
     }
 }

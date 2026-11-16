@@ -1,6 +1,6 @@
 package com.performance.platform.reporting.contract;
 
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.id.ReportId;
 import com.performance.platform.domain.id.ScenarioId;
@@ -71,11 +71,8 @@ public class ReportRendererContractTest {
         var injEntry = new InjectionReportEntry(
                 new TaskId("inj-1"), injResult, Path.of("/tmp/gatling"));
 
-        var assertResult = new AssertionResult(
-                new TaskId("assert-1"), AssertionStatus.PASSED, "p95 < 100ms",
-                null, Duration.ofMillis(50), now);
-        var assertEntry = new AssertionReportEntry(
-                new TaskId("assert-1"), assertResult, null);
+        var assertResult = AssertionSummary.verdictOnly(new TaskId("assert-1"), AssertionStatus.PASSED, "p95 < 100ms", Duration.ofMillis(50), now);
+        var assertEntry = new AssertionReportEntry(new TaskId("assert-1"), assertResult);
 
         return new CampaignReport(
                 reportId, scenarioId, "Contract Test Campaign", "1.0.0",

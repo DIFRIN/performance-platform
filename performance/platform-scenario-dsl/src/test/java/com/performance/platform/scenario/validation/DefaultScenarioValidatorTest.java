@@ -4,7 +4,6 @@ import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.injection.LoadModel;
 import com.performance.platform.domain.injection.LoadModelType;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
@@ -31,10 +30,21 @@ class DefaultScenarioValidatorTest {
 
     // ==================== Helper factories ====================
 
+    /**
+     * Fabrique un scenario avec l'ancienne signature (mode et load models)
+     * ignoree : ADR-053 a supprime ces champs du domaine.
+     */
+    private static ScenarioDefinition scenario(ScenarioId id, String name, String version,
+                                                 List<String> tags, Map<String, String> metadata,
+                                                 Object ignoredMode, List<StepDefinition> steps,
+                                                 Map<String, ?> ignoredLoadModels) {
+        return new ScenarioDefinition(id, name, version, tags, metadata, steps, null, null);
+    }
+
     private ScenarioDefinition scenarioWithId(String idValue) {
-        return new ScenarioDefinition(
+        return scenario(
             ScenarioId.of(idValue), "Test Scenario", "1.0.0",
-            List.of(), Map.of(), ExecutionMode.LOCAL,
+            List.of(), Map.of(), null,
             List.of(), Map.of()
         );
     }
@@ -77,13 +87,13 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("reference YAML structure yields valid=true")
         void referenceYamlValid() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("customer-api-perf"),
                 "Customer API Campaign",
                 "1.0.0",
                 List.of("performance", "regression"),
                 Map.of("owner", "team-a", "jira", "PERF-123"),
-                ExecutionMode.DISTRIBUTED,
+                null,
                 List.of(
                     new StepDefinition(
                         TaskId.of("purge-db"), "database", Phase.PREPARATION,
@@ -93,7 +103,7 @@ class DefaultScenarioValidatorTest {
                     ),
                     new StepDefinition(
                         TaskId.of("customer-api-load"), "gatling", Phase.INJECTION,
-                        Map.of("simulation", "com.example.CustomerApiSimulation", "loadModel", "api-load"),
+                        Map.of("simulation", "com.example.CustomerApiSimulation", "loadModel", Map.of("type", "RAMP")),
                         List.of(TaskId.of("purge-db")), List.of("purge-db"),
                         Duration.ofMinutes(20), null
                     )
@@ -113,13 +123,13 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("reference YAML has no errors")
         void referenceYamlNoErrors() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("customer-api-perf"),
                 "Customer API Campaign",
                 "1.0.0",
                 List.of("performance", "regression"),
                 Map.of("owner", "team-a"),
-                ExecutionMode.DISTRIBUTED,
+                null,
                 List.of(
                     new StepDefinition(
                         TaskId.of("purge-db"), "database", Phase.PREPARATION,
@@ -128,7 +138,7 @@ class DefaultScenarioValidatorTest {
                     ),
                     new StepDefinition(
                         TaskId.of("customer-api-load"), "gatling", Phase.INJECTION,
-                        Map.of("simulation", "com.example.CustomerApiSimulation", "loadModel", "api-load"),
+                        Map.of("simulation", "com.example.CustomerApiSimulation", "loadModel", Map.of("type", "RAMP")),
                         List.of(TaskId.of("purge-db")), List.of("purge-db"),
                         Duration.ofMinutes(20), null
                     )
@@ -143,13 +153,13 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("reference YAML has warnings (no ASSERTION)")
         void referenceYamlHasWarnings() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("customer-api-perf"),
                 "Customer API Campaign",
                 "1.0.0",
                 List.of("performance"),
                 Map.of("owner", "team-a"),
-                ExecutionMode.DISTRIBUTED,
+                null,
                 List.of(
                     new StepDefinition(
                         TaskId.of("purge-db"), "database", Phase.PREPARATION,
@@ -158,7 +168,7 @@ class DefaultScenarioValidatorTest {
                     ),
                     new StepDefinition(
                         TaskId.of("customer-api-load"), "gatling", Phase.INJECTION,
-                        Map.of("loadModel", "api-load"),
+                        Map.of("loadModel", Map.of("type", "RAMP")),
                         List.of(TaskId.of("purge-db")), List.of("purge-db"),
                         Duration.ofMinutes(20), null
                     )
@@ -192,9 +202,9 @@ class DefaultScenarioValidatorTest {
         @DisplayName("id exceeds max length 100")
         void idTooLong() {
             String longId = "a".repeat(101);
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of(longId), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -209,9 +219,9 @@ class DefaultScenarioValidatorTest {
         @DisplayName("id exactly 100 chars passes")
         void idExactly100() {
             String id100 = "a".repeat(100);
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of(id100), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -223,9 +233,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("id with invalid characters fails")
         void idWithInvalidChars() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("bad@id!"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -238,9 +248,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("empty id fails")
         void emptyId() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of(""), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -260,9 +270,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("valid semver passes")
         void validSemver() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -274,9 +284,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("null version fails")
         void nullVersion() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", null,
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -289,9 +299,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("blank version fails")
         void blankVersion() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "   ",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -304,9 +314,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("non-semver version fails")
         void nonSemver() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "v1.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -319,9 +329,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("prerelease semver like 1.0.0-alpha fails")
         void prereleaseSemverFails() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0-alpha",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -334,9 +344,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("leading zeros in version number fails")
         void leadingZeros() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "01.02.03",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("s1", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -356,9 +366,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("duplicate step id fails")
         void duplicateStepId() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     step("my-step", "db", Phase.PREPARATION),
                     step("my-step", "http", Phase.INJECTION)
@@ -375,9 +385,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("unique step ids pass")
         void uniqueStepIds() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     step("step-1", "db", Phase.PREPARATION),
                     step("step-2", "http", Phase.INJECTION)
@@ -399,9 +409,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("scenario with cycle yields valid=false")
         void scenarioWithCycle() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithDependsOn("A", "taskA", Phase.PREPARATION, "B"),
                     stepWithDependsOn("B", "taskB", Phase.PREPARATION, "A")
@@ -418,9 +428,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("self-loop yields cycle error")
         void selfLoop() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithDependsOn("A", "taskA", Phase.PREPARATION, "A")
                 ),
@@ -434,9 +444,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("acyclic graph passes")
         void acyclicGraph() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithDependsOn("A", "taskA", Phase.PREPARATION),
                     stepWithDependsOn("B", "taskB", Phase.PREPARATION, "A"),
@@ -453,9 +463,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("no dependsOn — acyclic")
         void noDependsOn() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     step("A", "taskA", Phase.PREPARATION),
                     step("B", "taskB", Phase.PREPARATION)
@@ -470,9 +480,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("dependsOn references non-existent step")
         void dependsOnNonExistent() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithDependsOn("A", "taskA", Phase.PREPARATION, "GHOST")
                 ),
@@ -496,9 +506,9 @@ class DefaultScenarioValidatorTest {
         @DisplayName("requiredContext referencing a prior (dependency) step passes")
         void requiredContextPriorDependency() {
             // A is a dependency of B, so B can require context from A
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithDependsOn("A", "taskA", Phase.PREPARATION),
                     new StepDefinition(
@@ -517,9 +527,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("requiredContext referencing a non-existent step fails")
         void requiredContextNonExistent() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithRequiredContexts("A", "taskA", Phase.PREPARATION, List.of("GHOST"))
                 ),
@@ -533,15 +543,14 @@ class DefaultScenarioValidatorTest {
         }
 
         @Test
-        @DisplayName("requiredContext referencing a step not prior in DAG fails")
+        @DisplayName("requiredContext referencing a later phase fails")
         void requiredContextNotPrior() {
-            // A and B are independent (no dependency), B requires context from A
-            // A is not prior in DAG
-            var scenario = new ScenarioDefinition(
+            // ADR-053 : une phase anterieure est disponible, une phase posterieure non.
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
-                    step("A", "taskA", Phase.PREPARATION),
+                    step("A", "taskA", Phase.ASSERTION),
                     new StepDefinition(
                         TaskId.of("B"), "taskB", Phase.INJECTION,
                         Map.of(), List.of(), List.of("A"),
@@ -554,16 +563,16 @@ class DefaultScenarioValidatorTest {
             ValidationResult result = validator.validate(scenario);
             assertFalse(result.valid());
             assertTrue(result.errorMessages().stream().anyMatch(e ->
-                e.contains("not prior") || e.contains("prior in the execution DAG")));
+                e.contains("not available before it runs")));
         }
 
         @Test
         @DisplayName("requiredContext transitive dependency passes")
         void requiredContextTransitive() {
             // A -> B -> C, C requires context from A (transitive dependency)
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     step("A", "taskA", Phase.PREPARATION),
                     stepWithDependsOn("B", "taskB", Phase.PREPARATION, "A"),
@@ -583,9 +592,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("blank requiredContext entry fails")
         void blankRequiredContext() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithRequiredContexts("A", "taskA", Phase.PREPARATION, List.of("  "))
                 ),
@@ -610,9 +619,9 @@ class DefaultScenarioValidatorTest {
                     Map.of("type", "RAMP", "parameters",
                         Map.of("from", 1, "to", 1000, "durationSeconds", 60)),
                     new LoadModel(LoadModelType.CONSTANT, Map.of()))) {
-                var scenario = new ScenarioDefinition(
+                var scenario = scenario(
                     ScenarioId.of("test"), "Test", "1.0.0",
-                    List.of(), Map.of(), ExecutionMode.LOCAL,
+                    List.of(), Map.of(), null,
                     List.of(stepWithParams("A", "gatling", Phase.INJECTION, Map.of("loadModel", model))),
                     Map.of());
 
@@ -628,9 +637,9 @@ class DefaultScenarioValidatorTest {
                     Map.of("type", "UNKNOWN"),
                     Map.of("type", "RAMP", "parameters", "invalid"),
                     42)) {
-                var scenario = new ScenarioDefinition(
+                var scenario = scenario(
                     ScenarioId.of("test"), "Test", "1.0.0",
-                    List.of(), Map.of(), ExecutionMode.LOCAL,
+                    List.of(), Map.of(), null,
                     List.of(stepWithParams("A", "gatling", Phase.INJECTION, Map.of("loadModel", model))),
                     Map.of());
 
@@ -641,15 +650,16 @@ class DefaultScenarioValidatorTest {
         }
 
         @Test
-        @DisplayName("gatling step with existing loadModel passes")
+        @DisplayName("gatling step with an inline loadModel passes")
         void gatlingWithExistingLoadModel() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
-                    stepWithParams("A", "gatling", Phase.INJECTION, Map.of("loadModel", "my-model"))
+                    stepWithParams("A", "gatling", Phase.INJECTION,
+                        Map.of("loadModel", Map.of("type", "CONSTANT", "parameters", Map.of())))
                 ),
-                Map.of("my-model", new LoadModel(LoadModelType.CONSTANT, Map.of()))
+                Map.of()
             );
 
             ValidationResult result = validator.validate(scenario);
@@ -657,11 +667,11 @@ class DefaultScenarioValidatorTest {
         }
 
         @Test
-        @DisplayName("gatling step with missing loadModel fails")
+        @DisplayName("gatling step referencing a named loadModel fails (inline only)")
         void gatlingWithMissingLoadModel() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithParams("A", "gatling", Phase.INJECTION, Map.of("loadModel", "no-such-model"))
                 ),
@@ -671,15 +681,15 @@ class DefaultScenarioValidatorTest {
             ValidationResult result = validator.validate(scenario);
             assertFalse(result.valid());
             assertTrue(result.errorMessages().stream().anyMatch(e ->
-                e.contains("no-such-model") && e.contains("loadModel")));
+                e.contains("loadModel") && e.contains("inline")));
         }
 
         @Test
         @DisplayName("non-gatling step with missing loadModel passes")
         void nonGatlingMissingLoadModel() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     stepWithParams("A", "database", Phase.PREPARATION, Map.of("loadModel", "no-such"))
                 ),
@@ -694,9 +704,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("gatling step without loadModel parameter passes (no reference)")
         void gatlingWithoutLoadModelRef() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     step("A", "gatling", Phase.INJECTION)
                 ),
@@ -717,9 +727,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("blank task name fails")
         void blankTaskName() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     step("A", "", Phase.PREPARATION)
                 ),
@@ -735,9 +745,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("whitespace-only task name fails")
         void whitespaceTaskName() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     step("A", "   ", Phase.PREPARATION)
                 ),
@@ -760,9 +770,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("valid phase passes (PREPARATION)")
         void validPhasePreparation() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("A", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -774,9 +784,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("valid phase passes (ASSERTION)")
         void validPhaseAssertion() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("A", "metric", Phase.ASSERTION)),
                 Map.of()
             );
@@ -795,9 +805,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("no metadata.owner produces warning")
         void noOwnerWarning() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("A", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -810,9 +820,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("metadata with owner produces no owner warning")
         void withOwner() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of("owner", "team-a"), ExecutionMode.LOCAL,
+                List.of(), Map.of("owner", "team-a"), null,
                 List.of(step("A", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -825,9 +835,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("no ASSERTION step produces warning")
         void noAssertionWarning() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of("owner", "team-a"), ExecutionMode.LOCAL,
+                List.of(), Map.of("owner", "team-a"), null,
                 List.of(step("A", "db", Phase.PREPARATION)),
                 Map.of()
             );
@@ -840,9 +850,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("ASSERTION step present suppresses the warning")
         void assertionPresent() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of("owner", "team-a"), ExecutionMode.LOCAL,
+                List.of(), Map.of("owner", "team-a"), null,
                 List.of(
                     step("A", "db", Phase.PREPARATION),
                     step("B", "metric", Phase.ASSERTION)
@@ -858,9 +868,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("INJECTION step without timeout produces warning")
         void injectionWithoutTimeoutWarning() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of("owner", "team-a"), ExecutionMode.LOCAL,
+                List.of(), Map.of("owner", "team-a"), null,
                 List.of(step("A", "gatling", Phase.INJECTION)),
                 Map.of()
             );
@@ -873,9 +883,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("INJECTION step with timeout produces no warning")
         void injectionWithTimeout() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of("owner", "team-a"), ExecutionMode.LOCAL,
+                List.of(), Map.of("owner", "team-a"), null,
                 List.of(new StepDefinition(
                     TaskId.of("A"), "gatling", Phase.INJECTION,
                     Map.of(), List.of(), List.of(),
@@ -889,11 +899,11 @@ class DefaultScenarioValidatorTest {
         }
 
         @Test
-        @DisplayName("ASSERTION step without requiredContexts produces warning")
+        @DisplayName("ASSERTION step without explicit requiredContexts is not a warning (ADR-053)")
         void assertionWithoutContextsWarning() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of("owner", "team-a"), ExecutionMode.LOCAL,
+                List.of(), Map.of("owner", "team-a"), null,
                 List.of(
                     step("A", "db", Phase.PREPARATION),
                     step("B", "metric", Phase.ASSERTION)
@@ -902,7 +912,7 @@ class DefaultScenarioValidatorTest {
             );
 
             ValidationResult result = validator.validate(scenario);
-            assertTrue(result.warnings().stream().anyMatch(w ->
+            assertTrue(result.warnings().stream().noneMatch(w ->
                 w.field().contains("requiredContexts") && w.message().contains("ASSERTION")));
         }
     }
@@ -925,9 +935,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("empty steps list yields error")
         void emptySteps() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(), Map.of()
             );
 
@@ -940,9 +950,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("multiple errors collected")
         void multipleErrorsCollected() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("bad@id"), "Test", "v1",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(
                     step("A", "   ", Phase.PREPARATION)
                 ),
@@ -959,14 +969,15 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("valid simple scenario with all required fields")
         void validSimpleScenario() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("simple-test"), "Simple Test", "2.0.0",
-                List.of("smoke"), Map.of("owner", "qa-team"), ExecutionMode.LOCAL,
+                List.of("smoke"), Map.of("owner", "qa-team"), null,
                 List.of(
                     step("setup", "database", Phase.PREPARATION),
                     new StepDefinition(
                         TaskId.of("load"), "gatling", Phase.INJECTION,
-                        Map.of("loadModel", "constant-load"), List.of(TaskId.of("setup")), List.of("setup"),
+                        Map.of("loadModel", Map.of("type", "CONSTANT", "parameters", Map.of("usersPerSecond", 50))),
+                        List.of(TaskId.of("setup")), List.of("setup"),
                         Duration.ofMinutes(5), null
                     ),
                     new StepDefinition(
@@ -995,9 +1006,9 @@ class DefaultScenarioValidatorTest {
         @Test
         @DisplayName("ValidationResult immutability: warnings list")
         void warningsListImmutability() {
-            var scenario = new ScenarioDefinition(
+            var scenario = scenario(
                 ScenarioId.of("test"), "Test", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL,
+                List.of(), Map.of(), null,
                 List.of(step("A", "db", Phase.PREPARATION)),
                 Map.of()
             );

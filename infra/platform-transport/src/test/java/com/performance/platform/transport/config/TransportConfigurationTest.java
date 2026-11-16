@@ -56,43 +56,6 @@ class TransportConfigurationTest {
         });
     }
 
-    // === RabbitMQ Properties Binding ===
-
-    @Test
-    void shouldBindFullRabbitMQProperties() {
-        runner.withPropertyValues(
-                "transport.rabbitmq.host=rabbitmq.example.com",
-                "transport.rabbitmq.port=5672",
-                "transport.rabbitmq.virtual-host=/production",
-                "transport.rabbitmq.tasks-exchange=tasks.exchange",
-                "transport.rabbitmq.events-exchange=events.exchange",
-                "transport.rabbitmq.signals-exchange=signals.exchange",
-                "transport.rabbitmq.username=admin",
-                "transport.rabbitmq.password=secret"
-        ).run(ctx -> {
-            var props = ctx.getBean(RabbitMQTransportProperties.class);
-            assertThat(props.host()).isEqualTo("rabbitmq.example.com");
-            assertThat(props.port()).isEqualTo(5672);
-            assertThat(props.virtualHost()).isEqualTo("/production");
-            assertThat(props.tasksExchange()).isEqualTo("tasks.exchange");
-            assertThat(props.eventsExchange()).isEqualTo("events.exchange");
-            assertThat(props.signalsExchange()).isEqualTo("signals.exchange");
-            assertThat(props.username()).isEqualTo("admin");
-            assertThat(props.password()).isEqualTo("secret");
-        });
-    }
-
-    @Test
-    void shouldBindPartialRabbitMQPropertiesWithDefaultPort() {
-        runner.withPropertyValues(
-                "transport.rabbitmq.host=localhost"
-        ).run(ctx -> {
-            var props = ctx.getBean(RabbitMQTransportProperties.class);
-            assertThat(props.host()).isEqualTo("localhost");
-            assertThat(props.port()).isEqualTo(0); // int default
-        });
-    }
-
     // === HTTP Properties Binding ===
 
     @Test
@@ -108,37 +71,6 @@ class TransportConfigurationTest {
             assertThat(props.requestTimeoutSeconds()).isEqualTo(60);
             assertThat(props.taskAvailabilityTimeoutSeconds()).isEqualTo(300);
             assertThat(props.callbackBasePath()).isEqualTo("/api/callbacks");
-        });
-    }
-
-    // === Socket Properties Binding ===
-
-    @Test
-    void shouldBindFullSocketProperties() {
-        runner.withPropertyValues(
-                "transport.socket.orchestrator-host=10.0.0.1",
-                "transport.socket.orchestrator-port=9090",
-                "transport.socket.backlog=100",
-                "transport.socket.keep-alive=true",
-                "transport.socket.reconnect-interval-ms=3000"
-        ).run(ctx -> {
-            var props = ctx.getBean(SocketTransportProperties.class);
-            assertThat(props.orchestratorHost()).isEqualTo("10.0.0.1");
-            assertThat(props.orchestratorPort()).isEqualTo(9090);
-            assertThat(props.backlog()).isEqualTo(100);
-            assertThat(props.keepAlive()).isTrue();
-            assertThat(props.reconnectIntervalMs()).isEqualTo(3000);
-        });
-    }
-
-    @Test
-    void shouldBindSocketKeepAliveFalse() {
-        runner.withPropertyValues(
-                "transport.socket.orchestrator-host=localhost",
-                "transport.socket.keep-alive=false"
-        ).run(ctx -> {
-            var props = ctx.getBean(SocketTransportProperties.class);
-            assertThat(props.keepAlive()).isFalse();
         });
     }
 
@@ -193,14 +125,6 @@ class TransportConfigurationTest {
         });
     }
 
-    @Test
-    void shouldRegisterRabbitMQSkeletonWhenTypeRabbitMQ() {
-        runner.withPropertyValues("transport.type=RABBITMQ")
-                .run(ctx -> {
-                    assertThat(ctx.containsBean("rabbitMQExecutionTransport")).isTrue();
-                    assertThat(ctx.containsBean("inMemoryExecutionTransport")).isFalse();
-                });
-    }
 
     @Test
     void shouldRegisterHttpSkeletonWhenTypeHttp() {
@@ -211,12 +135,4 @@ class TransportConfigurationTest {
                 });
     }
 
-    @Test
-    void shouldRegisterSocketSkeletonWhenTypeSocket() {
-        runner.withPropertyValues("transport.type=SOCKET")
-                .run(ctx -> {
-                    assertThat(ctx.containsBean("socketExecutionTransport")).isTrue();
-                    assertThat(ctx.containsBean("inMemoryExecutionTransport")).isFalse();
-                });
-    }
 }

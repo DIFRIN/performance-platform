@@ -8,7 +8,7 @@ import com.performance.platform.domain.event.ExecutionLifecycleSignal;
  * <p>
  * Permet a {@code platform-execution-engine} de dispatcher les signaux
  * sans dependre de {@code platform-agent-runtime} : le port est implemente
- * par {@code TaskAgentRuntime} et consomme par {@code LocalLifecycleDispatcher}.
+ * par {@code TaskAgentRuntime} (les signaux arrivent par le canal de transport).
  * <p>
  * 0 annotation framework.
  */

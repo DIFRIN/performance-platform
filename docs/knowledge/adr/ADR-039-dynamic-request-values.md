@@ -13,7 +13,7 @@ the platform code.
    no framework dependency): placeholders `{index[±*/%N][:width]}`, `{uuid}`, `{timestamp}`, `{date[:pattern]}`,
    `{random[:min-max]}`, `{randomString:n}`, `{randomHex:n}`, `{choice:a|b}`, `{cycle:a|b}`,
    `{executionId}`, `{stepId}`. Unknown `{names}` are left untouched; invalid arguments throw
-   `IllegalArgumentException`. `toRegex` yields a matching regex (used by the `http-mock` assertion).
+   `IllegalArgumentException`. `toRegex` yields a matching regex (used by the `direct-assertion` http metrics).
 2. `http-client` accepts `pathParams`, `queryParams`, `headers`, `body` (String or map/list → JSON).
 3. `gatling` without `simulation` is an HTTP injection built from the step parameters:
    `HttpRequestSpecFactory` → `HttpRequestSpecHolder` → built-in `HttpScenarioSimulation`,

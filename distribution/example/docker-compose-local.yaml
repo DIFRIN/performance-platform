@@ -10,9 +10,9 @@
 #     postgres postgres-sut kafka sut
 #
 #   docker compose -f distribution/example/docker-compose-local.yaml \
-#     run --rm -e SCENARIO_FILE=01-kafka-to-http-local.yaml platform
+#     run --rm -e SCENARIO_FILE=01-kafka-to-http.yaml platform
 #   docker compose -f distribution/example/docker-compose-local.yaml \
-#     run --rm -e SCENARIO_FILE=02-http-to-kafka-local.yaml platform
+#     run --rm -e SCENARIO_FILE=02-http-to-kafka.yaml platform
 #
 # Web UI (launch executions from the browser instead of the CLI):
 #   docker compose -f distribution/example/docker-compose-local.yaml \

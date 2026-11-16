@@ -78,8 +78,8 @@ public class DatabaseTaskExecutor implements TaskExecutor { ... }
 @Injection(name = "gatling", description = "Gatling load injection")
 public class GatlingTaskExecutor implements TaskExecutor { ... }
 
-@Assertion(name = "gatling-metric", description = "Gatling metrics assertions")
-public class GatlingMetricAssertionExecutor implements TaskExecutor { ... }
+@Assertion(name = "performance-thresholds", description = "Normalised SLO checks")
+public class PerformanceThresholdsAssertionExecutor implements AssertionExecutor { ... }
 ```
 
 ---
@@ -106,7 +106,7 @@ injections:
 
 assertions:
   - id: p95-check
-    type: gatling-metric     # → @Assertion(name = "gatling-metric") — interne
+    type: performance-thresholds  # → @Assertion(name = "performance-thresholds") — interne
 
   - id: custom-check
     type: my-custom-assertion  # → @Assertion(name = "my-custom-assertion") — plugin externe

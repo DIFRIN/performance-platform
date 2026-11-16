@@ -45,7 +45,6 @@ class ScenarioUploadControllerTest {
               id: test-scenario
               name: Test
               version: "1.0.0"
-              executionMode: LOCAL
               steps:
                 - id: step1
                   phase: INJECTION
@@ -202,6 +201,69 @@ class ScenarioUploadControllerTest {
     }
 
     @Nested
+    @DisplayName("POST /scenarios/validate — validation without execution")
+    class ValidateOnly {
+
+        @Test
+        @DisplayName("should return the parsed scenario and never submit an execution")
+        void shouldReturnPreview() throws Exception {
+            var scenario = createMinimalScenario();
+            when(parsingUseCase.parse(VALID_YAML)).thenReturn(scenario);
+
+            mockMvc.perform(post("/api/v1/scenarios/validate")
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                            .param("yaml", VALID_YAML))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.scenarioId").value("test-scenario"))
+                    .andExpect(jsonPath("$.name").value("Test"))
+                    .andExpect(jsonPath("$.version").value("1.0.0"))
+                    .andExpect(jsonPath("$.stepCount").value(0));
+
+            org.mockito.Mockito.verifyNoInteractions(executeUseCase);
+        }
+
+        @Test
+        @DisplayName("should accept a multipart file")
+        void shouldAcceptMultipartFile() throws Exception {
+            var scenario = createMinimalScenario();
+            when(parsingUseCase.parse(VALID_YAML)).thenReturn(scenario);
+
+            var file = new MockMultipartFile("file", "scenario.yaml",
+                    MediaType.TEXT_PLAIN_VALUE, VALID_YAML.getBytes());
+
+            mockMvc.perform(multipart("/api/v1/scenarios/validate").file(file))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.scenarioId").value("test-scenario"));
+        }
+
+        @Test
+        @DisplayName("should return 400 with field-level errors on invalid YAML")
+        void shouldReturn400OnInvalidYaml() throws Exception {
+            var validationResult = ValidationResult.invalid(
+                    List.of(new ValidationError("steps", "at least one step", "scenario.steps")),
+                    List.of());
+            when(parsingUseCase.parse(any()))
+                    .thenThrow(new ScenarioValidationException(validationResult));
+
+            mockMvc.perform(post("/api/v1/scenarios/validate")
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                            .param("yaml", "scenario:\n  id: empty"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("SCENARIO_VALIDATION_FAILED"))
+                    .andExpect(jsonPath("$.details[0].field").value("steps"));
+        }
+
+        @Test
+        @DisplayName("should return 400 when neither file nor yaml is provided")
+        void shouldReturn400WhenNoInput() throws Exception {
+            mockMvc.perform(post("/api/v1/scenarios/validate"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value("SCENARIO_VALIDATION_FAILED"))
+                    .andExpect(jsonPath("$.details[0].field").value("input"));
+        }
+    }
+
+    @Nested
     @DisplayName("POST /scenarios/upload — exception handling")
     class ExceptionHandling {
 
@@ -270,8 +332,8 @@ class ScenarioUploadControllerTest {
                 "1.0.0",
                 List.of(),
                 Map.of(),
-                null,
                 List.of(),
-                Map.of());
+                null,
+                null);
     }
 }

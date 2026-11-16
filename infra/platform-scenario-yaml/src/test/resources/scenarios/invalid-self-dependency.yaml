@@ -1,13 +1,11 @@
-# Invalid: step depends on itself
 scenario:
   id: self-dependency
   name: Self Dependency
   version: 1.0.0
-  execution:
-    mode: LOCAL
   steps:
-    - id: self-step
-      task: database
-      phase: PREPARATION
-      dependsOn: [self-step]
-      timeout: 30s
+  - id: self-step
+    task: database
+    phase: PREPARATION
+    dependsOn:
+    - self-step
+    timeout: 30s

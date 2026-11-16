@@ -115,7 +115,7 @@ public class ScenarioCatalogController {
         var definition = scenario.definition();
         if (definition == null) {
             return new CatalogScenarioResponse(
-                    scenario.key(), null, null, null, List.of(), null, 0,
+                    scenario.key(), null, null, null, List.of(), 0,
                     false, scenario.error(), scenario.yaml(), List.of());
         }
         var steps = definition.steps().stream()
@@ -127,7 +127,6 @@ public class ScenarioCatalogController {
                 definition.name(),
                 definition.version(),
                 definition.tags(),
-                definition.executionMode() == null ? null : definition.executionMode().name(),
                 steps.size(),
                 true,
                 null,
@@ -139,9 +138,12 @@ public class ScenarioCatalogController {
         return new CatalogStepResponse(
                 step.id().value(),
                 step.taskName(),
-                step.phase().name(),
+                step.phase() == null ? null : step.phase().name(),
+                step.during() == null ? null : step.during().name(),
+                step.ref() == null ? null : step.ref().value(),
+                step.fanOut().name(),
                 step.dependsOn().stream().map(taskId -> taskId.value()).toList(),
-                step.requiredContexts(),
+                step.resolvedRequiredContexts(),
                 step.timeout() == null ? null : step.timeout().toMillis(),
                 step.parameters());
     }

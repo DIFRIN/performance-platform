@@ -1,6 +1,6 @@
 package com.performance.platform.injection.gatling.http;
 
-import com.performance.platform.application.ports.out.EndpointResolver;
+import com.performance.platform.plugin.resource.EndpointResolver;
 import com.performance.platform.injection.gatling.protocol.InjectionProtocol;
 import com.performance.platform.injection.gatling.protocol.PreparedInjection;
 

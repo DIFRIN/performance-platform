@@ -1,221 +1,188 @@
 # Spec 07 — Assertion Framework
 
-**Module** : `platform-assertion`
+**Module** : `platform-assertion` (pipeline framework-free) + `platform-assertion-adapters` (familles d'execution)
 **Dépend de** : `platform-domain`, `platform-use-cases`, `platform-plugin-api`
+
+> Modèle unique (ADR-049) : une assertion **mesure** (`Observation`), **attend**
+> (`Expectation`) et **conclut** (`Check`). Le pipeline est partagé par toutes
+> les familles ; aucun adapter ne choisit le statut. Les sources externes
+> (panneaux Grafana/Kibana) et les critères temporels sont décrits dans
+> [Spec 10](10-observability-assertions-and-evidence.md).
 
 ---
 
 ## 1. Objectif
 
-Évaluer des assertions en lisant l'`ExecutionContext` (outputs d'injection/préparation)
-et, si nécessaire, des systèmes externes (datasource, WireMock, Kafka). Produire des
-`AssertionResult` avec une `Evidence` détaillée.
+Évaluer des assertions en lisant l'`ExecutionContext` (sorties d'injection,
+de préparation, de mock) ou des systèmes externes (datasource, API
+d'administration d'un mock, panneau), puis produire un `AssertionSummary`
+contenant un ou plusieurs `Check` et, si fourni, le SLI/SLO textuel du scénario.
 
-Depuis ADR-029/ADR-030, il n'existe **plus de registre d'assertions séparé** :
-`AssertionExecutor extends TaskExecutor` et les implémentations sont collectées par le
-`TaskExecutorRegistry` commun. Le moteur traite donc les assertions comme des tâches
-standard (chemin unique LOCAL/DISTRIBUTED).
+Depuis ADR-029/ADR-030 il n'existe **plus de registre d'assertions séparé** :
+`AssertionExecutor extends TaskExecutor` et les implémentations sont collectées
+par le `TaskExecutorRegistry` commun. Le moteur traite les assertions comme des
+tâches standard (chemin unique LOCAL/DISTRIBUTED).
 
 ---
 
-## 2. Interfaces
+## 2. Contrat
 
 ```java
 public interface AssertionExecutor extends TaskExecutor {
 
-    AssertionResult evaluate(ExecutionContext context, StepDefinition step);
+    AssertionSummary evaluate(ExecutionContext context, StepDefinition step);
 
-    String getSupportedAssertionName();       // correspond à @Assertion(name = "...")
+    String getSupportedAssertionName();
 
-    // Héritage de TaskExecutor
     @Override
     default String getSupportedTaskName() { return getSupportedAssertionName(); }
 
     @Override
     default TaskResult execute(ExecutionContext context, StepDefinition step) {
-        return toTaskResult(evaluate(context, step));
+        return AssertionSummaries.toTaskResult(evaluate(context, step), getSupportedAssertionName());
     }
 }
 ```
 
-- `evaluate(...)` ne lance **jamais** d'exception métier : il retourne un statut
-  `PASSED`, `FAILED`, `SKIPPED` ou `ERROR`.
-- `execute(...)` convertit le résultat en `TaskResult` et place un `AssertionSummary`
-  dans les outputs sous la clé `AssertionSummary.OUTPUT_KEY = "assertion"`.
-- Mapping des statuts : `PASSED → SUCCESS`, `FAILED → FAILED`, `SKIPPED → SKIPPED`,
-  `ERROR → FAILED`.
+- `evaluate(...)` ne lance **jamais** d'exception métier : une erreur produit un
+  `Check` en statut `ERROR`.
+- La conversion `AssertionSummary → TaskResult` est **unique**
+  (`AssertionSummaries`), y compris le mapping des statuts :
 
-Il n'y a pas d'interface `AssertionExecutorRegistry` : la découverte se fait par
-annotation (`@Assertion`) et le registre est `TaskExecutorRegistry`.
+| Statut | `TaskStatus` | Effet sur le rapport |
+|---|---|---|
+| `PASSED` | `SUCCESS` | succès |
+| `FAILED` | `FAILED` | échec (critique si `Severity.CRITICAL`) |
+| `SKIPPED` | `SKIPPED` | neutre |
+| `INCONCLUSIVE` | `SUCCESS` | limitation, jamais un succès |
+| `ERROR` | `FAILED` | anomalie technique |
 
 ---
 
-## 3. AssertionResult et Evidence
+## 3. Modèle
 
 ```java
-public record AssertionResult(
-    TaskId assertionId,
-    AssertionStatus status,         // PASSED | FAILED | SKIPPED | ERROR
-    String description,
-    Evidence evidence,
-    Duration evaluationDuration,
-    Instant evaluatedAt
-) {}
+record MetricId(String namespace, String name) {}
 
-public record Evidence(
-    Object actualValue,
-    Object expectedValue,
-    AssertionOperator operator,
-    String unit,
-    Map<String, Object> details
-) {}
+record MetricDefinition(MetricId id, MetricKind kind, String unit,
+                        Reduction reduction, String description) {}
 
-public record AssertionSummary(
-    TaskId assertionId,
-    AssertionStatus verdict,
-    String description,
-    Map<String, Object> collectedData,
-    List<AssertionSample> history,
-    Duration evaluationDuration,
-    Instant evaluatedAt
-) {
-    public static final String OUTPUT_KEY = "assertion";
-}
+record Observation(MetricId metric, double value, String unit, TimeWindow window,
+                   String source, QueryFingerprint fingerprint,
+                   Map<String, Object> attributes) {}
+
+record Expectation(AssertionOperator operator, double threshold,
+                   double tolerance, Severity severity) {}
+
+record Check(MetricId metric, Observation observed, Expectation expected,
+             AssertionStatus status, String intent, String rationale) {}
+
+record SloStatement(String title, String sli, String slo, String rationale) {}
+
+record AssertionSummary(TaskId assertionId, AssertionStatus verdict, String description,
+                        List<AssertionSample> history,
+                        Duration evaluationDuration, Instant evaluatedAt,
+                        AssertionFamily family, SloStatement slo,
+                        List<Check> checks, Rollup rollup) {}
 ```
 
-`AssertionStatus` : `PASSED`, `FAILED`, `SKIPPED`, `ERROR`.
-`AssertionOperator` : `LT`, `LTE`, `GT`, `GTE`, `EQ`, `NEQ` (comparaison numérique).
+`AssertionStatus` : `PASSED`, `FAILED`, `SKIPPED`, `INCONCLUSIVE`, `ERROR`.
+`AssertionOperator` : `LT`, `LTE`, `GT`, `GTE`, `EQ`, `NEQ`.
+`AssertionFamily` : `PERFORMANCE_THRESHOLDS`, `DIRECT`, `PANEL`, `CUSTOM`.
+`Rollup` : `ALL` (défaut), `ANY`, `QUORUM(n)`.
+
+Règles portées par le domaine :
+
+- `EQ`/`NEQ` sur une métrique continue (`GAUGE`, `RATIO`, `QUANTILE`,
+  `DURATION`) exige une **tolérance strictement positive** ;
+- les quantiles ne sont **jamais** agrégés par moyenne (`Reduction.MAX` = pire
+  agent, `MIN` pour le débit, `SUM` pour les compteurs, `ALL` pour les états) ;
+- `Rollup.combine` renvoie `INCONCLUSIVE` dès qu'une mesure manque : un succès
+  ne peut pas être déduit d'une absence de données.
+
+Le catalogue canonique (`MetricCatalog`) porte les 24 métriques et normalise les
+unités (`%`, `req/s`, `requests`…). Les noms canoniques (`injection.latency.p95`,
+`kafka.messages.consumed`, …) sont les seuls acceptés : aucun alias n'est résolu.
 
 ---
 
-## 4. Types d'assertions
+## 4. Familles
 
-Toutes les assertions se déclarent dans `steps:` avec `task:` et `phase: ASSERTION`.
+### 4.1 `performance-thresholds` — SLO normalisés
 
-### `gatling-metric`
 ```yaml
-- id: p95-check
-  task: gatling-metric
+- id: api-slo
+  task: performance-thresholds
   phase: ASSERTION
-  requiredContexts: [customer-api-load]
+  description:
+    title: API latency
+    sli: temps de réponse HTTP des POST /api/events
+    slo: p95 <= 500 ms, p99 <= 900 ms, erreurs <= 1 %, débit >= 100 req/s
+    rationale: contrat client 2026-Q4
   parameters:
-    metric: p95                # p50|p75|p90|p95|p99|max|min|mean|
-                               # errorRate|throughput|totalRequests|failedRequests
-    operator: LT
-    value: 500
-    unit: ms                   # ms|percent|req_per_sec|count
-    refTaskId: customer-api-load   # optionnel si une seule injection
-```
-Lit `InjectionResult` depuis le contexte (clé `"result"`) ; `refTaskId` par défaut =
-premier résultat d'injection disponible.
-
-### `database-assertion`
-```yaml
-- id: db-count
-  task: database-assertion
-  phase: ASSERTION
-  parameters:
-    datasource: customer-db    # nom logique platform.datasources ; compatible nom de bean ; "default" → primaire
-    query: "SELECT COUNT(*) FROM orders WHERE status = 'CREATED'"
-    operator: GT
-    value: 1000
-    unit: count
+    latency: { p50: 200, p95: 500, p99: 900, unit: ms, severity: WARNING }
+    errorRate: { max: 1.0, unit: percent, severity: CRITICAL }
+    throughput: { min: 100, unit: req_per_sec, severity: WARNING }
 ```
 
-### `kafka`
-```yaml
-- id: consumed
-  task: kafka
-  phase: ASSERTION
-  requiredContexts: [kafka-monitor]
-  parameters:
-    metric: consumedCount      # consumedCount | producedCount | lag
-    topic: customer-events
-    groupId: perf-monitor
-    operator: GT
-    value: 5000
-    refTaskId: kafka-monitor
-```
-Lit les outputs du `KafkaConsumerTaskExecutor` / `KafkaProducerTaskExecutor`
-(`messagesConsumed`, `messagesProduced`, `lag`).
+Un seul bloc produit cinq `Check` ; les percentiles non contraints sortent en
+`SKIPPED` documenté, afin que le rapport expose toujours la structure p50/p95/p99.
+Un paramètre `checks:` explicite permet d'ajouter n'importe quelle métrique
+d'injection avec opérateur/seuil/tolérance.
 
-### `wiremock`
-```yaml
-- id: calls
-  task: wiremock
-  phase: ASSERTION
-  parameters:
-    mockUrl: http://localhost:8090   # ou target: wiremock
-    endpoint: /api/customers
-    operator: EQ
-    expectedCount: 1000
-```
-Interroge l'API d'administration WireMock (`POST /__admin/requests/count`).
+### 4.2 `direct-assertion` — mesure directe
 
-### `http-mock`
 ```yaml
-- id: received
-  task: http-mock
+- id: orders-processed
+  task: direct-assertion
   phase: ASSERTION
-  requiredContexts: [start-mock]
   parameters:
-    metric: receivedCalls      # receivedCalls | matchedCalls | unmatchedCalls
-    endpoint: POST /api/customers
+    metric: database.updates          # database.scalar, filesystem.exists, ...
+    datasource: customer-db
+    query: "UPDATE orders SET status='DONE' WHERE status='CREATED'"
     operator: GTE
-    value: 1000
-    target: wiremock           # ou wiremockUrl
-    refTaskId: start-mock
-    queryParams:               # optionnel — ne compte que les appels portant ces request params
-      device_id: "device-{index}"   # tout placeholder DynamicValues → regex ; sinon equalTo (spec 03, ADR-039)
+    threshold: 1000
+    severity: CRITICAL
 ```
 
-### `file`
-```yaml
-- id: output-file
-  task: file
-  phase: ASSERTION
-  parameters:
-    path: /reports/output.csv
-    check: EXISTS              # EXISTS | NOT_EXISTS | CHECKSUM | SIZE_GT | SIZE_LT
-    checksum: sha256:abc123    # CHECKSUM
-    sizeBytes: 1024            # SIZE_GT / SIZE_LT
-```
+Métriques résolues par `DirectMeasurementResolver` :
 
-### Assertions d'intervalle (`linkedTo`)
-Une assertion dont le paramètre `linkedTo` référence un step d'injection est placée
-dans `ExecutionPlan.assertionIntervalSteps`. Elle n'est pas exécutée après l'injection :
-le moteur lui envoie `START` avant l'INJECTION et `STOP` après. Elle peut ainsi
-échantillonner pendant la charge (ex. assertion Gatling périodique). `linkedTo` inconnu
-→ `InvalidScenarioException` au build du plan.
+| Namespace | Métriques | Paramètres |
+|---|---|---|
+| `database` | `database.scalar`, `database.updates` | `datasource` (nom de `platform.datasources`, défaut : `default`), `query` |
+| `filesystem` | `filesystem.exists`, `.size`, `.checksum` | `path`, `expect`, `checksum` |
+| `http` | `http.requests.matched`, `.unmatched` | `target` (cible nommée), `mockUrl` + `endpoint`/`method`, ou `ref` |
+| `kafka` | `kafka.messages.consumed`, `.produced`, `.consumer.lag` | `ref` (+ `output`) |
+| `injection` | `injection.latency.*`, `injection.error.rate`, `injection.throughput` | `ref` |
+
+Les métriques `STATE` (`filesystem.exists`, `filesystem.checksum`) comparent un
+état converti en `1.0`/`0.0` : plus de branchement `EXISTS`/`CHECKSUM` dans un
+executor.
+
+### 4.3 `panel-assertion` — métriques de dashboard
+
+Fournie par l'annexe [observability-probe](../tools/observability-probe.md)
+(plugin JAR). Voir [Spec 10](10-observability-assertions-and-evidence.md) §3.3.
+
+### 4.4 Critères temporels
+
+`COVERAGE`, `REACH`, `SUSTAINED`, `SPREAD`, `TREND`, `RECOVERY`, `MONOTONIC`
+s'appliquent à une `SeriesObservation`. `COVERAGE` est vérifiée en premier :
+une série trop courte ou trouée produit `INCONCLUSIVE`. Voir Spec 10 §4.
 
 ---
-
-```mermaid
-flowchart LR
-    EV["AssertionExecutor.evaluate()"] --> AR["AssertionResult"]
-    AR --> MAP{"status"}
-    MAP -->|PASSED| S["TaskResult SUCCESS"]
-    MAP -->|FAILED| F["TaskResult FAILED"]
-    MAP -->|SKIPPED| K["TaskResult SKIPPED"]
-    MAP -->|ERROR| E["TaskResult FAILED"]
-    S --> OUT["outputs.assertion"]
-    F --> OUT
-    K --> OUT
-    E --> OUT
-```
 
 ## 5. Contribution au verdict
 
-Deux calculs coexistent :
+Deux niveaux, une seule source :
 
-1. **Verdict d'exécution** (`ExecutionEngine`) : toute tâche `FAILED` — y compris une
-   assertion — rend le verdict `FAILED` ; un `SKIPPED` donne `WARNING`.
-2. **Verdict de rapport** (`VerdictCalculator`) : `ERROR` → `FAILED`,
-   `FAILED` → `WARNING`, tout `PASSED`/`SKIPPED` (ou aucune assertion) → `SUCCESS`.
-
-Le rapport expose donc une sévérité plus nuancée que le statut d'exécution.
-Il n'existe pas de champ `severity` dans le modèle actuel : la distinction
-FAILED/WARNING provient du statut de l'assertion (`FAILED` vs `ERROR`).
+1. **Verdict d'exécution** (`ExecutionEngine`) : toute tâche `FAILED` rend le
+   verdict `FAILED` ; un `SKIPPED` donne `WARNING`. Un `Check` `INCONCLUSIVE`
+   n'échoue pas l'exécution (la tâche reste `SUCCESS`) mais limite le rapport.
+2. **Verdict de rapport** (`PerformanceAssessmentBuilder`) : `FAILED` si un
+   check `CRITICAL` échoue ou en cas d'échec technique ; sinon `WARNING` si un
+   check est `INCONCLUSIVE`/`SKIPPED` ou si une limitation existe ; sinon
+   `SUCCESS`.
 
 ---
 
@@ -223,8 +190,26 @@ FAILED/WARNING provient du statut de l'assertion (`FAILED` vs `ERROR`).
 
 - Découverte : beans Spring annotés `@Assertion(name="…")`, collectés par
   `TaskExecutorRegistry` (et par `PluginRegistry` pour les plugins externes).
-- Chargement plugin : `platform.plugins.enabled=true` + JAR dans `platform.plugins.dir`.
-- Exécution : chemin unique `LocalStepDispatcher`/`RemoteStepDispatcher` ; aucune
-  branche spécifique aux assertions.
-- En DISTRIBUTED, l'agent doit déclarer le nom d'assertion dans
-  `agent.supported-tasks` (ex. `wiremock`, `database-assertion`).
+- Chargement plugin : `platform.plugins.enabled=true` + JAR dans
+  `platform.plugins.dir` (constructeur no-arg).
+- Exécution : chemin unique `TransportStepDispatcher` (moteur et transport uniques, ADR-059) ;
+  aucune branche spécifique aux assertions.
+- En DISTRIBUTED, l'agent déclare le nom d'assertion utilisé dans
+  `agent.supported-tasks` (`direct-assertion`, `performance-thresholds`,
+  `panel-assertion`).
+
+---
+
+## 7. Validation au parsing
+
+`DefaultScenarioValidator` rejette au chargement du scénario (HTTP 400) :
+
+- métrique inconnue (`MetricCatalog.find` vide) ;
+- métrique continue avec `operator: EQ`/`NEQ` et `tolerance` absente ou nulle ;
+- `direct-assertion` sans `metric`, ou sans `operator`/`threshold` pour une
+  métrique non `STATE` ;
+- `performance-thresholds` sans `latency`, `errorRate`, `throughput` ni `checks`.
+
+Un bloc `description` absent produit un **avertissement**, pas une erreur : le
+contexte SLI/SLO est recommandé pour le rapport.
+

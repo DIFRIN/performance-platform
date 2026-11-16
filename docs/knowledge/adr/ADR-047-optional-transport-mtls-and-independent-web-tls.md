@@ -1,5 +1,8 @@
 # ADR-047 - Optional transport mTLS and independent web HTTPS
 
+**Status** : ACCEPTED  
+**Date** : 2026-11-12
+
 ## Status
 
 Accepted: scope and listener isolation confirmed by the user.

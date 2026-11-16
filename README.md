@@ -42,7 +42,8 @@ flowchart TB
     subgraph SUPPORT["infra/ - technical adapters"]
         EXECUTORS["TaskExecutors"]
         TRANSPORT["Transport implementations"]
-        INFRA["platform-infrastructure<br/>JPA · executors · plugins"]
+        INFRA["platform-infrastructure<br/>registry · plugins"]
+        PERSIST["platform-persistence<br/>JPA store"]
         GATLING["platform-injection-gatling"]
         YAML["YAML parser"]
         RENDER["HTML / PDF / JSON"]
@@ -85,10 +86,12 @@ flowchart TB
 | `performance/platform-assertion` | Assertion mapping and sampling policy |
 | `performance/platform-reporting` | SLI/SLO assessment and campaign report assembly |
 | `infra/platform-scenario-yaml` | SnakeYAML/Jackson scenario parser |
-| `infra/platform-transport` | In-memory, Kafka, RabbitMQ, HTTP and socket adapters |
-| `infra/platform-infrastructure` | Built-in task adapters, JPA persistence and plugin loading |
+| `infra/platform-transport` | In-memory, HTTP and Kafka adapters (RabbitMQ/socket as external plugins, ADR-056) |
+| `infra/platform-infrastructure` | Task executor registry, plugin JAR loading, schedule calculation |
+| `infra/platform-persistence` | Orchestrator store: JPA, Flyway migrations, primary datasource |
+| `infra/executors/platform-executor-*` | One module per built-in executor family: database, docker, filesystem, http, kafka, mock, shell (ADR-057) |
 | `infra/platform-injection-gatling` | Gatling injection and result parsing |
-| `infra/platform-assertion-adapters` | Database, file, Kafka, HTTP mock and Gatling assertions |
+| `infra/platform-assertion-adapters` | `performance-thresholds` and `direct-assertion` (ADR-049) |
 | `infra/platform-report-renderers` | HTML/PDF/JSON rendering and file output |
 | `infra/platform-observability` | Micrometer metrics and MDC logging |
 | `bootstrap` (`platform-bootstrap`) | Only executable: Spring Boot assembly, REST, UI and CLI |
@@ -128,12 +131,23 @@ exposes an API, UI, or CLI.
 
 ```bash
 java -jar bootstrap/target/performance-platform.jar \
-  --scenario=file:distribution/example/scenarios/01-kafka-to-http-local.yaml
+  --scenario=file:distribution/example/scenarios/01-kafka-to-http.yaml
 echo $?   # 0 success, 1 failed, 2 invalid arguments/scenario
 ```
 
 When `--scenario=` is present the application runs once and exits
 (`WebApplicationType.NONE`, ADR-021).
+
+The run can be deferred with `--schedule=` (or `platform.schedule` /
+`SCHEDULE`). Expressions accept `now`, `in 10m`, `in 1h30m`, an ISO-8601
+date-time, or a cron expression. A one-shot schedule waits in-process before
+executing; cron requires the web/orchestrator mode.
+
+```bash
+java -jar bootstrap/target/performance-platform.jar \
+  --scenario=file:distribution/example/scenarios/01-kafka-to-http.yaml \
+  --schedule="in 10m"
+```
 
 ### REST API
 
@@ -152,9 +166,19 @@ curl -X POST http://localhost:8080/api/v1/executions/{executionId}/cancel
 Additional endpoints: `GET /api/v1/executions`, `DELETE /api/v1/executions/{id}`,
 `POST /api/v1/executions/{id}/rerun` (new execution from the retained YAML),
 `POST /api/v1/scenarios/upload` (multipart `file` or form field `yaml`),
+`POST /api/v1/scenarios/validate` (parse and validate only, no execution),
 `GET /api/v1/catalog` (scenarios from `SCENARIOS_DIR`, no execution),
 `POST /api/v1/catalog/{key}/run` (execute a catalog scenario),
 `GET /api/v1/agents`, `GET /api/v1/executions/{id}/report?format=html|pdf|json`.
+
+Scheduled runs use `POST /api/v1/schedules` with a JSON body
+`{"scenarioYaml":"…","schedule":"in 10m"}` (empty/`now` runs immediately,
+`cron:0 0 2 * * *` recurs), `GET /api/v1/schedules` to list them, and
+`DELETE /api/v1/schedules/{id}` to cancel a pending run. The web UI exposes
+a schedule input **per scenario row** (Run) and **per execution row** (Rerun),
+so each scenario or re-run can be deferred independently: type an expression or
+pick a proposition. Executions can be filtered by status and by scenario, and
+the scenario id links back to the catalog view.
 
 Set `SCENARIOS_DIR=/path/to/scenarios` to populate the **Scenarios** view in the
 web UI; each entry shows its steps and has its own **Run** button.
@@ -199,7 +223,8 @@ The only deployment example lives in `distribution/example/`; its full runbook i
 
 - one config-driven SUT stub (`sut/`) combining "Kafka → DB → HTTP" and
   "HTTP → DB → Kafka" behaviours;
-- two scenarios, each runnable in LOCAL or DISTRIBUTED mode;
+- two SUT scenarios, each runnable in LOCAL or DISTRIBUTED mode, plus
+  `03-assertion-model.yaml` (LOCAL-only assertion/SLO example);
 - `docker-compose-local.yaml` and `docker-compose-distributed.yaml`.
 
 LOCAL mode uses the same `application-local.yaml` from the IDE and from Docker:
@@ -209,12 +234,12 @@ LOCAL mode uses the same `application-local.yaml` from the IDE and from Docker:
 docker compose -f distribution/example/docker-compose-local.yaml up -d \
   postgres postgres-sut kafka sut
 docker compose -f distribution/example/docker-compose-local.yaml \
-  run --rm -e SCENARIO_FILE=01-kafka-to-http-local.yaml platform
+  run --rm -e SCENARIO_FILE=01-kafka-to-http.yaml platform
 
 # IDE LOCAL (same config file, localhost defaults)
 java -jar bootstrap/target/performance-platform.jar \
   --spring.profiles.active=local \
-  --scenario=file:distribution/example/scenarios/01-kafka-to-http-local.yaml
+  --scenario=file:distribution/example/scenarios/01-kafka-to-http.yaml
 ```
 
 DISTRIBUTED mode uses the `example` profile shared by the orchestrator and agents:
@@ -223,7 +248,7 @@ DISTRIBUTED mode uses the `example` profile shared by the orchestrator and agent
 docker compose -f distribution/example/docker-compose-distributed.yaml up -d
 curl -X POST http://localhost:8080/api/v1/scenarios \
   -H 'Content-Type: application/yaml' \
-  --data-binary @distribution/example/scenarios/01-kafka-to-http-distributed.yaml
+  --data-binary @distribution/example/scenarios/01-kafka-to-http.yaml
 ```
 
 ---
@@ -238,6 +263,7 @@ Priority: **environment variable > CLI argument > Spring property > default**
 | Mode | `RUNTIME_MODE` | `--runtime.mode=` | `runtime.mode` | `LOCAL` |
 | Role | `MODE` | `--runtime.role=` | `runtime.role` | `NONE` |
 | Transport | `TRANSPORT_TYPE` | `--transport.type=` | `transport.type` | `IN_MEMORY` |
+| Schedule | `SCHEDULE` | `--schedule=` | `platform.schedule` | immediate |
 
 ```bash
 # Orchestrator
@@ -298,16 +324,20 @@ scenario:
         loadModel: api-load
       timeout: 20m
 
-    - id: p95-check
-      task: gatling-metric
+    - id: api-slo
+      task: performance-thresholds
       phase: ASSERTION
       requiredContexts: [inject]
       dependsOn: [inject]
+      description:
+        title: Customer API latency
+        sli: response time of POST /api/events during the injection window
+        slo: p95 <= 500 ms, error rate <= 1 %
+        rationale: release gate for the 2026-Q4 contract
       parameters:
-        metric: p95
-        operator: LT
-        value: 500
-        unit: ms
+        refTaskId: inject
+        latency: { p95: 500, unit: ms, severity: CRITICAL }
+        errorRate: { max: 1.0, unit: percent, severity: CRITICAL }
 
 loadModels:
   api-load:
@@ -338,7 +368,7 @@ Load-model types: `RAMP`, `RAMP_UP_DOWN`, `CONSTANT`, `SPIKE`, `STAIR`, `SOAK`, 
 | `docker` | `START`, `STOP`, `PULL` |
 | `http-client` | HTTP calls to named targets (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`) |
 | `kafka-consumer` | `CONSUME`, `COUNT` |
-| `kafka-producer` | `PRODUCE`, `PRELOAD` |
+| `kafka-producer` | `PRODUCE` |
 | `mock-server` | `START`, `STOP`, `RESET`, `VERIFY` on embedded/external WireMock |
 
 ### Injection
@@ -351,12 +381,14 @@ Load-model types: `RAMP`, `RAMP_UP_DOWN`, `CONSTANT`, `SPIKE`, `STAIR`, `SOAK`, 
 
 | Task | Notes |
 |---|---|
-| `gatling-metric` | `p50`, `p75`, `p90`, `p95`, `p99`, `max`, `min`, `mean`, `errorRate`, `throughput`, `totalRequests`, `failedRequests` |
-| `database-assertion` | SQL `COUNT`/`EXISTS`/`SCALAR` comparisons |
-| `kafka` | `consumedCount`, `producedCount`, `lag` |
-| `wiremock` | Request count on a WireMock endpoint |
-| `http-mock` | Received/matched/unmatched calls |
-| `file` | `EXISTS`, `NOT_EXISTS`, `CHECKSUM`, `SIZE_GT`, `SIZE_LT` |
+| `performance-thresholds` | Normalised SLO checks: `latency` (p50/p95/p99), `errorRate`, `throughput`, or an explicit `checks` list |
+| `direct-assertion` | One metric and one expectation: `database.scalar`, `database.updates`, `filesystem.*`, `http.requests.*`, `kafka.messages.*`, `injection.latency.*` |
+| `panel-assertion` | External dashboard metrics (Grafana/Kibana) through the `observability-probe` plugin JAR |
+
+Every assertion carries a textual `description` block (`title`, `sli`, `slo`,
+`rationale`) that is copied into the report next to the machine checks. The
+text is documentation with contractual value and is never parsed into a
+threshold.
 
 Assertions can use `linkedTo` to sample during an injection step; the engine sends them
 `START` before the injection and `STOP` after it.
@@ -374,7 +406,7 @@ agent:
     - database
     - mock-server
     - gatling
-    - wiremock
+    - direct-assertion
   registry:
     ttl-check-interval-seconds: 10
 ```
@@ -420,6 +452,14 @@ The performance report engine assembles the report after `ScenarioFinished`, del
 writing to the `ReportOutput` port and publishes `ReportGenerated` after output is ready.
 `ReportFileWriter` and the format renderers implement that output in `infra/`.
 
+Assertions declare their SLI/SLO textually in the scenario (`description.title`,
+`description.sli`, `description.slo`, `description.rationale`); the report renders that
+text next to the machine checks, so a reader knows what the run claims to guarantee.
+
+> Target design for normalised performance metrics, direct assertions and dashboard-backed
+> metrics: [Spec 10](docs/knowledge/specs/10-observability-assertions-and-evidence.md)
+> (ADR-049, ADR-050, ADR-051).
+
 ---
 
 ## Observability
@@ -428,6 +468,23 @@ writing to the `ReportOutput` port and publishes `ReportGenerated` after output 
   `phase_duration`
 - MDC keys: `executionId`, `scenarioId`, `taskId`, `agentId`, `phase`
 - Actuator: `GET /actuator/health` (readiness/liveness probes enabled)
+
+### Dashboard metrics (annex tool)
+
+`tools/observability-probe` replays Grafana panel queries (`POST /api/ds/query`) and
+Kibana saved-object queries (Elasticsearch direct or Kibana console proxy) so dashboard
+metrics become assertions instead of screenshots. It ships as a platform plugin
+(`panel-assertion`) and as a standalone CLI:
+
+```bash
+cd tools/observability-probe && mvn -q clean package
+java -jar target/observability-probe.jar verify  --source grafana-prod --dashboard api-slo
+java -jar target/observability-probe.jar query   --source grafana-prod --dashboard api-slo \
+  --panel 12 --from now-30m --to now --map refId=A:injection.latency.p95:ms
+```
+
+Full usage, configuration and troubleshooting:
+[docs/knowledge/tools/observability-probe.md](docs/knowledge/tools/observability-probe.md).
 
 ---
 

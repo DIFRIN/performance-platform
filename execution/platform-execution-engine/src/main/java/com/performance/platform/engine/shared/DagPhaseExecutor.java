@@ -3,6 +3,7 @@ package com.performance.platform.engine.shared;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
+import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.SignalId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
@@ -26,21 +27,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * Exécute une phase (PREPARATION / INJECTION / ASSERTION) niveau DAG par niveau DAG.
- * Les étapes d'un même dagLevel sont exécutées en parallèle via Virtual Threads.
+ * Execute une phase (PREPARATION / INJECTION / ASSERTION) niveau DAG par niveau DAG.
+ * Les etapes d'un meme dagLevel sont executees en parallele via Virtual Threads.
  *
- * <p>Cette classe est utilisée par l'{@code ExecutionEngine} unique.
- * La stratégie d'exécution d'un step individuel
- * est déléguée au {@link StepDispatcher}.</p>
+ * <p>Cette classe est utilisee par l'{@code ExecutionEngine} unique.
+ * La strategie d'execution d'un step individuel est deleguee au
+ * {@link StepDispatcher}.</p>
  *
- * <p>Règles :
+ * <p>Regles :
  * <ul>
- *   <li>Avant l'exécution d'un niveau, vérification des prérequis : si un dependsOn est
- *       FAILED/SKIPPED, l'étape est marquée SKIPPED.</li>
- *   <li>Chaque étape est dispatchée via {@link StepDispatcher}.</li>
- *   <li>Le résultat est stocké dans le {@link ExecutionContext}.</li>
+ *   <li>Avant l'execution d'un niveau, verification des prerequis : si un dependsOn est
+ *       FAILED/SKIPPED, l'etape est marquee SKIPPED.</li>
+ *   <li>Chaque etape est dispatchee via {@link StepDispatcher}.</li>
+ *   <li>Chaque resultat par agent est stocke dans le {@link ExecutionContext}.</li>
  *   <li>La publication des events de domaine (TaskCompleted, TaskFailed) est
- *       à la charge de l'engine appelant — voir {@link PhaseResult#outcomes()}.</li>
+ *       a la charge de l'engine appelant, voir {@link PhaseResult#outcomes()}.</li>
  * </ul>
  */
 public class DagPhaseExecutor {
@@ -58,16 +59,17 @@ public class DagPhaseExecutor {
     }
 
     /**
-     * Résultat d'un step individuel après dispatch.
+     * Resultat d'un step individuel apres dispatch.
      */
-    public record StepOutcome(TaskId taskId, String taskName, TaskResult result, TaskStatus status) {}
+    public record StepOutcome(TaskId taskId, AgentId agentId, String taskName,
+                              TaskResult result, TaskStatus status) {}
 
     /**
-     * Résultat de l'exécution d'une phase.
+     * Resultat de l'execution d'une phase.
      *
-     * @param updatedContext le contexte d'exécution mis à jour avec les résultats de la phase
-     * @param anyFailed      true si au moins une étape de cette phase a échoué (FAILED)
-     * @param outcomes       les résultats individuels de chaque step (pour publication d'events)
+     * @param updatedContext le contexte d'execution mis a jour avec les resultats de la phase
+     * @param anyFailed      true si au moins une etape de cette phase a echoue (FAILED)
+     * @param outcomes       les resultats individuels de chaque step (pour publication d'events)
      */
     public record PhaseResult(
             ExecutionContext updatedContext,
@@ -82,13 +84,13 @@ public class DagPhaseExecutor {
     }
 
     /**
-     * Exécute toutes les étapes d'une phase, niveau DAG par niveau DAG.
+     * Execute toutes les etapes d'une phase, niveau DAG par niveau DAG.
      *
-     * @param steps     les étapes de la phase, déjà triées par dagLevel croissant
-     * @param context   le contexte d'exécution courant
-     * @param phase     la phase en cours d'exécution
-     * @param cancelled flag d'annulation coopérative
-     * @return le résultat de la phase (contexte mis à jour + outcomes pour events)
+     * @param steps     les etapes de la phase, deja triees par dagLevel croissant
+     * @param context   le contexte d'execution courant
+     * @param phase     la phase en cours d'execution
+     * @param cancelled flag d'annulation cooperative
+     * @return le resultat de la phase
      */
     public PhaseResult executePhase(
             List<ExecutionStep> steps,
@@ -111,22 +113,23 @@ public class DagPhaseExecutor {
 
         for (Integer level : groupedByLevel.keySet().stream().sorted().toList()) {
             if (cancelled.get()) {
-                log.info("action=phase_cancelled phase={} level={} executionId={}", phase, level, context.executionId());
+                log.info("action=phase_cancelled phase={} level={} executionId={}",
+                        phase, level, context.executionId());
                 break;
             }
 
             var classification = classifySteps(groupedByLevel.get(level), currentContext);
 
-            // Mark skippable steps
             for (ExecutionStep step : classification.skippable()) {
                 StepDefinition stepDef = step.step();
+                var agentId = AgentId.of(DEFAULT_AGENT);
                 var skippedResult = TaskResult.skipped(stepDef.id(), stepDef.taskName(), "dependency failed");
-                currentContext = currentContext.with(stepDef.id().value(), DEFAULT_AGENT, skippedResult);
-                allOutcomes.add(new StepOutcome(stepDef.id(), stepDef.taskName(), skippedResult, TaskStatus.SKIPPED));
+                currentContext = currentContext.with(stepDef.id().value(), agentId.value(), skippedResult);
+                allOutcomes.add(new StepOutcome(stepDef.id(), agentId, stepDef.taskName(),
+                        skippedResult, TaskStatus.SKIPPED));
                 anyFailed = true;
             }
 
-            // Execute runnable steps
             if (!classification.runnable().isEmpty()) {
                 var levelResult = executeLevel(classification.runnable(), currentContext, phase, level, cancelled);
                 currentContext = levelResult.updatedContext();
@@ -138,19 +141,13 @@ public class DagPhaseExecutor {
         return new PhaseResult(currentContext, anyFailed, allOutcomes);
     }
 
-    /**
-     * Groupe les étapes par leur niveau DAG.
-     */
     private Map<Integer, List<ExecutionStep>> groupStepsByLevel(List<ExecutionStep> steps) {
         return steps.stream().collect(Collectors.groupingBy(ExecutionStep::dagLevel));
     }
 
-    /** Classification : étapes exécutables vs à ignorer. */
+    /** Classification : etapes executables vs a ignorer. */
     private record LevelClassification(List<ExecutionStep> runnable, List<ExecutionStep> skippable) {}
 
-    /**
-     * Classifie les étapes d'un niveau DAG selon l'état de leurs dépendances.
-     */
     private LevelClassification classifySteps(List<ExecutionStep> steps, ExecutionContext context) {
         var runnable = new ArrayList<ExecutionStep>();
         var skippable = new ArrayList<ExecutionStep>();
@@ -164,14 +161,17 @@ public class DagPhaseExecutor {
         return new LevelClassification(runnable, skippable);
     }
 
-    /** Résultat d'un niveau DAG. */
+    /** Resultat d'un niveau DAG. */
     private record LevelResult(ExecutionContext updatedContext, boolean anyFailed, List<StepOutcome> outcomes) {}
 
+    /** Resultat brut d'une etape dispatchee dans un niveau. */
+    private record LevelOutcome(ExecutionStep step, List<StepDispatchResult> results) {}
+
     /**
-     * Exécute toutes les étapes d'un niveau DAG en parallèle via Virtual Threads.
-     * Supporte l'annulation coopérative : quand {@code cancelled} devient true,
-     * les futures en attente sont annulés (interruption des threads),
-     * et les étapes non terminées sont marquées FAILED.
+     * Execute toutes les etapes d'un niveau DAG en parallele via Virtual Threads.
+     * Supporte l'annulation cooperative : quand {@code cancelled} devient true,
+     * les futures en attente sont annulees (interruption des threads),
+     * et les etapes non terminees sont marquees FAILED.
      */
     private LevelResult executeLevel(
             List<ExecutionStep> steps,
@@ -188,12 +188,11 @@ public class DagPhaseExecutor {
         List<StepOutcome> outcomes = new ArrayList<>();
 
         try (var vtExecutor = Executors.newVirtualThreadPerTaskExecutor()) {
-            var futures = new ArrayList<Future<StepOutcome>>();
+            var futures = new ArrayList<Future<LevelOutcome>>();
 
             for (ExecutionStep step : steps) {
                 ExecutionContext ctxAtStart = currentContext;
                 futures.add(vtExecutor.submit(() -> {
-                    // Envoyer START avant execution
                     lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.start(
                             SignalId.generate(),
                             ctxAtStart.executionId(),
@@ -205,10 +204,9 @@ public class DagPhaseExecutor {
                     ));
 
                     try {
-                        TaskResult result = dispatcher.dispatch(step, ctxAtStart);
-                        return new StepOutcome(step.step().id(), step.step().taskName(), result, result.status());
+                        List<StepDispatchResult> results = dispatcher.dispatch(step, ctxAtStart);
+                        return new LevelOutcome(step, results);
                     } finally {
-                        // Toujours envoyer STOP, meme en cas d'exception
                         lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.stop(
                                 SignalId.generate(),
                                 ctxAtStart.executionId(),
@@ -222,17 +220,14 @@ public class DagPhaseExecutor {
                 }));
             }
 
-            // Poll with timeout to support cooperative cancellation
             var pollIntervalMs = 500L;
             futuresLoop:
-            for (Future<StepOutcome> future : futures) {
-                StepOutcome outcome = null;
-                boolean completed = false;
+            for (Future<LevelOutcome> future : futures) {
+                LevelOutcome levelOutcome = null;
 
-                while (!completed) {
+                while (levelOutcome == null) {
                     if (cancelled.get()) {
-                        // Annulation : interrompre les threads en cours
-                        for (Future<StepOutcome> f : futures) {
+                        for (Future<LevelOutcome> f : futures) {
                             f.cancel(true);
                         }
                         log.info("action=level_cancelled phase={} level={} executionId={}",
@@ -242,8 +237,7 @@ public class DagPhaseExecutor {
                     }
 
                     try {
-                        outcome = future.get(pollIntervalMs, TimeUnit.MILLISECONDS);
-                        completed = true;
+                        levelOutcome = future.get(pollIntervalMs, TimeUnit.MILLISECONDS);
                     } catch (TimeoutException e) {
                         // Re-check cancellation flag et re-poll
                     } catch (InterruptedException e) {
@@ -253,22 +247,27 @@ public class DagPhaseExecutor {
                         Throwable cause = e.getCause();
                         log.error("action=step_unexpected_error phase={} level={} executionId={}",
                                 phase, level, currentContext.executionId(), cause);
-                        completed = true;
                         anyFailed = true;
+                        break;
                     } catch (CancellationException e) {
                         log.info("action=step_cancelled phase={} level={} executionId={}",
                                 phase, level, currentContext.executionId());
-                        completed = true;
                         anyFailed = true;
+                        break;
                     }
                 }
 
-                if (outcome != null) {
-                    currentContext = currentContext.with(
-                            outcome.taskId().value(), DEFAULT_AGENT, outcome.result());
-                    outcomes.add(outcome);
-                    if (outcome.result().status() == TaskStatus.FAILED) {
-                        anyFailed = true;
+                if (levelOutcome != null) {
+                    for (StepDispatchResult dispatchResult : levelOutcome.results()) {
+                        var taskId = levelOutcome.step().step().id();
+                        TaskResult result = dispatchResult.result();
+                        currentContext = currentContext.with(
+                                taskId.value(), dispatchResult.agentId().value(), result);
+                        outcomes.add(new StepOutcome(taskId, dispatchResult.agentId(),
+                                levelOutcome.step().step().taskName(), result, result.status()));
+                        if (result.status() == TaskStatus.FAILED) {
+                            anyFailed = true;
+                        }
                     }
                 }
             }
@@ -278,7 +277,7 @@ public class DagPhaseExecutor {
     }
 
     /**
-     * Vérifie que toutes les dépendances directes d'une étape sont SUCCESS dans le contexte.
+     * Verifie qu'au moins un resultat SUCCESS existe pour chaque dependance directe.
      */
     public boolean allDependenciesSatisfied(ExecutionStep step, ExecutionContext context) {
         List<TaskId> deps = step.dependencies();
@@ -287,9 +286,9 @@ public class DagPhaseExecutor {
         }
         for (TaskId dep : deps) {
             var agentResults = context.store().get(dep.value());
-            if (agentResults == null) return false;
-            var result = agentResults.get(DEFAULT_AGENT);
-            if (result == null || !result.isSuccess()) return false;
+            if (agentResults == null || agentResults.isEmpty()) return false;
+            boolean anySuccess = agentResults.values().stream().anyMatch(TaskResult::isSuccess);
+            if (!anySuccess) return false;
         }
         return true;
     }

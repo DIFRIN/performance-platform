@@ -12,6 +12,7 @@ import com.performance.platform.domain.event.PhaseStarted;
 import com.performance.platform.domain.event.ScenarioCancelled;
 import com.performance.platform.domain.event.ScenarioFinished;
 import com.performance.platform.domain.event.ScenarioStarted;
+import com.performance.platform.domain.event.TaskCompleted;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionState;
@@ -28,10 +29,9 @@ import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
-import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.application.ports.out.ExecutionPlanBuilder;
+import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.engine.ExecutionLifecycleDispatcher;
-import com.performance.platform.engine.OutcomeEventPublisher;
 import com.performance.platform.engine.shared.DagPhaseExecutor;
 import com.performance.platform.engine.shared.StepDispatcher;
 
@@ -43,6 +43,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -54,16 +55,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Moteur d'execution unique, independant du mode LOCAL/DISTRIBUTED.
  * <p>
- * Le mode n'est plus un fork du moteur : il est porté par le
- * {@link StepDispatcher} injecte ({@code LocalStepDispatcher} en LOCAL,
- * {@code RemoteStepDispatcher} en DISTRIBUTED). Le moteur partage
- * exactement le meme parcours de phases, le meme calcul de verdict et le
- * meme machine d'etat.
+ * Il n'y a plus de fork du moteur ni de strategie par mode : le
+ * {@link StepDispatcher} injecte ({@code TransportStepDispatcher}) est le
+ * meme partout (ADR-059). Le moteur partage exactement le meme parcours de
+ * phases, le meme calcul de verdict et la meme machine d'etat.
  * <p>
- * En DISTRIBUTED, les evenements de tache sont publies par
- * {@code TransportExecutionEventHandler} ; en LOCAL, par
- * l'{@link OutcomeEventPublisher} local. Le moteur ne connait ni le
- * transport ni le tracker.
+ * Les evenements de tache sont publies par {@code TransportExecutionEventHandler}
+ * dans tous les modes. Le moteur ne connait ni le transport ni le tracker.
  * <p>
  * Actif en LOCAL et en DISTRIBUTED + ORCHESTRATOR.
  */
@@ -79,7 +77,7 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
     private final ExecutionRepository executionRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final ExecutionLifecycleDispatcher lifecycleDispatcher;
-    private final OutcomeEventPublisher outcomeEventPublisher;
+    private final StepDispatcher stepDispatcher;
     private final DagPhaseExecutor dagPhaseExecutor;
 
     /** Suivi en memoire des executions actives. Cle : executionId.value(). */
@@ -91,22 +89,13 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
             ExecutionRepository executionRepository,
             ApplicationEventPublisher eventPublisher,
             ExecutionLifecycleDispatcher lifecycleDispatcher,
-            StepDispatcher stepDispatcher,
-            OutcomeEventPublisher outcomeEventPublisher) {
+            StepDispatcher stepDispatcher) {
         this.planBuilder = planBuilder;
         this.executionRepository = executionRepository;
         this.eventPublisher = eventPublisher;
         this.lifecycleDispatcher = lifecycleDispatcher;
-        this.outcomeEventPublisher = outcomeEventPublisher;
-        this.dagPhaseExecutor = new DagPhaseExecutor((step, context) -> {
-            markTaskStarted(context.executionId(), step.step().id());
-            var result = stepDispatcher.dispatch(step, context);
-            if (result.status() != TaskStatus.SKIPPED) {
-                outcomeEventPublisher.publish(context.executionId(), List.of(new DagPhaseExecutor.StepOutcome(
-                        step.step().id(), step.step().taskName(), result, result.status())), step.step().phase());
-            }
-            return result;
-        }, lifecycleDispatcher);
+        this.stepDispatcher = stepDispatcher;
+        this.dagPhaseExecutor = new DagPhaseExecutor(stepDispatcher, lifecycleDispatcher);
     }
 
     // ==================== UseCase API ====================
@@ -177,24 +166,27 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
         boolean hasFailure = false;
         Verdict verdict = Verdict.SUCCESS;
 
+        // ADR-054 : le STOP appartient au moteur. Un run echoue ou annule
+        // arrete quand meme les services demarres (finally).
+        var startedServices = new java.util.ArrayDeque<ExecutionStep>();
+
         try {
+            startedServices.addAll(startServices(plan.scenarioServices(), ctx, executionId));
+
             ctx = executePhase(Phase.PREPARATION, plan.preparationSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.preparationSteps())) {
                 hasFailure = true;
             }
 
-            for (ExecutionStep assertionStep : plan.assertionIntervalSteps()) {
-                dispatchLifecycleSignal(executionId, assertionStep, true);
-            }
+            startedServices.addAll(startServices(plan.injectionServices(), ctx, executionId));
 
             ctx = executePhase(Phase.INJECTION, plan.injectionSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.injectionSteps())) {
                 hasFailure = true;
             }
 
-            for (ExecutionStep assertionStep : plan.assertionIntervalSteps()) {
-                dispatchLifecycleSignal(executionId, assertionStep, false);
-            }
+            ctx = stopServices(plan.injectionServices(), ctx, executionId);
+            startedServices.removeAll(plan.injectionServices());
 
             ctx = executePhase(Phase.ASSERTION, plan.assertionSteps(), ctx, executionId, cancelled);
             if (checkFailedInPhase(ctx, plan.assertionSteps())) {
@@ -213,14 +205,69 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
                     executionId.value(), e.getMessage(), e);
             verdict = Verdict.FAILED;
             applyVerdict(executionId, plan.scenarioId(), ctx, verdict, false);
+        } finally {
+            if (!startedServices.isEmpty()) {
+                var remaining = new ArrayList<>(startedServices);
+                java.util.Collections.reverse(remaining);
+                try {
+                    ctx = stopServices(remaining, ctx, executionId);
+                } catch (RuntimeException e) {
+                    log.warn("action=service_cleanup_failed executionId={} error={}",
+                            executionId.value(), e.getMessage());
+                }
+            }
         }
 
         finalizeExecution(executionId, plan.scenarioId(), verdict, start);
         return executionId;
     }
 
+    /**
+     * Demarre les service steps de la portee (ADR-054). Un echec de demarrage
+     * fait echouer l'execution : le service est indispensable au scenario.
+     */
+    private List<ExecutionStep> startServices(List<ExecutionStep> services, ExecutionContext context,
+                                              ExecutionId executionId) {
+        var started = new ArrayList<ExecutionStep>(services.size());
+        for (ExecutionStep service : services) {
+            markTaskStarted(executionId, service.step().id());
+            stepDispatcher.startService(service, context);
+            started.add(service);
+            log.info("action=service_started taskId={} executionId={}",
+                    service.step().id().value(), executionId.value());
+        }
+        return started;
+    }
+
+    /**
+     * Arrete les service steps de la portee et integre leur resultat (publie au
+     * STOP) au contexte d'execution, ou les assertions le lisent via {@code ref}.
+     */
+    private ExecutionContext stopServices(List<ExecutionStep> services, ExecutionContext context,
+                                          ExecutionId executionId) {
+        ExecutionContext current = context;
+        for (ExecutionStep service : services) {
+            try {
+                var results = stepDispatcher.stopService(service, current);
+                for (var dispatchResult : results) {
+                    current = current.with(service.step().id().value(),
+                            dispatchResult.agentId().value(), dispatchResult.result());
+                }
+            } catch (RuntimeException e) {
+                log.warn("action=service_stop_failed taskId={} executionId={} error={}",
+                        service.step().id().value(), executionId.value(), e.getMessage());
+            }
+            log.info("action=service_stopped taskId={} executionId={}",
+                    service.step().id().value(), executionId.value());
+        }
+        return current;
+    }
+
     private void markTaskStarted(ExecutionId executionId, TaskId taskId) {
         ActiveExecution exec = activeExecutions.get(executionId.value());
+        if (exec == null) {
+            return;
+        }
         synchronized (exec) {
             ExecutionState current = exec.state;
             exec.state = new ExecutionState(current.id(), current.scenarioId(), current.status(),
@@ -300,9 +347,10 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
         DagPhaseExecutor.PhaseResult result = dagPhaseExecutor.executePhase(
                 steps, context, phase, cancelled);
 
-        // Dispatched results are published immediately; dependency-skipped steps never enter the dispatcher.
-        outcomeEventPublisher.publish(executionId, result.outcomes().stream()
-                .filter(outcome -> outcome.status() == TaskStatus.SKIPPED).toList(), phase);
+        // Les resultats dispatches sont deja publies par l'agent (TaskCompleted
+        // via le handler d'evenements). Seuls les steps ignores par dependance
+        // sont publies ici.
+        publishSkippedOutcomes(executionId, result.outcomes());
 
         boolean missingOutcomes = !cancelled.get() && result.outcomes().size() != steps.size();
         boolean anyFailedInPhase = missingOutcomes || checkFailedInPhase(result.updatedContext(), steps);
@@ -397,8 +445,7 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
     private boolean checkSkippedInAnyPhase(ExecutionContext context, ExecutionPlan plan) {
         return checkSkippedInSteps(context, plan.preparationSteps())
                 || checkSkippedInSteps(context, plan.injectionSteps())
-                || checkSkippedInSteps(context, plan.assertionSteps())
-                || checkSkippedInSteps(context, plan.assertionIntervalSteps());
+                || checkSkippedInSteps(context, plan.assertionSteps());
     }
 
     private boolean checkSkippedInSteps(ExecutionContext context, List<ExecutionStep> steps) {
@@ -415,24 +462,18 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
         return false;
     }
 
-    private void dispatchLifecycleSignal(ExecutionId executionId,
-                                         ExecutionStep assertionStep,
-                                         boolean isStart) {
-        var stepDef = assertionStep.step();
-        var params = new HashMap<>(stepDef.parameters());
-        params.put(ExecutionLifecycleSignal.PARAM_TASK_NAME, stepDef.taskName());
-        params.put(ExecutionLifecycleSignal.PARAM_PHASE, stepDef.phase().name());
-
-        if (isStart) {
-            lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.start(
-                    SignalId.generate(), executionId, stepDef.id(), Map.copyOf(params)));
-            log.info("action=lifecycle_start_dispatched taskId={} executionId={}",
-                    stepDef.id().value(), executionId.value());
-        } else {
-            lifecycleDispatcher.dispatch(ExecutionLifecycleSignal.stop(
-                    SignalId.generate(), executionId, stepDef.id(), Map.copyOf(params)));
-            log.info("action=lifecycle_stop_dispatched taskId={} executionId={}",
-                    stepDef.id().value(), executionId.value());
+    private void publishSkippedOutcomes(ExecutionId executionId,
+                                        List<DagPhaseExecutor.StepOutcome> outcomes) {
+        var now = Instant.now();
+        for (var outcome : outcomes) {
+            if (outcome.status() != TaskStatus.SKIPPED) {
+                continue;
+            }
+            executionRepository.saveTaskResult(
+                    executionId, outcome.taskId(), outcome.agentId(), outcome.result());
+            eventPublisher.publishEvent(new TaskCompleted(
+                    executionId, outcome.taskId(), outcome.agentId(),
+                    outcome.result(), outcome.result().duration(), now));
         }
     }
 
@@ -446,16 +487,39 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
         return new ExecutionState(
                 id, scenarioId, ExecutionStatus.RUNNING, phases, context, now, now, scenario.steps().size(),
                 scenario.steps().stream().map(step ->
-                        new ExecutionTask(step.id(), step.taskName(), step.phase(), false,
+                        new ExecutionTask(step.id(), step.taskName(), displayPhase(step), false,
                                 taskConfiguration(step, scenario))).toList(), scenario.sourceYaml(),
                 new ScenarioDetails(scenario.name(), scenario.version(), scenario.tags(), scenario.metadata(), scenario.report()));
+    }
+
+    /**
+     * Une service step n'a pas de phase (ADR-054) : pour le read-model et le
+     * rapport, elle est rattachee a la phase qu'elle sert.
+     */
+    private static Phase displayPhase(StepDefinition step) {
+        if (step.phase() != null) {
+            return step.phase();
+        }
+        return step.during() == com.performance.platform.domain.scenario.ServiceScope.SCENARIO
+                ? Phase.PREPARATION
+                : Phase.INJECTION;
     }
 
     private Map<String, Object> taskConfiguration(StepDefinition step, ScenarioDefinition scenario) {
         var configuration = new java.util.LinkedHashMap<String, Object>();
         configuration.put("parameters", step.parameters());
         configuration.put("dependsOn", step.dependsOn().stream().map(TaskId::value).toList());
-        configuration.put("requiredContexts", step.requiredContexts());
+        configuration.put("requiredContexts", step.resolvedRequiredContexts());
+        if (step.ref() != null) {
+            configuration.put("ref", step.ref().value());
+        }
+        if (step.during() != null) {
+            configuration.put("during", step.during().name());
+        }
+        if (!step.drain().isZero()) {
+            configuration.put("drain", step.drain().toString());
+        }
+        configuration.put("fanOut", step.fanOut().name());
         if (step.timeout() != null) {
             configuration.put("timeout", step.timeout().toString());
         }
@@ -465,11 +529,6 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
                     "maxAttempts", retry.maxAttempts(), "initialDelay", retry.initialDelay().toString(),
                     "multiplier", retry.multiplier(), "maxDelay", retry.maxDelay().toString(),
                     "retryableExceptions", retry.retryableExceptions().stream().map(Class::getName).sorted().toList()));
-        }
-        Object reference = step.parameters().get("loadModel");
-        if (reference instanceof String name && scenario.loadModels().containsKey(name)) {
-            var load = scenario.loadModels().get(name);
-            configuration.put("resolvedLoadModel", Map.of("type", load.type().name(), "parameters", load.parameters()));
         }
         return configuration;
     }

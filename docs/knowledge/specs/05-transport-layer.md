@@ -7,13 +7,17 @@
 
 ## 1. Objectif
 
-TLS optionnel pour HTTP, Kafka, RabbitMQ et Socket : voir
+TLS optionnel pour le transport HTTP et Kafka : voir
 [ADR-047](../adr/ADR-047-optional-transport-mtls-and-independent-web-tls.md) et le
 [guide de configuration TLS](../../../distribution/example/tls/README.md).
 `transport.tls.enabled=false` par defaut. Le bundle Spring Boot de transport est
 independant de `server.ssl.bundle` (UI/API HTTPS sans certificat client).
 HTTP utilise un listener dedie, y compris en AGENT sans serveur servlet.
 Les clients visant le SUT ne sont pas modifies.
+
+Transports supportés par le build cœur (ADR-056) : **`IN_MEMORY`, `HTTP`, `KAFKA`**.
+RabbitMQ et le transport socket ont été retirés ; ils peuvent être fournis comme
+plugins externes via `CUSTOM`.
 
 Abstraire le mécanisme de communication entre orchestrateur et agents. Changer de
 transport = changer `transport.type` ; aucun changement de code métier.
@@ -38,7 +42,7 @@ public interface TaskChannel {
 }
 
 public interface SignalChannel {
-    void broadcastSignal(AgentSignal signal);          // restart, START/STOP
+    void broadcastSignal(AgentSignal signal);          // restart, START/STOP, grants
     void receiveSignal(AgentSignalHandler handler);    // côté agent
 }
 
@@ -93,9 +97,7 @@ classDiagram
     }
     class InMemoryExecutionTransport
     class KafkaExecutionTransport
-    class RabbitMQExecutionTransport
     class HttpExecutionTransport
-    class SocketExecutionTransport
 
     ExecutionTransport --|> TaskChannel
     ExecutionTransport --|> SignalChannel
@@ -104,19 +106,17 @@ classDiagram
     ExecutionTransport --|> ConnectionLifecycle
     InMemoryExecutionTransport ..|> ExecutionTransport
     KafkaExecutionTransport ..|> ExecutionTransport
-    RabbitMQExecutionTransport ..|> ExecutionTransport
     HttpExecutionTransport ..|> ExecutionTransport
-    SocketExecutionTransport ..|> ExecutionTransport
 ```
 
 Consommateurs et ports utilisés :
 
 | Consommateur | Port |
 |---|---|
-| `RemoteStepDispatcher` | `TaskChannel` |
-| `RemoteLifecycleDispatcher` | `SignalChannel` |
+| `TransportStepDispatcher` | `TaskChannel` + `SignalChannel` (grants, STOP de service) |
+| `TransportLifecycleDispatcher` | `SignalChannel` |
 | `TaskExecutionPipeline` | `EventChannel` |
-| `TransportExecutionEventHandler` | `EventChannel` |
+| `TransportExecutionEventHandler` | `EventChannel` + `SignalChannel` (grants) |
 | `TransportAgentRegistration` | `LifecycleChannel` |
 | `AgentLifecycleIngestion` | `LifecycleChannel` |
 | `TaskAgentRuntime` | `TaskChannel` + `SignalChannel` + `EventChannel` + `ConnectionLifecycle` |
@@ -132,13 +132,15 @@ public record TaskExecutionRequest(
     MessageId id,                       // clé d'idempotence côté agent
     ExecutionId executionId,
     StepDefinition step,                // taskName, phase, parameters, timeout, retryPolicy
-    PartialExecutionContext context,    // uniquement step.requiredContexts()
+    PartialExecutionContext context,    // uniquement step.resolvedRequiredContexts()
     Instant dispatchedAt,
     RetryPolicy retryPolicy
 ) {}
 ```
 
 - **Pas de `targetAgentId`** : la sélection appartient aux agents.
+- L'étape porte son `fanOut` (`one`/`all`) et son `during` éventuel : l'agent sait s'il
+  doit exécuter une action ou maintenir un service (ADR-054/ADR-055).
 - Le payload du contexte peut être volumineux (résultats Gatling) ; surveiller la taille
   si de nombreux `requiredContexts` sont déclarés.
 
@@ -186,13 +188,32 @@ corrélation.
 ### 3.4 AgentSignal
 
 ```java
-public sealed interface AgentSignal permits ScenarioRestartSignal, ExecutionLifecycleSignal {
+public sealed interface AgentSignal
+        permits ScenarioRestartSignal, ExecutionLifecycleSignal, TaskGrantSignal {
     SignalId id();
     Instant issuedAt();
 }
 ```
 
-### 3.5 PartialExecutionContext
+### 3.5 TaskGrantSignal (ADR-055)
+
+```java
+public record TaskGrantSignal(
+    SignalId id,
+    ExecutionId executionId,
+    TaskId taskId,
+    MessageId messageId,     // MessageId de la TaskExecutionRequest revendiquée
+    AgentId agentId,         // agent destinataire du verdict
+    boolean granted,         // true = exécuter ; false = claim rejeté
+    Instant issuedAt
+) {}
+```
+
+Réponse de l'orchestrateur au claim d'un agent. Chaque agent ne retient que le grant qui
+le concerne ; un agent sans grant n'exécute pas. Ce signal réutilise le `SignalChannel`
+existant (aucun nouveau port).
+
+### 3.6 PartialExecutionContext
 
 ```java
 public record PartialExecutionContext(
@@ -217,9 +238,10 @@ valeur brute restent lisibles via les accesseurs historiques.
 ### 4.1 InMemory (LOCAL, tests)
 
 - Sélection : `transport.type` absent ou `IN_MEMORY` (`matchIfMissing = true`).
-- Livraison **synchrone** : `dispatchTask` invoque immédiatement les handlers ;
-  `publishEvent` notifie les souscripteurs.
-- Aucun broker, aucun serveur. Utilisé par le `TaskAgentRuntime` LOCAL.
+- **Livraison asynchrone** (ADR-059) : `dispatchTask` et `broadcastSignal` remettent le
+  message sur un Virtual Thread ; `publishEvent` utilise un dispatcher dédié. La
+  livraison ne se fait **jamais** sur le thread de l'émetteur.
+- Aucun broker, aucun serveur. Utilisé par LOCAL et par les tests.
 
 ### 4.2 Kafka
 
@@ -258,31 +280,14 @@ sequenceDiagram
     ORCH->>KT: TaskExecutionRequest (broadcast)
     KT-->>A1: message (g1)
     KT-->>A2: message (g2)
-    A1->>ET: TASK_CLAIMED / TASK_COMPLETED
+    A1->>ET: TASK_CLAIMED
+    ET-->>ORCH: consommation (group orchestrator)
+    ORCH->>A1: TaskGrantSignal (broadcast signal)
+    A1->>ET: TASK_COMPLETED
     ET-->>ORCH: consommation (group orchestrator)
 ```
 
-### 4.3 RabbitMQ
-
-```yaml
-transport:
-  type: RABBITMQ
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: 5672
-    virtual-host: /
-    tasks-exchange: tasks
-    events-exchange: events
-    signals-exchange: signals
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
-```
-
-- Exchanges FANOUT pour tasks/signals (broadcast), queue exclusive auto-delete par agent.
-- Ack manuel, at-least-once, I/O sur Virtual Threads.
-- `RabbitMQConsumerManager` gère les consommateurs et la reconnexion.
-
-### 4.4 HTTP
+### 4.3 HTTP
 
 ```yaml
 transport:
@@ -298,7 +303,11 @@ transport:
   `httpCallbackUrl` ; l'agent répond `202 Accepted`.
 - Les agents remontent leurs événements en POST sur `/api/v1/events`
   (`HttpEventCallbackController`), qui les republie dans le transport local.
-- `ALL_CAPABLE` = multi-claim natif ; `FIRST_AVAILABLE` = un seul agent.
+- Le grant (`TaskGrantSignal`) et les signaux de cycle de vie passent par le même canal
+  de callbacks.
+- `broadcast-mode` contrôle la diffusion de la requête (`ALL_CAPABLE` par défaut,
+  `FIRST_AVAILABLE` pour un seul destinataire) ; le nombre d'agents qui **exécutent** est
+  décidé par `fanOut` et le grant (ADR-055).
 - Appels bloquants exécutés sur Virtual Threads (client JDK `HttpClient`).
 
 > **Limite actuelle** : le code fournit l'envoi sortant et le contrôleur de callbacks
@@ -309,27 +318,12 @@ transport:
 > le dispatch orchestrateur → système externe et les callbacks, pas comme canal complet
 > orchestrateur ↔ agent plateforme en l'état.
 
-### 4.5 Socket
+### 4.4 CUSTOM
 
-```yaml
-transport:
-  type: SOCKET
-  socket:
-    orchestrator-host: localhost
-    orchestrator-port: 9090
-    backlog: 50
-    keep-alive: true
-    reconnect-interval-ms: 5000
-```
-
-- Connexions TCP persistantes, `SocketConnectionRegistry` côté orchestrateur.
-- Détection de rôle : bind réussi = orchestrateur, port occupé = agent.
-- Best-effort (pas de garantie at-least-once), reconnexion automatique côté agent.
-
-### 4.6 CUSTOM
-
-`transport.type=CUSTOM` est réservé à une configuration explicite de bean ; il n'existe
-pas d'implémentation fournie. Aucun chargement dynamique par nom de classe.
+`transport.type=CUSTOM` est un point d'extension : le transport est fourni comme JAR
+externe (RabbitMQ, socket ou tout autre protocole), avec un bean
+`@ConditionalOnProperty(transport.type=CUSTOM)`. Aucune implémentation n'est fournie
+dans le build cœur et aucun chargement dynamique par nom de classe n'a lieu.
 
 ---
 
@@ -338,22 +332,18 @@ pas d'implémentation fournie. Aucun chargement dynamique par nom de classe.
 ```java
 @Configuration
 @EnableConfigurationProperties({
-    KafkaTransportProperties.class, RabbitMQTransportProperties.class,
-    HttpTransportProperties.class, SocketTransportProperties.class})
+    KafkaTransportProperties.class, HttpTransportProperties.class,
+    HttpListenerProperties.class})
 public class TransportConfiguration {
 
     @Bean @ConditionalOnProperty(name="transport.type", havingValue="IN_MEMORY", matchIfMissing=true)
     InMemoryExecutionTransport inMemoryExecutionTransport() { ... }
 
-    @Bean @ConditionalOnProperty(name="transport.type", havingValue="RABBITMQ")
-    ExecutionTransport rabbitMQExecutionTransport(RabbitMQTransportProperties props) { ... }
-
     @Bean @ConditionalOnProperty(name="transport.type", havingValue="HTTP")
     ExecutionTransport httpExecutionTransport(HttpTransportProperties props,
-                                               ObjectProvider<AgentRegistryPort> registry) { ... }
+                                               ObjectProvider<AgentRegistryPort> registry, ...) { ... }
 
-    @Bean @ConditionalOnProperty(name="transport.type", havingValue="SOCKET")
-    ExecutionTransport socketExecutionTransport(SocketTransportProperties props) { ... }
+    // transport.type=CUSTOM : bean fourni par un plugin (RabbitMQ, socket, ...)
 }
 ```
 
@@ -368,11 +358,9 @@ Priorité de configuration (ADR-006) : `TRANSPORT_TYPE` env > `--transport.type=
 
 | Transport | Modèle | At-least-once | Ordre | Idempotence agent |
 |---|---|---|---|---|
-| IN_MEMORY | synchrone | oui (même JVM) | garanti | non nécessaire |
+| IN_MEMORY | livraison asynchrone, même JVM | oui | par handler | requise (`MessageId`) |
 | KAFKA | broadcast par consumer group | oui (offsets) | par partition | requise (`MessageId`) |
-| RABBITMQ | FANOUT + ack manuel | oui | par queue | requise |
 | HTTP | POST + timeouts | via retry orchestrateur | non garanti | requise |
-| SOCKET | broadcast connexions | non (best-effort) | par connexion | requise |
 
 Clé d'idempotence : `TaskExecutionRequest.id`. Un agent ne ré-exécute jamais un
 `MessageId` déjà traité.
@@ -381,11 +369,12 @@ Clé d'idempotence : `TaskExecutionRequest.id`. Un agent ne ré-exécute jamais 
 
 ## 7. Enregistrement des agents
 
-Les signaux Kafka, RabbitMQ et Socket distinguent les deux sous-types de
-`AgentSignal` : `ExecutionLifecycleSignal` (`action`/`taskId`, START ou STOP)
-et `ScenarioRestartSignal` (`reason`). Le décodage conserve le format existant,
-y compris les messages déjà en file ; aucun champ `reason` artificiel n'est
-ajouté aux signaux START/STOP. Les payloads invalides ou ambigus sont rejetés.
+Le décodage des signaux (Kafka, HTTP) distingue les trois sous-types de `AgentSignal` :
+`ExecutionLifecycleSignal` (`action`/`taskId`, START ou STOP), `ScenarioRestartSignal`
+(`reason`) et `TaskGrantSignal` (`messageId`, `agentId`, `granted`). Le décodage conserve
+le format existant, y compris les messages déjà en file ; aucun champ `reason`
+artificiel n'est ajouté aux signaux START/STOP. Les payloads invalides ou ambigus sont
+rejetés.
 
 L'enregistrement passe par le **canal lifecycle** (ADR-012), pas par le canal exécution :
 

@@ -2,7 +2,6 @@ package com.performance.platform.scenario.e2e;
 
 import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
@@ -67,7 +66,6 @@ class ScenarioDslContractE2ETest {
             assertEquals("minimal-valid", scenario.id().value());
             assertEquals("Minimal Valid Scenario", scenario.name());
             assertEquals("1.0.0", scenario.version());
-            assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
             assertEquals(1, scenario.steps().size());
 
             StepDefinition step = scenario.steps().get(0);
@@ -97,12 +95,10 @@ class ScenarioDslContractE2ETest {
             assertEquals("full-scenario", scenario.id().value());
             assertEquals("Full Feature Scenario", scenario.name());
             assertEquals("2.3.1", scenario.version());
-            assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
             assertEquals(List.of("performance", "regression", "nightly"), scenario.tags());
             assertEquals("team-a", scenario.metadata().get("owner"));
             assertEquals("PERF-456", scenario.metadata().get("jira"));
-            assertEquals(7, scenario.steps().size());
-            assertEquals(1, scenario.loadModels().size());
+            assertEquals(6, scenario.steps().size());
 
             // Verify phases are correctly parsed
             List<StepDefinition> prepSteps = scenario.steps().stream()
@@ -112,9 +108,9 @@ class ScenarioDslContractE2ETest {
             List<StepDefinition> assertSteps = scenario.steps().stream()
                     .filter(s -> s.phase() == Phase.ASSERTION).toList();
 
-            assertEquals(3, prepSteps.size());
+            // ADR-054 : le mock est une service step, plus une etape PREPARATION.`n            assertEquals(2, prepSteps.size());
             assertEquals(1, injSteps.size());
-            assertEquals(3, assertSteps.size());
+            assertEquals(2, assertSteps.size());
         }
 
         @Test
@@ -124,8 +120,8 @@ class ScenarioDslContractE2ETest {
             String yamlContent = readFileAsString(file);
             ScenarioDefinition scenario = useCase.parse(yamlContent);
 
-            assertEquals(7, scenario.steps().size());
-            assertNotNull(scenario.loadModels().get("ramp-load"));
+            assertEquals(6, scenario.steps().size());
+            assertNotNull(step(scenario, "customer-api-load").parameters().get("loadModel"));
         }
 
         @Test
@@ -143,7 +139,8 @@ class ScenarioDslContractE2ETest {
 
             assertTrue(seedStep.dependsOn().stream()
                     .anyMatch(d -> d.value().equals("purge-customer-db")));
-            assertTrue(loadStep.dependsOn().size() >= 2);
+            assertTrue(loadStep.dependsOn().stream()
+                    .anyMatch(d -> d.value().equals("seed-test-data")));
         }
 
         @Test
@@ -168,19 +165,17 @@ class ScenarioDslContractE2ETest {
 
             assertNotNull(scenario);
             assertEquals("distributed-scenario", scenario.id().value());
-            assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
             assertEquals(List.of("distributed", "multi-agent"), scenario.tags());
             assertEquals(4, scenario.steps().size());
         }
 
         @Test
-        @DisplayName("TC-08: valid-distributed.yaml — load models are parsed")
+        @DisplayName("TC-08: valid-distributed.yaml — inline load model is parsed")
         void parseDistributedLoadModels() {
             var file = SCENARIOS_DIR.resolve("valid-distributed.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
-            assertNotNull(scenario.loadModels().get("constant-load"));
-            assertEquals(1, scenario.loadModels().size());
+            assertNotNull(step(scenario, "distributed-load").parameters().get("loadModel"));
         }
     }
 
@@ -287,8 +282,6 @@ class ScenarioDslContractE2ETest {
                   id: empty-steps
                   name: Empty Steps
                   version: 1.0.0
-                  execution:
-                    mode: LOCAL
                   steps: []
                 """;
             ScenarioDefinition scenario = parser.parse(yaml);
@@ -299,13 +292,13 @@ class ScenarioDslContractE2ETest {
         }
 
         @Test
-        @DisplayName("TC-21: Scenario with no load models should parse")
+        @DisplayName("TC-21: valid-minimal.yaml has no inline load model")
         void parseScenarioWithoutLoadModels() {
             var file = SCENARIOS_DIR.resolve("valid-minimal.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
             assertNotNull(scenario);
-            assertTrue(scenario.loadModels().isEmpty());
+            assertTrue(scenario.steps().stream().noneMatch(s -> s.parameters().containsKey("loadModel")));
         }
 
         @Test
@@ -326,20 +319,15 @@ class ScenarioDslContractE2ETest {
         @DisplayName("TC-24: Missing scenario section should throw")
         void rejectMissingScenarioSection() {
             String yaml = """
-                loadModels:
-                  my-load:
-                    type: CONSTANT
-                    stages:
-                      - duration: 1m
-                        usersPerSecond: 10
+                scenario:
                 """;
             assertThrows(ScenarioParsingException.class,
                     () -> parser.parse(yaml));
         }
 
         @Test
-        @DisplayName("TC-25: Default execution mode when absent is LOCAL")
-        void defaultExecutionModeIsLocal() {
+        @DisplayName("TC-25: a scenario without execution mode parses")
+        void scenarioWithoutExecutionModeParses() {
             String yaml = """
                 scenario:
                   id: no-mode
@@ -353,7 +341,6 @@ class ScenarioDslContractE2ETest {
                 """;
             ScenarioDefinition scenario = parser.parse(yaml);
 
-            assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
         }
     }
 
@@ -379,7 +366,6 @@ class ScenarioDslContractE2ETest {
             // Verify complete structure
             assertEquals("full-scenario", scenario.id().value());
             assertEquals("2.3.1", scenario.version());
-            assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
 
             // Every step has a unique ID
             List<String> ids = scenario.steps().stream()
@@ -400,7 +386,7 @@ class ScenarioDslContractE2ETest {
             assertTrue(assertionCount > 0);
 
             // Load model is accessible
-            assertNotNull(scenario.loadModels().get("ramp-load"));
+            assertNotNull(step(scenario, "customer-api-load").parameters().get("loadModel"));
         }
 
         @Test
@@ -423,19 +409,26 @@ class ScenarioDslContractE2ETest {
             StepDefinition seedStep = scenario.steps().stream()
                     .filter(s -> s.id().value().equals("seed-test-data"))
                     .findFirst().orElseThrow();
-            assertTrue(seedStep.requiredContexts().contains("purge-customer-db"));
+            assertTrue(seedStep.resolvedRequiredContexts().contains("purge-customer-db"));
 
-            // customer-api-load requires contexts from both preparation steps
+            // customer-api-load requires the context of its preparation dependency
             StepDefinition loadStep = scenario.steps().stream()
                     .filter(s -> s.id().value().equals("customer-api-load"))
                     .findFirst().orElseThrow();
-            assertTrue(loadStep.requiredContexts().size() >= 2);
+            assertTrue(loadStep.resolvedRequiredContexts().contains("seed-test-data"));
         }
     }
 
     // ========================================================================
     // Helpers
     // ========================================================================
+
+    private static StepDefinition step(ScenarioDefinition scenario, String id) {
+        return scenario.steps().stream()
+                .filter(candidate -> candidate.id().value().equals(id))
+                .findFirst()
+                .orElseThrow();
+    }
 
     private static String readFileAsString(Path file) {
         try {

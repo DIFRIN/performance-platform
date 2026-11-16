@@ -62,6 +62,47 @@
             <artifactId>platform-infrastructure</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- ADR-057 : store et executors integres livres comme modules de capacite -->
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-persistence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-executor-database</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-executor-docker</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-executor-filesystem</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-executor-http</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-executor-kafka</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-executor-mock</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.performance</groupId>
+            <artifactId>platform-executor-shell</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-injection-gatling</artifactId>

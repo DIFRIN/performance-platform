@@ -53,9 +53,7 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder {
         var allSteps = new ArrayList<ExecutionStep>(stepDefs.size());
         for (StepDefinition stepDef : stepDefs) {
             int dagLevel = dagLevels.getOrDefault(stepDef.id(), 0);
-            Set<String> requiredContextKeys = stepDef.requiredContexts() == null
-                    ? Set.of()
-                    : Set.copyOf(stepDef.requiredContexts());
+            Set<String> requiredContextKeys = Set.copyOf(stepDef.resolvedRequiredContexts());
 
             var execStep = new ExecutionStep(
                     stepDef,
@@ -66,41 +64,25 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder {
             allSteps.add(execStep);
         }
 
-        // 3. Separation par phase
+        // 3. Separation par phase et par portee de service (ADR-054)
         var preparationSteps = new ArrayList<ExecutionStep>();
         var injectionSteps = new ArrayList<ExecutionStep>();
-        var allAssertionSteps = new ArrayList<ExecutionStep>();
+        var assertionSteps = new ArrayList<ExecutionStep>();
+        var injectionServices = new ArrayList<ExecutionStep>();
+        var scenarioServices = new ArrayList<ExecutionStep>();
 
         for (ExecutionStep step : allSteps) {
+            if (step.step().hasLifetime()) {
+                switch (step.step().during()) {
+                    case INJECTION -> injectionServices.add(step);
+                    case SCENARIO -> scenarioServices.add(step);
+                }
+                continue;
+            }
             switch (step.step().phase()) {
                 case PREPARATION -> preparationSteps.add(step);
                 case INJECTION -> injectionSteps.add(step);
-                case ASSERTION -> allAssertionSteps.add(step);
-            }
-        }
-
-        // 3b. Construire l'ensemble des IDs d'injection pour validation linkedTo
-        Set<String> injectionIds = new java.util.HashSet<>();
-        for (var inj : injectionSteps) {
-            injectionIds.add(inj.step().id().value());
-        }
-
-        // 3c. Separer les assertions point-in-time vs interval (linkedTo)
-        var assertionSteps = new ArrayList<ExecutionStep>();
-        var assertionIntervalSteps = new ArrayList<ExecutionStep>();
-
-        for (ExecutionStep step : allAssertionSteps) {
-            Object linkedToValue = step.step().parameters().get("linkedTo");
-            if (linkedToValue != null && !linkedToValue.toString().isEmpty()) {
-                String linkedToId = linkedToValue.toString();
-                if (!injectionIds.contains(linkedToId)) {
-                    throw new InvalidScenarioException(
-                            "linkedTo references unknown injection step: " + linkedToId
-                                    + " (assertion: " + step.step().id().value() + ")");
-                }
-                assertionIntervalSteps.add(step);
-            } else {
-                assertionSteps.add(step);
+                case ASSERTION -> assertionSteps.add(step);
             }
         }
 
@@ -117,7 +99,8 @@ public class DefaultExecutionPlanBuilder implements ExecutionPlanBuilder {
                 preparationSteps,
                 injectionSteps,
                 assertionSteps,
-                assertionIntervalSteps,
+                injectionServices,
+                scenarioServices,
                 ExecutionContext.initial(executionId, scenario.id())
         );
     }

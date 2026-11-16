@@ -1,5 +1,10 @@
 # Spec 08 — Report Engine
 
+> **Extension** : les preuves issues de sources externes (panneaux Grafana,
+> Kibana) et la revue humaine attribuée sont décrites dans
+> [Spec 10](10-observability-assertions-and-evidence.md) et les ADR-050 / ADR-051.
+> Le verdict expose désormais `checks[]` plus `reviewState`.
+
 **Module** : `platform-reporting`
 **Dépend de** : `platform-domain`, `platform-use-cases`
 
@@ -101,15 +106,15 @@ public record InjectionReportEntry(
 ) {}
 
 public record AssertionReportEntry(
-    TaskId assertionId, AssertionResult result, Evidence evidence
+    TaskId assertionId, AssertionSummary summary
 ) {}
 ```
 
 Classes de résultat (dans `platform-domain`) :
 - `InjectionResult` — KPIs Gatling (`totalRequests`, `successfulRequests`, ...),
   `OUTPUT_KEY = "result"` ;
-- `AssertionResult` / `AssertionSummary` — statut, description, evidence,
-  `OUTPUT_KEY = "assertion"`.
+- `AssertionSummary` — verdict, `Check[]`, `SloStatement`, `Rollup` et
+  `history`, `OUTPUT_KEY = "assertion"`.
 
 ---
 
@@ -131,6 +136,12 @@ ne bloque pas SUCCESS ; une observation `required: true` absente produit WARNING
 Une assertion sans criticite explicite est critique. Une assertion `ERROR` reste
 critique meme si son objectif est mineur. Un graphe seul ne prouve pas l'absence
 de saturation.
+
+Chaque assertion contribue par ses `Check`. Une assertion sans check detaille
+(verdict opaque : `AssertionSummary.verdictOnly`, plugin custom) expose un check
+synthetique `metric: assertion` dont le statut est le verdict enregistre et dont
+la criticite vient d'un critere `assertion` portant le meme `taskId` (defaut :
+critique).
 
 `VerdictCalculator.calculate(assertionEntries)` reste un helper historique, pas le
 calcul du verdict final :
@@ -167,8 +178,8 @@ sommes de temps de taches (elles peuvent depasser la duree murale en parallele).
 Les renderers sont des beans Spring ; `ReportFileWriter` les indexe par `ReportFormat`.
 
 La restauration des sorties JSONB accepte la propriete derivee `passed` emise
-par Jackson pour `AssertionSummary.isPassed()` et `AssertionResult.isPassed()`.
-Seul `verdict` / `status` fait autorite ; les autres champs inconnus restent
+par Jackson pour `AssertionSummary.isPassed()`.
+Seul `verdict` fait autorite ; les autres champs inconnus restent
 rejetes. Ce mapping est local au reporting, sans annotation Jackson dans le domaine.
 
 ---

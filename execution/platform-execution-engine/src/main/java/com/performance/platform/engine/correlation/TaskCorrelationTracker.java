@@ -1,155 +1,114 @@
 package com.performance.platform.engine.correlation;
 
-import com.performance.platform.application.config.ResultSelectionPolicy;
-import com.performance.platform.domain.execution.TaskCompletionPolicy;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.TaskId;
+import com.performance.platform.domain.scenario.FanOut;
 import com.performance.platform.domain.task.TaskResult;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Suit la correlation MessageId -> claims -> resultats (1:N) et determine
- * la completion selon {@link TaskCompletionPolicy}.
+ * Suit la correlation MessageId -> claims -> grants -> resultats (ADR-055).
  * <p>
- * Dans le modele broadcast multi-agent, plusieurs agents peuvent claimer la
- * meme task. Ce tracker enregistre chaque claim et chaque resultat
- * independamment, et expose la completion via la policy demandee.
+ * L'orchestrateur est unique (ADR-058) : la decision d'accord n'a besoin
+ * d'aucun verrou distribue. Pour {@code fanOut: one}, le premier claim est
+ * accorde et les suivants sont rejetes. Pour {@code fanOut: all}, tous les
+ * claims recus pendant la fenetre de claim sont accordes.
  * <p>
- * Thread-safe : les implementations doivent supporter les appels concurrents
- * de plusieurs agents publiant en parallele.
+ * Thread-safe : plusieurs agents publient claims et resultats en parallele.
  */
 public interface TaskCorrelationTracker {
 
     /**
-     * Enregistre le dispatch initial d'une task.
-     *
-     * @param messageId   identifiant du message de transport
-     * @param taskId      identifiant de la task
-     * @param executionId identifiant de l'execution parente
+     * Enregistre le dispatch initial d'une task et son mode de fan-out.
      */
-    void trackDispatched(MessageId messageId, TaskId taskId, ExecutionId executionId);
+    void trackDispatched(MessageId messageId, TaskId taskId, ExecutionId executionId, FanOut fanOut);
 
     /**
-     * Enregistre qu'un agent a claim la task.
-     *
-     * @param messageId identifiant du message
-     * @param agentId   identifiant de l'agent
+     * Enregistre un claim et retourne la decision immediate.
+     * <ul>
+     *   <li>{@code one} : premier claim GRANTED, suivants REJECTED ;</li>
+     *   <li>{@code all} : PENDING jusqu'au {@link #settleClaims(MessageId)},
+     *       REJECTED apres le settlement.</li>
+     * </ul>
      */
-    void onClaimed(MessageId messageId, AgentId agentId);
+    GrantDecision onClaimed(MessageId messageId, AgentId agentId);
+
+    /**
+     * Ferme la fenetre de claim : tous les claims en attente sont accordes.
+     *
+     * @return les agents accordes a l'issue du settlement
+     */
+    List<AgentId> settleClaims(MessageId messageId);
+
+    /**
+     * Enregistre qu'un agent a ete accorde (utilise pour les grants diffuses).
+     */
+    void onGranted(MessageId messageId, AgentId agentId);
 
     /**
      * Enregistre la completion reussie d'une task par un agent.
-     *
-     * @param messageId identifiant du message
-     * @param agentId   identifiant de l'agent
-     * @param result    le resultat produit par l'agent
      */
     void onCompleted(MessageId messageId, AgentId agentId, TaskResult result);
 
     /**
      * Enregistre l'echec d'une task par un agent.
-     *
-     * @param messageId identifiant du message
-     * @param agentId   identifiant de l'agent
-     * @param error     description de l'erreur
      */
     void onFailed(MessageId messageId, AgentId agentId, String error);
 
     /**
-     * Retourne l'ensemble des agents ayant claim pour ce messageId.
-     *
-     * @param messageId identifiant du message
-     * @return ensemble immuable des agents claimers (vide si aucun)
+     * Agents ayant claim pour ce messageId (accordes ou non).
      */
     Set<AgentId> claimsFor(MessageId messageId);
 
     /**
-     * Determine si la task est complete selon la politique indiquee.
-     * <ul>
-     * <li>{@code FIRST_COMPLETE} : true des le premier onCompleted.</li>
-     * <li>{@code ALL_COMPLETE} : true quand tous les agents ayant claim
-     * ont complete (SUCCESS) ou echoue (FAILED).</li>
-     * </ul>
-     *
-     * @param messageId identifiant du message
-     * @param policy    politique de completion
-     * @return true si la condition est satisfaite
+     * Agents accordes pour ce messageId.
      */
-    boolean isComplete(MessageId messageId, TaskCompletionPolicy policy);
+    Set<AgentId> grantedFor(MessageId messageId);
 
     /**
-     * Retourne tous les resultats enregistres pour ce messageId.
-     * La cle est l'identifiant de l'agent, la valeur son TaskResult.
-     *
-     * @param messageId identifiant du message
-     * @return map immuable des resultats par agent (vide si aucun)
+     * Futur complete au premier claim recu (attente du dispatch).
+     */
+    CompletableFuture<Void> claimSignal(MessageId messageId);
+
+    /**
+     * Futur complete quand tous les agents accordes ont repondu
+     * (ou quand l'agent accorde a repondu en {@code fanOut: one}).
+     */
+    CompletableFuture<Void> completionSignal(MessageId messageId);
+
+    /**
+     * Tous les resultats enregistres, par agent.
      */
     Map<AgentId, TaskResult> getResults(MessageId messageId);
 
     /**
-     * Retourne le {@link TaskId} associe a ce messageId lors du
-     * {@link #trackDispatched}, ou {@code null} si le messageId
-     * est inconnu.
-     *
-     * @param messageId identifiant du message
-     * @return le taskId, ou {@code null}
-     */
-    TaskId taskIdFor(MessageId messageId);
-
-    /**
-     * Notifie le tracker qu'un agent est perdu (heartbeat expire).
-     * Tous les claims de cet agent qui ne sont ni completes ni echoues
-     * sont marques comme echoues, afin de rendre une politique
-     * {@code ALL_COMPLETE} satisfiable et de declencher un fast-fail
-     * plutot qu'une attente jusqu'au timeout.
-     *
-     * @param agentId l'agent perdu
-     */
-    void onAgentLost(AgentId agentId);
-
-    /**
-     * Retourne les resultats dans l'ordre de completion des agents.
-     * Ordre deterministe, jamais l'ordre d'iteration d'une map.
-     *
-     * @param messageId identifiant du message
-     * @return liste immuable des resultats, dans l'ordre de completion
+     * Resultats dans l'ordre de completion (deterministe).
      */
     List<TaskResult> resultsInCompletionOrder(MessageId messageId);
 
     /**
-     * Retourne un signal complete lorsque la politique est satisfaite.
-     * Remplace le polling : le tracker complete le futur des qu'un
-     * evenement (claim, completion, echec, perte d'agent) rend la
-     * completion vraie. Si la completion est deja vraie, le futur retourne
-     * est deja complete.
-     *
-     * @param messageId identifiant du message
-     * @param policy    politique de completion
-     * @return un futur complete a la satisfaction de la politique
+     * TaskId associe au messageId, ou {@code null} si inconnu.
      */
-    CompletableFuture<Void> completionSignal(MessageId messageId, TaskCompletionPolicy policy);
+    TaskId taskIdFor(MessageId messageId);
 
     /**
-     * Selectionne un resultat selon la politique demandee.
-     *
-     * @param messageId identifiant du message
-     * @param policy    politique de selection
-     * @return le resultat selectionne, ou vide si aucun agent n'a complete
+     * ExecutionId associe au messageId, ou {@code null} si inconnu.
      */
-    Optional<TaskResult> selectResult(MessageId messageId, ResultSelectionPolicy policy);
+    ExecutionId executionIdFor(MessageId messageId);
+
+    /**
+     * Un agent perdu voit ses grants non repondus marques comme echoues.
+     */
+    void onAgentLost(AgentId agentId);
 
     /**
      * Libere l'etat de correlation d'un messageId.
-     * A appeler une fois le resultat consomme, sous peine de fuite memoire.
-     *
-     * @param messageId identifiant du message termine
      */
     void release(MessageId messageId);
 }

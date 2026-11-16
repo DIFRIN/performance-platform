@@ -1,0 +1,58 @@
+scenario:
+  id: 03-assertion-model
+  name: Assertion model - textual SLO and direct checks (LOCAL)
+  version: 1.0.0
+  tags:
+  - example
+  - assertion
+  metadata:
+    owner: perf-team
+  steps:
+  - id: create-marker
+    task: filesystem
+    phase: PREPARATION
+    parameters:
+      operation: CREATE
+      path: /tmp/perf-platform-assertion-marker.txt
+      content: assertion model
+    timeout: 30s
+  - id: marker-present
+    task: direct-assertion
+    phase: ASSERTION
+    dependsOn:
+    - create-marker
+    requiredContexts:
+    - create-marker
+    description:
+      title: Marker produced
+      sli: presence of the marker file on the local filesystem
+      slo: the marker exists at the end of the run
+      rationale: exercises the direct assertion pipeline without external systems
+    parameters:
+      metric: filesystem.exists
+      path: /tmp/perf-platform-assertion-marker.txt
+      expect: true
+      severity: CRITICAL
+  - id: api-slo
+    task: performance-thresholds
+    phase: ASSERTION
+    description:
+      title: API latency
+      sli: p95 of POST /api/events during the injection window
+      slo: p95 <= 500 ms, p99 <= 900 ms, error rate <= 1 %, throughput >= 100 req/s
+      rationale: customer contract 2026-Q4, 20 % margin on the 2026-11-01 reference
+    parameters:
+      latency:
+        p50: 200
+        p95: 500
+        p99: 900
+        unit: ms
+        severity: WARNING
+      errorRate:
+        max: 1.0
+        unit: percent
+        severity: CRITICAL
+      throughput:
+        min: 100
+        unit: req_per_sec
+        severity: WARNING

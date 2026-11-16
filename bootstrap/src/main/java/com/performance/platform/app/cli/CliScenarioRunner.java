@@ -1,10 +1,12 @@
 package com.performance.platform.app.cli;
 
+import com.performance.platform.application.exception.InvalidScheduleException;
 import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.application.ports.in.ExecuteScenarioUseCase;
 import com.performance.platform.application.ports.in.GetExecutionStatusUseCase;
 import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
+import com.performance.platform.application.ports.out.ScheduleCalculator;
 import com.performance.platform.application.usecase.ExecutionProgressCalculator;
 import com.performance.platform.domain.execution.ExecutionProgress;
 import com.performance.platform.domain.execution.ExecutionState;
@@ -13,6 +15,8 @@ import com.performance.platform.domain.execution.PhaseStatus;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
+import com.performance.platform.application.schedule.ScheduleKind;
+import com.performance.platform.application.schedule.ScheduleSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -67,9 +72,17 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
     private final ExecutionRepository executionRepository;
     private final ExecutionProgressCalculator progressCalculator;
     private final ResourceLoader resourceLoader;
+    private final ScheduleCalculator scheduleCalculator;
 
     @Value("${scenario}")
     private String scenarioPath;
+
+    /**
+     * Planification optionnelle : {@code --schedule=...} (prioritaire) ou
+     * {@code platform.schedule} / variable d'environnement {@code SCHEDULE}.
+     */
+    @Value("${schedule:${platform.schedule:}}")
+    private String scheduleExpression;
 
     private int exitCode;
 
@@ -79,13 +92,15 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
             GetExecutionStatusUseCase statusUseCase,
             ExecutionRepository executionRepository,
             ExecutionProgressCalculator progressCalculator,
-            ResourceLoader resourceLoader) {
+            ResourceLoader resourceLoader,
+            ScheduleCalculator scheduleCalculator) {
         this.parsingUseCase = Objects.requireNonNull(parsingUseCase, "parsingUseCase required");
         this.executeUseCase = Objects.requireNonNull(executeUseCase, "executeUseCase required");
         this.statusUseCase = Objects.requireNonNull(statusUseCase, "statusUseCase required");
         this.executionRepository = Objects.requireNonNull(executionRepository, "executionRepository required");
         this.progressCalculator = Objects.requireNonNull(progressCalculator, "progressCalculator required");
         this.resourceLoader = Objects.requireNonNull(resourceLoader, "resourceLoader required");
+        this.scheduleCalculator = Objects.requireNonNull(scheduleCalculator, "scheduleCalculator required");
     }
 
     /**
@@ -145,6 +160,30 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
         String scenarioName = displayName(scenario);
         String scenarioId = scenario.id().value();
 
+        // 3b. Resolve optional scheduling (--schedule= or platform.schedule / SCHEDULE)
+        ScheduleSpec schedule;
+        try {
+            schedule = scheduleCalculator.parse(scheduleExpression);
+        } catch (InvalidScheduleException e) {
+            log.error("action=invalid_schedule expression={} message={}",
+                    scheduleExpression, e.getMessage());
+            return printResume(2, scenarioName, scenarioId, "-", "INVALID_SCHEDULE", 0, 0, 0, "-");
+        }
+
+        if (schedule.kind() == ScheduleKind.CRON) {
+            log.error("action=cron_not_supported_in_cli expression={}", schedule.expression());
+            return printResume(2, scenarioName, scenarioId, "-", "CRON_NOT_SUPPORTED_IN_CLI", 0, 0, 0, "-");
+        }
+
+        if (schedule.kind() == ScheduleKind.ONCE) {
+            System.out.println("schedule   : " + schedule.kind().name().toLowerCase()
+                    + " at " + schedule.runAt());
+            if (!awaitUntil(schedule.runAt())) {
+                log.warn("action=schedule_wait_interrupted at={}", schedule.runAt());
+                return printResume(1, scenarioName, scenarioId, "-", "SCHEDULE_INTERRUPTED", 0, 0, 0, "-");
+            }
+        }
+
         // 4. Execute scenario
         ExecutionId executionId;
         try {
@@ -181,6 +220,27 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
 
         return printResume(code, scenarioName, scenarioId, execIdValue,
                 finalStatus.name(), ok, ko, total, "-");
+    }
+
+    /**
+     * Waits until the given instant, in one-second slices so the wait
+     * remains interruptible (Ctrl+C stops a scheduled local run).
+     *
+     * @param due scheduled instant
+     * @return true when the instant was reached, false when interrupted
+     */
+    static boolean awaitUntil(Instant due) {
+        long remaining = Duration.between(Instant.now(), due).toMillis();
+        while (remaining > 0) {
+            try {
+                Thread.sleep(Math.min(remaining, 1_000L));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            remaining = Duration.between(Instant.now(), due).toMillis();
+        }
+        return true;
     }
 
     /**

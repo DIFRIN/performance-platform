@@ -20,7 +20,8 @@
 | ❌ | REMOVED | Supprimé — ne plus utiliser |
 
 > Décisions de cadrage : `TaskType` supprimé (→ `String taskName`), gRPC non implémenté,
-> `platform-infrastructure` séparé en 3 packages (.executor/.plugin/.persistence). Le package
+> `platform-infrastructure` séparé en modules Maven (ADR-057) : registre + plugins + scheduling restent ;
+> `.persistence` → `platform-persistence`, `.executor.<famille>` → `platform-executor-<famille>`. Le package
 > `.publisher` a été supprimé (ISSUE-135 / ADR-022).
 
 ---

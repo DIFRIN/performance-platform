@@ -2,7 +2,7 @@ package com.performance.platform.reporting.render;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.id.ReportId;
 import com.performance.platform.domain.id.ScenarioId;
@@ -63,9 +63,8 @@ class JsonReportRendererTest {
                                 Path.of("/tmp/gatling"), Map.of()),
                         Path.of("/tmp/gatling"))),
                 List.of(new AssertionReportEntry(new TaskId("t3"),
-                        new AssertionResult(new TaskId("t3"), AssertionStatus.PASSED,
-                                "p99 < 50ms", null, Duration.ofMillis(100), now),
-                        null)),
+                        AssertionSummary.verdictOnly(new TaskId("t3"), AssertionStatus.PASSED,
+                                "p99 < 50ms", Duration.ofMillis(100), now))),
                 Verdict.SUCCESS, "All good",
                 now, Duration.ofSeconds(6)
         );

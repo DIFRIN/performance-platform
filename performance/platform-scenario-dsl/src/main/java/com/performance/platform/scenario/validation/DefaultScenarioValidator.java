@@ -1,5 +1,6 @@
 package com.performance.platform.scenario.validation;
 
+import com.performance.platform.domain.assertion.MetricCatalog;
 import com.performance.platform.domain.injection.LoadModel;
 import com.performance.platform.domain.injection.LoadModelType;
 import com.performance.platform.domain.id.TaskId;
@@ -7,26 +8,19 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
  * Implementation par defaut de {@link ScenarioValidator}.
- * Valide la structure, la coherence du DAG, les requiredContexts et les references aux loadModels.
+ * Valide la structure, la coherence du DAG intra-phase, les contextes requis
+ * et les modeles de charge inline (ADR-053, ADR-054).
  * 0 dependance Spring.
- *
- * <p>CC-02 exception: class exceeds 300 lines (~345) because validation rules are
- * naturally co-located for readability of the orchestration flow.
- * Methods {@link #validate(ScenarioDefinition)} and {@link #validateRequiredContexts}
- * exceed 40 lines for the same reason: they sequence multiple sub-validations sharing
- * the error/warning collectors.
  */
 public class DefaultScenarioValidator implements ScenarioValidator {
 
@@ -100,11 +94,7 @@ public class DefaultScenarioValidator implements ScenarioValidator {
             }
             if (step.phase() == Phase.ASSERTION) {
                 hasAssertion = true;
-                // Warning: requiredContexts vide sur step ASSERTION
-                if (step.requiredContexts() == null || step.requiredContexts().isEmpty()) {
-                    warnings.add(new ValidationWarning(stepPath + ".requiredContexts",
-                        "ASSERTION step has no requiredContexts. It may execute with no context for verification."));
-                }
+                validateAssertionParameters(step, errors, warnings, stepPath);
             }
         }
 
@@ -183,7 +173,112 @@ public class DefaultScenarioValidator implements ScenarioValidator {
         }
     }
 
+    /**
+     * Validation parse-time des assertions du nouveau modele (ADR-049).
+     * <p>
+     * Objectif : une metrique inconnue, une unite incompatible ou un {@code EQ}
+     * flottant sans tolerance deviennent une erreur de scenario (HTTP 400), pas
+     * un {@code ERROR} d'execution. Seules les familles declaratives sont
+     * validees ici.
+     */
+    private void validateAssertionParameters(StepDefinition step, List<ValidationError> errors,
+                                             List<ValidationWarning> warnings, String stepPath) {
+        String taskName = step.taskName();
+        if (taskName == null) {
+            return;
+        }
+        Map<String, Object> parameters = step.parameters();
+
+        boolean newModel = "direct-assertion".equals(taskName)
+                || "performance-thresholds".equals(taskName)
+                || "panel-assertion".equals(taskName);
+        if (!newModel) {
+            return;
+        }
+        if (!parameters.containsKey("description")) {
+            warnings.add(new ValidationWarning(stepPath + ".description",
+                    "No textual SLI/SLO described for this assertion. "
+                            + "Recommended for report context (title, sli, slo, rationale)."));
+        }
+
+        if ("direct-assertion".equals(taskName)) {
+            Object metricRaw = parameters.get("metric");
+            if (metricRaw == null || metricRaw.toString().isBlank()) {
+                errors.add(new ValidationError("step.metric",
+                        "direct-assertion requires a 'metric' parameter", stepPath + ".parameters.metric"));
+                return;
+            }
+            var definition = MetricCatalog.find(metricRaw.toString());
+            if (definition.isEmpty()) {
+                errors.add(new ValidationError("step.metric",
+                        "Unknown metric '" + metricRaw + "'. Known metrics: " + MetricCatalog.knownNames(),
+                        stepPath + ".parameters.metric"));
+                return;
+            }
+            var metric = definition.get();
+            if (metric.kind() != com.performance.platform.domain.assertion.MetricKind.STATE) {
+                if (parameters.get("operator") == null || parameters.get("threshold") == null) {
+                    errors.add(new ValidationError("step.threshold",
+                            "direct-assertion requires 'operator' and 'threshold' for metric "
+                                    + metric.id(),
+                            stepPath + ".parameters.threshold"));
+                } else {
+                    validateTolerance(metric, parameters, errors, stepPath);
+                }
+            }
+            return;
+        }
+
+        if ("performance-thresholds".equals(taskName)) {
+            boolean declared = parameters.containsKey("latency")
+                    || parameters.containsKey("errorRate")
+                    || parameters.containsKey("throughput")
+                    || parameters.containsKey("checks");
+            if (!declared) {
+                errors.add(new ValidationError("step.parameters",
+                        "performance-thresholds requires at least one of latency, errorRate, "
+                                + "throughput or checks",
+                        stepPath + ".parameters"));
+            }
+        }
+    }
+
+    private void validateTolerance(com.performance.platform.domain.assertion.MetricDefinition metric,
+                                   Map<String, Object> parameters, List<ValidationError> errors,
+                                   String stepPath) {
+        String operator = String.valueOf(parameters.get("operator")).toUpperCase();
+        boolean equality = operator.equals("EQ") || operator.equals("==") || operator.equals("=")
+                || operator.equals("NEQ") || operator.equals("!=");
+        if (!equality || !metric.requiresToleranceForEquality()) {
+            return;
+        }
+        double tolerance = 0;
+        Object raw = parameters.get("tolerance");
+        if (raw instanceof Number number) {
+            tolerance = number.doubleValue();
+        } else if (raw != null) {
+            try {
+                tolerance = Double.parseDouble(raw.toString());
+            } catch (NumberFormatException ignored) {
+                tolerance = 0;
+            }
+        }
+        if (tolerance <= 0) {
+            errors.add(new ValidationError("step.tolerance",
+                    "EQ/NEQ on continuous metric " + metric.id()
+                            + " requires a strictly positive 'tolerance'",
+                    stepPath + ".parameters.tolerance"));
+        }
+    }
+
     private void validatePhase(StepDefinition step, List<ValidationError> errors, String stepPath) {
+        if (step.hasLifetime()) {
+            if (step.drain().isNegative()) {
+                errors.add(new ValidationError("step.drain",
+                        "drain must not be negative", stepPath + ".drain"));
+            }
+            return;
+        }
         if (step.phase() == null) {
             errors.add(new ValidationError("step.phase",
                 "Phase is required. Expected PREPARATION, INJECTION, or ASSERTION", stepPath + ".phase"));
@@ -199,22 +294,75 @@ public class DefaultScenarioValidator implements ScenarioValidator {
 
             for (TaskId dep : step.dependsOn()) {
                 String depId = dep.value();
-                if (!stepsById.containsKey(depId)) {
+                StepDefinition depStep = stepsById.get(depId);
+                if (depStep == null) {
                     errors.add(new ValidationError("step.dependsOn",
                         "Step '" + stepId + "' depends on '" + depId + "' which does not exist",
                         "steps"));
+                    continue;
+                }
+                if (depId.equals(stepId)) {
+                    errors.add(new ValidationError("step.dependsOn",
+                        "Step '" + stepId + "' cannot depend on itself", "steps"));
+                    continue;
+                }
+                if (depStep.hasLifetime()) {
+                    errors.add(new ValidationError("step.dependsOn",
+                        "Step '" + stepId + "' cannot depend on service step '" + depId
+                            + "'. Use 'ref' to read a service result.", "steps"));
+                    continue;
+                }
+                // ADR-053 : dependsOn ordonne uniquement a l'interieur d'une phase.
+                // Une reference a une phase anterieure est acceptee et ignoree pour
+                // l'ordonnancement ; une reference a une phase posterieure est une erreur.
+                if (step.phase() != null && phaseOrder(depStep) > phaseOrder(step)) {
+                    errors.add(new ValidationError("step.dependsOn",
+                        "Step '" + stepId + "' (" + step.phase() + ") depends on '" + depId
+                            + "' (" + depStep.phase() + ") from a later phase. "
+                            + "dependsOn orders steps inside a phase only.",
+                        "steps"));
+                }
+                // dependsOn vers une phase anterieure : accepte, sans effet d'ordre.
+            }
+
+            if (step.ref() != null) {
+                if (!stepsById.containsKey(step.ref().value())) {
+                    errors.add(new ValidationError("step.ref",
+                        "Step '" + stepId + "' references '" + step.ref().value()
+                            + "' which does not exist", "steps"));
+                } else if (step.ref().value().equals(stepId)) {
+                    errors.add(new ValidationError("step.ref",
+                        "Step '" + stepId + "' cannot reference itself", "steps"));
                 }
             }
         }
     }
 
+    private static int phaseOrder(StepDefinition step) {
+        if (step.phase() == null) {
+            return -1;
+        }
+        return switch (step.phase()) {
+            case PREPARATION -> 0;
+            case INJECTION -> 1;
+            case ASSERTION -> 2;
+        };
+    }
+
     /**
-     * Construit la map dependsOn : stepId -> [stepIds dont cette etape depend].
+     * Construit la map dependsOn intra-phase : stepId -> [stepIds dont cette etape depend].
+     * Les references a une phase anterieure sont ignorees pour l'ordonnancement (ADR-053).
      */
     private Map<String, List<String>> buildDependsOnMap(ScenarioDefinition scenario) {
         Map<String, List<String>> dependsOnMap = new LinkedHashMap<>();
+        Map<String, StepDefinition> byId = new LinkedHashMap<>();
         for (StepDefinition step : scenario.steps()) {
-            if (step.id() == null) continue;
+            if (step.id() != null) {
+                byId.put(step.id().value(), step);
+            }
+        }
+        for (StepDefinition step : scenario.steps()) {
+            if (step.id() == null || step.hasLifetime()) continue;
             String stepId = step.id().value();
             List<TaskId> deps = step.dependsOn();
             if (deps == null || deps.isEmpty()) {
@@ -222,6 +370,9 @@ public class DefaultScenarioValidator implements ScenarioValidator {
             } else {
                 List<String> depIds = new ArrayList<>();
                 for (TaskId dep : deps) {
+                    StepDefinition depStep = byId.get(dep.value());
+                    if (depStep == null || depStep.hasLifetime()) continue;
+                    if (phaseOrder(depStep) != phaseOrder(step)) continue;
                     depIds.add(dep.value());
                 }
                 dependsOnMap.put(stepId, depIds);
@@ -231,34 +382,22 @@ public class DefaultScenarioValidator implements ScenarioValidator {
     }
 
     /**
-     * Valide les requiredContexts.
-     * Chaque cle de requiredContexts doit etre un step existant et
-     * doit etre un ancetre (direct ou transitif) du step courant dans le DAG.
-     *
-     * <p>CC-02 note: method exceeds 40 lines (~49) because it combines adjacency
-     * building, reachability BFS, and the validation loop into a single cohesive
-     * traversal of the DAG. Separating these would require passing internal graph
-     * structures across methods without improving testability.
+     * Valide les contextes requis effectifs (ADR-053) : override explicite, sinon
+     * dependsOn plus ref. Chaque cle doit designer une etape anterieure disponible.
      */
     private void validateRequiredContexts(ScenarioDefinition scenario,
                                           Map<String, List<String>> dependsOnMap,
                                           boolean hasCycle,
                                           Map<String, StepDefinition> stepsById,
                                           List<ValidationError> errors) {
-        if (hasCycle) {
-            // Si le DAG a un cycle, on ne peut pas verifier les requiredContexts
-            return;
-        }
-
-        // Construire la fermeture transitive du graphe forward
-        // forwardGraph: dep -> [steps qui dependent de dep]
-        Map<String, Set<String>> forwardGraph = buildForwardGraph(dependsOnMap);
+        Map<String, StepDefinition> byId = stepsById;
+        Map<String, Set<String>> forwardGraph = hasCycle ? Map.of() : buildForwardGraph(dependsOnMap);
 
         for (StepDefinition step : scenario.steps()) {
             if (step.id() == null) continue;
             String stepId = step.id().value();
-            List<String> requiredContexts = step.requiredContexts();
-            if (requiredContexts == null || requiredContexts.isEmpty()) continue;
+            List<String> requiredContexts = step.resolvedRequiredContexts();
+            if (requiredContexts.isEmpty()) continue;
 
             for (String ctxStepId : requiredContexts) {
                 if (ctxStepId == null || ctxStepId.isBlank()) {
@@ -268,26 +407,49 @@ public class DefaultScenarioValidator implements ScenarioValidator {
                     continue;
                 }
 
-                // Le step de contexte doit exister
-                if (!stepsById.containsKey(ctxStepId)) {
+                StepDefinition ctxStep = byId.get(ctxStepId);
+                if (ctxStep == null) {
                     errors.add(new ValidationError("step.requiredContexts",
                         "Step '" + stepId + "' requires context from '" + ctxStepId
                             + "' which does not exist",
                         "steps"));
                     continue;
                 }
-
-                // Le step de contexte doit etre un ancetre dans le DAG
-                // (il doit y avoir un chemin de ctxStepId vers stepId)
-                if (!ctxStepId.equals(stepId) && !isReachable(ctxStepId, stepId, forwardGraph)) {
+                if (ctxStepId.equals(stepId)) {
+                    continue;
+                }
+                if (!isPriorContext(ctxStep, step, forwardGraph)) {
                     errors.add(new ValidationError("step.requiredContexts",
                         "Step '" + stepId + "' requires context from '" + ctxStepId
-                            + "' which is not prior in the execution DAG. "
-                            + "The context step must be a dependency (direct or transitive) of the step.",
+                            + "' which is not available before it runs.",
                         "steps"));
                 }
             }
         }
+    }
+
+    /**
+     * Une etape anterieure est disponible si elle appartient a une phase anterieure,
+     * ou si elle est un ancetre DAG dans la meme phase. Une service step
+     * {@code during: injection} est disponible des la phase ASSERTION (SON resultat
+     * est publie au STOP, ADR-054).
+     */
+    private boolean isPriorContext(StepDefinition contextStep, StepDefinition step,
+                                   Map<String, Set<String>> forwardGraph) {
+        if (contextStep.hasLifetime()) {
+            return step.phase() == Phase.ASSERTION
+                && contextStep.during() == com.performance.platform.domain.scenario.ServiceScope.INJECTION;
+        }
+        if (step.phase() == null) {
+            return false;
+        }
+        if (phaseOrder(contextStep) < phaseOrder(step)) {
+            return true;
+        }
+        if (phaseOrder(contextStep) > phaseOrder(step)) {
+            return false;
+        }
+        return isReachable(contextStep.id().value(), step.id().value(), forwardGraph);
     }
 
     /**
@@ -298,20 +460,11 @@ public class DefaultScenarioValidator implements ScenarioValidator {
         for (Map.Entry<String, List<String>> entry : dependsOnMap.entrySet()) {
             String step = entry.getKey();
             List<String> deps = entry.getValue();
+            forwardGraph.computeIfAbsent(step, k -> new LinkedHashSet<>());
             if (deps == null) continue;
 
             for (String dep : deps) {
                 forwardGraph.computeIfAbsent(dep, k -> new LinkedHashSet<>()).add(step);
-            }
-            // S'assurer que le step lui-meme est dans le graphe
-            forwardGraph.computeIfAbsent(step, k -> new LinkedHashSet<>());
-        }
-        // Ajouter les noeuds des dependances qui ne sont pas des steps (ne devrait pas arriver)
-        for (List<String> deps : dependsOnMap.values()) {
-            if (deps != null) {
-                for (String dep : deps) {
-                    forwardGraph.computeIfAbsent(dep, k -> new LinkedHashSet<>());
-                }
             }
         }
         return forwardGraph;
@@ -319,13 +472,12 @@ public class DefaultScenarioValidator implements ScenarioValidator {
 
     /**
      * Verifie si le noeud cible est atteignable depuis le noeud source dans le graphe forward.
-     * BFS depuis la source.
      */
     private boolean isReachable(String source, String target, Map<String, Set<String>> forwardGraph) {
         if (source.equals(target)) return true;
 
         Set<String> visited = new LinkedHashSet<>();
-        Queue<String> queue = new ArrayDeque<>();
+        java.util.ArrayDeque<String> queue = new java.util.ArrayDeque<>();
         queue.add(source);
         visited.add(source);
 
@@ -354,16 +506,10 @@ public class DefaultScenarioValidator implements ScenarioValidator {
             if (loadModelRef == null || loadModelRef instanceof LoadModel) continue;
             if (loadModelRef instanceof Map<?, ?> inline) {
                 validateInlineLoadModel(inline, step, errors);
-            } else if (loadModelRef instanceof String ref) {
-                if (scenario.loadModels() == null || !scenario.loadModels().containsKey(ref)) {
-                    errors.add(new ValidationError("step.loadModel",
-                        "Step '" + step.id().value() + "' references loadModel '" + ref
-                            + "' which is not defined in loadModels",
-                        "steps"));
-                }
             } else {
                 errors.add(new ValidationError("step.loadModel",
-                    "Step '" + step.id().value() + "' loadModel must be a name or an inline mapping",
+                    "Step '" + step.id().value()
+                        + "' loadModel must be an inline mapping (named load models were removed)",
                     "steps"));
             }
         }

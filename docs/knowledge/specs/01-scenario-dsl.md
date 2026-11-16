@@ -11,6 +11,11 @@ Définir le format YAML des scénarios et des load models, les règles de valida
 et les interfaces de parsing. La sortie de ce module est un `ScenarioDefinition`
 immuable utilisable par le moteur d'exécution.
 
+Le modèle est décrit dans le présent document ; les raisons des simplifications
+sont dans [ADR-053](../adr/ADR-053-scenario-model-simplification.md) (modèle),
+[ADR-054](../adr/ADR-054-service-steps-and-reactive-behaviour.md) (service steps)
+et [ADR-055](../adr/ADR-055-single-claim-dispatch-by-default.md) (`fanOut`).
+
 ---
 
 ## 2. Structure YAML d'un Scénario
@@ -22,7 +27,13 @@ exemple : [Spec 08 - report evidence](08-report-engine.md#8-configuration-des-pr
 `scenario.metadata.executionGroup` (chaîne optionnelle) sérialise les tirs
 partageant une ressource : le groupe est acquis avant PREPARATION et libéré après
 les événements de fin, reporting et nettoyage. Sans groupe, les tirs restent
-parallèles. La coordination est limitée à une instance d'orchestrateur.
+parallèles. La coordination est limitée à une instance d'orchestrateur
+(ADR-058 : un seul orchestrateur par déploiement).
+
+**Un seul fichier de scénario pour les deux modes.** Le mode est une propriété du
+runtime (`runtime.mode`, ADR-005/ADR-053) : la clé `execution.mode` n'existe plus
+et est rejetée par le parser strict. Une étape est soit une **action step**
+(`phase`), soit une **service step** (`during`), jamais les deux (ADR-054).
 
 ```yaml
 scenario:
@@ -38,183 +49,129 @@ scenario:
     jira: PERF-123
     description: "Test de performance de l'API client"
 
-  execution:
-    mode: DISTRIBUTED                  # LOCAL | DISTRIBUTED
-
   # NOTE R5 : taskAvailabilityTimeoutSeconds — durée d'attente d'un agent compétent.
   # Doit être supérieur au temps de démarrage d'un agent (min 120s en K8s).
   taskAvailabilityTimeoutSeconds: 120
 
   steps:
+    - id: start-mock                  # service step : vivante pendant INJECTION
+      task: mock-server
+      during: injection
+      drain: 8s                       # optionnel : retarde le STOP
+      parameters:
+        deployment: EMBEDDED
+        port: 8090
+        mappingsPath: classpath:mock
+      timeout: 30s
+
     - id: purge-db
       task: database                   # matché avec agent.supported-tasks
       phase: PREPARATION
-      requiredContexts: []             # aucun contexte requis
-      dependsOn: []
       parameters:
         operation: PURGE
         datasource: customer-db
       timeout: 30s
 
-    - id: kafka-monitor
-      task: kafka-consumer
+    - id: seed-db
+      task: database
       phase: PREPARATION
-      requiredContexts: []
-      dependsOn: []
+      dependsOn: [purge-db]
       parameters:
-        topic: customer-events
-        groupId: perf-monitor
-
-    - id: start-mock
-      task: mock-server
-      phase: PREPARATION
-      requiredContexts: []
-      dependsOn: []
-      parameters:
-        deployment: EMBEDDED
-        port: 8090
-        mappingsPath: classpath:mock
+        operation: POPULATE
+        datasource: customer-db
+        scriptPath: classpath:sql/seed.sql
+      timeout: 2m
 
     - id: customer-api-load
       task: gatling
       phase: INJECTION
-      requiredContexts:
-        - purge-db                     # l'agent recevra context["purge-db"]
-        - start-mock                   # et context["start-mock"]
-      dependsOn:
-        - purge-db
-        - start-mock
+      fanOut: all                      # tous les agents compétents injectent
+      dependsOn: [seed-db]
       parameters:
         simulation: com.example.CustomerApiSimulation
-        loadModel: api-load
+        loadModel:                     # modèle inline uniquement
+          type: RAMP
+          parameters: { from: 1, to: 300, durationSeconds: 840 }
       timeout: 20m
 
-    - id: error-rate-check
-      task: gatling-metric
+    - id: api-slo
+      task: performance-thresholds
       phase: ASSERTION
-      requiredContexts:
-        - customer-api-load            # l'agent recevra context["customer-api-load"]
-      dependsOn:
-        - customer-api-load
+      dependsOn: [customer-api-load]
+      description:
+        title: Customer API latency
+        sli: p95 and error rate of the customer API calls
+        slo: p95 <= 500 ms et taux d'erreur <= 1 %
       parameters:
-        metric: errorRate
-        operator: LT
-        value: 1.0
+        latency: { p95: 500, unit: ms, severity: WARNING }
+        errorRate: { max: 1.0, unit: percent, severity: CRITICAL }
 
-    - id: p95-check
-      task: gatling-metric
+    - id: mock-called
+      task: direct-assertion
       phase: ASSERTION
-      requiredContexts:
-        - customer-api-load
-      dependsOn:
-        - customer-api-load
+      dependsOn: [customer-api-load]
+      ref: start-mock                  # lit le résultat publié au STOP du service
+      description:
+        title: Calls reached the mock
+        sli: nombre d'appels reçus par le mock
+        slo: au moins un appel en fin de tir
       parameters:
-        metric: p95
-        operator: LT
-        value: 500
-
-    - id: db-count-check
-      task: database-assertion
-      phase: ASSERTION
-      requiredContexts: []
-      dependsOn:
-        - customer-api-load
-      parameters:
-        datasource: customer-db
-        query: "SELECT COUNT(*) FROM orders WHERE created_at > NOW() - INTERVAL '1 hour'"
-        operator: GT
-        value: 1000
-
-loadModels:
-  api-load:
-    type: RAMP
-    stages:
-      - duration: 2m
-        usersPerSecond: 10
-      - duration: 5m
-        usersPerSecond: 100
-      - duration: 5m
-        usersPerSecond: 300
-      - duration: 2m
-        usersPerSecond: 0
+        metric: http.requests.matched
+        operator: GTE
+        threshold: 1
+        severity: CRITICAL
 ```
+
+### Champs d'une étape
+
+| Champ | Requis | Rôle |
+|---|---|---|
+| `id` | oui | identifiant unique dans le scénario (`TaskId`) |
+| `task` | oui | nom libre matchant `agent.supported-tasks` |
+| `phase` | action step | `PREPARATION` \| `INJECTION` \| `ASSERTION` |
+| `during` | service step | `injection` \| `scenario` (ADR-054) |
+| `drain` | non | durée ajoutée avant le STOP d'une service step |
+| `fanOut` | non | `one` (défaut) \| `all` (ADR-055) |
+| `parameters` | non | opaque pour le moteur : appartient à la task |
+| `dependsOn` | non | ordonne les steps **dans une phase** (ADR-053) |
+| `ref` | non | référence de première classe vers un autre step |
+| `requiredContexts` | non | override explicite ; défaut = `dependsOn` + `ref` |
+| `timeout` | non | défaut 5 min |
+| `retryPolicy` | non | `maxAttempts`, `initialDelay`, `multiplier`, `maxDelay`, `retryableExceptions` |
+| `description` | non | `title`, `sli`, `slo`, `rationale` — recopié dans `parameters.description` |
+
+`parameters.refTaskId` et `parameters.linkedTo` n'existent plus : `ref` remplace le
+premier (ADR-053) et `during` remplace le second (ADR-054).
 
 ---
 
-## 3. Load Model Types
+## 3. Load Models
 
-### RAMP
+Un load model est **inline** dans les paramètres de l'étape (`parameters.loadModel`,
+ADR-053). Le registre nommé `loadModels` au niveau `scenario` n'existe plus
+(`LoadModelRegistry` et `ScenarioDefinition.loadModels` sont supprimés). Seule une
+étape `gatling` de phase `INJECTION` est concernée.
+
 ```yaml
-type: RAMP
-stages:
-  - duration: 2m
-    usersPerSecond: 10
-  - duration: 5m
-    usersPerSecond: 100
+parameters:
+  loadModel:
+    type: RAMP
+    parameters: { from: 1, to: 300, durationSeconds: 840 }
 ```
 
-### CONSTANT
-```yaml
-type: CONSTANT
-usersPerSecond: 100
-duration: 10m
-```
+| Type | Clés de `parameters` |
+|---|---|
+| `RAMP` | `from`, `to`, `durationSeconds` |
+| `CONSTANT` | `usersPerSec`, `durationSeconds` |
+| `SPIKE` | `base`, `spike`, `spikeDurationSeconds`, `totalDurationSeconds` |
+| `STAIR` | `startUsersPerSec`, `incrementUsersPerSec`, `steps`, `stepDurationSeconds` |
+| `SOAK` | `usersPerSec`, `durationSeconds`, `rampDurationSeconds` |
+| `BURST` | `users`, `bursts`, `intervalSeconds` |
+| `RAMP_UP_DOWN` | `from`, `to`, `rampUpDurationSeconds`, `holdDurationSeconds`, `rampDownDurationSeconds` |
+| `CUSTOM` | `points` : liste de `{ timeSeconds, usersPerSec }` |
 
-### SPIKE
-```yaml
-type: SPIKE
-baseUsersPerSecond: 50
-spikeUsersPerSecond: 500
-spikeDuration: 30s
-baseDuration: 5m
-```
-
-### STAIR
-```yaml
-type: STAIR
-initialUsersPerSecond: 10
-incrementPerStep: 20
-stepDuration: 2m
-steps: 5
-```
-
-### SOAK
-```yaml
-type: SOAK
-usersPerSecond: 50
-duration: 2h
-rampUpDuration: 5m
-```
-
-### BURST
-```yaml
-type: BURST
-burstUsersPerSecond: 1000
-burstDuration: 10s
-burstCount: 3
-intervalBetweenBursts: 2m
-```
-
-### RAMP_UP_DOWN
-```yaml
-type: RAMP_UP_DOWN
-usersPerSecond: 200
-rampUpDuration: 5m
-holdDuration: 10m
-rampDownDuration: 5m
-```
-
-### CUSTOM
-```yaml
-type: CUSTOM
-points:
-  - time: 0s
-    usersPerSecond: 0
-  - time: 60s
-    usersPerSecond: 100
-  - time: 300s
-    usersPerSecond: 50
-```
+La traduction en `OpenInjectionStep` Gatling est dans
+[Spec 06 section 4](06-injection-gatling.md#4-loadmodel--gatling-openinjection).
 
 ---
 
@@ -232,13 +189,6 @@ public interface ScenarioParser {
 public interface ScenarioValidator {
     ValidationResult validate(ScenarioDefinition scenario);
 }
-
-// Registre des load models réutilisables
-public interface LoadModelRegistry {
-    void register(String name, LoadModel model);
-    LoadModel get(String name) throws LoadModelNotFoundException;
-    Map<String, LoadModel> getAll();
-}
 ```
 
 ---
@@ -255,19 +205,30 @@ flowchart LR
 ## 5. Règles de Validation
 
 Le parser rejette toute clé inconnue (`FAIL_ON_UNKNOWN_PROPERTIES` + listes explicites
-`ROOT_KEYS`, `SCENARIO_KEYS`, `EXECUTION_KEYS`, `STEP_KEYS`, `RETRY_KEYS`) : une faute de
-frappe dans un nom de propriété produit une erreur de parsing, jamais un champ ignoré.
+`ROOT_KEYS`, `SCENARIO_KEYS`, `STEP_KEYS`, `RETRY_KEYS`) : une faute de frappe dans un
+nom de propriété produit une erreur de parsing, jamais un champ ignoré. `execution`,
+`loadModels` et `parameters.refTaskId`/`linkedTo` sont donc rejetés (ADR-053).
 
 ### Erreurs (bloquantes)
 - `scenario.id` : obligatoire, alphanumérique + tirets, max 100 chars
 - `scenario.version` : obligatoire, format semver strict
 - Chaque `step.id` : unique au sein du scénario
-- `dependsOn` : référence des IDs existants dans le même scénario
-- `dependsOn` : pas de cycle (DAG valide)
-- `requiredContexts` : toutes les clés référencées doivent être l'id d'un step
-  antérieur dans l'ordre topologique du DAG
-- `loadModel` dans un step INJECTION de type `gatling` : référence résolue
-- `phase` : obligatoire sur chaque step (PREPARATION | INJECTION | ASSERTION)
+- `phase` : obligatoire sur une action step ; `during` obligatoire sur une service step ;
+  une étape ne porte jamais les deux ; `drain` n'est valide que sur une service step
+- `drain` : non négatif
+- `fanOut` : `one` ou `all` uniquement
+- `dependsOn` : référence des IDs existants dans le même scénario, pas de self-référence,
+  pas de dépendance vers une service step
+- `dependsOn` : ordonne uniquement **dans une phase** ; une référence à une phase
+  antérieure est acceptée et ignorée pour l'ordonnancement, une référence à une phase
+  postérieure est une erreur (ADR-053)
+- `dependsOn` : pas de cycle dans le DAG intra-phase
+- `ref` : référence un step existant, jamais lui-même
+- `requiredContexts` (ou son défaut `dependsOn` + `ref`) : chaque clé doit désigner un
+  step disponible avant l'exécution — phase antérieure, ancêtre DAG dans la même phase,
+  ou service `during: injection` pour une assertion (ADR-054)
+- `loadModel` dans un step INJECTION `gatling` : mapping inline avec un `type` valide ;
+  une référence nommée est une erreur
 - `task` : obligatoire — le `taskName` n'est pas validé contre un registre au parse time
   (les agents ne sont pas connus à ce stade)
 
@@ -275,46 +236,57 @@ frappe dans un nom de propriété produit une erreur de parsing, jamais un champ
 - Pas de `metadata.owner` : warning
 - `timeout` non défini sur step INJECTION : warning
 - Scénario sans step de phase ASSERTION : warning
-- `requiredContexts` vide sur un step ASSERTION : warning (les assertions lisent généralement un contexte)
 
 ---
 
 ## 6. Modèle de Données (Domain)
 
 ```java
-// Tous les records sont immuables
+// Tous les records sont immuables ; 0 annotation framework (ADR-060)
 public record ScenarioDefinition(
     ScenarioId id,
     String name,
     String version,
     List<String> tags,
     Map<String, String> metadata,
-    ExecutionMode executionMode,
     List<StepDefinition> steps,           // liste unifiée — remplace preparation/injections/assertions
-    Map<String, LoadModel> loadModels
+    String sourceYaml,
+    ReportDefinition report
 ) {}
 
 /**
  * StepDefinition remplace TaskDefinition.
- * La phase est explicite (PREPARATION | INJECTION | ASSERTION).
- * requiredContexts déclare les entrées de contexte nécessaires à l'exécution.
+ * Action step : phase. Service step : during (+ drain optionnel). Jamais les deux.
+ * fanOut : nombre d'agents accordés (ADR-055).
+ * ref : référence de première classe vers un autre step (ADR-053).
  */
 public record StepDefinition(
     TaskId id,                            // identifiant unique dans le scénario
     String taskName,                      // nom libre matchant agent.supported-tasks
-    Phase phase,                          // PREPARATION | INJECTION | ASSERTION
-    Map<String, Object> parameters,       // paramètres spécifiques à la task
-    List<TaskId> dependsOn,               // dépendances DAG
-    List<String> requiredContexts,        // clés de l'ExecutionContext à transmettre à l'agent
+    Phase phase,                          // PREPARATION | INJECTION | ASSERTION (action step)
+    Map<String, Object> parameters,       // paramètres spécifiques à la task (opaque)
+    List<TaskId> dependsOn,               // ordonne les steps dans une phase
+    TaskId ref,                           // référence vers un step, nullable
+    ServiceScope during,                  // INJECTION | SCENARIO (service step), nullable
+    Duration drain,                       // ZERO par défaut, service step uniquement
+    FanOut fanOut,                        // ONE (défaut) | ALL
+    List<String> requiredContexts,        // override explicite, vide = dependsOn + ref
     Duration timeout,                     // nullable = default 5min
-    RetryPolicy retryPolicy               // nullable = default global
-) {}
+    RetryPolicy retryPolicy               // nullable = pas de retry
+) {
+    boolean isService();                      // during != null
+    List<String> resolvedRequiredContexts();  // override, sinon dependsOn + ref
+}
 
 public record LoadModel(
     LoadModelType type,
     Map<String, Object> parameters
 ) {}
 ```
+
+`ExecutionMode` a été supprimé du domaine scenario : le mode vient uniquement du
+runtime (ADR-053). `LoadModel` reste un type d'injection ; il n'y a plus de map
+`loadModels` dans `ScenarioDefinition`.
 
 ---
 

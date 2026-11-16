@@ -1,7 +1,6 @@
 package com.performance.platform.domain.scenario;
 
 import com.performance.platform.domain.id.ScenarioId;
-import com.performance.platform.domain.injection.LoadModel;
 import com.performance.platform.domain.report.ReportDefinition;
 
 import java.util.List;
@@ -10,6 +9,8 @@ import java.util.Objects;
 
 /**
  * Définition complète d'un scénario de test de performance.
+ * Le mode d'exécution n'est plus déclaré dans le scénario : il vient du runtime
+ * uniquement (ADR-053). Les modèles de charge sont inline dans les étapes.
  * Record immuable — copies défensives sur toutes les collections.
  * 0 annotation framework.
  */
@@ -19,32 +20,16 @@ public record ScenarioDefinition(
     String version,
     List<String> tags,
     Map<String, String> metadata,
-    ExecutionMode executionMode,
     List<StepDefinition> steps,
-    Map<String, LoadModel> loadModels,
     String sourceYaml,
     ReportDefinition report
 ) {
-    public ScenarioDefinition(ScenarioId id, String name, String version, List<String> tags,
-                              Map<String, String> metadata, ExecutionMode executionMode,
-                              List<StepDefinition> steps, Map<String, LoadModel> loadModels, String sourceYaml) {
-        this(id, name, version, tags, metadata, executionMode, steps, loadModels, sourceYaml, null);
-    }
-
-    public ScenarioDefinition(ScenarioId id, String name, String version, List<String> tags,
-                              Map<String, String> metadata, ExecutionMode executionMode,
-                              List<StepDefinition> steps, Map<String, LoadModel> loadModels) {
-        this(id, name, version, tags, metadata, executionMode, steps, loadModels, null);
-    }
-
     public ScenarioDefinition {
         Objects.requireNonNull(id, "id required");
         // name peut être null (optionnel dans les specs)
         // version peut être null
         tags = tags == null ? List.of() : List.copyOf(tags);
         metadata = metadata == null ? Map.of() : Map.copyOf(metadata);
-        // executionMode peut être null (défaut LOCAL)
         steps = steps == null ? List.of() : List.copyOf(steps);
-        loadModels = loadModels == null ? Map.of() : Map.copyOf(loadModels);
     }
 }

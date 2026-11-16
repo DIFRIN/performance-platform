@@ -13,15 +13,21 @@ Un agent est une instance JVM qui :
 2. en DISTRIBUTED, s'enregistre et envoie un heartbeat ;
 3. reçoit les `TaskExecutionRequest` en broadcast ;
 4. filtre localement selon ses `supportedTaskNames` ;
-5. exécute les tâches et publie claim, progression et résultat ;
-6. libère ses ressources stateful sur signal de restart ;
-7. draine ses tâches à l'arrêt.
+5. **revendique** la tâche puis attend le **grant** de l'orchestrateur (ADR-055) ;
+6. exécute les tâches (action ou service) et publie progression et résultat ;
+7. libère ses ressources stateful sur signal de restart ;
+8. draine ses tâches à l'arrêt.
 
-Il existe **un seul runtime** (`TaskAgentRuntime`) pour LOCAL et DISTRIBUTED (ADR-037).
+Il existe **un seul runtime** (`TaskAgentRuntime`) pour LOCAL et DISTRIBUTED (ADR-037,
+ADR-059). En LOCAL, ce runtime est un agent embarqué, démarré par la racine de
+composition, qui reçoit ses messages du transport en mémoire.
 La différence est portée par `AgentRegistrationPort` :
 - `registrationPort == null` → LOCAL : pas de REGISTERING, pas de heartbeat,
   pas de deregister ;
 - `registrationPort != null` → DISTRIBUTED : enregistrement, heartbeat, deregister.
+
+Un agent n'exécute **jamais** une tâche sur simple réception du broadcast : il doit
+d'abord avoir reçu un `TaskGrantSignal` accordé (ADR-055).
 
 > **Aucune surface d'accès en mode AGENT (ADR-019).** La JVM démarre avec
 > `WebApplicationType.NONE` : ni API REST, ni IHM, ni CLI, pas de Tomcat. L'agent est un
@@ -40,7 +46,7 @@ stateDiagram-v2
     OFFLINE --> IDLE: start() · LOCAL
     REGISTERING --> IDLE: registered
     REGISTERING --> OFFLINE: registration failed
-    IDLE --> EXECUTING: task claimed
+    IDLE --> EXECUTING: grant received
     EXECUTING --> IDLE: activeTasks == 0
     IDLE --> DRAINING: stop()
     EXECUTING --> DRAINING: stop()
@@ -53,7 +59,7 @@ Règles :
 - `stop()` est idempotent ; il passe en DRAINING, attend les tâches actives
   (timeout = 2 × `taskExecutionTimeout`), annule le reste, arrête le heartbeat,
   se désenregistre, se déconnecte puis passe OFFLINE.
-- Un agent OFFLINE ou DRAINING ignore les nouvelles tâches.
+- Un agent OFFLINE ou DRAINING ignore les nouvelles tâches et les nouveaux grants.
 
 ---
 
@@ -156,6 +162,27 @@ ignoré. Le set `processedMessageIds` est purgé au-delà de 10 000 entrées.
 
 ## 6. Pipeline d'exécution
 
+### 6.1 Réception, claim et grant (ADR-055)
+
+`TaskAgentRuntime.onTaskReceived(request)` :
+1. ignore le message si l'agent est OFFLINE ou DRAINING ;
+2. `TaskSpecializationFilter` : `NotResponsible` → ignoré, aucun appel réseau ;
+3. idempotence : un `MessageId` déjà traité est ignoré ;
+4. publie `TASK_CLAIMED` (`TaskClaimedByAgent`) et mémorise la requête en attente ;
+5. planifie l'expiration du claim (nettoyage mémoire si aucun grant n'arrive) ;
+6. **n'exécute rien** tant que `TaskGrantSignal` n'est pas reçu.
+
+`onGrantReceived(grant)` :
+- ignore le grant destiné à un autre agent ;
+- `granted == false` (`fanOut: one`, un autre agent a été accordé) → le claim est
+  abandonné, aucune exécution ;
+- `granted == true` → `IDLE → EXECUTING`, soumission du pipeline.
+
+Le `TaskGrantSignal` circule sur le `SignalChannel` et porte
+`(executionId, taskId, messageId, agentId, granted)`.
+
+### 6.2 Exécution
+
 `TaskExecutionPipeline.execute(request)` :
 1. planifie la publication périodique de `TaskWorkInProgress`
    (intervalle = `taskExecutionTimeout / 3`, minimum 1 s) ;
@@ -163,13 +190,31 @@ ignoré. Le set `processedMessageIds` est purgé au-delà de 10 000 entrées.
    publié immédiatement ;
 3. convertit le `PartialExecutionContext` en `ExecutionContext` local (les outputs
    nommés sont exposés tels quels ; les anciens payloads bruts restent supportés) ;
-4. exécute `executor.execute(context, step)` sur un Virtual Thread ;
+4. exécute sur un Virtual Thread :
+   - action step → `executor.execute(context, step)` ;
+   - service step → `ServiceTaskExecutor.executeService(context, step, control)`,
+     qui démarre le service et bloque jusqu'au STOP (ADR-054) ;
 5. publie `TASK_COMPLETED` (succès) ou `TASK_FAILED` (échec) avec payload :
    `taskName`, `taskId`, `status`, `durationMs`, `outputs` (succès), `error` (échec) ;
 6. en `finally` : arrête la progression, retire la tâche active, décrémente le compteur
    et repasse `EXECUTING → IDLE` si plus aucune tâche active.
 
-Le claim `TASK_CLAIMED` est publié par le runtime **avant** la soumission du pipeline.
+Le claim `TASK_CLAIMED` est publié à la réception, avant tout grant.
+
+### 6.3 Service steps et STOP (ADR-054)
+
+- Un exécuteur qui ne déclare pas `ServiceTaskExecutor` ne peut pas servir une service
+  step : le pipeline publie un `TASK_FAILED` explicite.
+- Le pipeline enregistre le `ServiceControl` vivant par `executionId::taskId` ;
+  `stopService(executionId, taskId)` demande l'arrêt.
+- Un `ExecutionLifecycleSignal` STOP reçu sur le `SignalChannel` est traité par le
+  pipeline (arrêt du service) puis transmis au `LifecycleSignalHandler` pour les
+  assertions.
+- Le `TaskResult` d'une service step est publié **au STOP**, sous l'id de l'étape ; les
+  assertions le lisent via `ref`. Le service n'a pas besoin de rester vivant pendant la
+  phase ASSERTION.
+- L'agent conserve l'état du service entre START et STOP ; la perte de l'agent fait
+  échouer l'étape (ADR-033).
 
 ---
 
@@ -231,19 +276,22 @@ dispatcher aucune tâche.
 
 ---
 
-## 8. Multi-claim
+## 8. Claim, grant et fan-out (ADR-055)
 
-Plusieurs agents peuvent être spécialisés pour la même tâche. L'orchestrateur accepte
-tous les claims et suit chaque agent indépendamment (ADR-011) :
+Plusieurs agents peuvent être spécialisés pour la même tâche. L'agent revendique, puis
+n'exécute qu'après un grant accordé par l'orchestrateur unique (ADR-058) :
 
-- chaque agent publie `TaskClaimedByAgent` puis son propre `TaskCompleted`/`TaskFailed` ;
-- `TaskCorrelationTracker` enregistre claims, résultats, échecs et ordre de complétion ;
-- la tâche est terminée selon `TaskCompletionPolicy`
-  (`FIRST_COMPLETE` ou `ALL_COMPLETE`) ;
-- le résultat final est sélectionné de façon déterministe
-  (`ResultSelectionPolicy`, ADR-034).
+| `fanOut` | Comportement |
+|---|---|
+| `one` (défaut) | l'orchestrateur accorde le premier claim et rejette les suivants ; les agents rejetés n'exécutent pas |
+| `all` | tous les claims reçus pendant la fenêtre de claim (`execution.claim-window`) sont accordés ; l'étape se termine quand tous les agents accordés ont répondu ou expiré |
 
-Le même `TaskId` peut donc avoir plusieurs `TaskResult` persistés, un par agent.
+- Chaque agent publie `TaskClaimedByAgent` puis son propre `TaskCompleted`/`TaskFailed`.
+- `TaskCorrelationTracker` enregistre claims, grants, résultats et échecs.
+- `completion-policy` et `result-selection-policy` sont supprimés : `fanOut` est le seul
+  paramètre, et il est déclaré par étape.
+- Le même `TaskId` peut avoir plusieurs `TaskResult` persistés, un par agent accordé
+  (`fanOut: all`).
 
 ---
 
@@ -271,7 +319,7 @@ Ressources stateful typiques :
 | `gatling` | simulation en cours, connexions |
 | `mock-server` | WireMock embarqué, mappings |
 | `kafka-consumer` / `kafka-producer` | consumer/producer, offsets, flush |
-| `database` / `database-assertion` | connexions, transactions |
+| `database` | connexions, transactions |
 | `docker` | containers démarrés par l'exécution |
 | `shell` | processus fils |
 
@@ -282,13 +330,17 @@ Il n'y a **pas** de reprise : le scénario repart de zéro après restart.
 ## 10. Signaux de cycle de vie START/STOP
 
 `DefaultLifecycleSignalHandler` reçoit `ExecutionLifecycleSignal` :
-- START : prépare l'exécution ; pour une assertion `linkedTo`, démarre l'échantillonnage ;
-- STOP : termine l'exécution ; pour une assertion `linkedTo`, arrête l'échantillonnage
-  selon `stopBehavior`, produit l'`AssertionSummary` final et publie `TaskCompleted`.
+- START : prépare l'exécution de l'assertion ;
+- STOP : termine l'exécution de l'assertion, produit l'`AssertionSummary` final et publie
+  `TaskCompleted`.
 
 Les signaux concernant une tâche non supportée sont ignorés (log DEBUG).
-En LOCAL, le dispatcher appelle directement le runtime ; en DISTRIBUTED, le signal passe
-par le `SignalChannel` (broadcast).
+Tous les signaux passent par le `SignalChannel` (broadcast) :
+`TransportLifecycleDispatcher` est la seule implémentation, en LOCAL comme en DISTRIBUTED
+(ADR-059). En LOCAL, le transport en mémoire livre le signal sur un Virtual Thread.
+
+Un STOP de service step est d'abord traité par `TaskExecutionPipeline` (arrêt du service,
+publication du résultat) puis transmis au handler de cycle de vie (ADR-054).
 
 ---
 
@@ -301,7 +353,7 @@ agent:
     - mock-server
     - kafka-producer
     - gatling
-    - wiremock
+    - direct-assertion
   registry:
     ttl-check-interval-seconds: 10   # orchestrateur
 ```

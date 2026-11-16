@@ -7,6 +7,7 @@ import com.performance.platform.agent.filter.TaskSpecializationFilter;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.TransportAgentRegistration;
 import com.performance.platform.agent.runtime.TaskAgentRuntime;
+import com.performance.platform.agent.support.GrantingDispatch;
 import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
@@ -88,7 +89,7 @@ class AgentCoordinationE2ETest {
             runtime.start();
 
             var request = buildTaskRequest("database", ExecutionId.generate());
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(15, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_COMPLETED.equals(e.eventType())));
@@ -157,7 +158,7 @@ class AgentCoordinationE2ETest {
             runtime.start();
 
             var request = buildTaskRequest("database", ExecutionId.generate());
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(15, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_FAILED.equals(e.eventType())));
@@ -252,7 +253,8 @@ class AgentCoordinationE2ETest {
 
             int taskCount = 5;
             for (int i = 0; i < taskCount; i++) {
-                transport.dispatchTask(buildTaskRequest("shell", ExecutionId.generate()));
+                GrantingDispatch.dispatchAndGrant(transport,
+                        buildTaskRequest("shell", ExecutionId.generate()));
             }
 
             await().atMost(30, TimeUnit.SECONDS).until(() ->

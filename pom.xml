@@ -36,6 +36,14 @@
         <module>performance/platform-reporting</module>
         <module>infra/platform-scenario-yaml</module>
         <module>infra/platform-infrastructure</module>
+        <module>infra/platform-persistence</module>
+        <module>infra/executors/platform-executor-database</module>
+        <module>infra/executors/platform-executor-docker</module>
+        <module>infra/executors/platform-executor-filesystem</module>
+        <module>infra/executors/platform-executor-http</module>
+        <module>infra/executors/platform-executor-kafka</module>
+        <module>infra/executors/platform-executor-mock</module>
+        <module>infra/executors/platform-executor-shell</module>
         <module>infra/platform-transport</module>
         <module>infra/platform-injection-gatling</module>
         <module>infra/platform-assertion-adapters</module>

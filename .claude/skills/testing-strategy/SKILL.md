@@ -42,7 +42,7 @@ class ExecutionContextTest {
 
 ---
 
-## Tests d'Intégration (platform-infrastructure)
+## Tests d'Intégration (platform-persistence, platform-executor-*)
 
 Utiliser Testcontainers. Ne PAS mocker la DB ou Kafka.
 

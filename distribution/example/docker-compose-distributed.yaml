@@ -5,17 +5,17 @@
 # AGENT_SUPPORTED_TASKS). The SUT stub, PostgreSQL and Kafka run alongside.
 #
 # Routing (ADR-015):
-#   mock-agent : mock-server, http-mock   (embedded WireMock, port 8090)
-#   agent-http : gatling, http-client     (HTTP injection, SUT health)
-#   agent-kafka: database, database-assertion, kafka-producer,
-#                kafka-consumer, kafka, shell
+#   mock-agent : mock-server, direct-assertion   (embedded WireMock, port 8090)
+#   agent-http : gatling, http-client, performance-thresholds   (HTTP injection, SUT health, latency SLO)
+#   agent-kafka: database, direct-assertion, kafka-producer,
+#                kafka-consumer, shell
 #
 # Usage:
 #   docker compose -f distribution/example/docker-compose-distributed.yaml build
 #   docker compose -f distribution/example/docker-compose-distributed.yaml up -d
 #   curl -X POST http://localhost:8080/api/v1/scenarios \
 #     -H 'Content-Type: application/yaml' \
-#     --data-binary @distribution/example/scenarios/01-kafka-to-http-distributed.yaml
+#     --data-binary @distribution/example/scenarios/01-kafka-to-http.yaml
 # =============================================================================
 
 x-platform-image: &platform-image
@@ -168,6 +168,7 @@ services:
       DB_PASSWORD: changeme
       PLATFORM_SECURITY_ENABLED: "false"
       REPORTING_OUTPUT_DIR: /reports
+      SCENARIOS_DIR: /scenarios
     ports:
       - "8080:8080"
     volumes:
@@ -194,7 +195,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       IOT_KAFKA_SERVERS: "kafka:29092"
       AGENT_ID: mock-agent
-      AGENT_SUPPORTED_TASKS: "mock-server,http-mock"
+      AGENT_SUPPORTED_TASKS: "mock-server,direct-assertion"
       PLATFORM_SECURITY_ENABLED: "false"
       # Only this agent resolves the wiremock target.
       WIREMOCK_URL: "http://mock-agent:8090"
@@ -222,7 +223,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       IOT_KAFKA_SERVERS: "kafka:29092"
       AGENT_ID: agent-http
-      AGENT_SUPPORTED_TASKS: "gatling,http-client"
+      AGENT_SUPPORTED_TASKS: "gatling,http-client,performance-thresholds"
       PLATFORM_SECURITY_ENABLED: "false"
       SUT_API_URL: "http://sut:8084"
       SPRING_FLYWAY_ENABLED: "false"
@@ -249,7 +250,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       IOT_KAFKA_SERVERS: "kafka:29092"
       AGENT_ID: agent-kafka
-      AGENT_SUPPORTED_TASKS: "database,database-assertion,kafka-producer,kafka-consumer,kafka,shell"
+      AGENT_SUPPORTED_TASKS: "database,direct-assertion,kafka-producer,kafka-consumer,shell"
       PLATFORM_SECURITY_ENABLED: "false"
       SUT_DB_URL: "jdbc:postgresql://postgres-sut:5432/sut_devices"
       SUT_DB_USERNAME: postgres

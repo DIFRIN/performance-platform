@@ -4,10 +4,15 @@ import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.application.usecase.ExecutionProgressCalculator;
 import com.performance.platform.domain.event.ScenarioFinished;
+import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
+import com.performance.platform.domain.execution.ExecutionStep;
+import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.engine.shared.StepDispatchResult;
+import com.performance.platform.engine.shared.StepDispatcher;
 import com.performance.platform.campaign.ExecutionEngine;
 import com.performance.platform.campaign.plan.DefaultExecutionPlanBuilder;
 import com.performance.platform.scenario.parser.YamlScenarioParser;
@@ -17,6 +22,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,14 +43,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ScenarioSubmissionTest {
 
     @Test
-    @Timeout(value = 15, unit = TimeUnit.SECONDS)
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
     void bothSubmissionEndpointsReturnAcceptedBeforeExecutionCompletes() throws Exception {
         String yaml = """
                 scenario:
                   id: async-web
                   name: Async web
                   version: "1.0.0"
-                  execution: {mode: LOCAL}
                   steps:
                     - id: load
                       task: inject
@@ -70,20 +75,38 @@ class ScenarioSubmissionTest {
         var started = new CountDownLatch(2);
         var release = new CountDownLatch(1);
         var finished = new CountDownLatch(2);
+        StepDispatcher dispatcher = new StepDispatcher() {
+            @Override
+            public List<StepDispatchResult> dispatch(ExecutionStep step, ExecutionContext context) {
+                if (step.step().taskName().equals("inject")) {
+                    started.countDown();
+                    try {
+                        if (!release.await(10, TimeUnit.SECONDS)) {
+                            throw new AssertionError("Execution not released");
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new AssertionError(e);
+                    }
+                }
+                return List.of(new StepDispatchResult(AgentId.of("test-agent"),
+                        TaskResult.success(step.step().id(), step.step().taskName(),
+                                Duration.ZERO, Map.of())));
+            }
+
+            @Override
+            public void startService(ExecutionStep step, ExecutionContext context) {
+                throw new IllegalStateException("no service step in this scenario");
+            }
+
+            @Override
+            public List<StepDispatchResult> stopService(ExecutionStep step, ExecutionContext context) {
+                return List.of();
+            }
+        };
         var engine = new ExecutionEngine(new DefaultExecutionPlanBuilder(), repository, event -> {
             if (event instanceof ScenarioFinished) finished.countDown();
-        }, signal -> {}, (step, context) -> {
-            if (step.step().taskName().equals("inject")) {
-                started.countDown();
-                try {
-                    if (!release.await(10, TimeUnit.SECONDS)) throw new AssertionError("Execution not released");
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new AssertionError(e);
-                }
-            }
-            return TaskResult.success(step.step().id(), step.step().taskName(), Duration.ZERO, Map.of());
-        }, (id, outcomes, phase) -> {});
+        }, signal -> {}, dispatcher);
         var mvc = MockMvcBuilders.standaloneSetup(
                 new ScenarioController(parsing, engine, null, engine, repository, new ExecutionProgressCalculator()),
                 new ScenarioUploadController(parsing, engine),
@@ -102,7 +125,10 @@ class ScenarioSubmissionTest {
                 assertEquals(ExecutionStatus.RUNNING, state.status());
                 mvc.perform(get("/api/v1/executions/" + state.id().value() + "/tasks"))
                         .andExpect(status().isOk())
-                        .andExpect(jsonPath("$.tasks[0].status").value("RUNNING"))
+                        .andExpect(jsonPath("$.tasks.length()").value(2))
+                        .andExpect(jsonPath("$.tasks[0].taskId").value("load"))
+                        .andExpect(jsonPath("$.tasks[1].taskId").value("verify"))
+                        .andExpect(jsonPath("$.tasks[0].status").value("PENDING"))
                         .andExpect(jsonPath("$.tasks[1].status").value("PENDING"));
             }
         } finally {

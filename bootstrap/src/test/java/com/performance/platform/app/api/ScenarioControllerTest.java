@@ -59,7 +59,6 @@ class ScenarioControllerTest {
               id: test-scenario
               name: Test
               version: "1.0.0"
-              executionMode: LOCAL
               steps:
                 - id: step1
                   phase: INJECTION
@@ -270,8 +269,8 @@ class ScenarioControllerTest {
                 "1.0.0",
                 List.of(),
                 Map.of(),
-                null,
                 List.of(),
-                Map.of());
+                null,
+                null);
     }
 }

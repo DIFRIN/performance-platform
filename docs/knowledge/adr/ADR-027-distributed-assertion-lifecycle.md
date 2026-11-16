@@ -1,5 +1,11 @@
 # ADR-027 — Distributed Assertion Lifecycle: General-Purpose Task Signals
 
+> **Note (2026-11-13)** : le format de résultat et les noms d'assertion décrits ici
+> ont été remplacés par ADR-049 (`AssertionSummary` + `Check`, familles
+> `performance-thresholds` / `direct-assertion`, suppression de `AssertionResult`
+> et `Evidence`). Les décisions de cycle de vie (signaux START/STOP, `linkedTo`)
+> restent valides.
+
 **Date** : 2026-06-30
 **Statut** : ACCEPTED
 **Décideurs** : Architect

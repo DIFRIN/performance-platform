@@ -1,5 +1,8 @@
 # ADR-044 - Evidence-based performance reports
 
+**Status** : ACCEPTED  
+**Date** : 2026-10-31
+
 ## Context
 
 Reports previously used a placeholder scenario version, classified JSONB-restored

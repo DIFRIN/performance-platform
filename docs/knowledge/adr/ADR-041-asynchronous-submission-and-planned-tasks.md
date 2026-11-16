@@ -1,5 +1,8 @@
 # ADR-041 - Asynchronous submission and persisted task visibility
 
+**Status** : ACCEPTED  
+**Date** : 2026-10-31
+
 ## Context
 
 Web submission called the blocking execution use case, delaying HTTP 202 and the

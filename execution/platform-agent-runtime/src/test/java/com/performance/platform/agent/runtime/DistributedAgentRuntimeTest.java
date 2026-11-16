@@ -21,6 +21,7 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.agent.runtime.TaskAgentRuntime;
+import com.performance.platform.agent.support.GrantingDispatch;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
 import com.performance.platform.transport.message.ExecutionEvent;
@@ -167,8 +168,10 @@ class DistributedAgentRuntimeTest {
 
         runtime.start();
 
+        await().atMost(5, TimeUnit.SECONDS).until(() -> claimed.getCount() == 0);
         assertThat(claimed.getCount()).isZero();
-        org.mockito.Mockito.verify(lifecyclePolicy).onLifecycleSignal(signal);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                org.mockito.Mockito.verify(lifecyclePolicy).onLifecycleSignal(signal));
     }
 
     @Test
@@ -191,7 +194,8 @@ class DistributedAgentRuntimeTest {
 
         transport.broadcastSignal(signal);
 
-        org.mockito.Mockito.verify(lifecyclePolicy).onLifecycleSignal(signal);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                org.mockito.Mockito.verify(lifecyclePolicy).onLifecycleSignal(signal));
     }
 
     @Nested
@@ -387,7 +391,7 @@ class DistributedAgentRuntimeTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_COMPLETED.equals(e.eventType())));
@@ -424,7 +428,7 @@ class DistributedAgentRuntimeTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_FAILED.equals(e.eventType())));
@@ -445,7 +449,7 @@ class DistributedAgentRuntimeTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_FAILED.equals(e.eventType())));
@@ -490,7 +494,7 @@ class DistributedAgentRuntimeTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             // Wait for work-in-progress events (progress every 1s with 3s timeout)
             await().atMost(10, TimeUnit.SECONDS).until(() ->
@@ -531,7 +535,7 @@ class DistributedAgentRuntimeTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_COMPLETED.equals(e.eventType())));
@@ -581,7 +585,7 @@ class DistributedAgentRuntimeTest {
             for (int i = 0; i < taskCount; i++) {
                 var executionId = ExecutionId.generate();
                 var request = createRequest("http-get", executionId);
-                transport.dispatchTask(request);
+                GrantingDispatch.dispatchAndGrant(transport, request);
             }
 
             await().atMost(15, TimeUnit.SECONDS).until(() ->
@@ -638,7 +642,7 @@ class DistributedAgentRuntimeTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             // Wait for the task to be claimed and registered in activeTasks
             await().atMost(5, TimeUnit.SECONDS).until(() ->
@@ -841,11 +845,13 @@ class DistributedAgentRuntimeTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             // Wait for task to start
             try { startedLatch.await(5, TimeUnit.SECONDS); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
 
+            await().atMost(5, TimeUnit.SECONDS).until(() ->
+                    runtime.getState() == AgentState.EXECUTING);
             assertThat(runtime.getState()).isEqualTo(AgentState.EXECUTING);
             assertThat(runtime.activeTaskCount()).isEqualTo(1);
 

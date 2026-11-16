@@ -1,7 +1,8 @@
 package com.performance.platform.scenario.parser;
 
-import com.performance.platform.domain.scenario.ExecutionMode;
+import com.performance.platform.domain.scenario.FanOut;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
+import com.performance.platform.domain.scenario.ServiceScope;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.scenario.TestPaths;
 import com.performance.platform.scenario.validation.DefaultScenarioValidator;
@@ -12,8 +13,13 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Les exemples sont des fichiers uniques valables dans les deux modes
+ * d'execution (ADR-053) et utilisent les service steps (ADR-054).
+ */
 @DisplayName("Example scenarios parse and validate")
 class ExampleScenarioParseTest {
 
@@ -22,77 +28,56 @@ class ExampleScenarioParseTest {
     private final YamlScenarioParser parser = new YamlScenarioParser();
 
     @Test
-    @DisplayName("01-kafka-to-http-local.yaml")
-    void parsesKafkaToHttpLocal() throws Exception {
-        ScenarioDefinition scenario = parseValid("01-kafka-to-http-local.yaml");
+    @DisplayName("01-kafka-to-http.yaml")
+    void parsesKafkaToHttp() throws Exception {
+        ScenarioDefinition scenario = parseValid("01-kafka-to-http.yaml");
 
-        assertEquals("01-kafka-to-http-local", scenario.id().value());
-        assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
-        assertEquals(8, scenario.steps().size());
+        assertEquals("01-kafka-to-http", scenario.id().value());
+        assertEquals(6, scenario.steps().size());
 
         StepDefinition startMock = step(scenario, "start-mock");
         assertEquals("mock-server", startMock.taskName());
+        assertEquals(ServiceScope.INJECTION, startMock.during());
+        assertNull(startMock.phase());
         assertEquals(8090, startMock.parameters().get("port"));
-        assertEquals("classpath:mock", startMock.parameters().get("mappingsPath"));
 
         StepDefinition inject = step(scenario, "inject-commands");
         assertEquals("kafka-producer", inject.taskName());
-        assertEquals("iot-sut", inject.parameters().get("cluster"));
+        assertEquals(FanOut.ONE, inject.fanOut());
         assertEquals("iot-commands", inject.parameters().get("topic"));
 
         StepDefinition assertion = step(scenario, "assert-mock-called");
-        assertEquals("http-mock", assertion.taskName());
-        assertEquals("wiremock", assertion.parameters().get("target"));
-        assertEquals("GTE", assertion.parameters().get("operator"));
+        assertEquals("direct-assertion", assertion.taskName());
+        assertEquals("start-mock", assertion.ref().value());
+        assertEquals("http.requests.matched", assertion.parameters().get("metric"));
     }
 
     @Test
-    @DisplayName("01-kafka-to-http-distributed.yaml")
-    void parsesKafkaToHttpDistributed() throws Exception {
-        ScenarioDefinition scenario = parseValid("01-kafka-to-http-distributed.yaml");
+    @DisplayName("02-http-to-kafka.yaml")
+    void parsesHttpToKafka() throws Exception {
+        ScenarioDefinition scenario = parseValid("02-http-to-kafka.yaml");
 
-        assertEquals("01-kafka-to-http-distributed", scenario.id().value());
-        assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
-        assertEquals(8, scenario.steps().size());
-        assertEquals(5000, step(scenario, "inject-commands").parameters().get("messageCount"));
-        assertEquals("wiremock", step(scenario, "assert-mock-called")
-                .parameters().get("target"));
-    }
-
-    @Test
-    @DisplayName("02-http-to-kafka-local.yaml")
-    void parsesHttpToKafkaLocal() throws Exception {
-        ScenarioDefinition scenario = parseValid("02-http-to-kafka-local.yaml");
-
-        assertEquals("02-http-to-kafka-local", scenario.id().value());
-        assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
-        assertEquals(7, scenario.steps().size());
+        assertEquals("02-http-to-kafka", scenario.id().value());
+        assertEquals(6, scenario.steps().size());
 
         StepDefinition injection = step(scenario, "inject-events");
         assertEquals("gatling", injection.taskName());
+        assertEquals(FanOut.ALL, injection.fanOut());
         assertEquals("sut-api", injection.parameters().get("target"));
-
-        StepDefinition count = step(scenario, "count-events");
-        assertEquals("kafka-consumer", count.taskName());
-        assertEquals("iot-sut", count.parameters().get("cluster"));
-        assertEquals("device-events", count.parameters().get("topic"));
+        assertTrue(injection.parameters().get("loadModel") instanceof java.util.Map);
 
         StepDefinition assertion = step(scenario, "assert-events-produced");
-        assertEquals("kafka", assertion.taskName());
-        assertEquals("count-events", assertion.parameters().get("refTaskId"));
+        assertEquals("count-events", assertion.ref().value());
     }
 
     @Test
-    @DisplayName("02-http-to-kafka-distributed.yaml")
-    void parsesHttpToKafkaDistributed() throws Exception {
-        ScenarioDefinition scenario = parseValid("02-http-to-kafka-distributed.yaml");
+    @DisplayName("03-assertion-model.yaml")
+    void parsesAssertionModel() throws Exception {
+        ScenarioDefinition scenario = parseValid("03-assertion-model.yaml");
 
-        assertEquals("02-http-to-kafka-distributed", scenario.id().value());
-        assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
-        assertEquals(7, scenario.steps().size());
-        assertEquals("sut-api", step(scenario, "inject-events").parameters().get("target"));
-        assertEquals("device-events", step(scenario, "count-events")
-                .parameters().get("topic"));
+        assertEquals("03-assertion-model", scenario.id().value());
+        assertNotNull(step(scenario, "marker-present"));
+        assertNotNull(step(scenario, "api-slo"));
     }
 
     private ScenarioDefinition parseValid(String file) throws Exception {

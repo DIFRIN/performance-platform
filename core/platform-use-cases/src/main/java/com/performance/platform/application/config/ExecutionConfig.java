@@ -1,45 +1,34 @@
 package com.performance.platform.application.config;
 
-import com.performance.platform.domain.execution.TaskCompletionPolicy;
-
 import java.time.Duration;
 
 /**
- * Configuration de l'execution, regroupant les timeouts et la politique de completions.
+ * Configuration de l'execution, regroupant les timeouts et la fenetre de claim.
  *
- * <p>Les contraintes R5 (taskAvailabilityTimeout >= 120s en K8s) et
- * R6 (workInProgressResetInterval <= taskExecutionTimeout / 3) sont
- * applicatives et verifiees par l'engine d'execution, pas ici.</p>
+ * <p>ADR-055 : le fan-out est declare par etape ({@code fanOut}), il n'y a plus
+ * de politique globale de completion ni de selection de resultat. ADR-058 :
+ * {@code work-in-progress-reset-interval} est supprime.</p>
  *
  * @param taskAvailabilityTimeout delai max d'attente de disponibilite d'un agent
  * @param taskExecutionTimeout delai max d'execution d'une tache
- * @param workInProgressResetInterval intervalle de reset des taches en cours
- * @param completionPolicy politique de completions (FIRST_COMPLETE ou ALL_COMPLETE)
- * @param resultSelectionPolicy politique de selection du resultat en multi-claim
+ * @param claimWindow fenetre pendant laquelle les claims sont collectes
+ *                    ({@code fanOut: all}) ou attendus ({@code fanOut: one})
  */
 public record ExecutionConfig(
     Duration taskAvailabilityTimeout,
     Duration taskExecutionTimeout,
-    Duration workInProgressResetInterval,
-    TaskCompletionPolicy completionPolicy,
-    ResultSelectionPolicy resultSelectionPolicy
+    Duration claimWindow
 ) {
 
-    /**
-     * Constructeur de compatibilite : selectionne le premier resultat complete.
-     */
-    public ExecutionConfig(Duration taskAvailabilityTimeout,
-                           Duration taskExecutionTimeout,
-                           Duration workInProgressResetInterval,
-                           TaskCompletionPolicy completionPolicy) {
-        this(taskAvailabilityTimeout, taskExecutionTimeout,
-                workInProgressResetInterval, completionPolicy,
-                ResultSelectionPolicy.FIRST_COMPLETED);
-    }
-
     public ExecutionConfig {
-        if (resultSelectionPolicy == null) {
-            resultSelectionPolicy = ResultSelectionPolicy.FIRST_COMPLETED;
+        if (taskAvailabilityTimeout == null) {
+            taskAvailabilityTimeout = Duration.ofSeconds(120);
+        }
+        if (taskExecutionTimeout == null) {
+            taskExecutionTimeout = Duration.ofSeconds(300);
+        }
+        if (claimWindow == null) {
+            claimWindow = Duration.ofSeconds(1);
         }
     }
 }

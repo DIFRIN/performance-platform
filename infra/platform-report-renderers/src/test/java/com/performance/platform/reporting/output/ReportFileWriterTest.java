@@ -1,5 +1,7 @@
 package com.performance.platform.reporting.output;
 
+import com.performance.platform.domain.assertion.AssertionStatus;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ReportId;
 import com.performance.platform.domain.id.ScenarioId;
@@ -427,14 +429,9 @@ class ReportFileWriterTest {
                                 tempDir.resolve("no-gatling")),
                         tempDir.resolve("no-gatling"))),
                 List.of(new AssertionReportEntry(TaskId.of("assert-001"),
-                        new com.performance.platform.domain.assertion.AssertionResult(
-                                TaskId.of("assert-001"),
-                                com.performance.platform.domain.assertion.AssertionStatus.PASSED,
-                                "all metrics within threshold",
-                                null,
-                                Duration.ofMillis(150),
-                                Instant.now()),
-                        null)),
+                        AssertionSummary.verdictOnly(TaskId.of("assert-001"),
+                                AssertionStatus.PASSED, "all metrics within threshold",
+                                Duration.ofMillis(150), Instant.now()))),
                 Verdict.SUCCESS,
                 "All assertions passed",
                 Instant.now(),

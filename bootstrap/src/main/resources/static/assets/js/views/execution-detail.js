@@ -21,7 +21,28 @@
  * when the router switches to another view.
  */
 
-import { getExecutionStatus, listExecutionTasks, getExecutionScenario, cancelExecution, rerunExecution } from "/assets/js/api.js";
+import { getExecutionStatus, listExecutionTasks, getExecutionScenario, cancelExecution, rerunExecution, scheduleScenario } from "/assets/js/api.js";
+import {
+    toast,
+    announce,
+    confirmDestructive,
+    copyableIdHtml,
+    copyText,
+    handleCopyClick,
+    createPoller,
+    refreshStatusText,
+    formatDuration,
+    formatDateTime,
+    shortId
+} from "/assets/js/ui.js";
+import {
+    enhanceScheduleControls,
+    isScheduled,
+    readSchedule,
+    scheduleConfirmation,
+    validateScheduleInput,
+    scheduleFieldHtml
+} from "/assets/js/schedule.js";
 
 /** Polling interval in milliseconds. */
 const POLL_INTERVAL_MS = 3000;
@@ -41,27 +62,34 @@ const TERMINAL_STATUSES = new Set(["COMPLETED", "FAILED", "CANCELLED"]);
  */
 export function mount(el, executionId) {
     /* ---- State ---- */
-    let intervalId = null;
+    let poller = null;
     let detail = null;       // ExecutionStatusResponse from getExecutionStatus
     let tasksData = null;    // TaskListResponse from listExecutionTasks
     let error = null;
     let lastSnapshot = null; // serialized last rendered state — skip DOM rebuild when unchanged
     let inFlight = false;
     let disposed = false;
+    let lastStatus = null;
     const expandedTaskIds = new Set(); // survives re-renders so polling never collapses open rows
 
     /* ---- Skeleton ---- */
     el.innerHTML = buildSkeleton(executionId);
+    enhanceScheduleControls(el);
 
     const bodyEl = el.querySelector("#exec-detail-body");
     const backLink = el.querySelector("[data-exec-back]");
     const reportLink = el.querySelector("[data-exec-report]");
     const rerunBtn = el.querySelector("[data-exec-rerun]");
+    const scheduleInput = el.querySelector("[data-schedule-input]");
     const abortBtn = el.querySelector("[data-exec-abort]");
     const scenarioPanel = el.querySelector("[data-scenario-source]");
     const scenarioCode = el.querySelector("[data-scenario-code]");
+    const scenarioCopy = el.querySelector("[data-scenario-copy]");
+    const scenarioDownload = el.querySelector("[data-scenario-download]");
+    const refreshStateEl = el.querySelector("[data-refresh-state]");
     let sourceLoaded = false;
     let sourceLoading = false;
+    let sourceYaml = null;
     let actionInFlight = false;
 
     scenarioPanel.addEventListener("toggle", async function () {
@@ -71,10 +99,13 @@ export function mount(el, executionId) {
         try {
             const source = await getExecutionScenario(executionId);
             if (disposed) return;
+            sourceYaml = source.yaml;
             scenarioCode.textContent = source.yaml == null
                 ? "Original YAML is unavailable for this execution."
                 : source.yaml;
-            sourceLoaded = true;
+            sourceLoaded = source.yaml != null;
+            if (scenarioCopy) scenarioCopy.disabled = !sourceLoaded;
+            if (scenarioDownload) scenarioDownload.disabled = !sourceLoaded;
         } catch (e) {
             console.error("execution-detail: scenario source fetch failed", e);
             if (!disposed) scenarioCode.textContent = "Failed to load YAML: " + e.message +
@@ -83,6 +114,50 @@ export function mount(el, executionId) {
             sourceLoading = false;
         }
     });
+
+    if (scenarioCopy) {
+        scenarioCopy.addEventListener("click", async function () {
+            if (!sourceYaml) return;
+            const ok = await copyText(sourceYaml);
+            toast(ok ? "Scenario YAML copied" : "Copy failed", { variant: ok ? "success" : "error" });
+        });
+    }
+
+    if (scenarioDownload && scenarioDownload.tagName === "BUTTON") {
+        scenarioDownload.addEventListener("click", function () {
+            downloadSourceYaml();
+        });
+    } else if (scenarioDownload) {
+        scenarioDownload.addEventListener("click", async function (e) {
+            e.preventDefault();
+            if (!sourceLoaded) {
+                try {
+                    const source = await getExecutionScenario(executionId);
+                    sourceYaml = source.yaml;
+                } catch (err) {
+                    toast("Download failed: " + err.message, { variant: "error" });
+                    return;
+                }
+            }
+            downloadSourceYaml();
+        });
+    }
+
+    function downloadSourceYaml() {
+        if (!sourceYaml) {
+            toast("Scenario YAML is unavailable", { variant: "warning" });
+            return;
+        }
+        const blob = new Blob([sourceYaml], { type: "text/yaml" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "scenario-" + shortId(executionId) + ".yaml";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
 
     /* ---- Event handlers ---- */
 
@@ -111,10 +186,26 @@ export function mount(el, executionId) {
             rerunBtn.disabled = true;
             rerunBtn.textContent = "Starting...";
             try {
-                const result = await rerunExecution(executionId);
+                const schedule = readSchedule(scheduleInput);
+                let result;
+                if (isScheduled(schedule)) {
+                    const check = validateScheduleInput(scheduleInput);
+                    if (!check.valid) return;
+                    const source = await getExecutionScenario(executionId);
+                    if (!source || !source.yaml) {
+                        throw new Error("The original scenario YAML is unavailable");
+                    }
+                    result = await scheduleScenario(source.yaml, schedule);
+                    if (!result.executionId) {
+                        toast(scheduleConfirmation(result.nextRunAt), { variant: "success" });
+                        return;
+                    }
+                } else {
+                    result = await rerunExecution(executionId);
+                }
                 window.location.hash = "#/executions/" + encodeURIComponent(result.executionId);
             } catch (e) {
-                alert("Rerun failed: " + (e.message || "Unknown error"));
+                toast("Rerun failed: " + (e.message || "Unknown error"), { variant: "error" });
             } finally {
                 actionInFlight = false;
                 if (!disposed) {
@@ -129,14 +220,16 @@ export function mount(el, executionId) {
     if (abortBtn) {
         abortBtn.addEventListener("click", async function () {
             if (abortBtn.disabled || actionInFlight) return;
-            if (!confirm("Abort execution " + executionId + "?")) return;
+            if (!confirmDestructive("Abort execution " + executionId + "? This cannot be undone.")) return;
             actionInFlight = true;
             abortBtn.disabled = true;
             abortBtn.textContent = "Aborting...";
             try {
                 await cancelExecution(executionId);
+                toast("Execution abort requested", { variant: "success" });
+                announce("Execution abort requested");
             } catch (e) {
-                alert("Abort failed: " + (e.message || "Unknown error"));
+                toast("Abort failed: " + (e.message || "Unknown error"), { variant: "error" });
             } finally {
                 actionInFlight = false;
                 if (!disposed) {
@@ -149,6 +242,8 @@ export function mount(el, executionId) {
 
     // Delegated click handler on body for row expansion
     bodyEl.addEventListener("click", function (e) {
+        if (handleCopyClick(e)) return;
+
         var toggleBtn = e.target.closest("[data-task-toggle]");
         if (toggleBtn) {
             e.stopPropagation();
@@ -173,10 +268,7 @@ export function mount(el, executionId) {
     /* ---- Fetch & Render loop ---- */
 
     function stopPolling() {
-        if (intervalId !== null) {
-            clearInterval(intervalId);
-            intervalId = null;
-        }
+        if (poller) poller.pause();
     }
 
     /**
@@ -221,6 +313,13 @@ export function mount(el, executionId) {
                 : "View execution report";
             updateActionButtons(detail);
 
+            if (detail && detail.status !== lastStatus) {
+                if (lastStatus !== null) {
+                    announce("Execution is now " + detail.status);
+                }
+                lastStatus = detail.status;
+            }
+
             var snapshot = JSON.stringify([detail, tasksData, error]);
             if (snapshot !== lastSnapshot) {
                 lastSnapshot = snapshot;
@@ -236,17 +335,20 @@ export function mount(el, executionId) {
         }
     }
 
-    // Initial fetch
-    fetchAndRender();
-
-    // Start polling
-    intervalId = setInterval(fetchAndRender, POLL_INTERVAL_MS);
+    poller = createPoller({
+        run: fetchAndRender,
+        intervalMs: POLL_INTERVAL_MS,
+        onState: function (next) {
+            if (refreshStateEl) refreshStateEl.textContent = refreshStatusText(next);
+        }
+    });
+    poller.start();
 
     /* ---- Cleanup ---- */
     return {
         cleanup: function () {
             disposed = true;
-            stopPolling();
+            if (poller) poller.stop();
         }
     };
 }
@@ -266,9 +368,13 @@ function buildSkeleton(executionId) {
         '  <div class="detail-card__header">' +
         '    <div class="detail-header__left">' +
         '      <a href="#/executions" class="detail-back-link" data-exec-back>&larr; Back to Executions</a>' +
-        '      <h1 class="detail-header__title">Execution <span class="text-mono">' + escapeHtml(executionId) + '</span></h1>' +
+        '      <h1 class="detail-header__title" data-page-heading>Execution ' +
+        '        ' + copyableIdHtml(executionId, { label: executionId, title: "Copy execution ID" }) +
+        '      </h1>' +
+        '      <span class="refresh-state" data-refresh-state aria-live="polite">Waiting for data\u2026</span>' +
         '    </div>' +
         '    <div class="detail-header__right">' +
+        '      ' + scheduleFieldHtml("exec-detail", { compact: true, label: "Schedule rerun" }) +
         '      <button type="button" class="btn" data-exec-rerun disabled title="Available when execution has finished">Rerun</button>' +
         '      <button type="button" class="btn btn--warning" data-exec-abort disabled title="Available while execution is running">Abort</button>' +
         '      <button type="button" class="btn btn--primary" data-exec-report disabled title="Available when execution has finished">View Report</button>' +
@@ -279,6 +385,10 @@ function buildSkeleton(executionId) {
         '  </div>' +
         '  <details class="card detail-scenario-source" data-scenario-source>' +
         '    <summary class="card__title">Scenario YAML (original source)</summary>' +
+        '    <div class="code-toolbar">' +
+        '      <button type="button" class="btn btn--sm" data-scenario-copy disabled>Copy</button>' +
+        '      <button type="button" class="btn btn--sm" data-scenario-download disabled>Download .yaml</button>' +
+        '    </div>' +
         '    <pre class="detail-technical-value"><code data-scenario-code></code></pre>' +
         '  </details>' +
         '</div>';
@@ -315,12 +425,14 @@ function renderBody(bodyEl, detail, tasksData, error) {
 
     var infoHtml = renderInfoSection(detail);
     var progressHtml = renderDetailProgress(detail.progress);
+    var timelineHtml = renderTimeline(detail, tasksData);
     var phasesHtml = renderPhaseSections(tasksData);
 
     bodyEl.innerHTML = '' +
         errorBanner +
         infoHtml +
         progressHtml +
+        timelineHtml +
         phasesHtml;
 }
 
@@ -338,7 +450,7 @@ function renderInfoSection(detail) {
         '<div class="card mb-2">' +
         '  <div class="detail-info-grid">' +
         '    <div class="detail-info-label">Scenario ID</div>' +
-        '    <div class="detail-info-value"><span class="text-mono">' + escapeHtml(detail.scenarioId || "—") + '</span></div>' +
+        '    <div class="detail-info-value">' + scenarioLink(detail.scenarioId) + '</div>' +
         '    <div class="detail-info-label">Status</div>' +
         '    <div class="detail-info-value"><span class="status ' + statusClass + '">' + escapeHtml(detail.status || "UNKNOWN") + '</span></div>' +
         '    <div class="detail-info-label">Started</div>' +
@@ -348,6 +460,20 @@ function renderInfoSection(detail) {
         '  </div>' +
         '  ' + renderPhaseStatusBadges(detail.phaseStatuses) +
         '</div>';
+}
+
+/**
+ * Render the scenario id as a link to the catalog view filtered on it.
+ * @param {string|null} scenarioId
+ * @returns {string} HTML
+ */
+function scenarioLink(scenarioId) {
+    if (!scenarioId) {
+        return '<span class="text-muted">—</span>';
+    }
+    return '<a class="scenario-link text-mono" href="#/scenarios/' +
+        encodeURIComponent(scenarioId) + '" title="Open this scenario in the catalog">' +
+        escapeHtml(scenarioId) + '</a>';
 }
 
 /**
@@ -428,6 +554,92 @@ function renderDetailProgress(progress) {
         '    <div class="detail-progress__counts">' + escapeHtml(counts) + '</div>' +
         '  </div>' +
         '</div>';
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers — task timeline
+// ---------------------------------------------------------------------------
+
+/**
+ * Render a horizontal timeline of tasks with their durations.
+ * Task start is derived from completion time minus duration; the longest task
+ * is highlighted as the dominant (critical-path) task.
+ *
+ * @param {Object} detail — ExecutionStatusResponse
+ * @param {Object|null} tasksData — TaskListResponse
+ * @returns {string} HTML
+ */
+function renderTimeline(detail, tasksData) {
+    var tasks = tasksData && tasksData.tasks ? tasksData.tasks : [];
+    if (tasks.length === 0) return '';
+
+    var items = [];
+    tasks.forEach(function (task) {
+        if (task.durationMillis === null || task.durationMillis === undefined) return;
+        var duration = Number(task.durationMillis);
+        var end = task.completedAt ? new Date(task.completedAt).getTime() : null;
+        if (end === null || isNaN(end)) return;
+        items.push({
+            task: task,
+            start: end - duration,
+            end: end,
+            duration: duration
+        });
+    });
+
+    if (items.length === 0) return '';
+
+    items.sort(function (a, b) { return a.start - b.start; });
+
+    var rangeStart = Math.min.apply(null, items.map(function (i) { return i.start; }));
+    var rangeEnd = Math.max.apply(null, items.map(function (i) { return i.end; }));
+    var span = Math.max(1, rangeEnd - rangeStart);
+
+    var slowestId = items.reduce(function (best, item) {
+        return item.duration > best.duration ? item : best;
+    }, items[0]);
+
+    var rows = items.map(function (item) {
+        var left = (item.start - rangeStart) / span * 100;
+        var width = Math.max(0.8, item.duration / span * 100);
+        var kind = taskBarKind(item.task.status);
+        var critical = item.task === slowestId.task ? " timeline__bar--critical" : "";
+        return '<div class="timeline__row">' +
+            '<span class="timeline__label" title="' + escapeAttr(item.task.taskId) + '">' +
+                escapeHtml(item.task.taskName || item.task.taskId) +
+                '<span class="timeline__phase">' + escapeHtml(item.task.phase || "") + '</span>' +
+            '</span>' +
+            '<span class="timeline__track">' +
+                '<span class="timeline__bar timeline__bar--' + kind + critical + '"' +
+                ' style="left:' + left.toFixed(2) + '%;width:' + width.toFixed(2) + '%"' +
+                ' title="' + escapeAttr(item.task.taskName + " \u00b7 " + formatDuration(item.duration)) + '"></span>' +
+            '</span>' +
+            '<span class="timeline__value">' + escapeHtml(formatDuration(item.duration)) + '</span>' +
+            '</div>';
+    }).join("");
+
+    return '<div class="card mb-2">' +
+        '<div class="flex-between mb-1">' +
+        '  <span class="card__title">Timeline</span>' +
+        '  <span class="text-muted">Longest task: ' +
+             escapeHtml(slowestId.task.taskName || slowestId.task.taskId) + ' (' +
+             escapeHtml(formatDuration(slowestId.duration)) + ')</span>' +
+        '</div>' +
+        '<div class="timeline">' + rows + '</div>' +
+        '<p class="timeline__hint text-muted">Bars are positioned from task completion time and duration.</p>' +
+        '</div>';
+}
+
+function taskBarKind(status) {
+    switch (status) {
+        case "SUCCESS": return "ok";
+        case "FAILED":
+        case "TIMEOUT":
+        case "SKIPPED": return "ko";
+        case "RUNNING":
+        case "STARTED": return "running";
+        default: return "pending";
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -517,6 +729,7 @@ function renderTasksTable(tasks) {
         '      <th>Task Name</th>' +
         '      <th>Task Type</th>' +
         '      <th>Status</th>' +
+        '      <th>Duration</th>' +
         '      <th>Message</th>' +
         '    </tr>' +
         '  </thead>' +
@@ -548,11 +761,12 @@ function renderTaskRow(task) {
         '  <td><span class="text-mono detail-task-name">' + escapeHtml(task.taskId) + '</span></td>' +
         '  <td>' + escapeHtml(task.taskName) + '</td>' +
         '  <td><span class="status ' + statusClass + '">' + escapeHtml(task.status) + '</span></td>' +
+        '  <td class="text-mono">' + escapeHtml(formatDuration(task.durationMillis)) + '</td>' +
         '  <td class="detail-task-message">' + escapeHtml(shortMessage) + '</td>' +
         '</tr>' +
         '<tr class="detail-task-expanded" id="task-detail-' + escapeAttr(rowKey) + '" style="display:none">' +
         '  <td></td>' +
-        '  <td colspan="4">' +
+        '  <td colspan="5">' +
         '    <div class="detail-task-expanded__content">' +
         '      <div class="detail-task-expanded__field">' +
         '        <span class="detail-task-expanded__label">Task Name</span>' +
@@ -642,14 +856,19 @@ function restoreExpandedRows(bodyEl, expandedTaskIds, tasks) {
     });
 }
 
+function cssEscape(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(value);
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+}
+
 /**
  * @param {HTMLElement} bodyEl
  * @param {string} taskId
  * @param {boolean} expanded
  */
 function setTaskExpanded(bodyEl, taskId, expanded) {
-    var detailRow = bodyEl.querySelector("#task-detail-" + CSS.escape(taskId));
-    var toggleBtn = bodyEl.querySelector("[data-task-toggle=\"" + CSS.escape(taskId) + "\"]");
+    var detailRow = bodyEl.querySelector("#task-detail-" + cssEscape(taskId));
+    var toggleBtn = bodyEl.querySelector("[data-task-toggle=\"" + cssEscape(taskId) + "\"]");
     if (!detailRow) return;
 
     detailRow.style.display = expanded ? "" : "none";

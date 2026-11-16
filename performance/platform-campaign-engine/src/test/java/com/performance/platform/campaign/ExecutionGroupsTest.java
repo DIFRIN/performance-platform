@@ -7,16 +7,18 @@ import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
-import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.engine.ExecutionLifecycleDispatcher;
+import com.performance.platform.engine.support.StubStepDispatcher;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,7 +26,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+@DisplayName("ExecutionGroups")
 class ExecutionGroupsTest {
+
+    private static final ExecutionLifecycleDispatcher LIFECYCLE = signal -> { };
 
     @Test
     void shouldSerializeTheWholeScenarioBeforePreparationAndReleaseAfterFailure() throws Exception {
@@ -35,31 +40,28 @@ class ExecutionGroupsTest {
         var first = new AtomicBoolean(true);
         var step = new StepDefinition(TaskId.of("prep"), "mock-server", Phase.PREPARATION,
                 Map.of(), List.of(), List.of(), Duration.ofSeconds(10), null);
+
+        var dispatcher = new StubStepDispatcher((execStep, context) -> {
+            if (first.getAndSet(false)) {
+                firstEntered.countDown();
+                await(allowFirst);
+                return StubStepDispatcher.failure(execStep, "expected failure");
+            }
+            secondEntered.countDown();
+            return StubStepDispatcher.success(execStep, Map.of());
+        });
         var engine = new ExecutionEngine(scenario -> {
             var id = ExecutionId.generate();
-            return new ExecutionPlan(id, scenario.id(), List.of(new ExecutionStep(step, List.of(), 0, java.util.Set.of())),
-                    List.of(), List.of(), List.of(), ExecutionContext.initial(id, scenario.id()));
+            return new ExecutionPlan(id, scenario.id(),
+                    List.of(new ExecutionStep(step, List.of(), 0, Set.of())),
+                    List.of(), List.of(), List.of(), List.of(),
+                    ExecutionContext.initial(id, scenario.id()));
         }, mock(ExecutionRepository.class), event -> {
             if (event instanceof com.performance.platform.domain.event.ScenarioFinished finished
                     && finished.scenarioId().value().equals("second")) {
                 secondFinished.countDown();
             }
-        }, signal -> {}, (executionStep, context) -> {
-            if (first.getAndSet(false)) {
-                firstEntered.countDown();
-                try {
-                    if (!allowFirst.await(5, TimeUnit.SECONDS)) {
-                        throw new IllegalStateException("Test did not release first execution");
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(e);
-                }
-                return TaskResult.failed(step.id(), step.taskName(), Duration.ZERO, "expected failure", null);
-            }
-            secondEntered.countDown();
-            return TaskResult.success(step.id(), step.taskName(), Duration.ZERO, Map.of());
-        }, (id, outcomes, phase) -> {});
+        }, LIFECYCLE, dispatcher);
 
         engine.submit(scenario("first", step));
         assertThat(firstEntered.await(5, TimeUnit.SECONDS)).isTrue();
@@ -90,8 +92,19 @@ class ExecutionGroupsTest {
         groups.release("port-8090");
     }
 
+    private static void await(CountDownLatch latch) {
+        try {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Test did not release first execution");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
     private static ScenarioDefinition scenario(String id, StepDefinition step) {
         return new ScenarioDefinition(ScenarioId.of(id), id, "1", List.of(),
-                Map.of("executionGroup", "port-8090"), ExecutionMode.LOCAL, List.of(step), Map.of());
+                Map.of("executionGroup", "port-8090"), List.of(step), null, null);
     }
 }

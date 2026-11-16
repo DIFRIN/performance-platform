@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 @DisplayName("TransportAgentRegistration")
 class TransportAgentRegistrationTest {
@@ -62,6 +64,21 @@ class TransportAgentRegistrationTest {
         return events;
     }
 
+    /** Livraison des evenements asynchrone (ADR-059) : attendre le premier evenement. */
+    private AgentLifecycleEvent awaitFirstEvent(List<AgentLifecycleEvent> events) {
+        await().atMost(5, TimeUnit.SECONDS).until(() -> !events.isEmpty());
+        return events.getFirst();
+    }
+
+    /** Attend le premier evenement du type demande (les events anterieurs peuvent encore arriver). */
+    private AgentLifecycleEvent awaitFirstEvent(List<AgentLifecycleEvent> events, String eventType) {
+        await().atMost(5, TimeUnit.SECONDS).until(() ->
+                events.stream().anyMatch(e -> eventType.equals(e.eventType())));
+        return events.stream()
+                .filter(e -> eventType.equals(e.eventType()))
+                .findFirst().orElseThrow();
+    }
+
     // === Tests ===
 
     @Nested
@@ -74,8 +91,8 @@ class TransportAgentRegistrationTest {
             var events = captureEvents();
             registration.register(descriptor);
 
+            var event = awaitFirstEvent(events);
             assertThat(events).hasSize(1);
-            var event = events.get(0);
             assertThat(event.eventType()).isEqualTo(AgentLifecycleEvent.AGENT_REGISTERED);
             assertThat(event.agentId()).isEqualTo(agentId);
         }
@@ -86,7 +103,7 @@ class TransportAgentRegistrationTest {
             var events = captureEvents();
             registration.register(descriptor);
 
-            var payload = events.get(0).payload();
+            var payload = awaitFirstEvent(events).payload();
             assertThat(payload).containsEntry("agentId", agentId.value());
             assertThat(payload).containsEntry("name", "test-agent");
             assertThat(payload).containsEntry("host", "localhost");
@@ -106,7 +123,7 @@ class TransportAgentRegistrationTest {
             registration.register(descriptor);
 
             @SuppressWarnings("unchecked")
-            var caps = (java.util.Map<String, Object>) events.get(0).payload().get("capabilities");
+            var caps = (java.util.Map<String, Object>) awaitFirstEvent(events).payload().get("capabilities");
             assertThat(caps).containsEntry("maxConcurrentTasks", 10);
             assertThat(caps).containsEntry("version", "1.0.0");
         }
@@ -157,8 +174,8 @@ class TransportAgentRegistrationTest {
             var events = captureEvents();
             registration.deregister(agentId);
 
+            var event = awaitFirstEvent(events);
             assertThat(events).hasSize(1);
-            var event = events.get(0);
             assertThat(event.eventType()).isEqualTo(AgentLifecycleEvent.AGENT_DEREGISTERED);
             assertThat(event.agentId()).isEqualTo(agentId);
         }
@@ -169,7 +186,7 @@ class TransportAgentRegistrationTest {
             var events = captureEvents();
             registration.deregister(agentId);
 
-            assertThat(events.get(0).payload()).containsEntry("agentId", agentId.value());
+            assertThat(awaitFirstEvent(events).payload()).containsEntry("agentId", agentId.value());
         }
 
         @Test
@@ -193,7 +210,7 @@ class TransportAgentRegistrationTest {
 
             registration.sendHeartbeat(agentId, heartbeat);
 
-            var payload = events.getFirst().payload();
+            var payload = awaitFirstEvent(events, AgentLifecycleEvent.AGENT_HEARTBEAT).payload();
             assertThat(payload).containsEntry("name", descriptor.name())
                     .containsEntry("httpCallbackUrl", descriptor.httpCallbackUrl())
                     .containsEntry("supportedTaskNames", descriptor.supportedTaskNames())
@@ -210,7 +227,8 @@ class TransportAgentRegistrationTest {
 
             registration.sendHeartbeat(agentId, new AgentHeartbeat(agentId, AgentState.IDLE, 0, Instant.now()));
 
-            assertThat(events.getFirst().payload()).doesNotContainKey("supportedTaskNames");
+            assertThat(awaitFirstEvent(events, AgentLifecycleEvent.AGENT_HEARTBEAT).payload())
+                    .doesNotContainKey("supportedTaskNames");
         }
 
         @Test
@@ -220,8 +238,8 @@ class TransportAgentRegistrationTest {
             var heartbeat = new AgentHeartbeat(agentId, AgentState.IDLE, 0, Instant.now());
             registration.sendHeartbeat(agentId, heartbeat);
 
+            var event = awaitFirstEvent(events);
             assertThat(events).hasSize(1);
-            var event = events.get(0);
             assertThat(event.eventType()).isEqualTo(AgentLifecycleEvent.AGENT_HEARTBEAT);
             assertThat(event.agentId()).isEqualTo(agentId);
         }
@@ -234,7 +252,7 @@ class TransportAgentRegistrationTest {
             var heartbeat = new AgentHeartbeat(agentId, AgentState.EXECUTING, 3, now);
             registration.sendHeartbeat(agentId, heartbeat);
 
-            var payload = events.get(0).payload();
+            var payload = awaitFirstEvent(events, AgentLifecycleEvent.AGENT_HEARTBEAT).payload();
             assertThat(payload).containsEntry("agentId", agentId.value());
             assertThat(payload).containsEntry("state", "EXECUTING");
             assertThat(payload).containsEntry("activeTasks", 3);

@@ -3,10 +3,8 @@ package com.performance.platform.reporting.engine;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.performance.platform.domain.assertion.AssertionResult;
-import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.assertion.AssertionSummary;
-import com.performance.platform.domain.assertion.AssertionSample;
+import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.execution.*;
 import com.performance.platform.domain.id.*;
 import com.performance.platform.domain.injection.InjectionResult;
@@ -74,11 +72,11 @@ class PerformanceReportingTest {
                 Map.of("parameters", Map.of("protocol", "http", "loadModel", "campaign"),
                         "resolvedLoadModel", Map.of("type", "CONSTANT", "parameters", Map.of("users", 100))))));
         if (assertionStatus != null) {
-            var assertion = new AssertionResult(ASSERT, assertionStatus, "Latency objective", null,
+            var assertion = AssertionSummary.verdictOnly(ASSERT, assertionStatus, "Latency objective",
                     Duration.ofMillis(1), START.plusSeconds(13));
-            context = context.with("slo", "agent-1", TaskResult.success(ASSERT, "gatling-metric",
-                    Duration.ofMillis(1), Map.of("assertionResult", assertion)));
-            tasks.add(new ExecutionTask(ASSERT, "gatling-metric", Phase.ASSERTION, true));
+            context = context.with("slo", "agent-1", TaskResult.success(ASSERT, "direct-assertion",
+                    Duration.ofMillis(1), Map.of(AssertionSummary.OUTPUT_KEY, assertion)));
+            tasks.add(new ExecutionTask(ASSERT, "direct-assertion", Phase.ASSERTION, true));
         }
         return new ExecutionState(ID, SCENARIO, ExecutionStatus.COMPLETED, Map.of(), context,
                 START, START.plusSeconds(15), tasks.size(), tasks, "# source",
@@ -87,44 +85,37 @@ class PerformanceReportingTest {
 
     @Test
     void persistedAssertionsAcceptDerivedPassedButUseTheRecordedVerdict() throws Exception {
-        for (boolean legacy : List.of(false, true)) {
-            for (AssertionStatus status : List.of(AssertionStatus.PASSED, AssertionStatus.FAILED)) {
-                var original = state(definition(List.of()), true, null);
-                Object assertion = legacy
-                        ? new AssertionResult(ASSERT, status, "Latency objective", null,
-                                Duration.ofMillis(1), START.plusSeconds(13))
-                        : new AssertionSummary(ASSERT, status, "Latency objective", Map.of("observed", 50),
-                                List.of(new AssertionSample(START, 50, "ms", Map.of())),
-                                Duration.ofMillis(1), START.plusSeconds(13));
-                Map<String, Object> serialized = MAPPER.readValue(
-                        MAPPER.writeValueAsBytes(assertion), new TypeReference<>() {});
-                assertEquals(status == AssertionStatus.PASSED, serialized.get("passed"));
-                // Derived data must never override the authoritative verdict/status.
-                serialized.put("passed", status != AssertionStatus.PASSED);
-                String key = legacy ? "assertionResult" : AssertionSummary.OUTPUT_KEY;
-                var result = TaskResult.success(ASSERT, "gatling-metric", Duration.ofMillis(1),
-                        Map.of(key, serialized));
-                var context = original.context().with("slo", "agent-1", result);
-                var persisted = new ExecutionState(original.id(), original.scenarioId(), original.status(),
-                        original.phaseStatuses(), context, original.startedAt(), original.updatedAt(),
-                        original.plannedTaskCount(), original.tasks(), original.scenarioYaml(), original.scenarioDetails());
+        for (AssertionStatus status : List.of(AssertionStatus.PASSED, AssertionStatus.FAILED)) {
+            var original = state(definition(List.of()), true, null);
+            Object assertion = AssertionSummary.verdictOnly(ASSERT, status, "Latency objective",
+                    Duration.ofMillis(1), START.plusSeconds(13));
+            Map<String, Object> serialized = MAPPER.readValue(
+                    MAPPER.writeValueAsBytes(assertion), new TypeReference<>() {});
+            assertEquals(status == AssertionStatus.PASSED, serialized.get("passed"));
+            // Derived data must never override the authoritative verdict.
+            serialized.put("passed", status != AssertionStatus.PASSED);
+            var result = TaskResult.success(ASSERT, "direct-assertion", Duration.ofMillis(1),
+                    Map.of(AssertionSummary.OUTPUT_KEY, serialized));
+            var context = original.context().with("slo", "agent-1", result);
+            var persisted = new ExecutionState(original.id(), original.scenarioId(), original.status(),
+                    original.phaseStatuses(), context, original.startedAt(), original.updatedAt(),
+                    original.plannedTaskCount(), original.tasks(), original.scenarioYaml(), original.scenarioDetails());
 
-                var report = engine().generate(persisted);
+            var report = engine().generate(persisted);
 
-                assertEquals(status, report.assertionResults().getFirst().result().status());
-                assertEquals(status == AssertionStatus.PASSED ? Verdict.SUCCESS : Verdict.FAILED, report.verdict());
-                var renderer = new HtmlReportRenderer();
-                assertTrue(new String(renderer.render(report), StandardCharsets.UTF_8).contains(status.name()));
-                assertEquals(status.name(), MAPPER.readTree(new JsonReportRenderer().render(report))
-                        .at("/assertionResults/0/result/status").asText());
-                try (var pdf = PDDocument.load(new PdfReportRenderer(renderer).render(report))) {
-                    assertTrue(new PDFTextStripper().getText(pdf).contains(status.name()));
-                }
-
-                serialized.put("unexpectedField", true);
-                assertThrows(com.performance.platform.application.exception.ReportGenerationException.class,
-                        () -> engine().generate(persisted), "Unknown fields must still fail explicitly");
+            assertEquals(status, report.assertionResults().getFirst().verdict());
+            assertEquals(status == AssertionStatus.PASSED ? Verdict.SUCCESS : Verdict.FAILED, report.verdict());
+            var renderer = new HtmlReportRenderer();
+            assertTrue(new String(renderer.render(report), StandardCharsets.UTF_8).contains(status.name()));
+            assertEquals(status.name(), MAPPER.readTree(new JsonReportRenderer().render(report))
+                    .at("/assertionResults/0/summary/verdict").asText());
+            try (var pdf = PDDocument.load(new PdfReportRenderer(renderer).render(report))) {
+                assertTrue(new PDFTextStripper().getText(pdf).contains(status.name()));
             }
+
+            serialized.put("unexpectedField", true);
+            assertThrows(com.performance.platform.application.exception.ReportGenerationException.class,
+                    () -> engine().generate(persisted), "Unknown fields must still fail explicitly");
         }
     }
 
@@ -153,7 +144,9 @@ class PerformanceReportingTest {
         assertTrue(html.contains("https://monitor.example/d/test?from=1&amp;to=2"));
         assertFalse(html.contains("${"));
         var json = MAPPER.readTree(new JsonReportRenderer().render(report));
-        assertEquals(6, json.get("performance").size());
+        assertEquals(8, json.get("performance").size());
+        assertTrue(json.get("performance").has("sloStatements"));
+        assertEquals("NONE", json.at("/performance/review/state").asText());
         assertEquals("SUCCESS", json.at("/performance/validation/status").asText());
         assertEquals("PERF", json.at("/performance/context/environment").asText());
         assertEquals(50, json.at("/injectionResults/0/metrics/p95Ms").asInt());

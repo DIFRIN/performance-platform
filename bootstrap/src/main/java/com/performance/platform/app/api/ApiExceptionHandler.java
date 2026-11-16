@@ -2,8 +2,10 @@ package com.performance.platform.app.api;
 
 import com.performance.platform.app.api.dto.ValidationErrorResponse;
 import com.performance.platform.application.exception.ExecutionException;
+import com.performance.platform.application.exception.InvalidScheduleException;
 import com.performance.platform.application.exception.InvalidScenarioException;
 import com.performance.platform.application.exception.NoAvailableAgentException;
+import com.performance.platform.application.exception.ScheduleNotFoundException;
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.application.usecase.ExecutionNotDeletableException;
@@ -119,6 +121,32 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(409)
                 .body(Map.of(
                         "error", "EXECUTION_NOT_DELETABLE",
+                        "message", ex.getMessage()));
+    }
+
+    /**
+     * Handles invalid scheduling expressions.
+     * Returns 400 so the UI can display the expected syntax.
+     */
+    @ExceptionHandler(InvalidScheduleException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidSchedule(InvalidScheduleException ex) {
+        log.warn("action=invalid_schedule message={}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(Map.of(
+                        "error", "INVALID_SCHEDULE",
+                        "message", ex.getMessage()));
+    }
+
+    /**
+     * Handles cancellation/consultation of an unknown scheduled run.
+     */
+    @ExceptionHandler(ScheduleNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleScheduleNotFound(ScheduleNotFoundException ex) {
+        log.warn("action=schedule_not_found scheduleId={}",
+                ex.getScheduledRunId().value());
+        return ResponseEntity.status(404)
+                .body(Map.of(
+                        "error", "SCHEDULE_NOT_FOUND",
                         "message", ex.getMessage()));
     }
 

@@ -2,36 +2,47 @@ package com.performance.platform.engine.shared;
 
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
-import com.performance.platform.domain.task.TaskResult;
+
+import java.util.List;
 
 /**
- * Abstrait la stratégie d'exécution d'un step individuel.
+ * Abstrait la strategie d'execution d'un step individuel.
  *
- * <p>En LOCAL ({@code LocalStepDispatcher}) : appel direct à l'executor
- * dans la même JVM (mémoire partagée, pas de sérialisation).</p>
+ * <p>Le moteur a un seul chemin d'execution (ADR-059) : il dispatche toujours
+ * via les ports de transport, quel que soit le mode. En LOCAL le transport est
+ * le transport en memoire et l'agent est embarque.</p>
  *
- * <p>En DISTRIBUTED ({@code RemoteStepDispatcher}) : dispatch via
- * {@code ExecutionTransport} et attente des résultats via
- * {@code TaskCorrelationTracker}.</p>
- *
- * <p>Le {@link DagPhaseExecutor} utilise cette abstraction pour le
- * parcours DAG sans connaître la stratégie de dispatch sous-jacente.</p>
- *
- * <p>Depuis ISSUE-154 : le paramètre {@code Phase} a été supprimé car
- * {@code AssertionExecutor} étend {@code TaskExecutor}, ce qui permet
- * un chemin de résolution unifié pour toutes les phases.</p>
+ * <p>Une <b>action step</b> est executee par {@link #dispatch}. Une
+ * <b>service step</b> (ADR-054) est demarree par {@link #startService} et
+ * arretee par {@link #stopService} ; son resultat est publie au STOP.</p>
  */
-@FunctionalInterface
 public interface StepDispatcher {
 
     /**
-     * Exécute un step et retourne son résultat.
-     * L'implémentation est responsable de la résolution du
-     * {@code TaskExecutor}, du retry, et du transport éventuel.
+     * Execute une action step et retourne un resultat par agent accorde
+     * (un seul en {@code fanOut: one}, tous les agents accordes en {@code all}).
      *
-     * @param execStep le step à exécuter (contient step + dagLevel + deps)
-     * @param context  le contexte d'exécution courant
-     * @return le résultat de l'exécution du step
+     * @param execStep le step a executer
+     * @param context  le contexte d'execution courant
+     * @return les resultats, jamais null
      */
-    TaskResult dispatch(ExecutionStep execStep, ExecutionContext context);
+    List<StepDispatchResult> dispatch(ExecutionStep execStep, ExecutionContext context);
+
+    /**
+     * Demarre une service step. Retourne quand un agent a ete accorde et a
+     * demarre le service ; le service reste vivant jusqu'au STOP.
+     *
+     * @param execStep la service step
+     * @param context  le contexte d'execution courant
+     */
+    void startService(ExecutionStep execStep, ExecutionContext context);
+
+    /**
+     * Arrete une service step et attend le resultat publie au STOP.
+     *
+     * @param execStep la service step
+     * @param context  le contexte d'execution courant
+     * @return les resultats, jamais null
+     */
+    List<StepDispatchResult> stopService(ExecutionStep execStep, ExecutionContext context);
 }

@@ -1,5 +1,8 @@
 # ADR-046 - Execution groups and terminal resource cleanup
 
+**Status** : ACCEPTED  
+**Date** : 2026-11-12
+
 ## Context
 
 Concurrent example runs share a fixed embedded mock port and the SUT database.

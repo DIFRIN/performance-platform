@@ -51,13 +51,10 @@ agent:
     # - docker
     # - filesystem
     #
-    # Assertion tasks (ISSUE-156)
-    # - gatling-metric      # assertion Gatling metrics
-    # - kafka               # assertion Kafka metrics
-    # - wiremock            # assertion WireMock request count
-    # - http-mock           # assertion HTTP mock calls
-    # - file                # assertion fichier (EXISTS, CHECKSUM, etc.)
-    # - database-assertion  # assertion base de donnees (SQL count/exists)
+    # Assertion tasks
+    # - performance-thresholds  # normalized latency / error rate / throughput checks
+    # - direct-assertion        # direct metric checks (database, kafka, http, filesystem)
+    # - panel-assertion         # external dashboard metrics (plugin JAR)
     []
 
 # ---- Transport distribue ----
@@ -78,7 +75,7 @@ platform:
   security:
     enabled: true
 
-  # Named HTTP targets used by http-client / http-mock on agents.
+  # Named HTTP targets used by http-client / mock-server / direct-assertion on agents.
   # The mock is the WireMock EMBEDDED server started by a mock-server step,
   # exposed on the fixed port 8090 of the agent responsible for it.
   http-targets:

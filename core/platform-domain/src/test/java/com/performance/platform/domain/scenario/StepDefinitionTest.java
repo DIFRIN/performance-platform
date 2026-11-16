@@ -97,9 +97,9 @@ class StepDefinitionTest {
         }
 
         @Test
-        @DisplayName("phase null lève NullPointerException")
+        @DisplayName("phase null lève IllegalArgumentException pour une action step")
         void nullPhaseThrows() {
-            assertThrows(NullPointerException.class, () ->
+            assertThrows(IllegalArgumentException.class, () ->
                 new StepDefinition(validTaskId(), "task", null,
                     null, null, null, null, null)
             );

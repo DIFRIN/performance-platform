@@ -44,7 +44,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.Optional;
 import com.performance.platform.domain.execution.ExecutionTask;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 
@@ -385,7 +384,7 @@ class ExecutionControllerTest {
     private static ScenarioDefinition scenarioDefinition(String yaml) {
         return new ScenarioDefinition(
                 ScenarioId.of(SCENARIO_ID), "scenario", "1.0.0",
-                List.of(), Map.of(), ExecutionMode.LOCAL, List.of(), Map.of(), yaml);
+                List.of(), Map.of(), List.of(), yaml, null);
     }
 
     private static ExecutionState buildTerminalStateWithYaml(ExecutionId executionId,

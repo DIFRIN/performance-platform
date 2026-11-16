@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -37,6 +39,10 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
     private final ConcurrentMap<InMemorySubscription, ExecutionEventHandler> subscriptions = new ConcurrentHashMap<>();
     private final ConcurrentMap<InMemorySubscription, AgentLifecycleEventHandler> agentSubscriptions = new ConcurrentHashMap<>();
 
+    /** Livraison des evenements : sequentielle et hors du thread de l'emetteur. */
+    private final ExecutorService eventDispatcher =
+            Executors.newSingleThreadExecutor(runnable -> Thread.ofVirtual().unstarted(runnable));
+
     // === ExecutionTransport ===
 
     @Override
@@ -50,8 +56,9 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
         log.debug("action=dispatch_task executionId={} messageId={} taskName={} handlerCount={}",
                 request.executionId().value(), request.id().value(),
                 request.step().taskName(), taskHandlers.size());
+        // ADR-059 : la livraison ne se fait jamais sur le thread de l'emetteur.
         for (TaskRequestHandler handler : taskHandlers) {
-            handler.onRequest(request);
+            Thread.startVirtualThread(() -> handler.onRequest(request));
         }
     }
 
@@ -64,7 +71,7 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
             throw new TransportException("transport is not connected");
         }
         for (AgentSignalHandler handler : signalHandlers) {
-            handler.onSignal(signal);
+            Thread.startVirtualThread(() -> handler.onSignal(signal));
         }
     }
 
@@ -80,11 +87,14 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
                 event.executionId().value(), event.id().value(),
                 event.agentId() != null ? event.agentId().value() : "null",
                 event.eventType(), subscriptions.size());
-        for (var entry : subscriptions.entrySet()) {
-            if (entry.getKey().isActive()) {
-                entry.getValue().onEvent(event);
+        // Livraison asynchrone mais ordonnee pour un meme agent.
+        eventDispatcher.execute(() -> {
+            for (var entry : subscriptions.entrySet()) {
+                if (entry.getKey().isActive()) {
+                    entry.getValue().onEvent(event);
+                }
             }
-        }
+        });
     }
 
     @Override
@@ -98,11 +108,13 @@ public class InMemoryExecutionTransport implements ExecutionTransport {
         log.debug("action=publish_agent_event eventId={} agentId={} type={} subscriberCount={}",
                 event.id().value(), event.agentId().value(),
                 event.eventType(), agentSubscriptions.size());
-        for (var entry : agentSubscriptions.entrySet()) {
-            if (entry.getKey().isActive()) {
-                entry.getValue().onEvent(event);
+        eventDispatcher.execute(() -> {
+            for (var entry : agentSubscriptions.entrySet()) {
+                if (entry.getKey().isActive()) {
+                    entry.getValue().onEvent(event);
+                }
             }
-        }
+        });
     }
 
     @Override

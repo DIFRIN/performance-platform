@@ -121,14 +121,70 @@ class ModuleDependencyTest {
     @DisplayName("assertion ne depend pas de injection-gatling")
     void assertionMustNotDependOnInjection() {
         assertNoDependency(ASSERTION, INJECTION, Set.of(),
-                "GatlingMetricAssertionExecutor utilise domain.injection.InjectionResult");
+                "les assertions lisent domain.injection.InjectionResult sans dependre de Gatling");
     }
 
     @Test
     @DisplayName("assertion ne depend pas de infrastructure")
     void assertionMustNotDependOnInfrastructure() {
         assertNoDependency(ASSERTION, INFRASTRUCTURE, Set.of(),
-                "les cibles HTTP passent par le port application.ports.out.EndpointResolver");
+                "les cibles HTTP passent par le port plugin.resource.EndpointResolver");
+    }
+
+    private static final String EXECUTOR = INFRASTRUCTURE + "executor/";
+    private static final String PERSISTENCE = INFRASTRUCTURE + "persistence/";
+    private static final List<String> EXECUTOR_FAMILIES =
+            List.of("database", "docker", "fs", "http", "kafka", "mock", "shell");
+
+    @Test
+    @DisplayName("le scanner voit chaque module d'executor et la persistance (ADR-057)")
+    void scannerMustSeeEveryCapabilityModule() {
+        for (String family : EXECUTOR_FAMILIES) {
+            assertThat(dependencies.keySet())
+                    .as("module executor %s", family)
+                    .anyMatch(c -> c.startsWith(EXECUTOR + family + "/"));
+        }
+        assertThat(dependencies.keySet()).anyMatch(c -> c.startsWith(PERSISTENCE));
+    }
+
+    @Test
+    @DisplayName("un module d'executor ne depend d'aucun autre module d'executor (ADR-057)")
+    void executorFamiliesMustBeIndependent() {
+        for (String source : EXECUTOR_FAMILIES) {
+            for (String target : EXECUTOR_FAMILIES) {
+                if (!source.equals(target)) {
+                    assertNoDependency(EXECUTOR + source + "/", EXECUTOR + target + "/", Set.of(),
+                            "les ressources partagees passent par les ports application.ports.out");
+                }
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("executors et persistance sont independants (ADR-057)")
+    void executorsAndPersistenceMustBeIndependent() {
+        for (String family : EXECUTOR_FAMILIES) {
+            assertNoDependency(EXECUTOR + family + "/", PERSISTENCE, Set.of(),
+                    "un executor ne voit jamais le store de l'orchestrateur");
+            assertNoDependency(PERSISTENCE, EXECUTOR + family + "/", Set.of(),
+                    "le store possede sa propre DataSource (PersistenceDataSourceConfiguration)");
+        }
+    }
+
+    @Test
+    @DisplayName("un executor ne depend que des contrats plugin-api et domain (ADR-057)")
+    void executorsMustDependOnlyOnPluginContracts() {
+        assertNoDependency(EXECUTOR, "com/performance/platform/application/", Set.of(),
+                "ports et valeurs dynamiques sont dans platform-plugin-api (plugin.resource, plugin.template)");
+    }
+
+    @Test
+    @DisplayName("JPA confine au module de persistance (ADR-057)")
+    void jpaMustStayInPersistence() {
+        for (String source : List.of(EXECUTOR, INFRASTRUCTURE + "plugin/", INFRASTRUCTURE + "scheduling/")) {
+            assertNoDependency(source, "jakarta/persistence/", Set.of(),
+                    "seul platform-persistence embarque JPA");
+        }
     }
 
     // ------------------------------------------------------------------

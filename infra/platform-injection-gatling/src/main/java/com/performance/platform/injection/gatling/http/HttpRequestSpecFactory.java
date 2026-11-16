@@ -2,8 +2,8 @@ package com.performance.platform.injection.gatling.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.performance.platform.application.ports.out.Endpoint;
-import com.performance.platform.application.ports.out.EndpointResolver;
+import com.performance.platform.plugin.resource.Endpoint;
+import com.performance.platform.plugin.resource.EndpointResolver;
 
 import java.util.ArrayList;
 import java.util.Collection;

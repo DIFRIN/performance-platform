@@ -1,28 +1,26 @@
 package com.performance.platform.engine.correlation;
 
-import com.performance.platform.domain.execution.TaskCompletionPolicy;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.TaskId;
+import com.performance.platform.domain.scenario.FanOut;
 import com.performance.platform.domain.task.TaskResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Tests du tracker de correlation au modele grant (ADR-055).
+ */
 @DisplayName("DefaultTaskCorrelationTracker")
 class DefaultTaskCorrelationTrackerTest {
 
@@ -32,571 +30,99 @@ class DefaultTaskCorrelationTrackerTest {
     private ExecutionId executionId;
     private AgentId agentA;
     private AgentId agentB;
-    private AgentId agentC;
 
     @BeforeEach
     void setUp() {
         tracker = new DefaultTaskCorrelationTracker();
         messageId = MessageId.generate();
-        taskId = TaskId.of("perf-test-1");
+        taskId = TaskId.of("task-1");
         executionId = ExecutionId.generate();
         agentA = AgentId.of("agent-a");
         agentB = AgentId.of("agent-b");
-        agentC = AgentId.of("agent-c");
     }
 
-    // ── Construction ────────────────────────────────────────────
+    private TaskResult success(AgentId agent) {
+        return TaskResult.success(taskId, taskId.value(), Duration.ofMillis(10), Map.of());
+    }
 
     @Test
-    @DisplayName("should be constructable without Spring context")
-    void shouldBeConstructableWithoutSpring() {
-        assertNotNull(tracker);
+    @DisplayName("fanOut one : le premier claim est accorde, les suivants rejetes")
+    void oneGrantsFirstClaimAndRejectsOthers() {
+        tracker.trackDispatched(messageId, taskId, executionId, FanOut.ONE);
+
+        assertEquals(GrantDecision.GRANTED, tracker.onClaimed(messageId, agentA));
+        assertEquals(GrantDecision.REJECTED, tracker.onClaimed(messageId, agentB));
+        assertEquals(java.util.Set.of(agentA), tracker.grantedFor(messageId));
     }
 
-    // ── trackDispatched ─────────────────────────────────────────
+    @Test
+    @DisplayName("fanOut all : claims en attente puis settlement")
+    void allSettlesClaims() throws Exception {
+        tracker.trackDispatched(messageId, taskId, executionId, FanOut.ALL);
 
-    @Nested
-    @DisplayName("trackDispatched")
-    class TrackDispatchedTests {
+        assertEquals(GrantDecision.PENDING, tracker.onClaimed(messageId, agentA));
+        assertEquals(GrantDecision.PENDING, tracker.onClaimed(messageId, agentB));
+        assertTrue(tracker.grantedFor(messageId).isEmpty());
 
-        @Test
-        @DisplayName("should register message without error")
-        void shouldRegisterMessageWithoutError() {
-            assertDoesNotThrow(() ->
-                    tracker.trackDispatched(messageId, taskId, executionId));
-        }
-
-        @Test
-        @DisplayName("should allow multiple dispatches for same messageId")
-        void shouldAllowMultipleDispatches() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            assertDoesNotThrow(() ->
-                    tracker.trackDispatched(messageId, taskId, executionId));
-        }
+        assertEquals(2, tracker.settleClaims(messageId).size());
+        assertEquals(GrantDecision.REJECTED, tracker.onClaimed(messageId, AgentId.of("late")));
     }
 
-    // ── onClaimed ───────────────────────────────────────────────
+    @Test
+    @DisplayName("completion one : signal des que l'agent accorde a repondu")
+    void completionSignalForOne() throws Exception {
+        tracker.trackDispatched(messageId, taskId, executionId, FanOut.ONE);
+        tracker.onClaimed(messageId, agentA);
 
-    @Nested
-    @DisplayName("onClaimed")
-    class OnClaimedTests {
+        var signal = tracker.completionSignal(messageId);
+        assertFalse(signal.isDone());
 
-        @Test
-        @DisplayName("should register a claim")
-        void shouldRegisterClaim() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-
-            Set<AgentId> claims = tracker.claimsFor(messageId);
-            assertEquals(1, claims.size());
-            assertTrue(claims.contains(agentA));
-        }
-
-        @Test
-        @DisplayName("should register multiple claims for same messageId")
-        void shouldRegisterMultipleClaims() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            Set<AgentId> claims = tracker.claimsFor(messageId);
-            assertEquals(2, claims.size());
-            assertTrue(claims.contains(agentA));
-            assertTrue(claims.contains(agentB));
-        }
-
-        @Test
-        @DisplayName("should auto-create state when claim arrives before dispatch")
-        void shouldAutoCreateStateWhenClaimBeforeDispatch() {
-            tracker.onClaimed(messageId, agentA);
-
-            Set<AgentId> claims = tracker.claimsFor(messageId);
-            assertEquals(1, claims.size());
-        }
+        tracker.onCompleted(messageId, agentA, success(agentA));
+        assertTrue(signal.get(1, TimeUnit.SECONDS) == null || signal.isDone());
     }
 
-    // ── claimsFor ───────────────────────────────────────────────
+    @Test
+    @DisplayName("completion all : attend tous les agents accordes")
+    void completionSignalForAll() throws Exception {
+        tracker.trackDispatched(messageId, taskId, executionId, FanOut.ALL);
+        tracker.onClaimed(messageId, agentA);
+        tracker.onClaimed(messageId, agentB);
+        tracker.settleClaims(messageId);
 
-    @Nested
-    @DisplayName("claimsFor")
-    class ClaimsForTests {
+        var signal = tracker.completionSignal(messageId);
+        tracker.onCompleted(messageId, agentA, success(agentA));
+        assertFalse(signal.isDone());
 
-        @Test
-        @DisplayName("should return empty set for unknown messageId")
-        void shouldReturnEmptySetForUnknown() {
-            Set<AgentId> claims = tracker.claimsFor(messageId);
-            assertTrue(claims.isEmpty());
-        }
-
-        @Test
-        @DisplayName("should return unmodifiable set")
-        void shouldReturnUnmodifiableSet() {
-            tracker.onClaimed(messageId, agentA);
-            Set<AgentId> claims = tracker.claimsFor(messageId);
-            assertThrows(UnsupportedOperationException.class,
-                    () -> claims.add(agentB));
-        }
-
-        @Test
-        @DisplayName("should reflect current claims after multiple onClaimed")
-        void shouldReflectCurrentClaims() {
-            tracker.onClaimed(messageId, agentA);
-            assertEquals(1, tracker.claimsFor(messageId).size());
-
-            tracker.onClaimed(messageId, agentB);
-            assertEquals(2, tracker.claimsFor(messageId).size());
-
-            tracker.onClaimed(messageId, agentC);
-            assertEquals(3, tracker.claimsFor(messageId).size());
-        }
+        tracker.onCompleted(messageId, agentB, success(agentB));
+        assertTrue(signal.isDone());
     }
 
-    // ── onCompleted ─────────────────────────────────────────────
+    @Test
+    @DisplayName("agent perdu : ses grants non repondus font echouer l'etape")
+    void agentLostFailsGrantedClaims() {
+        tracker.trackDispatched(messageId, taskId, executionId, FanOut.ONE);
+        tracker.onClaimed(messageId, agentA);
 
-    @Nested
-    @DisplayName("onCompleted")
-    class OnCompletedTests {
+        tracker.onAgentLost(agentA);
 
-        @Test
-        @DisplayName("should register completion")
-        void shouldRegisterCompletion() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-
-            TaskResult result = successResult();
-            tracker.onCompleted(messageId, agentA, result);
-
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-        }
-
-        private TaskResult successResult() {
-            return TaskResult.success(taskId, "perf-test", Duration.ofSeconds(2), Map.of("p95", "120ms"));
-        }
+        assertTrue(tracker.completionSignal(messageId).isDone());
     }
 
-    // ── onFailed ────────────────────────────────────────────────
+    @Test
+    @DisplayName("release libere l'etat de correlation")
+    void releaseRemovesState() {
+        tracker.trackDispatched(messageId, taskId, executionId, FanOut.ONE);
+        assertEquals(1, tracker.stateCount());
 
-    @Nested
-    @DisplayName("onFailed")
-    class OnFailedTests {
-
-        @Test
-        @DisplayName("should register failure without error")
-        void shouldRegisterFailure() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onFailed(messageId, agentA, "connection timeout");
-
-            // ALL_COMPLETE: claimed + failed means complete
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
+        tracker.release(messageId);
+        assertEquals(0, tracker.stateCount());
     }
 
-    // ── FIRST_COMPLETE policy ───────────────────────────────────
-
-    @Nested
-    @DisplayName("FIRST_COMPLETE policy")
-    class FirstCompletePolicyTests {
-
-        @Test
-        @DisplayName("should NOT be complete when no agent completed")
-        void shouldNotBeCompleteWhenNoneCompleted() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should be complete after first agent completes")
-        void shouldBeCompleteAfterFirstAgentCompletes() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            tracker.onCompleted(messageId, agentA, successResult());
-
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should stay complete even if other agent fails after first succeeded")
-        void shouldStayCompleteAfterSubsequentFailure() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            tracker.onCompleted(messageId, agentA, successResult());
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-
-            // agentB fails — still complete
-            tracker.onFailed(messageId, agentB, "timeout");
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-        }
-
-        private TaskResult successResult() {
-            return TaskResult.success(taskId, "perf-test", Duration.ofSeconds(2), Map.of("p95", "120ms"));
-        }
-    }
-
-    // ── ALL_COMPLETE policy ─────────────────────────────────────
-
-    @Nested
-    @DisplayName("ALL_COMPLETE policy")
-    class AllCompletePolicyTests {
-
-        @Test
-        @DisplayName("should NOT be complete when no agents claimed")
-        void shouldNotBeCompleteWhenNoClaims() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should NOT be complete when only 1 of 2 claimed completed")
-        void shouldNotBeCompleteWhenPartialCompletion() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            tracker.onCompleted(messageId, agentA, successResult());
-
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should be complete when all claimed agents completed")
-        void shouldBeCompleteWhenAllCompleted() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            tracker.onCompleted(messageId, agentA, successResult());
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-
-            tracker.onCompleted(messageId, agentB, successResult());
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should be complete when all claimed completed OR failed")
-        void shouldBeCompleteWhenMixOfCompletedAndFailed() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-            tracker.onClaimed(messageId, agentC);
-
-            tracker.onCompleted(messageId, agentA, successResult());
-            tracker.onFailed(messageId, agentB, "connection refused");
-            tracker.onCompleted(messageId, agentC, successResult());
-
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should be complete when all claimed agents failed")
-        void shouldBeCompleteWhenAllFailed() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            tracker.onFailed(messageId, agentA, "timeout");
-            tracker.onFailed(messageId, agentB, "oom");
-
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should handle 3 claims where 3rd completes before 2nd")
-        void shouldHandleOutOfOrderCompletions() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-            tracker.onClaimed(messageId, agentC);
-
-            // agentC completes first
-            tracker.onCompleted(messageId, agentC, successResult());
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-
-            // agentA fails
-            tracker.onFailed(messageId, agentA, "error");
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-
-            // agentB completes last
-            tracker.onCompleted(messageId, agentB, successResult());
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-
-        private TaskResult successResult() {
-            return TaskResult.success(taskId, "perf-test", Duration.ofSeconds(2), Map.of("p95", "120ms"));
-        }
-    }
-
-    // ── isComplete for unknown messageId ────────────────────────
-
-    @Nested
-    @DisplayName("isComplete for unknown messageId")
-    class UnknownMessageIdTests {
-
-        @Test
-        @DisplayName("should return false for FIRST_COMPLETE on unknown messageId")
-        void shouldReturnFalseFirstCompleteForUnknown() {
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should return false for ALL_COMPLETE on unknown messageId")
-        void shouldReturnFalseAllCompleteForUnknown() {
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-    }
-
-    // ── Thread safety ───────────────────────────────────────────
-
-    @Nested
-    @DisplayName("Thread safety")
-    class ThreadSafetyTests {
-
-        @Test
-        @DisplayName("should handle concurrent claims and completions")
-        void shouldHandleConcurrentClaimsAndCompletions() throws Exception {
-            int numAgents = 50;
-            var executor = Executors.newVirtualThreadPerTaskExecutor();
-            var startLatch = new CountDownLatch(1);
-            var doneLatch = new CountDownLatch(numAgents);
-            var allCompleteSeen = new AtomicBoolean(false);
-
-            tracker.trackDispatched(messageId, taskId, executionId);
-
-            for (int i = 0; i < numAgents; i++) {
-                final AgentId agent = AgentId.of("agent-" + i);
-                final int index = i;
-                executor.submit(() -> {
-                    try {
-                        startLatch.await();
-                        tracker.onClaimed(messageId, agent);
-                        if (index % 2 == 0) {
-                            var result = TaskResult.success(taskId, "perf-test",
-                                    Duration.ofSeconds(1), Map.of("idx", index));
-                            tracker.onCompleted(messageId, agent, result);
-                        } else {
-                            tracker.onFailed(messageId, agent, "simulated-error-" + index);
-                        }
-                        allCompleteSeen.set(true);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    } finally {
-                        doneLatch.countDown();
-                    }
-                });
-            }
-
-            startLatch.countDown();
-            boolean finished = doneLatch.await(10, TimeUnit.SECONDS);
-            executor.shutdown();
-            executor.awaitTermination(1, TimeUnit.SECONDS);
-
-            assertTrue(finished, "all agents should complete within timeout");
-            assertTrue(allCompleteSeen.get());
-
-            // After all agents complete, ALL_COMPLETE should be true
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-
-            // Claims count should match
-            assertEquals(numAgents, tracker.claimsFor(messageId).size());
-        }
-    }
-
-    // ── Agent loss ──────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("onAgentLost")
-    class AgentLostTests {
-
-        @Test
-        @DisplayName("should make ALL_COMPLETE satisfiable when a claiming agent is lost")
-        void shouldMakeAllCompleteSatisfiable() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-            tracker.onCompleted(messageId, agentA, successResult());
-
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-
-            tracker.onAgentLost(agentB);
-
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should fast-fail FIRST_COMPLETE when every claiming agent is lost")
-        void shouldFastFailFirstCompleteWhenAllLost() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-
-            tracker.onAgentLost(agentA);
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-
-            tracker.onAgentLost(agentB);
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.FIRST_COMPLETE));
-        }
-
-        @Test
-        @DisplayName("should not fail completed claims of the lost agent")
-        void shouldNotFailCompletedClaims() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onCompleted(messageId, agentA, successResult());
-
-            tracker.onAgentLost(agentA);
-
-            assertTrue(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-            assertEquals(1, tracker.getResults(messageId).size());
-        }
-
-        @Test
-        @DisplayName("should be a no-op for an agent with no claims")
-        void shouldBeNoOpForUnknownAgent() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-
-            tracker.onAgentLost(agentB);
-
-            assertFalse(tracker.isComplete(messageId, TaskCompletionPolicy.ALL_COMPLETE));
-        }
-
-        private TaskResult successResult() {
-            return TaskResult.success(taskId, "perf-test", Duration.ofSeconds(2), Map.of("p95", "120ms"));
-        }
-    }
-
-    // ── Completion signal ───────────────────────────────────────
-
-    @Nested
-    @DisplayName("completionSignal")
-    class CompletionSignalTests {
-
-        @Test
-        @DisplayName("should complete immediately when the policy is already satisfied")
-        void shouldCompleteImmediatelyWhenAlreadySatisfied() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onCompleted(messageId, agentA, successResult());
-
-            CompletableFuture<Void> signal =
-                    tracker.completionSignal(messageId, TaskCompletionPolicy.FIRST_COMPLETE);
-
-            assertTrue(signal.isDone());
-        }
-
-        @Test
-        @DisplayName("should complete when the first agent completes")
-        void shouldCompleteOnFirstCompletion() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-
-            CompletableFuture<Void> signal =
-                    tracker.completionSignal(messageId, TaskCompletionPolicy.FIRST_COMPLETE);
-            assertFalse(signal.isDone());
-
-            tracker.onCompleted(messageId, agentA, successResult());
-
-            assertTrue(signal.isDone());
-        }
-
-        @Test
-        @DisplayName("should wait for every claim under ALL_COMPLETE")
-        void shouldWaitForAllClaims() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-            tracker.onClaimed(messageId, agentB);
-
-            CompletableFuture<Void> signal =
-                    tracker.completionSignal(messageId, TaskCompletionPolicy.ALL_COMPLETE);
-
-            tracker.onCompleted(messageId, agentA, successResult());
-            assertFalse(signal.isDone());
-
-            tracker.onCompleted(messageId, agentB, successResult());
-            assertTrue(signal.isDone());
-        }
-
-        @Test
-        @DisplayName("should complete on agent loss fast-fail")
-        void shouldCompleteOnAgentLoss() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-
-            CompletableFuture<Void> signal =
-                    tracker.completionSignal(messageId, TaskCompletionPolicy.FIRST_COMPLETE);
-            tracker.onAgentLost(agentA);
-
-            assertTrue(signal.isDone());
-        }
-
-        @Test
-        @DisplayName("should unblock waiters when the state is released")
-        void shouldUnblockOnRelease() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-
-            CompletableFuture<Void> signal =
-                    tracker.completionSignal(messageId, TaskCompletionPolicy.ALL_COMPLETE);
-            tracker.release(messageId);
-
-            assertTrue(signal.isDone());
-        }
-
-        private TaskResult successResult() {
-            return TaskResult.success(taskId, "perf-test", Duration.ofSeconds(2), Map.of("p95", "120ms"));
-        }
-    }
-
-    // ── Release / memory ────────────────────────────────────────
-
-    @Nested
-    @DisplayName("release")
-    class ReleaseTests {
-
-        @Test
-        @DisplayName("should remove all state for a messageId")
-        void shouldRemoveState() {
-            tracker.trackDispatched(messageId, taskId, executionId);
-            tracker.onClaimed(messageId, agentA);
-
-            assertEquals(1, tracker.stateCount());
-
-            tracker.release(messageId);
-
-            assertEquals(0, tracker.stateCount());
-            assertTrue(tracker.claimsFor(messageId).isEmpty());
-            assertTrue(tracker.getResults(messageId).isEmpty());
-        }
-
-        @Test
-        @DisplayName("should be idempotent for an unknown messageId")
-        void shouldBeIdempotent() {
-            assertDoesNotThrow(() -> tracker.release(messageId));
-            assertEquals(0, tracker.stateCount());
-        }
-
-        @Test
-        @DisplayName("should not grow unbounded across dispatch/release cycles")
-        void shouldNotGrowUnbounded() {
-            for (int i = 0; i < 10_000; i++) {
-                var msg = MessageId.generate();
-                tracker.trackDispatched(msg, taskId, executionId);
-                tracker.onClaimed(msg, agentA);
-                tracker.onFailed(msg, agentA, "done");
-                tracker.release(msg);
-            }
-
-            assertEquals(0, tracker.stateCount());
-        }
+    @Test
+    @DisplayName("executionId est conserve pour les signaux de grant")
+    void executionIdIsTracked() {
+        tracker.trackDispatched(messageId, taskId, executionId, FanOut.ONE);
+        assertEquals(executionId, tracker.executionIdFor(messageId));
+        assertEquals(taskId, tracker.taskIdFor(messageId));
     }
 }

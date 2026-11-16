@@ -1,5 +1,8 @@
 # ADR-043 - Execution inspection snapshots
 
+**Status** : ACCEPTED  
+**Date** : 2026-10-31
+
 ## Context
 
 The execution UI needs technical step configuration before completion, per-agent

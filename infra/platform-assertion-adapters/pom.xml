@@ -13,20 +13,13 @@
 
     <artifactId>platform-assertion-adapters</artifactId>
     <name>Platform Assertion Adapters</name>
-    <description>Assertion framework: AssertionExecutorRegistry, GatlingMetricAssertionExecutor, DatabaseAssertionExecutor, etc.</description>
+    <description>Assertion families: performance-thresholds, direct-assertion, shared check pipeline.</description>
 
     <dependencies>
-        <!-- Domaine pur (AssertionResult, AssertionStatus, etc.) -->
+        <!-- Domaine pur (AssertionSummary, AssertionStatus, Check, etc.) -->
         <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-domain</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- Ports applicatifs (HttpTargetResolver) -->
-        <dependency>
-            <groupId>com.performance</groupId>
-            <artifactId>platform-use-cases</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -115,7 +108,13 @@
             <artifactId>HikariCP</artifactId>
             <scope>test</scope>
         </dependency>
-            <dependency>
+            <!-- Spring JDBC : mesure directe des metriques base de donnees (ADR-049) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-assertion</artifactId>
             <version>${project.version}</version>

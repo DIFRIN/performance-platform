@@ -12,15 +12,18 @@
 
 | Fichier | Domaine | Modules Maven | Concepts clés |
 |---|---|---|---|
-| `01-scenario-dsl.md` | Parsing YAML, validation DAG, LoadModels | `platform-scenario-dsl` | `ScenarioDefinition`, `StepDefinition`, `ValidationResult` |
+| `01-scenario-dsl.md` | Parsing YAML, validation DAG, load model inline | `platform-scenario-dsl` | `ScenarioDefinition`, `StepDefinition`, `ValidationResult` |
 | `02-execution-engine.md` | Orchestration, DAG, phases, verdict, dispatch | `platform-execution-engine` | `ExecutionEngine`, `StepDispatcher`, `DagPhaseExecutor`, `ExecutionPlan` |
-| `03-task-framework.md` | Contrats de tâches, registre, plugins JAR | `platform-plugin-api`, `platform-infrastructure` | `TaskExecutor`, `@Preparation/@Injection/@Assertion`, `TaskExecutorRegistry` |
+| `03-task-framework.md` | Contrats de tâches, registre, plugins JAR | `platform-plugin-api`, `platform-infrastructure`, `platform-executor-*` | `TaskExecutor`, `@Preparation/@Injection/@Assertion`, `TaskExecutorRegistry` |
 | `04-agent-runtime.md` | Runtime agent unique, spécialisation, registre, TTL | `platform-agent-runtime` | `TaskAgentRuntime`, `TaskSpecializationFilter`, `AgentTtlMonitor` |
 | `05-transport-layer.md` | Canaux de communication et implémentations | `platform-transport` | `TaskChannel`, `SignalChannel`, `EventChannel`, `LifecycleChannel` |
 | `06-injection-gatling.md` | Injection de charge Gatling | `platform-injection-gatling` | `GatlingTaskExecutor`, `GatlingRunner`, `LoadModelTranslator` |
-| `07-assertion-framework.md` | Assertions post-injection | `platform-assertion` | `AssertionExecutor`, `AssertionResult`, `AssertionSummary` |
+| `07-assertion-framework.md` | Assertions post-injection | `platform-assertion` | `AssertionExecutor`, `Check`, `AssertionSummary`, `SloStatement` |
 | `08-report-engine.md` | Rapport de campagne | `platform-reporting` | `DefaultReportEngine`, `CampaignReport`, renderers, `ReportFileWriter` |
 | `09-deployment.md` | Docker, compose LOCAL/DISTRIBUTED et exemple | `distribution` | Dockerfile, compose, profils Spring |
+| `10-observability-assertions-and-evidence.md` | Métriques externes, critères temporels, preuves et revue | `platform-assertion`, `platform-reporting`, `tools/observability-probe` | `Observation`, `SeriesObservation`, `TemporalCriterion`, `ReviewState`, `panel-assertion` |
+
+Guide de l'outil annexe : [`../tools/observability-probe.md`](../tools/observability-probe.md).
 
 > Il n'existe **pas** de module publisher : la sortie des rapports est locale
 > (`reporting.output-directory`, ADR-022). Les anciens Confluence/S3/Git/SharePoint/Nexus
@@ -40,7 +43,7 @@ flowchart TB
     TASKS --> GATLING["06 · Injection Gatling"]
     TASKS --> ASSERT["07 · Assertion Framework"]
     GATLING -->|InjectionResult| REPORT["08 · Report Engine"]
-    ASSERT -->|AssertionResult| REPORT
+    ASSERT -->|AssertionSummary| REPORT
     REPORT --> WRITER["ReportFileWriter<br/>bean non câblé"]
     WRITER --> OUT["reporting.output-directory"]
 ```
@@ -93,6 +96,13 @@ En mode CLI headless, l'application parse le scénario, l'exécute, imprime un r
 stdout et sort avec un code de retour (0 succès / 1 échec / 2 arguments invalides).
 Aucun serveur HTTP ni IHM. En l'absence de `--scenario=`, l'application démarre en
 serveur long-running (API + IHM si activée).
+
+La planification d'un run (ADR-048) utilise la même grammaire dans les trois modes
+d'accès : `now`/vide, `in 10m`/`in 1h30m`, un instant ISO-8601, ou une expression cron
+(5 ou 6 champs, préfixe `cron:` optionnel). L'IHM l'expose sur chaque action de run
+(saisie libre + propositions) ; le CLI la lit depuis `--schedule=` ou
+`platform.schedule`/`SCHEDULE` et attend l'échéance pour un run one-shot (le cron est
+refusé en headless, code de sortie 2) ; l'API utilise `POST /api/v1/schedules`.
 
 ### Profiles Spring fournis
 

@@ -1,7 +1,7 @@
 package com.performance.platform.injection.gatling.kafka;
 
-import com.performance.platform.application.ports.out.MessageChannel;
-import com.performance.platform.application.ports.out.MessageChannelFactory;
+import com.performance.platform.plugin.resource.MessageChannel;
+import com.performance.platform.plugin.resource.MessageChannelFactory;
 import com.performance.platform.domain.injection.LoadModel;
 import com.performance.platform.domain.injection.LoadModelType;
 import com.performance.platform.domain.id.TaskId;

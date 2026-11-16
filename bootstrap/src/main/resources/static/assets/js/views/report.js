@@ -1,52 +1,49 @@
-/**
+﻿/**
  * Report view.
- * PDR-029 — ISSUE-130
  *
- * Mounts the report view for a completed execution:
- * - Polls GET /api/v1/executions/{id}/report?format=html every 3 seconds
- * - While 404: displays "rapport en cours de generation"
- * - On 200: loads the HTML report in a full-width <iframe>
- * - Download buttons for PDF and JSON formats (enabled only when report is available)
- * - The client NEVER triggers report generation (reports are generated automatically
- *   at the end of the execution lifecycle).
+ * - Polls the HTML report every 3 seconds until it is available
+ *   (visibility-aware: polling pauses while the tab is hidden)
+ * - Shows "report generation in progress" until the file exists
+ * - Renders the report in a full-width iframe once available
+ * - Actions: PDF, JSON, HTML download, open in new tab, print
+ *
+ * The client NEVER triggers report generation: reports are produced at the
+ * end of the execution lifecycle.
  *
  * Public API:
- *   mount(el, executionId) → { cleanup: Function }
- *
- * The cleanup function clears the polling interval so there is no leak
- * when the router switches to another view.
+ *   mount(el, executionId) -> { cleanup: Function }
  */
 
 import { reportUrl, isReportAvailable } from "/assets/js/api.js";
+import {
+    createPoller,
+    refreshStatusText,
+    toast,
+    escapeHtml,
+    escapeAttr
+} from "/assets/js/ui.js";
 
-/** Polling interval in milliseconds. */
 const POLL_INTERVAL_MS = 3000;
 
 /**
- * Mount the report view inside the given element.
+ * Mount the report view.
  *
- * @param {HTMLElement} el — the container element for this view
- * @param {string} executionId — the execution identifier from the route
+ * @param {HTMLElement} el
+ * @param {string} executionId
  * @returns {{cleanup: Function}}
  */
 export function mount(el, executionId) {
-    /* ---- State ---- */
-    var intervalId = null;
-    var reportReady = false;
-    var disposed = false;
-    var inFlight = false;
+    let reportReady = false;
+    let disposed = false;
+    let iframeEl = null;
 
-    /* ---- Skeleton ---- */
     el.innerHTML = buildSkeleton(executionId);
 
-    var bodyEl = el.querySelector("#report-body");
-    var backLink = el.querySelector("[data-report-back]");
-    var downloadPdfBtn = el.querySelector("[data-report-download='pdf']");
-    var downloadJsonBtn = el.querySelector("[data-report-download='json']");
+    const bodyEl = el.querySelector("#report-body");
+    const backLink = el.querySelector("[data-report-back]");
+    const refreshStateEl = el.querySelector("[data-refresh-state]");
+    const actionButtons = el.querySelectorAll("[data-report-action]");
 
-    /* ---- Event handlers ---- */
-
-    // Back link
     if (backLink) {
         backLink.addEventListener("click", function (e) {
             e.preventDefault();
@@ -54,88 +51,108 @@ export function mount(el, executionId) {
         });
     }
 
-    // Download buttons
-    if (downloadPdfBtn) {
-        downloadPdfBtn.addEventListener("click", function (e) {
+    actionButtons.forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
             e.preventDefault();
-            window.open(reportUrl(executionId, "pdf"), "_blank");
-        });
-    }
+            if (btn.disabled) return;
+            const action = btn.dataset.reportAction;
+            const format = btn.dataset.reportFormat;
 
-    if (downloadJsonBtn) {
-        downloadJsonBtn.addEventListener("click", function (e) {
-            e.preventDefault();
-            window.open(reportUrl(executionId, "json"), "_blank");
+            if (action === "open" && format) {
+                window.open(reportUrl(executionId, format), "_blank", "noopener");
+                return;
+            }
+            if (action === "download" && format) {
+                const link = document.createElement("a");
+                link.href = reportUrl(executionId, format);
+                link.download = "report-" + executionId + "." + format;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                return;
+            }
+            if (action === "print") {
+                printReport();
+            }
         });
-    }
+    });
 
-    /* ---- Poll & Render loop ---- */
+    function printReport() {
+        if (!iframeEl || !iframeEl.contentWindow) {
+            window.open(reportUrl(executionId, "html"), "_blank", "noopener");
+            return;
+        }
+        try {
+            iframeEl.contentWindow.focus();
+            iframeEl.contentWindow.print();
+        } catch (e) {
+            console.error("report: print failed", e);
+            toast("Print unavailable, opening the report instead", { variant: "warning" });
+            window.open(reportUrl(executionId, "html"), "_blank", "noopener");
+        }
+    }
 
     async function pollAndRender() {
-        if (disposed || inFlight || reportReady) return;
-        inFlight = true;
+        if (disposed || reportReady) return;
         try {
-            var available = await isReportAvailable(executionId);
+            const available = await isReportAvailable(executionId);
             if (disposed) return;
             if (available) {
                 renderIframe(bodyEl, executionId);
-                enableDownloadButtons(downloadPdfBtn, downloadJsonBtn);
+                iframeEl = bodyEl.querySelector("iframe");
+                enableActions(actionButtons);
                 reportReady = true;
-                if (intervalId !== null) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                }
-            } else if (!reportReady) {
+                poller.pause();
+            } else {
                 renderPending(bodyEl);
             }
         } catch (e) {
             console.error("report: poll failed", e);
             if (!disposed && !reportReady) {
-                renderError(bodyEl, e.message || "Failed to check report availability");
+                renderError(bodyEl, e.message || "Failed to check report availability", function () {
+                    poller.refresh();
+                });
             }
-        } finally {
-            inFlight = false;
         }
     }
 
-    // Initial fetch
-    pollAndRender();
+    const poller = createPoller({
+        run: pollAndRender,
+        intervalMs: POLL_INTERVAL_MS,
+        onState: function (next) {
+            if (refreshStateEl) refreshStateEl.textContent = refreshStatusText(next);
+        }
+    });
+    poller.start();
 
-    // Start polling
-    intervalId = setInterval(pollAndRender, POLL_INTERVAL_MS);
-
-    /* ---- Cleanup ---- */
     return {
         cleanup: function () {
             disposed = true;
-            if (intervalId !== null) {
-                clearInterval(intervalId);
-                intervalId = null;
-            }
+            poller.stop();
         }
     };
 }
 
 // ---------------------------------------------------------------------------
-// Internal helpers — skeleton
+// Skeleton
 // ---------------------------------------------------------------------------
 
-/**
- * Build the static skeleton HTML.
- * @param {string} executionId
- * @returns {string}
- */
 function buildSkeleton(executionId) {
     return '' +
         '<div class="detail-card report-card">' +
         '  <div class="detail-card__header">' +
         '    <div class="detail-header__left">' +
         '      <a href="#/executions/' + escapeAttr(executionId) + '" class="detail-back-link" data-report-back>&larr; Back to Execution</a>' +
-        '      <h1 class="detail-header__title">Report for <span class="text-mono">' + escapeHtml(executionId) + '</span></h1>' +
+        '      <h1 class="detail-header__title" data-page-heading>Report for <span class="text-mono">' +
+        escapeHtml(executionId) + '</span></h1>' +
+        '      <span class="refresh-state" data-refresh-state aria-live="polite">Waiting for data\u2026</span>' +
         '    </div>' +
         '    <div class="detail-header__right report-download-actions">' +
-        '      <button class="btn btn--sm" data-report-download="pdf" disabled title="Download PDF">PDF</button>' +
-        '      <button class="btn btn--sm" data-report-download="json" disabled title="Download JSON">JSON</button>' +
+        '      <button class="btn btn--sm" data-report-action="open" data-report-format="html" disabled title="Open the HTML report in a new tab">Open in new tab</button>' +
+        '      <button class="btn btn--sm" data-report-action="print" disabled title="Print the report">Print</button>' +
+        '      <button class="btn btn--sm" data-report-action="download" data-report-format="html" disabled title="Download HTML">HTML</button>' +
+        '      <button class="btn btn--sm" data-report-action="download" data-report-format="pdf" disabled title="Download PDF">PDF</button>' +
+        '      <button class="btn btn--sm" data-report-action="download" data-report-format="json" disabled title="Download JSON">JSON</button>' +
         '    </div>' +
         '  </div>' +
         '  <div id="report-body">' +
@@ -147,86 +164,36 @@ function buildSkeleton(executionId) {
 }
 
 // ---------------------------------------------------------------------------
-// Internal helpers — rendering
+// Rendering
 // ---------------------------------------------------------------------------
 
-/**
- * Render the pending state: report not yet available.
- * @param {HTMLElement} bodyEl
- */
 function renderPending(bodyEl) {
-    bodyEl.innerHTML = '' +
-        '<div class="detail-loading report-loading">' +
+    bodyEl.innerHTML = '<div class="detail-loading report-loading">' +
         '  <span class="report-loading__text">Report generation in progress...</span>' +
         '  <span class="report-loading__hint text-muted">The report is generated automatically. Please wait.</span>' +
         '</div>';
 }
 
-/**
- * Render the HTML report in an iframe.
- * @param {HTMLElement} bodyEl
- * @param {string} executionId
- */
 function renderIframe(bodyEl, executionId) {
-    bodyEl.innerHTML = '' +
-        '<iframe class="report-iframe" src="' + escapeAttr(reportUrl(executionId, "html")) + '"' +
-        '        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"' +
+    bodyEl.innerHTML = '<iframe class="report-iframe" src="' + escapeAttr(reportUrl(executionId, "html")) + '"' +
+        '        sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"' +
         '        title="Execution Report"' +
         '        loading="lazy">' +
         '</iframe>';
 }
 
-/**
- * Render an error state.
- * @param {HTMLElement} bodyEl
- * @param {string} message
- */
-function renderError(bodyEl, message) {
-    bodyEl.innerHTML = '' +
-        '<div class="empty-state">' +
+function renderError(bodyEl, message, onRetry) {
+    bodyEl.innerHTML = '<div class="empty-state">' +
         '  <div class="empty-state__text exec-error">' + escapeHtml(message) + '</div>' +
+        '  <button type="button" class="btn btn--sm" data-report-retry>Retry</button>' +
         '</div>';
+    const retry = bodyEl.querySelector("[data-report-retry]");
+    if (retry && onRetry) retry.addEventListener("click", onRetry);
 }
 
-/**
- * Enable the download buttons once the report is available.
- * @param {HTMLElement|null} pdfBtn
- * @param {HTMLElement|null} jsonBtn
- */
-function enableDownloadButtons(pdfBtn, jsonBtn) {
-    if (pdfBtn) pdfBtn.disabled = false;
-    if (jsonBtn) jsonBtn.disabled = false;
-}
-
-// ---------------------------------------------------------------------------
-// Internal helpers — formatting & utilities
-// ---------------------------------------------------------------------------
-
-/**
- * Escape text for safe inclusion in HTML element content.
- * @param {string|null} text
- * @returns {string}
- */
-function escapeHtml(text) {
-    if (text === null || text === undefined) return "";
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-}
-
-/**
- * Escape text for safe inclusion in an HTML attribute value.
- * @param {string|null} text
- * @returns {string}
- */
-function escapeAttr(text) {
-    if (text === null || text === undefined) return "";
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+function enableActions(buttons) {
+    buttons.forEach(function (btn) {
+        if (btn.dataset.reportAction === "print") btn.disabled = false;
+        else btn.disabled = false;
+    });
 }

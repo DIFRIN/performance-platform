@@ -2,7 +2,7 @@ package com.performance.platform.reporting.engine;
 
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.event.ReportGenerated;
 import com.performance.platform.domain.event.ScenarioFinished;
@@ -187,15 +187,13 @@ class DefaultReportEngineTest {
         }
 
         @Test
-        @DisplayName("should classify assertion tasks via AssertionResult in outputs")
+        @DisplayName("should classify assertion tasks via AssertionSummary in outputs")
         void shouldClassifyAssertionTasks() {
             var assertTaskId = new TaskId("assert-1");
-            var assertResult = new AssertionResult(
-                    assertTaskId, AssertionStatus.PASSED, "metric ok",
-                    null, Duration.ofMillis(50), now
+            var assertResult = AssertionSummary.verdictOnly(assertTaskId, AssertionStatus.PASSED, "metric ok", Duration.ofMillis(50), now
             );
-            var taskResult = TaskResult.success(assertTaskId, "gatling-metric",
-                    Duration.ofMillis(50), Map.of("assertionResult", assertResult));
+            var taskResult = TaskResult.success(assertTaskId, "direct-assertion",
+                    Duration.ofMillis(50), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertTaskId.value(), "agent-1", taskResult);
@@ -208,19 +206,17 @@ class DefaultReportEngineTest {
 
             assertEquals(1, report.assertionResults().size());
             assertEquals(assertTaskId, report.assertionResults().get(0).assertionId());
-            assertEquals(AssertionStatus.PASSED, report.assertionResults().get(0).result().status());
+            assertEquals(AssertionStatus.PASSED, report.assertionResults().get(0).verdict());
         }
 
         @Test
         @DisplayName("should fail when an assertion fails without explicit minor severity")
         void shouldComputeFailedVerdictForCriticalAssertion() {
             var assertTaskId = new TaskId("assert-1");
-            var assertResult = new AssertionResult(
-                    assertTaskId, AssertionStatus.FAILED, "threshold exceeded",
-                    null, Duration.ofMillis(10), now
+            var assertResult = AssertionSummary.verdictOnly(assertTaskId, AssertionStatus.FAILED, "threshold exceeded", Duration.ofMillis(10), now
             );
-            var taskResult = TaskResult.success(assertTaskId, "gatling-metric",
-                    Duration.ofMillis(10), Map.of("assertionResult", assertResult));
+            var taskResult = TaskResult.success(assertTaskId, "direct-assertion",
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertTaskId.value(), "agent-1", taskResult);
@@ -239,12 +235,10 @@ class DefaultReportEngineTest {
         @DisplayName("should compute correct FAILED verdict when assertion ERROR")
         void shouldComputeFailedVerdict() {
             var assertTaskId = new TaskId("assert-1");
-            var assertResult = new AssertionResult(
-                    assertTaskId, AssertionStatus.ERROR, "evaluation error",
-                    null, Duration.ofMillis(10), now
+            var assertResult = AssertionSummary.verdictOnly(assertTaskId, AssertionStatus.ERROR, "evaluation error", Duration.ofMillis(10), now
             );
-            var taskResult = TaskResult.success(assertTaskId, "gatling-metric",
-                    Duration.ofMillis(10), Map.of("assertionResult", assertResult));
+            var taskResult = TaskResult.success(assertTaskId, "direct-assertion",
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertTaskId.value(), "agent-1", taskResult);
@@ -274,12 +268,10 @@ class DefaultReportEngineTest {
             var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(5), Map.of(InjectionResult.OUTPUT_KEY, injResult));
             var assertId = new TaskId("assert-1");
-            var assertResult = new AssertionResult(
-                    assertId, AssertionStatus.PASSED, "ok",
-                    null, Duration.ofMillis(100), now
+            var assertResult = AssertionSummary.verdictOnly(assertId, AssertionStatus.PASSED, "ok", Duration.ofMillis(100), now
             );
             var assertTaskResult = TaskResult.success(assertId, "check",
-                    Duration.ofMillis(100), Map.of("assertionResult", assertResult));
+                    Duration.ofMillis(100), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)

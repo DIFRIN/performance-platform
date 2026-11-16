@@ -1,5 +1,8 @@
 # ADR-042 - Neutral named resource resolution
 
+**Status** : ACCEPTED  
+**Date** : 2026-10-31
+
 ## Context
 
 Preparation resolves named datasources from the infrastructure registry, while

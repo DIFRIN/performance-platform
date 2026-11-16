@@ -168,13 +168,26 @@ public class HtmlReportRenderer implements ReportRenderer {
             return "<p><em>No assertion tasks</em></p>";
         }
         var sb = new StringBuilder();
-        sb.append("<table><tr><th>Task</th><th>Status</th><th>Description</th><th>Duration</th></tr>\n");
+        sb.append("<table><tr><th>Task</th><th>Status</th><th>SLI / SLO</th><th>Checks</th><th>Duration</th></tr>\n");
         for (AssertionReportEntry e : entries) {
+            var summary = e.summary();
+            String slo = summary.slo().blank()
+                    ? summary.description()
+                    : (summary.slo().sli().isBlank() ? summary.slo().slo()
+                        : summary.slo().sli() + " - " + summary.slo().slo());
+            String checkSummary = summary.checks().isEmpty()
+                    ? "-"
+                    : summary.checks().size() + " check(s): " + summary.checks().stream()
+                            .filter(check -> check.status() != com.performance.platform.domain.assertion.AssertionStatus.PASSED)
+                            .map(check -> check.metric() + "=" + check.status())
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse("all passed");
             sb.append("<tr>")
                     .append("<td>").append(escapeHtml(e.assertionId().value())).append("</td>")
-                    .append("<td>").append(e.result().status().name()).append("</td>")
-                    .append("<td>").append(escapeHtml(e.result().description())).append("</td>")
-                    .append("<td>").append(e.result().evaluationDuration().toString()).append("</td>")
+                    .append("<td>").append(summary.verdict().name()).append("</td>")
+                    .append("<td>").append(escapeHtml(slo)).append("</td>")
+                    .append("<td>").append(escapeHtml(checkSummary)).append("</td>")
+                    .append("<td>").append(summary.evaluationDuration().toString()).append("</td>")
                     .append("</tr>\n");
         }
         sb.append("</table>");

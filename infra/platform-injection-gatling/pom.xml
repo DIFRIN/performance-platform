@@ -22,13 +22,6 @@
             <artifactId>platform-domain</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- Port HttpTargetResolver : resolution de la cible HTTP du step gatling -->
-        <dependency>
-            <groupId>com.performance</groupId>
-            <artifactId>platform-use-cases</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <!-- Plugin API (TaskExecutor, @Injection pour GatlingTaskExecutor futur) -->
         <dependency>
             <groupId>com.performance</groupId>

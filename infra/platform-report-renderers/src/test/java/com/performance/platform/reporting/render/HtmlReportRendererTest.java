@@ -1,6 +1,6 @@
 package com.performance.platform.reporting.render;
 
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.id.ReportId;
 import com.performance.platform.domain.id.ScenarioId;
@@ -63,13 +63,9 @@ class HtmlReportRendererTest {
         );
 
         // Assertion entry
-        var assertResult = new AssertionResult(
-                new TaskId("assert-1"), AssertionStatus.PASSED, "throughput >= 50",
-                null, Duration.ofMillis(50), now
+        var assertResult = AssertionSummary.verdictOnly(new TaskId("assert-1"), AssertionStatus.PASSED, "throughput >= 50", Duration.ofMillis(50), now
         );
-        var assertEntry = new AssertionReportEntry(
-                new TaskId("assert-1"), assertResult, null
-        );
+        var assertEntry = new AssertionReportEntry(new TaskId("assert-1"), assertResult);
 
         report = new CampaignReport(
                 reportId, scenarioId, "Test Campaign", "2.0",

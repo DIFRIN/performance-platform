@@ -2,7 +2,7 @@ package com.performance.platform.reporting.e2e;
 
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionState;
@@ -296,18 +296,14 @@ class ReportingPipelineE2ETest {
                     Duration.ofSeconds(15), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             var assertA = TaskId.of("assert-a");
-            var assertResultA = new AssertionResult(
-                    assertA, AssertionStatus.PASSED, "p95 < 100ms",
-                    null, Duration.ofMillis(10), now);
-            var assertTaskResultA = TaskResult.success(assertA, "gatling-metric",
-                    Duration.ofMillis(10), Map.of("assertionResult", assertResultA));
+            var assertResultA = AssertionSummary.verdictOnly(assertA, AssertionStatus.PASSED, "p95 < 100ms", Duration.ofMillis(10), now);
+            var assertTaskResultA = TaskResult.success(assertA, "direct-assertion",
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, assertResultA));
 
             var assertB = TaskId.of("assert-b");
-            var assertResultB = new AssertionResult(
-                    assertB, AssertionStatus.PASSED, "errorRate < 2%",
-                    null, Duration.ofMillis(5), now);
-            var assertTaskResultB = TaskResult.success(assertB, "gatling-metric",
-                    Duration.ofMillis(5), Map.of("assertionResult", assertResultB));
+            var assertResultB = AssertionSummary.verdictOnly(assertB, AssertionStatus.PASSED, "errorRate < 2%", Duration.ofMillis(5), now);
+            var assertTaskResultB = TaskResult.success(assertB, "direct-assertion",
+                    Duration.ofMillis(5), Map.of(AssertionSummary.OUTPUT_KEY, assertResultB));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepA.value(), "agent-1", prepResultA)
@@ -365,11 +361,9 @@ class ReportingPipelineE2ETest {
         @DisplayName("should produce FAILED verdict when a critical assertion fails")
         void shouldProduceFailedVerdictForCriticalAssertion() {
             var assertId = TaskId.of("assert-1");
-            var assertResult = new AssertionResult(
-                    assertId, AssertionStatus.FAILED, "p99 > threshold",
-                    null, Duration.ofMillis(10), now);
-            var assertTaskResult = TaskResult.success(assertId, "gatling-metric",
-                    Duration.ofMillis(10), Map.of("assertionResult", assertResult));
+            var assertResult = AssertionSummary.verdictOnly(assertId, AssertionStatus.FAILED, "p99 > threshold", Duration.ofMillis(10), now);
+            var assertTaskResult = TaskResult.success(assertId, "direct-assertion",
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertId.value(), "agent-1", assertTaskResult);
@@ -393,25 +387,19 @@ class ReportingPipelineE2ETest {
         @DisplayName("should produce FAILED verdict when any assertion ERROR (priority over FAILED)")
         void shouldProduceFailedVerdictWithErrorPriority() {
             var assertA = TaskId.of("assert-a");
-            var passedResult = new AssertionResult(
-                    assertA, AssertionStatus.PASSED, "all good", null,
-                    Duration.ofMillis(10), now);
-            var passedTaskResult = TaskResult.success(assertA, "gatling-metric",
-                    Duration.ofMillis(10), Map.of("assertionResult", passedResult));
+            var passedResult = AssertionSummary.verdictOnly(assertA, AssertionStatus.PASSED, "all good", Duration.ofMillis(10), now);
+            var passedTaskResult = TaskResult.success(assertA, "direct-assertion",
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, passedResult));
 
             var assertB = TaskId.of("assert-b");
-            var failedResult = new AssertionResult(
-                    assertB, AssertionStatus.FAILED, "threshold breached", null,
-                    Duration.ofMillis(10), now);
-            var failedTaskResult = TaskResult.success(assertB, "gatling-metric",
-                    Duration.ofMillis(10), Map.of("assertionResult", failedResult));
+            var failedResult = AssertionSummary.verdictOnly(assertB, AssertionStatus.FAILED, "threshold breached", Duration.ofMillis(10), now);
+            var failedTaskResult = TaskResult.success(assertB, "direct-assertion",
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, failedResult));
 
             var assertC = TaskId.of("assert-c");
-            var errorResult = new AssertionResult(
-                    assertC, AssertionStatus.ERROR, "evaluation crashed", null,
-                    Duration.ofMillis(10), now);
-            var errorTaskResult = TaskResult.success(assertC, "gatling-metric",
-                    Duration.ofMillis(10), Map.of("assertionResult", errorResult));
+            var errorResult = AssertionSummary.verdictOnly(assertC, AssertionStatus.ERROR, "evaluation crashed", Duration.ofMillis(10), now);
+            var errorTaskResult = TaskResult.success(assertC, "direct-assertion",
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, errorResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", passedTaskResult)

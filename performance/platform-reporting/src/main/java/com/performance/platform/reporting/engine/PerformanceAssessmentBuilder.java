@@ -67,18 +67,26 @@ final class PerformanceAssessmentBuilder {
                     compare(actual, criterion.operator(), criterion.threshold()) ? "PASSED" : "FAILED",
                     criterion.critical(), "Scenario criterion"));
         }
+        // Un check par metrique declaree dans l'assertion (ADR-049). Le SLO
+        // textuel est rendu a cote des checks qu'il decrit. Une assertion sans
+        // check detaille (verdict opaque) expose son verdict comme un check.
+        var sloSections = new ArrayList<PerformanceAssessment.SloSection>();
         for (var assertion : assertions) {
-            var status = assertion.result().status();
-            var configured = spec.criteria().stream().filter(c -> "assertion".equals(c.metric())
-                    && assertion.assertionId().value().equals(c.taskId())).findFirst();
-            boolean critical = status == AssertionStatus.ERROR
-                    || configured.map(ReportDefinition.Criterion::critical).orElse(true);
-            checks.add(new Check(assertion.result().description(), "assertion", assertion.assertionId().value(),
-                    status == AssertionStatus.PASSED ? Double.valueOf(1) :
-                            status == AssertionStatus.SKIPPED ? null : Double.valueOf(0),
-                    "==", 1.0, status == AssertionStatus.PASSED ? "PASSED" :
-                    status == AssertionStatus.SKIPPED ? "UNKNOWN" : "FAILED", critical, "Executed assertion"));
+            var summary = assertion.summary();
+            var mapped = summary.checks().isEmpty()
+                    ? List.of(verdictCheck(assertion, spec.criteria()))
+                    : summary.checks().stream()
+                            .map(check -> toAssessmentCheck(check, assertion.assertionId().value()))
+                            .toList();
+            sloSections.add(new PerformanceAssessment.SloSection(
+                    assertion.assertionId().value(),
+                    summary.slo().title(), summary.slo().sli(), summary.slo().slo(),
+                    summary.slo().rationale(), mapped));
+            checks.addAll(mapped);
         }
+        boolean reviewRequired = sloSections.stream()
+                .flatMap(section -> section.checks().stream())
+                .anyMatch(check -> "INCONCLUSIVE".equals(check.status()));
         var validation = new ArrayList<Check>();
         for (String metric : VALIDATION_METRICS) {
             var matching = checks.stream().filter(c -> c.metric().equals(metric)).toList();
@@ -104,13 +112,17 @@ final class PerformanceAssessmentBuilder {
                 .anyMatch(r -> !r.isSuccess() && state.tasks().stream().noneMatch(t ->
                         t.id().equals(r.taskId()) && t.phase() == Phase.ASSERTION
                                 && assertions.stream().anyMatch(a -> a.assertionId().equals(t.id()))));
-        boolean criticalFailure = checks.stream().anyMatch(c -> c.critical() && c.status().equals("FAILED"));
+        boolean criticalFailure = checks.stream().anyMatch(c -> c.critical()
+                && (c.status().equals("FAILED") || c.status().equals("ERROR")));
         boolean warning = !limitations.isEmpty() || checks.stream().anyMatch(c -> !c.status().equals("PASSED"));
+        if (reviewRequired) {
+            limitations.add("Human review required: at least one check is INCONCLUSIVE");
+        }
         boolean failedWithoutAssertionEvidence = state.status() == ExecutionStatus.FAILED
-                && assertions.stream().noneMatch(a -> a.result().status() == AssertionStatus.FAILED
-                        || a.result().status() == AssertionStatus.ERROR);
+                && assertions.stream().noneMatch(a -> a.verdict() == AssertionStatus.FAILED
+                        || a.verdict() == AssertionStatus.ERROR);
         Verdict verdict = failedTask || criticalFailure || failedWithoutAssertionEvidence ? Verdict.FAILED
-                : warning || state.status() != ExecutionStatus.COMPLETED
+                : warning || reviewRequired || state.status() != ExecutionStatus.COMPLETED
                 ? Verdict.WARNING : Verdict.SUCCESS;
         var findings = new ArrayList<String>(spec.incidents());
         checks.stream().filter(c -> !c.status().equals("PASSED")).forEach(c ->
@@ -150,7 +162,89 @@ final class PerformanceAssessmentBuilder {
                 List.copyOf(loads), List.copyOf(checks),
                 new Technical(List.copyOf(measurements), spec.graphs(), spec.incidents()),
                 new Analysis(List.copyOf(findings), List.copyOf(recommendations)),
-                new Validation(verdict, List.copyOf(validation), List.copyOf(limitations)));
+                new Validation(verdict, List.copyOf(validation), List.copyOf(limitations)),
+                List.copyOf(sloSections),
+                new PerformanceAssessment.Review(
+                        reviewRequired ? com.performance.platform.reporting.model.ReviewState.REQUIRED
+                                : com.performance.platform.reporting.model.ReviewState.NONE,
+                        "", null,
+                        reviewRequired ? "At least one check is INCONCLUSIVE" : "",
+                        List.of()));
+    }
+
+    /**
+     * Traduit un check du domaine vers le modele de rapport.
+     */
+    private static Check toAssessmentCheck(
+            com.performance.platform.domain.assertion.Check check, String taskId) {
+        String status = switch (check.status()) {
+            case PASSED -> "PASSED";
+            case FAILED -> "FAILED";
+            case INCONCLUSIVE -> "INCONCLUSIVE";
+            case SKIPPED -> "UNKNOWN";
+            case ERROR -> "ERROR";
+        };
+        boolean critical = check.expected() != null
+                && check.expected().severity() == com.performance.platform.domain.assertion.Severity.CRITICAL
+                && check.status() != com.performance.platform.domain.assertion.AssertionStatus.SKIPPED;
+        if (check.status() == com.performance.platform.domain.assertion.AssertionStatus.ERROR) {
+            critical = true;
+        }
+        String name = check.intent().isBlank() ? check.metric().toString() : check.intent();
+        return new Check(
+                name,
+                check.metric().toString(),
+                taskId,
+                check.actualValue(),
+                check.expected() == null ? null : check.expected().operator().name(),
+                check.expected() == null ? null : check.expected().threshold(),
+                status,
+                critical,
+                check.rationale().isBlank() ? "Assertion check" : check.rationale());
+    }
+
+    /**
+     * Check synthetique pour une assertion sans check detaille : le verdict
+     * enregistre fait foi. La criticite vient d'un critere {@code assertion}
+     * declarant le meme taskId (defaut : critique).
+     */
+    private static Check verdictCheck(AssertionReportEntry assertion,
+                                      List<ReportDefinition.Criterion> criteria) {
+        String taskId = assertion.assertionId().value();
+        AssertionStatus verdict = assertion.verdict();
+        String status = switch (verdict) {
+            case PASSED -> "PASSED";
+            case FAILED -> "FAILED";
+            case INCONCLUSIVE -> "INCONCLUSIVE";
+            case SKIPPED -> "UNKNOWN";
+            case ERROR -> "ERROR";
+        };
+        Double actual = switch (verdict) {
+            case PASSED -> 1.0;
+            case FAILED, ERROR -> 0.0;
+            case SKIPPED, INCONCLUSIVE -> null;
+        };
+        boolean critical = criteria.stream()
+                .filter(c -> "assertion".equals(c.metric()))
+                .filter(c -> c.taskId() == null || c.taskId().equals(taskId))
+                .map(c -> c.critical() == null || c.critical())
+                .findFirst()
+                .orElse(true);
+        // An assertion ERROR stays critical even when its objective is minor.
+        if (verdict == AssertionStatus.ERROR) {
+            critical = true;
+        }
+        String description = assertion.summary().description();
+        return new Check(
+                description.isBlank() ? "Assertion " + taskId : description,
+                "assertion",
+                taskId,
+                actual,
+                "==",
+                1.0,
+                status,
+                critical,
+                "Assertion verdict");
     }
 
     private static Double metric(String name, String taskId, ExecutionState state,
@@ -160,8 +254,8 @@ final class PerformanceAssessmentBuilder {
                 .map(InjectionReportEntry::metrics).toList();
         if ("assertion".equals(name)) {
             var matches = assertions.stream().filter(a -> a.assertionId().value().equals(taskId)).toList();
-            if (matches.isEmpty() || matches.stream().anyMatch(a -> a.result().status() == AssertionStatus.SKIPPED)) return null;
-            return matches.stream().allMatch(a -> a.result().status() == AssertionStatus.PASSED) ? 1.0 : 0.0;
+            if (matches.isEmpty() || matches.stream().anyMatch(a -> a.verdict() == AssertionStatus.SKIPPED)) return null;
+            return matches.stream().allMatch(a -> a.verdict() == AssertionStatus.PASSED) ? 1.0 : 0.0;
         }
         for (var observation : observations) if (observation.name().equals(name)) return observation.value();
         if (results.isEmpty()) return null;

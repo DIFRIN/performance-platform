@@ -1,9 +1,6 @@
 package com.performance.platform.scenario.parser;
 
 import com.performance.platform.application.exception.ScenarioParsingException;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
@@ -76,7 +73,6 @@ class YamlScenarioParserTest {
               version: 1.0.0
               tags: [performance, regression]
               metadata: { owner: team-a, jira: PERF-123 }
-              execution: { mode: DISTRIBUTED }
               taskAvailabilityTimeoutSeconds: 120
               steps:
                 - id: purge-db
@@ -91,14 +87,8 @@ class YamlScenarioParserTest {
                   phase: INJECTION
                   requiredContexts: [purge-db]
                   dependsOn: [purge-db]
-                  parameters: { simulation: com.example.CustomerApiSimulation, loadModel: api-load }
+                  parameters: { simulation: com.example.CustomerApiSimulation, loadModel: { type: RAMP } }
                   timeout: 20m
-            loadModels:
-              api-load:
-                type: RAMP
-                stages:
-                  - { duration: 2m, usersPerSecond: 10 }
-                  - { duration: 5m, usersPerSecond: 100 }
             """;
 
         @Test
@@ -110,7 +100,6 @@ class YamlScenarioParserTest {
             assertEquals("customer-api-perf", scenario.id().value());
             assertEquals("Customer API Campaign", scenario.name());
             assertEquals("1.0.0", scenario.version());
-            assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
             assertEquals(REFERENCE_YAML, scenario.sourceYaml());
         }
 
@@ -138,13 +127,6 @@ class YamlScenarioParserTest {
             ScenarioDefinition scenario = parser.parse(REFERENCE_YAML);
             assertEquals("team-a", scenario.metadata().get("owner"));
             assertEquals("PERF-123", scenario.metadata().get("jira"));
-        }
-
-        @Test
-        @DisplayName("scenario execution mode is DISTRIBUTED")
-        void executionModeDistributed() {
-            ScenarioDefinition scenario = parser.parse(REFERENCE_YAML);
-            assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
         }
 
         @Test
@@ -184,33 +166,10 @@ class YamlScenarioParserTest {
             assertEquals(1, step.dependsOn().size());
             assertEquals("purge-db", step.dependsOn().get(0).value());
             assertEquals("com.example.CustomerApiSimulation", step.parameters().get("simulation"));
-            assertEquals("api-load", step.parameters().get("loadModel"));
             assertEquals(Duration.ofMinutes(20), step.timeout());
             assertNull(step.retryPolicy());
         }
 
-        @Test
-        @DisplayName("load model: api-load (RAMP type)")
-        void loadModelApiLoad() {
-            ScenarioDefinition scenario = parser.parse(REFERENCE_YAML);
-            Map<String, LoadModel> loadModels = scenario.loadModels();
-
-            assertEquals(1, loadModels.size());
-            assertTrue(loadModels.containsKey("api-load"));
-
-            LoadModel lm = loadModels.get("api-load");
-            assertEquals(LoadModelType.RAMP, lm.type());
-
-            // stages is a List of Maps
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> stages = (List<Map<String, Object>>) lm.parameters().get("stages");
-            assertNotNull(stages);
-            assertEquals(2, stages.size());
-            assertEquals("2m", stages.get(0).get("duration"));
-            assertEquals(10, stages.get(0).get("usersPerSecond"));
-            assertEquals("5m", stages.get(1).get("duration"));
-            assertEquals(100, stages.get(1).get("usersPerSecond"));
-        }
     }
 
     @Nested
@@ -309,57 +268,6 @@ class YamlScenarioParserTest {
     }
 
     @Nested
-    @DisplayName("Execution modes")
-    class ExecutionModes {
-
-        @Test
-        @DisplayName("execution mode LOCAL")
-        void executionModeLocal() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                  execution:
-                    mode: LOCAL
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
-        }
-
-        @Test
-        @DisplayName("execution mode DISTRIBUTED")
-        void executionModeDistributed() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                  execution:
-                    mode: DISTRIBUTED
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
-        }
-
-        @Test
-        @DisplayName("missing execution section defaults to LOCAL")
-        void missingExecutionDefaults() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            assertEquals(ExecutionMode.LOCAL, scenario.executionMode());
-        }
-    }
-
-    @Nested
     @DisplayName("Phases")
     class Phases {
 
@@ -437,189 +345,6 @@ class YamlScenarioParserTest {
     }
 
     @Nested
-    @DisplayName("Load models — all 8 types")
-    class LoadModels {
-
-        @Test
-        @DisplayName("CONSTANT load model")
-        void constantLoadModel() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  my-model:
-                    type: CONSTANT
-                    usersPerSecond: 100
-                    duration: 10m
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            LoadModel lm = scenario.loadModels().get("my-model");
-            assertEquals(LoadModelType.CONSTANT, lm.type());
-            assertEquals(100, lm.parameters().get("usersPerSecond"));
-            assertEquals("10m", lm.parameters().get("duration"));
-        }
-
-        @Test
-        @DisplayName("SPIKE load model")
-        void spikeLoadModel() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  spike-model:
-                    type: SPIKE
-                    baseUsersPerSecond: 50
-                    spikeUsersPerSecond: 500
-                    spikeDuration: 30s
-                    baseDuration: 5m
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            LoadModel lm = scenario.loadModels().get("spike-model");
-            assertEquals(LoadModelType.SPIKE, lm.type());
-            assertEquals(50, lm.parameters().get("baseUsersPerSecond"));
-            assertEquals(500, lm.parameters().get("spikeUsersPerSecond"));
-        }
-
-        @Test
-        @DisplayName("STAIR load model")
-        void stairLoadModel() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  stair-model:
-                    type: STAIR
-                    initialUsersPerSecond: 10
-                    incrementPerStep: 20
-                    stepDuration: 2m
-                    steps: 5
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            LoadModel lm = scenario.loadModels().get("stair-model");
-            assertEquals(LoadModelType.STAIR, lm.type());
-            assertEquals(10, lm.parameters().get("initialUsersPerSecond"));
-            assertEquals(5, lm.parameters().get("steps"));
-        }
-
-        @Test
-        @DisplayName("SOAK load model")
-        void soakLoadModel() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  soak-model:
-                    type: SOAK
-                    usersPerSecond: 50
-                    duration: 2h
-                    rampUpDuration: 5m
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            LoadModel lm = scenario.loadModels().get("soak-model");
-            assertEquals(LoadModelType.SOAK, lm.type());
-            assertEquals("2h", lm.parameters().get("duration"));
-        }
-
-        @Test
-        @DisplayName("BURST load model")
-        void burstLoadModel() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  burst-model:
-                    type: BURST
-                    burstUsersPerSecond: 1000
-                    burstDuration: 10s
-                    burstCount: 3
-                    intervalBetweenBursts: 2m
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            LoadModel lm = scenario.loadModels().get("burst-model");
-            assertEquals(LoadModelType.BURST, lm.type());
-            assertEquals(1000, lm.parameters().get("burstUsersPerSecond"));
-            assertEquals(3, lm.parameters().get("burstCount"));
-        }
-
-        @Test
-        @DisplayName("RAMP_UP_DOWN load model")
-        void rampUpDownLoadModel() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  rud-model:
-                    type: RAMP_UP_DOWN
-                    usersPerSecond: 200
-                    rampUpDuration: 5m
-                    holdDuration: 10m
-                    rampDownDuration: 5m
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            LoadModel lm = scenario.loadModels().get("rud-model");
-            assertEquals(LoadModelType.RAMP_UP_DOWN, lm.type());
-            assertEquals(200, lm.parameters().get("usersPerSecond"));
-        }
-
-        @Test
-        @DisplayName("CUSTOM load model")
-        void customLoadModel() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  custom-model:
-                    type: CUSTOM
-                    points:
-                      - { time: 0s, usersPerSecond: 0 }
-                      - { time: 60s, usersPerSecond: 100 }
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            LoadModel lm = scenario.loadModels().get("custom-model");
-            assertEquals(LoadModelType.CUSTOM, lm.type());
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> points = (List<Map<String, Object>>) lm.parameters().get("points");
-            assertNotNull(points);
-            assertEquals(2, points.size());
-        }
-
-        @Test
-        @DisplayName("no load models produces empty map")
-        void noLoadModels() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            assertTrue(scenario.loadModels().isEmpty());
-        }
-    }
-
-    @Nested
     @DisplayName("Error cases")
     class ErrorCases {
 
@@ -646,10 +371,7 @@ class YamlScenarioParserTest {
         @DisplayName("missing scenario section throws")
         void missingScenarioSection() {
             String yaml = """
-                loadModels:
-                  test:
-                    type: CONSTANT
-                    usersPerSecond: 100
+                scenario:
                 """;
 
             ScenarioParsingException ex = assertThrows(
@@ -741,25 +463,6 @@ class YamlScenarioParserTest {
         }
 
         @Test
-        @DisplayName("invalid execution mode throws")
-        void invalidExecutionMode() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                  execution:
-                    mode: CLOUD
-                """;
-
-            ScenarioParsingException ex = assertThrows(
-                ScenarioParsingException.class,
-                () -> parser.parse(yaml)
-            );
-            assertTrue(ex.getErrors().stream().anyMatch(e -> e.contains("mode") && e.contains("CLOUD")));
-        }
-
-        @Test
         @DisplayName("invalid duration in timeout throws")
         void invalidDuration() {
             String yaml = """
@@ -779,47 +482,6 @@ class YamlScenarioParserTest {
                 () -> parser.parse(yaml)
             );
             assertTrue(ex.getErrors().stream().anyMatch(e -> e.contains("timeout")));
-        }
-
-        @Test
-        @DisplayName("invalid load model type throws")
-        void invalidLoadModelType() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  my-model:
-                    type: UNKNOWN_TYPE
-                    usersPerSecond: 100
-                """;
-
-            ScenarioParsingException ex = assertThrows(
-                ScenarioParsingException.class,
-                () -> parser.parse(yaml)
-            );
-            assertTrue(ex.getErrors().stream().anyMatch(e -> e.contains("UNKNOWN_TYPE")));
-        }
-
-        @Test
-        @DisplayName("load model without type throws")
-        void loadModelWithoutType() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  my-model:
-                    usersPerSecond: 100
-                """;
-
-            ScenarioParsingException ex = assertThrows(
-                ScenarioParsingException.class,
-                () -> parser.parse(yaml)
-            );
-            assertTrue(ex.getErrors().stream().anyMatch(e -> e.contains("type")));
         }
 
         @Test
@@ -918,24 +580,6 @@ class YamlScenarioParserTest {
 
             ScenarioDefinition scenario = parser.parse(yaml);
             assertThrows(UnsupportedOperationException.class, () -> scenario.steps().add(null));
-        }
-
-        @Test
-        @DisplayName("loadModels map is immutable")
-        void loadModelsImmutable() {
-            String yaml = """
-                scenario:
-                  id: test
-                  name: Test
-                  version: 1.0.0
-                loadModels:
-                  test:
-                    type: CONSTANT
-                    usersPerSecond: 100
-                """;
-
-            ScenarioDefinition scenario = parser.parse(yaml);
-            assertThrows(UnsupportedOperationException.class, () -> scenario.loadModels().put("x", null));
         }
 
         @Test

@@ -1,5 +1,8 @@
 # ADR-040 - Persist the planned execution task count
 
+**Status** : ACCEPTED  
+**Date** : 2026-10-31
+
 ## Context
 
 Counting only persisted results reports 100% after preparation, while injection

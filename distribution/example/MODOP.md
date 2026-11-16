@@ -1,7 +1,9 @@
 # Example — Mode Opératoire
 
-Two end-to-end scenarios, each runnable in **LOCAL** (one platform JVM) or
-**DISTRIBUTED** (orchestrator + specialised agents). The mock HTTP server is
+Two end-to-end scenarios (`01` Kafka → SUT → HTTP mock, `02` HTTP → SUT → Kafka),
+each runnable in **LOCAL** (one platform JVM) or **DISTRIBUTED** (orchestrator +
+specialised agents), plus `03-assertion-model.yaml`, a LOCAL-only example
+of the assertion families and the textual SLI/SLO. The mock HTTP server is
 never a separate service: it is WireMock **EMBEDDED** in the platform
 (`mock-server` task) and bound to port `8090`.
 
@@ -11,7 +13,7 @@ distribution/example/
 ├── docker-compose-distributed.yaml    # orchestrator + mock-agent + agent-http + agent-kafka + SUT + infra
 ├── sut/                               # one stub image, behaviours enabled by configuration
 ├── sut-db/sql/                        # devices schema + 10k seed
-├── scenarios/                         # 2 scenarios x 2 modes
+├── scenarios/                         # 2 SUT scenarios (LOCAL + DISTRIBUTED) + assertion model (LOCAL)
 └── MODOP.md                           # this file
 ```
 
@@ -34,10 +36,12 @@ Compose project and leaves the existing example stack unchanged.
 
 ## 1. Scenarios
 
-All four scenarios declare `metadata.executionGroup: example-sut`. Within one
-orchestrator, runs in this group wait before preparation, protecting the shared
-mock port and SUT database. Different groups (or no group) can run concurrently.
-This does not coordinate multiple orchestrators or separate LOCAL JVMs.
+The four SUT scenarios (`01`/`02`, LOCAL and DISTRIBUTED) declare
+`metadata.executionGroup: example-sut`; the LOCAL assertion-model example does
+not. Within one orchestrator, runs in this group wait before preparation,
+protecting the shared mock port and SUT database. Different groups (or no group)
+can run concurrently. This does not coordinate multiple orchestrators or
+separate LOCAL JVMs.
 The API persists queued runs immediately; steps stay pending until the group
 is acquired (`execution_group_wait` / `execution_group_acquired` in logs).
 
@@ -67,7 +71,7 @@ platform --kafka-producer--> iot-commands
                                   v
                     embedded WireMock (port 8090)
                                   |
-                     http-mock assertion (receivedCalls)
+                     direct-assertion (http.requests.matched)
 ```
 
 1. `mock-server` STARTS embedded WireMock on port 8090.
@@ -76,7 +80,7 @@ platform --kafka-producer--> iot-commands
 3. `kafka-producer` produces commands into `iot-commands`.
 4. The SUT consumes, finds the device in PostgreSQL, reads `device_dns`, and
    POSTs to `http://<device_dns>/command`.
-5. `http-mock` asserts the embedded mock received calls.
+5. `direct-assertion` asserts the embedded mock received calls.
 
 ### Scenario 2 — HTTP injection → SUT endpoint → DB → Kafka → consumer assertion
 
@@ -91,13 +95,37 @@ platform --gatling HTTP--> POST /api/events?device_id=...
                                   v
                      Kafka produce -> device-events
                                   |
-                     kafka-consumer COUNT + kafka assertion
+                     kafka-consumer COUNT + direct-assertion
 ```
 
 1. `database` PURGE + POPULATE seeds the devices.
 2. Gatling injects `POST /api/events?device_id=device-NNNN` on the SUT.
 3. The SUT checks the device in PostgreSQL and publishes to `device-events`.
-4. `kafka-consumer` COUNTs the topic; `kafka` asserts the expected volume.
+4. `kafka-consumer` COUNTs the topic; `direct-assertion` checks the expected volume.
+
+### Scenario 3 — assertion model (LOCAL only)
+
+`03-assertion-model.yaml` demonstrates the two declarative assertion
+families and the textual SLI/SLO carried into the report:
+
+- `direct-assertion` — one metric, one expectation (`filesystem.exists` here);
+- `performance-thresholds` — normalised `latency`, `errorRate` and `throughput`
+  checks;
+- the `description` block (`title`, `sli`, `slo`, `rationale`) is copied into
+  the report next to the machine checks and is never parsed into a threshold.
+
+It needs no SUT, Kafka or mock: run it headless in LOCAL mode.
+
+```bash
+java -jar bootstrap/target/performance-platform.jar \
+  --scenario=file:distribution/example/scenarios/03-assertion-model.yaml
+```
+
+The file-system check passes. The latency block has no injection step to read,
+so it produces an `INCONCLUSIVE` check and the report verdict is `WARNING`
+(measurement limitation, not a failure). Add a `gatling` injection step
+(optionally targeted with `refTaskId`) to turn it into a measured
+`SUCCESS`/`FAILED`.
 
 ---
 
@@ -170,14 +198,21 @@ Scenario 1:
 
 ```bash
 docker compose -f distribution/example/docker-compose-local.yaml \
-  run --rm -e SCENARIO_FILE=01-kafka-to-http-local.yaml platform
+  run --rm -e SCENARIO_FILE=01-kafka-to-http.yaml platform
 ```
 
 Scenario 2:
 
 ```bash
 docker compose -f distribution/example/docker-compose-local.yaml \
-  run --rm -e SCENARIO_FILE=02-http-to-kafka-local.yaml platform
+  run --rm -e SCENARIO_FILE=02-http-to-kafka.yaml platform
+```
+
+Scenario 3 (assertion model) needs no infrastructure; run the jar directly:
+
+```bash
+java -jar bootstrap/target/performance-platform.jar \
+  --scenario=file:distribution/example/scenarios/03-assertion-model.yaml
 ```
 
 The `platform` container is a run-and-exit headless CLI (ADR-021). Exit code
@@ -213,13 +248,13 @@ scenario file:
 ```bash
 java -jar bootstrap/target/performance-platform.jar \
   --spring.profiles.active=local \
-  --scenario=file:distribution/example/scenarios/01-kafka-to-http-local.yaml
+  --scenario=file:distribution/example/scenarios/01-kafka-to-http.yaml
 ```
 
 ```bash
 java -jar bootstrap/target/performance-platform.jar \
   --spring.profiles.active=local \
-  --scenario=file:distribution/example/scenarios/02-http-to-kafka-local.yaml
+  --scenario=file:distribution/example/scenarios/02-http-to-kafka.yaml
 ```
 
 The defaults in `application-local.yaml` resolve to `localhost`:
@@ -262,7 +297,7 @@ Scenario 1:
 ```bash
 curl -X POST http://localhost:8080/api/v1/scenarios \
   -H 'Content-Type: application/yaml' \
-  --data-binary @distribution/example/scenarios/01-kafka-to-http-distributed.yaml
+  --data-binary @distribution/example/scenarios/01-kafka-to-http.yaml
 ```
 
 Scenario 2:
@@ -270,7 +305,7 @@ Scenario 2:
 ```bash
 curl -X POST http://localhost:8080/api/v1/scenarios \
   -H 'Content-Type: application/yaml' \
-  --data-binary @distribution/example/scenarios/02-http-to-kafka-distributed.yaml
+  --data-binary @distribution/example/scenarios/02-http-to-kafka.yaml
 ```
 
 Follow the execution with the returned `executionId`:
@@ -305,9 +340,9 @@ docker compose -f distribution/example/docker-compose-distributed.yaml down -v
 
 | Agent | `AGENT_SUPPORTED_TASKS` | Role |
 |---|---|---|
-| `mock-agent` | `mock-server,http-mock` | starts embedded WireMock, asserts request counts |
-| `agent-http` | `gatling,http-client` | HTTP injection and SUT health checks |
-| `agent-kafka` | `database,database-assertion,kafka-producer,kafka-consumer,kafka,shell` | DB, Kafka injection/consumer assertions, wait steps |
+| `mock-agent` | `mock-server,direct-assertion` | starts embedded WireMock, asserts request counts |
+| `agent-http` | `gatling,http-client,performance-thresholds` | HTTP injection, SUT health checks, latency SLO |
+| `agent-kafka` | `database,direct-assertion,kafka-producer,kafka-consumer,shell` | DB, Kafka injection/consumer assertions, wait steps |
 
 Only `mock-agent` receives `WIREMOCK_URL`; it is the only agent resolving the
 `wiremock` HTTP target. `agent-http` receives `SUT_API_URL`; `agent-kafka`
@@ -396,6 +431,6 @@ provides one.
 |---|---|---|
 | `Unknown http-target: 'sut-api'` | wrong Spring profile | use `local` for LOCAL, `agent,example` / `orchestrator,example` for DISTRIBUTED |
 | SUT never calls the mock | `device_dns` unreachable | verify `host.docker.internal` resolves and port `8090` is published |
-| `Unknown http-target: 'wiremock'` on an agent | `WIREMOCK_URL` missing on the agent that executes `http-mock` | set it on `mock-agent` only |
-| Scenario 2 assertion too high | HTTP injection ramp too short | lower the `value` in `assert-events-produced` or lengthen the ramp |
+| `Unknown http-target: 'wiremock'` on an agent | `WIREMOCK_URL` missing on the agent that executes `direct-assertion` against the mock | set it on `mock-agent` only |
+| Scenario 2 assertion too high | HTTP injection ramp too short | lower the `threshold` in `assert-events-produced` or lengthen the ramp |
 | Kafka assertion counts old messages | topic not reset | `docker compose ... down -v` before the run |

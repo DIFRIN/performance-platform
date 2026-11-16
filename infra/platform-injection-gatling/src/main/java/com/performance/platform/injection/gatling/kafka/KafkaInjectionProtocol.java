@@ -1,10 +1,10 @@
 package com.performance.platform.injection.gatling.kafka;
 
-import com.performance.platform.application.ports.out.MessageChannel;
-import com.performance.platform.application.ports.out.MessageChannelFactory;
+import com.performance.platform.plugin.resource.MessageChannel;
+import com.performance.platform.plugin.resource.MessageChannelFactory;
 import com.performance.platform.injection.gatling.protocol.InjectionProtocol;
 import com.performance.platform.injection.gatling.protocol.PreparedInjection;
-import com.performance.platform.domain.template.MessageTemplate;
+import com.performance.platform.plugin.template.MessageTemplate;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -2,34 +2,50 @@ package com.performance.platform.engine.e2e;
 
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.campaign.ExecutionEngine;
+import com.performance.platform.campaign.plan.DefaultExecutionPlanBuilder;
+import com.performance.platform.domain.assertion.AssertionFamily;
 import com.performance.platform.domain.assertion.AssertionStatus;
-import com.performance.platform.domain.event.*;
-import com.performance.platform.domain.execution.*;
-import com.performance.platform.domain.id.*;
+import com.performance.platform.domain.assertion.AssertionSummary;
+import com.performance.platform.domain.assertion.Rollup;
+import com.performance.platform.domain.event.PhaseStarted;
+import com.performance.platform.domain.event.ScenarioFinished;
+import com.performance.platform.domain.event.ScenarioStarted;
+import com.performance.platform.domain.execution.ExecutionContext;
+import com.performance.platform.domain.execution.ExecutionState;
+import com.performance.platform.domain.execution.ExecutionStatus;
+import com.performance.platform.domain.execution.ExecutionStep;
+import com.performance.platform.domain.execution.PhaseStatus;
+import com.performance.platform.domain.id.AgentId;
+import com.performance.platform.domain.id.ExecutionId;
+import com.performance.platform.domain.id.ScenarioId;
+import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.report.Verdict;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
-
-import com.performance.platform.campaign.ExecutionEngine;
 import com.performance.platform.engine.ExecutionLifecycleDispatcher;
-import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
-import com.performance.platform.engine.local.LocalStepDispatcher;
-import com.performance.platform.engine.local.TaskExecutorLookup;
-import com.performance.platform.application.ports.out.ExecutionPlanBuilder;
-import com.performance.platform.engine.retry.DefaultRetryExecutor;
-import com.performance.platform.engine.retry.RetryExecutor;
+import com.performance.platform.engine.shared.StepDispatchResult;
+import com.performance.platform.engine.support.StubStepDispatcher;
 import com.performance.platform.plugin.AssertionExecutor;
 import com.performance.platform.plugin.TaskExecutor;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -43,43 +59,42 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests E2E du pipeline d'execution complet.
  * <p>
- * Scenarios realistes simulant le flux complet :
- * PREPARATION (database purge + seed + mock server start)
- * -> INJECTION (Gatling load test)
- * -> ASSERTION (p95 latency + error rate + row count).
+ * Le plan est construit par le vrai {@link DefaultExecutionPlanBuilder} ; le
+ * moteur delegue chaque step a un {@link StubStepDispatcher} qui execute les
+ * {@link TaskExecutor} enregistres (le role de l'agent, ADR-059).
  */
 @DisplayName("Execution Engine E2E")
 class ExecutionEngineE2ETest {
 
-    private RetryExecutor retryExecutor;
     private List<Object> publishedEvents;
-
-    private List<TaskResult> allTaskResults;
-    private StubTaskExecutorLookup taskExecutorLookup;
-    private Map<String, ExecutionPlan> planMap;
+    private Map<String, TaskExecutor> executors;
+    private StubStepDispatcher stepDispatcher;
     private ExecutionEngine engine;
-    private ExecutionPlanBuilder planBuilder;
     private StubExecutionRepository executionRepository;
     private final ExecutionLifecycleDispatcher lifecycleDispatcher = signal -> { /* no-op */ };
 
     @BeforeEach
     void setUp() {
-        retryExecutor = new DefaultRetryExecutor();
         publishedEvents = new CopyOnWriteArrayList<>();
-
-        allTaskResults = new CopyOnWriteArrayList<>();
-        taskExecutorLookup = new StubTaskExecutorLookup();
-        planMap = new HashMap<>();
+        executors = new ConcurrentHashMap<>();
         executionRepository = new StubExecutionRepository();
-        planBuilder = scenario -> planMap.get(scenario.id().value());
+        stepDispatcher = new StubStepDispatcher(this::executeRegisteredStep);
 
         ApplicationEventPublisher eventPublisher = event -> publishedEvents.add(event);
-
         engine = new ExecutionEngine(
-                planBuilder, executionRepository,
+                new DefaultExecutionPlanBuilder(), executionRepository,
                 eventPublisher, lifecycleDispatcher,
-                new LocalStepDispatcher(taskExecutorLookup, retryExecutor),
-                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
+                stepDispatcher);
+    }
+
+    private List<StepDispatchResult> executeRegisteredStep(ExecutionStep execStep,
+                                                           ExecutionContext context) {
+        TaskExecutor executor = executors.get(execStep.step().taskName());
+        if (executor == null) {
+            return StubStepDispatcher.failure(execStep,
+                    "no executor for " + execStep.step().taskName());
+        }
+        return StubStepDispatcher.result(execStep, executor.execute(context, execStep.step()));
     }
 
     // ========================================================================
@@ -96,30 +111,27 @@ class ExecutionEngineE2ETest {
             ScenarioDefinition scenario = buildScenario("perf-campaign-1",
                     List.of(
                             step("purge-db", "database", Phase.PREPARATION, List.of(), List.of()),
-                            step("seed-data", "database", Phase.PREPARATION, List.of(t("purge-db")), List.of("purge-db")),
+                            step("seed-data", "database", Phase.PREPARATION,
+                                    List.of(t("purge-db")), List.of("purge-db")),
                             step("start-mocks", "mockserver", Phase.PREPARATION, List.of(), List.of()),
                             step("api-load", "gatling", Phase.INJECTION,
                                     List.of(t("seed-data"), t("start-mocks")),
                                     List.of("seed-data", "start-mocks")),
-                            step("check-p95", "gatling-metric", Phase.ASSERTION,
+                            step("check-p95", "direct-assertion", Phase.ASSERTION,
                                     List.of(t("api-load")), List.of("api-load")),
-                            step("check-errors", "gatling-metric", Phase.ASSERTION,
+                            step("check-errors", "direct-assertion", Phase.ASSERTION,
                                     List.of(t("api-load")), List.of("api-load"))
                     ));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            taskExecutorLookup.registerTask("database",
-                    new FixedResultTaskExecutor("database", Duration.ofMillis(50), Map.of("rows_affected", 42)));
-            taskExecutorLookup.registerTask("mockserver",
-                    new FixedResultTaskExecutor("mockserver", Duration.ofMillis(30), Map.of("mocks", 3, "port", 8080)));
-            taskExecutorLookup.registerTask("gatling",
-                    new FixedResultTaskExecutor("gatling", Duration.ofMillis(150),
-                            Map.of("p95Ms", 320L, "errorRate", 0.002, "throughput", 1500.0, "totalRequests", 10000L)));
-            taskExecutorLookup.registerAssertion("gatling-metric",
-                    new FixedAssertionExecutor("gatling-metric", AssertionStatus.PASSED,
-                            "p95=320ms, threshold=500ms", Duration.ofMillis(5)));
+            executors.put("database", new FixedResultTaskExecutor("database",
+                    Duration.ofMillis(50), Map.of("rows_affected", 42)));
+            executors.put("mockserver", new FixedResultTaskExecutor("mockserver",
+                    Duration.ofMillis(30), Map.of("mocks", 3, "port", 8080)));
+            executors.put("gatling", new FixedResultTaskExecutor("gatling",
+                    Duration.ofMillis(150),
+                    Map.of("p95Ms", 320L, "errorRate", 0.002, "throughput", 1500.0, "totalRequests", 10000L)));
+            executors.put("direct-assertion", new FixedAssertionExecutor("direct-assertion",
+                    AssertionStatus.PASSED, "p95=320ms, threshold=500ms", Duration.ofMillis(5)));
 
             ExecutionId executionId = engine.execute(scenario);
             assertNotNull(executionId);
@@ -129,6 +141,7 @@ class ExecutionEngineE2ETest {
 
             ScenarioFinished finished = getEvent(ScenarioFinished.class);
             assertNotNull(finished);
+            assertEquals(Verdict.SUCCESS, finished.verdict());
 
             // Verify phase ordering
             List<PhaseStarted> phaseStarts = getEventsOrdered(PhaseStarted.class);
@@ -137,15 +150,15 @@ class ExecutionEngineE2ETest {
             assertEquals(Phase.INJECTION, phaseStarts.get(1).phase());
             assertEquals(Phase.ASSERTION, phaseStarts.get(2).phase());
 
-            // All 6 tasks should have completed
-            assertEquals(6, countEvents(TaskCompleted.class));
-            assertEquals(0, countEvents(TaskFailed.class));
+            // All 6 tasks went through the dispatcher
+            assertEquals(6, stepDispatcher.dispatchedSteps().size());
 
-            // Repository should have persisted state
+            // Repository should have persisted state with all results in context
             ExecutionState persisted = executionRepository.findById(executionId).orElseThrow();
             assertEquals(ExecutionStatus.COMPLETED, persisted.status());
-            // Task results are saved via the engine's saveTaskResult calls
-            assertTrue(persisted.context() != null);
+            assertEquals(java.util.Set.of("purge-db", "seed-data", "start-mocks", "api-load",
+                            "check-p95", "check-errors"),
+                    persisted.context().store().keySet());
         }
 
         @Test
@@ -154,22 +167,22 @@ class ExecutionEngineE2ETest {
             ScenarioDefinition scenario = buildScenario("dag-chain",
                     List.of(
                             step("prep-1", "shell", Phase.PREPARATION, List.of(), List.of()),
-                            step("prep-2", "shell", Phase.PREPARATION, List.of(t("prep-1")), List.of("prep-1")),
-                            step("inject-1", "gatling", Phase.INJECTION, List.of(t("prep-2")), List.of("prep-2")),
-                            step("assert-1", "gatling-metric", Phase.ASSERTION, List.of(t("inject-1")), List.of("inject-1"))
+                            step("prep-2", "shell", Phase.PREPARATION,
+                                    List.of(t("prep-1")), List.of("prep-1")),
+                            step("inject-1", "gatling", Phase.INJECTION,
+                                    List.of(t("prep-2")), List.of("prep-2")),
+                            step("assert-1", "direct-assertion", Phase.ASSERTION,
+                                    List.of(t("inject-1")), List.of("inject-1"))
                     ));
 
             List<String> executionOrder = Collections.synchronizedList(new ArrayList<>());
 
-            taskExecutorLookup.registerTask("shell",
-                    new OrderTrackingTaskExecutor("shell", Duration.ofMillis(10), Map.of(), executionOrder));
-            taskExecutorLookup.registerTask("gatling",
-                    new OrderTrackingTaskExecutor("gatling", Duration.ofMillis(30), Map.of(), executionOrder));
-            taskExecutorLookup.registerAssertion("gatling-metric",
-                    new OrderTrackingAssertionExecutor("gatling-metric", executionOrder));
-
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
+            executors.put("shell", new OrderTrackingTaskExecutor("shell",
+                    Duration.ofMillis(10), Map.of(), executionOrder));
+            executors.put("gatling", new OrderTrackingTaskExecutor("gatling",
+                    Duration.ofMillis(30), Map.of(), executionOrder));
+            executors.put("direct-assertion", new OrderTrackingAssertionExecutor(
+                    "direct-assertion", executionOrder));
 
             engine.execute(scenario);
 
@@ -198,22 +211,18 @@ class ExecutionEngineE2ETest {
             ScenarioDefinition scenario = buildScenario("all-success",
                     List.of(
                             step("prep", "shell", Phase.PREPARATION, List.of(), List.of()),
-                            step("load", "gatling", Phase.INJECTION, List.of(t("prep")), List.of("prep")),
-                            step("assert", "gatling-metric", Phase.ASSERTION,
+                            step("load", "gatling", Phase.INJECTION,
+                                    List.of(t("prep")), List.of("prep")),
+                            step("assert", "direct-assertion", Phase.ASSERTION,
                                     List.of(t("load")), List.of("load"))
                     ));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            taskExecutorLookup.registerTask("shell",
-                    new FixedResultTaskExecutor("shell", Duration.ofMillis(10), Map.of()));
-            taskExecutorLookup.registerTask("gatling",
-                    new FixedResultTaskExecutor("gatling", Duration.ofMillis(20),
-                            Map.of("p95Ms", 200L, "errorRate", 0.001)));
-            taskExecutorLookup.registerAssertion("gatling-metric",
-                    new FixedAssertionExecutor("gatling-metric", AssertionStatus.PASSED,
-                            "OK", Duration.ofMillis(5)));
+            executors.put("shell", new FixedResultTaskExecutor("shell",
+                    Duration.ofMillis(10), Map.of()));
+            executors.put("gatling", new FixedResultTaskExecutor("gatling",
+                    Duration.ofMillis(20), Map.of("p95Ms", 200L, "errorRate", 0.001)));
+            executors.put("direct-assertion", new FixedAssertionExecutor("direct-assertion",
+                    AssertionStatus.PASSED, "OK", Duration.ofMillis(5)));
 
             engine.execute(scenario);
 
@@ -228,19 +237,14 @@ class ExecutionEngineE2ETest {
             ScenarioDefinition scenario = buildScenario("failed-assertion",
                     List.of(
                             step("load", "gatling", Phase.INJECTION, List.of(), List.of()),
-                            step("check-sla", "gatling-metric", Phase.ASSERTION,
+                            step("check-sla", "direct-assertion", Phase.ASSERTION,
                                     List.of(t("load")), List.of("load"))
                     ));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            taskExecutorLookup.registerTask("gatling",
-                    new FixedResultTaskExecutor("gatling", Duration.ofMillis(20),
-                            Map.of("p95Ms", 1500L, "errorRate", 0.05)));
-            taskExecutorLookup.registerAssertion("gatling-metric",
-                    new FixedAssertionExecutor("gatling-metric", AssertionStatus.FAILED,
-                            "p95=1500ms exceeds threshold=500ms", Duration.ofMillis(5)));
+            executors.put("gatling", new FixedResultTaskExecutor("gatling",
+                    Duration.ofMillis(20), Map.of("p95Ms", 1500L, "errorRate", 0.05)));
+            executors.put("direct-assertion", new FixedAssertionExecutor("direct-assertion",
+                    AssertionStatus.FAILED, "p95=1500ms exceeds threshold=500ms", Duration.ofMillis(5)));
 
             engine.execute(scenario);
 
@@ -259,79 +263,45 @@ class ExecutionEngineE2ETest {
                                     List.of(t("critical-setup")), List.of("critical-setup"))
                     ));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            taskExecutorLookup.registerTask("database", new TaskExecutor() {
+            executors.put("database", new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
                     return TaskResult.failed(st.id(), "database", Duration.ofMillis(10),
                             "Connection refused", new RuntimeException("Connection refused"));
                 }
+
                 @Override
-                public String getSupportedTaskName() { return "database"; }
+                public String getSupportedTaskName() {
+                    return "database";
+                }
             });
 
             var gatlingCalled = new AtomicBoolean(false);
-            taskExecutorLookup.registerTask("gatling", new TaskExecutor() {
+            executors.put("gatling", new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
                     gatlingCalled.set(true);
                     return TaskResult.success(st.id(), "gatling", Duration.ofMillis(10), Map.of());
                 }
+
                 @Override
-                public String getSupportedTaskName() { return "gatling"; }
+                public String getSupportedTaskName() {
+                    return "gatling";
+                }
             });
 
-            engine.execute(scenario);
+            ExecutionId executionId = engine.execute(scenario);
 
             ScenarioFinished finished = getEvent(ScenarioFinished.class);
             assertNotNull(finished);
-            assertNotEquals(Verdict.SUCCESS, finished.verdict(),
-                    "Expected non-success verdict when a task fails");
-        }
+            assertEquals(Verdict.FAILED, finished.verdict());
+            assertFalse(gatlingCalled.get(), "Skipped step must not reach the dispatcher");
 
-        @Test
-        @DisplayName("E2E-13: Retry mechanism recovers from transient failure")
-        void retryMechanismRecovers() {
-            // Use a step with explicit retry policy to ensure retries are triggered
-            var retryPolicy = new RetryPolicy(3, Duration.ofMillis(10),
-                    2.0, Duration.ofMillis(100), Set.of(RuntimeException.class));
-
-            var scenario = new ScenarioDefinition(
-                    sId("retry-recovery"), "E2E retry-recovery", "1.0",
-                    List.of("e2e"), Map.of(), ExecutionMode.LOCAL,
-                    List.of(new StepDefinition(t("flaky-task"), "database", Phase.PREPARATION,
-                            Map.of(), List.of(), List.of(), Duration.ofSeconds(60),
-                            retryPolicy)),
-                    Map.of());
-
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            var attempts = new AtomicInteger(0);
-            taskExecutorLookup.registerTask("database", new TaskExecutor() {
-                @Override
-                public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
-                    int attempt = attempts.incrementAndGet();
-                    if (attempt < 3) {
-                        throw new RuntimeException("Transient failure, attempt " + attempt);
-                    }
-                    return TaskResult.success(st.id(), "database", Duration.ofMillis(5),
-                            Map.of("attempts", attempt));
-                }
-                @Override
-                public String getSupportedTaskName() { return "database"; }
-            });
-
-            engine.execute(scenario);
-
-            // Task should complete successfully after retries
-            assertEquals(1, countEvents(TaskCompleted.class),
-                    "Expected task to complete after retries");
-            // At least 2 retry events should be published
-            long completed = countEvents(TaskCompleted.class);
-            assertTrue(completed >= 1, "Expected at least 1 task completion, got " + completed);
+            ExecutionState persisted = executionRepository.findById(executionId).orElseThrow();
+            var skipped = persisted.context().store().get("depends-on-setup");
+            assertNotNull(skipped);
+            assertTrue(skipped.values().stream()
+                    .allMatch(result -> result.status() == com.performance.platform.domain.task.TaskStatus.SKIPPED));
         }
     }
 
@@ -349,27 +319,25 @@ class ExecutionEngineE2ETest {
             ScenarioDefinition scenario = buildScenario("assertion-always",
                     List.of(
                             step("load", "gatling", Phase.INJECTION, List.of(), List.of()),
-                            step("verify", "gatling-metric", Phase.ASSERTION,
+                            step("verify", "direct-assertion", Phase.ASSERTION,
                                     List.of(t("load")), List.of("load"))
                     ));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            taskExecutorLookup.registerTask("gatling",
-                    new FixedResultTaskExecutor("gatling", Duration.ofMillis(20),
-                            Map.of("p95Ms", 600L)));
+            executors.put("gatling", new FixedResultTaskExecutor("gatling",
+                    Duration.ofMillis(20), Map.of("p95Ms", 600L)));
 
             var assertionExecuted = new AtomicBoolean(false);
-            taskExecutorLookup.registerAssertion("gatling-metric", new AssertionExecutor() {
+            executors.put("direct-assertion", new AssertionExecutor() {
                 @Override
-                public AssertionResult evaluate(ExecutionContext ctx, StepDefinition st) {
+                public AssertionSummary evaluate(ExecutionContext ctx, StepDefinition st) {
                     assertionExecuted.set(true);
-                    return new AssertionResult(st.id(), AssertionStatus.FAILED,
-                            "p95 too high", null, Duration.ofMillis(5), Instant.now());
+                    return summary(st.id(), AssertionStatus.FAILED, "p95 too high", Duration.ofMillis(5));
                 }
+
                 @Override
-                public String getSupportedAssertionName() { return "gatling-metric"; }
+                public String getSupportedAssertionName() {
+                    return "direct-assertion";
+                }
             });
 
             engine.execute(scenario);
@@ -382,38 +350,32 @@ class ExecutionEngineE2ETest {
             ScenarioDefinition scenario = buildScenario("prep-only",
                     List.of(
                             step("purge", "database", Phase.PREPARATION, List.of(), List.of()),
-                            step("seed", "database", Phase.PREPARATION, List.of(t("purge")), List.of("purge"))
+                            step("seed", "database", Phase.PREPARATION,
+                                    List.of(t("purge")), List.of("purge"))
                     ));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            taskExecutorLookup.registerTask("database",
-                    new FixedResultTaskExecutor("database", Duration.ofMillis(10), Map.of("ok", true)));
+            executors.put("database", new FixedResultTaskExecutor("database",
+                    Duration.ofMillis(10), Map.of("ok", true)));
 
             ExecutionId executionId = engine.execute(scenario);
             assertNotNull(executionId);
-            assertEquals(2, countEvents(TaskCompleted.class));
-            assertEquals(0, countEvents(TaskFailed.class));
+            assertEquals(2, stepDispatcher.dispatchedSteps().size());
+            assertEquals(Verdict.SUCCESS, getEvent(ScenarioFinished.class).verdict());
         }
 
         @Test
         @DisplayName("E2E-22: Scenario with only injection step succeeds")
         void scenarioWithOnlyInjection() {
             ScenarioDefinition scenario = buildScenario("inject-only",
-                    List.of(
-                            step("load", "gatling", Phase.INJECTION, List.of(), List.of())
-                    ));
+                    List.of(step("load", "gatling", Phase.INJECTION, List.of(), List.of())));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            taskExecutorLookup.registerTask("gatling",
-                    new FixedResultTaskExecutor("gatling", Duration.ofMillis(15), Map.of("requests", 5000)));
+            executors.put("gatling", new FixedResultTaskExecutor("gatling",
+                    Duration.ofMillis(15), Map.of("requests", 5000)));
 
             ExecutionId executionId = engine.execute(scenario);
             assertNotNull(executionId);
-            assertEquals(1, countEvents(TaskCompleted.class));
+            assertEquals(1, stepDispatcher.dispatchedSteps().size());
+            assertEquals(Verdict.SUCCESS, getEvent(ScenarioFinished.class).verdict());
         }
     }
 
@@ -440,33 +402,23 @@ class ExecutionEngineE2ETest {
                             step("task-b", "shell", Phase.PREPARATION, List.of(), List.of())
                     ));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
-            taskExecutorLookup.registerTask("shell", new TaskExecutor() {
+            executors.put("shell", new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
                     if (st.id().value().equals("task-a")) {
                         startedA.countDown();
-                        try {
-                            assertTrue(latchA.await(5, TimeUnit.SECONDS), "Task A was not released");
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            throw new AssertionError("Task A interrupted", e);
-                        }
+                        await(latchA, "Task A");
                     } else {
                         startedB.countDown();
-                        try {
-                            assertTrue(latchB.await(5, TimeUnit.SECONDS), "Task B was not released");
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                            throw new AssertionError("Task B interrupted", e);
-                        }
+                        await(latchB, "Task B");
                     }
                     return TaskResult.success(st.id(), "shell", Duration.ofMillis(5), Map.of());
                 }
+
                 @Override
-                public String getSupportedTaskName() { return "shell"; }
+                public String getSupportedTaskName() {
+                    return "shell";
+                }
             });
 
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -483,12 +435,19 @@ class ExecutionEngineE2ETest {
                         executionRepository.findById(executionId).orElseThrow().status());
             }
 
-            assertEquals(2, countEvents(TaskCompleted.class));
-            assertEquals(0, countEvents(TaskFailed.class));
+            assertEquals(2, stepDispatcher.dispatchedSteps().size());
             assertEquals(Verdict.SUCCESS, getEvent(ScenarioFinished.class).verdict());
-            assertEquals(Set.of(t("task-a"), t("task-b")),
-                    allTaskResults.stream().map(TaskResult::taskId).collect(java.util.stream.Collectors.toSet()));
-            assertEquals(2, allTaskResults.size());
+        }
+
+        private static void await(CountDownLatch latch, String name) {
+            try {
+                if (!latch.await(5, TimeUnit.SECONDS)) {
+                    throw new AssertionError(name + " was not released");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError(name + " interrupted", e);
+            }
         }
     }
 
@@ -504,7 +463,6 @@ class ExecutionEngineE2ETest {
         @DisplayName("E2E-40: Cancel on unknown execution ID does not throw")
         void cancelUnknownExecutionDoesNotThrow() {
             var unknownId = ExecutionId.generate();
-            // cancel() on unknown ID should be a no-op, not throw
             assertDoesNotThrow(() -> engine.cancel(unknownId));
         }
     }
@@ -523,41 +481,46 @@ class ExecutionEngineE2ETest {
             ScenarioDefinition scenario = buildScenario("ctx-flow",
                     List.of(
                             step("db-setup", "database", Phase.PREPARATION, List.of(), List.of()),
-                            step("db-check", "database-assertion", Phase.ASSERTION,
+                            step("db-check", "direct-assertion", Phase.ASSERTION,
                                     List.of(t("db-setup")), List.of("db-setup"))
                     ));
 
-            ExecutionPlan plan = buildPlan(scenario, scenario.steps());
-            planMap.put(scenario.id().value(), plan);
-
             var setupCalls = new AtomicInteger(0);
-            taskExecutorLookup.registerTask("database", new TaskExecutor() {
+            executors.put("database", new TaskExecutor() {
                 @Override
                 public TaskResult execute(ExecutionContext ctx, StepDefinition st) {
                     setupCalls.incrementAndGet();
                     return TaskResult.success(st.id(), "database", Duration.ofMillis(5),
                             Map.of("datasource", "my-db", "rows_cleaned", 500));
                 }
+
                 @Override
-                public String getSupportedTaskName() { return "database"; }
+                public String getSupportedTaskName() {
+                    return "database";
+                }
             });
 
             var checkCalls = new AtomicInteger(0);
-            taskExecutorLookup.registerAssertion("database-assertion", new AssertionExecutor() {
+            var seenSetupResult = new AtomicBoolean(false);
+            executors.put("direct-assertion", new AssertionExecutor() {
                 @Override
-                public AssertionResult evaluate(ExecutionContext ctx, StepDefinition st) {
+                public AssertionSummary evaluate(ExecutionContext ctx, StepDefinition st) {
                     checkCalls.incrementAndGet();
-                    return new AssertionResult(st.id(), AssertionStatus.PASSED,
-                            "verified", null, Duration.ofMillis(5), Instant.now());
+                    seenSetupResult.set(ctx.store().containsKey("db-setup"));
+                    return summary(st.id(), AssertionStatus.PASSED, "verified", Duration.ofMillis(5));
                 }
+
                 @Override
-                public String getSupportedAssertionName() { return "database-assertion"; }
+                public String getSupportedAssertionName() {
+                    return "direct-assertion";
+                }
             });
 
             engine.execute(scenario);
 
             assertEquals(1, setupCalls.get());
             assertEquals(1, checkCalls.get());
+            assertTrue(seenSetupResult.get(), "Assertion step must see the preparation result");
         }
     }
 
@@ -573,8 +536,6 @@ class ExecutionEngineE2ETest {
         @DisplayName("E2E-60: Scenario with no steps succeeds")
         void emptyScenarioSucceeds() {
             ScenarioDefinition scenario = buildScenario("empty", List.of());
-            ExecutionPlan plan = buildPlan(scenario, List.of());
-            planMap.put(scenario.id().value(), plan);
 
             ExecutionId executionId = engine.execute(scenario);
             assertNotNull(executionId);
@@ -593,8 +554,13 @@ class ExecutionEngineE2ETest {
     // Factory methods
     // ========================================================================
 
-    private static TaskId t(String id) { return TaskId.of(id); }
-    private static ScenarioId sId(String id) { return ScenarioId.of(id); }
+    private static TaskId t(String id) {
+        return TaskId.of(id);
+    }
+
+    private static ScenarioId sId(String id) {
+        return ScenarioId.of(id);
+    }
 
     private static StepDefinition step(String id, String taskName, Phase phase,
                                        List<TaskId> dependsOn, List<String> requiredContexts) {
@@ -604,28 +570,7 @@ class ExecutionEngineE2ETest {
 
     private static ScenarioDefinition buildScenario(String id, List<StepDefinition> steps) {
         return new ScenarioDefinition(sId(id), "E2E " + id, "1.0", List.of("e2e"), Map.of(),
-                ExecutionMode.LOCAL, steps, Map.of());
-    }
-
-    private ExecutionPlan buildPlan(ScenarioDefinition scenario, List<StepDefinition> steps) {
-        var eid = ExecutionId.generate();
-        List<ExecutionStep> prep = new ArrayList<>();
-        List<ExecutionStep> injection = new ArrayList<>();
-        List<ExecutionStep> assertion = new ArrayList<>();
-
-        for (StepDefinition step : steps) {
-            var execStep = new ExecutionStep(step, step.dependsOn(),
-                    step.dependsOn().isEmpty() ? 0 : 1,
-                    Set.copyOf(step.requiredContexts()));
-            switch (step.phase()) {
-                case PREPARATION -> prep.add(execStep);
-                case INJECTION -> injection.add(execStep);
-                case ASSERTION -> assertion.add(execStep);
-            }
-        }
-
-        return new ExecutionPlan(eid, scenario.id(), prep, injection, assertion, List.of(),
-                ExecutionContext.initial(eid, scenario.id()));
+                steps, null, null);
     }
 
     // ========================================================================
@@ -656,7 +601,7 @@ class ExecutionEngineE2ETest {
     // Stubs
     // ========================================================================
 
-    class StubExecutionRepository implements ExecutionRepository {
+    static class StubExecutionRepository implements ExecutionRepository {
         private final Map<String, ExecutionState> states = new ConcurrentHashMap<>();
 
         @Override
@@ -684,7 +629,7 @@ class ExecutionEngineE2ETest {
 
         @Override
         public void saveTaskResult(ExecutionId id, TaskId taskId, AgentId agentId, TaskResult result) {
-            allTaskResults.add(result);
+            // Les resultats dispatches sont conserves dans le contexte de l'etat.
         }
 
         @Override
@@ -701,23 +646,8 @@ class ExecutionEngineE2ETest {
         public void deleteById(ExecutionId id) { /* no-op */ }
 
         @Override
-        public Map<com.performance.platform.domain.id.TaskId, Map<com.performance.platform.domain.id.AgentId, com.performance.platform.domain.task.TaskResult>> findAllTaskResults(ExecutionId id) { return Map.of(); }
-    }
-
-    static class StubTaskExecutorLookup implements TaskExecutorLookup {
-        private final Map<String, TaskExecutor> taskExecutors = new HashMap<>();
-
-        void registerTask(String taskName, TaskExecutor executor) {
-            taskExecutors.put(taskName, executor);
-        }
-
-        void registerAssertion(String assertionName, AssertionExecutor executor) {
-            taskExecutors.put(assertionName, executor); // AssertionExecutor extends TaskExecutor
-        }
-
-        @Override
-        public TaskExecutor findTaskExecutor(String taskName) {
-            return taskExecutors.get(taskName);
+        public Map<TaskId, Map<AgentId, TaskResult>> findAllTaskResults(ExecutionId id) {
+            return Map.of();
         }
     }
 
@@ -735,14 +665,18 @@ class ExecutionEngineE2ETest {
 
         @Override
         public TaskResult execute(ExecutionContext ctx, StepDefinition step) {
-            try { Thread.sleep(latency.toMillis()); } catch (InterruptedException e) {
+            try {
+                Thread.sleep(latency.toMillis());
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
             return TaskResult.success(step.id(), taskName, latency, new HashMap<>(outputs));
         }
 
         @Override
-        public String getSupportedTaskName() { return taskName; }
+        public String getSupportedTaskName() {
+            return taskName;
+        }
     }
 
     /** AssertionExecutor that returns a fixed result. */
@@ -761,15 +695,19 @@ class ExecutionEngineE2ETest {
         }
 
         @Override
-        public AssertionResult evaluate(ExecutionContext ctx, StepDefinition step) {
-            try { Thread.sleep(latency.toMillis()); } catch (InterruptedException e) {
+        public AssertionSummary evaluate(ExecutionContext ctx, StepDefinition step) {
+            try {
+                Thread.sleep(latency.toMillis());
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            return new AssertionResult(step.id(), status, message, null, latency, Instant.now());
+            return summary(step.id(), status, message, latency);
         }
 
         @Override
-        public String getSupportedAssertionName() { return assertionName; }
+        public String getSupportedAssertionName() {
+            return assertionName;
+        }
     }
 
     /** TaskExecutor that tracks execution order by step ID. */
@@ -789,7 +727,9 @@ class ExecutionEngineE2ETest {
 
         @Override
         public TaskResult execute(ExecutionContext ctx, StepDefinition step) {
-            try { Thread.sleep(latency.toMillis()); } catch (InterruptedException e) {
+            try {
+                Thread.sleep(latency.toMillis());
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
             order.add(step.id().value());
@@ -797,7 +737,9 @@ class ExecutionEngineE2ETest {
         }
 
         @Override
-        public String getSupportedTaskName() { return taskName; }
+        public String getSupportedTaskName() {
+            return taskName;
+        }
     }
 
     /** AssertionExecutor that tracks execution order by step ID. */
@@ -811,13 +753,21 @@ class ExecutionEngineE2ETest {
         }
 
         @Override
-        public AssertionResult evaluate(ExecutionContext ctx, StepDefinition step) {
+        public AssertionSummary evaluate(ExecutionContext ctx, StepDefinition step) {
             order.add(step.id().value());
-            return new AssertionResult(step.id(), AssertionStatus.PASSED, "OK",
-                    null, Duration.ofMillis(5), Instant.now());
+            return summary(step.id(), AssertionStatus.PASSED, "OK", Duration.ofMillis(5));
         }
 
         @Override
-        public String getSupportedAssertionName() { return assertionName; }
+        public String getSupportedAssertionName() {
+            return assertionName;
+        }
+    }
+
+    /** Resume d'assertion pour les stubs de test. */
+    private static AssertionSummary summary(TaskId id, AssertionStatus status,
+                                            String description, Duration duration) {
+        return new AssertionSummary(id, status, description, List.of(),
+                duration, Instant.now(), AssertionFamily.CUSTOM, null, List.of(), Rollup.all());
     }
 }

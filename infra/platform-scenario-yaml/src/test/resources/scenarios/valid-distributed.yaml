@@ -2,46 +2,55 @@ scenario:
   id: distributed-scenario
   name: Distributed Multi-Agent Scenario
   version: 1.0.0
-  tags: [distributed, multi-agent]
+  tags:
+  - distributed
+  - multi-agent
   taskAvailabilityTimeoutSeconds: 60
-  execution:
-    mode: DISTRIBUTED
   steps:
-    - id: agent1-prep
-      task: shell
-      phase: PREPARATION
-      parameters:
-        command: echo "Agent 1 ready"
-      timeout: 10s
-    - id: agent2-prep
-      task: shell
-      phase: PREPARATION
-      parameters:
-        command: echo "Agent 2 ready"
-      timeout: 10s
-    - id: distributed-load
-      task: gatling
-      phase: INJECTION
-      requiredContexts: [agent1-prep, agent2-prep]
-      dependsOn: [agent1-prep, agent2-prep]
-      parameters:
-        simulation: com.example.DistributedSimulation
-        loadModel: constant-load
-      timeout: 15m
-    - id: distributed-assertion
-      task: gatling-metric
-      phase: ASSERTION
-      requiredContexts: [distributed-load]
-      dependsOn: [distributed-load]
-      parameters:
-        metric: throughput
-        operator: GREATER_THAN
-        threshold: 1000
-        sourceTaskId: distributed-load
-      timeout: 10s
-loadModels:
-  constant-load:
-      type: CONSTANT
-      stages:
+  - id: agent1-prep
+    task: shell
+    phase: PREPARATION
+    parameters:
+      command: echo "Agent 1 ready"
+    timeout: 10s
+  - id: agent2-prep
+    task: shell
+    phase: PREPARATION
+    parameters:
+      command: echo "Agent 2 ready"
+    timeout: 10s
+  - id: distributed-load
+    task: gatling
+    phase: INJECTION
+    requiredContexts:
+    - agent1-prep
+    - agent2-prep
+    dependsOn:
+    - agent1-prep
+    - agent2-prep
+    parameters:
+      simulation: com.example.DistributedSimulation
+      loadModel:
+        type: CONSTANT
+        stages:
         - duration: 10m
           usersPerSecond: 200
+    timeout: 15m
+  - id: distributed-assertion
+    task: performance-thresholds
+    phase: ASSERTION
+    requiredContexts:
+    - distributed-load
+    dependsOn:
+    - distributed-load
+    description:
+      title: Distributed throughput
+      sli: aggregated throughput of the distributed injection
+      slo: throughput >= 1000 req/s
+    parameters:
+      throughput:
+        min: 1000
+        unit: req_per_sec
+        severity: CRITICAL
+    timeout: 10s
+    ref: distributed-load

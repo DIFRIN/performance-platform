@@ -1,23 +1,34 @@
 package com.performance.platform.reporting.model;
 
-import com.performance.platform.domain.assertion.AssertionResult;
-import com.performance.platform.domain.assertion.Evidence;
+import com.performance.platform.domain.assertion.AssertionStatus;
+import com.performance.platform.domain.assertion.AssertionSummary;
+import com.performance.platform.domain.assertion.Check;
+import com.performance.platform.domain.assertion.SloStatement;
 import com.performance.platform.domain.id.TaskId;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
- * Entrée de rapport pour une tâche d'assertion.
- * Associe l'identifiant d'assertion au résultat et à l'évidence collectée.
- * Record immuable.
+ * Entree de rapport pour une tache d'assertion : le resume complet, source
+ * unique du verdict, des checks et du SLI/SLO textuel (ADR-049/ADR-051).
  */
-public record AssertionReportEntry(
-    TaskId assertionId,
-    AssertionResult result,
-    Evidence evidence
-) {
+public record AssertionReportEntry(TaskId assertionId, AssertionSummary summary) {
+
     public AssertionReportEntry {
         Objects.requireNonNull(assertionId, "assertionId required");
-        Objects.requireNonNull(result, "result required");
+        Objects.requireNonNull(summary, "summary required");
+    }
+
+    public AssertionStatus verdict() {
+        return summary.verdict();
+    }
+
+    public List<Check> checks() {
+        return summary.checks();
+    }
+
+    public SloStatement slo() {
+        return summary.slo();
     }
 }

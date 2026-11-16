@@ -39,7 +39,7 @@ platform:
         minimum-idle: 1
         connection-timeout: 10000
 
-    # SUT database used by the `database` / `database-assertion` tasks.
+    # SUT database used by the `database` task.
     sut-db:
       url: ${SUT_DB_URL:jdbc:postgresql://localhost:5433/sut_devices}
       username: ${SUT_DB_USERNAME:postgres}

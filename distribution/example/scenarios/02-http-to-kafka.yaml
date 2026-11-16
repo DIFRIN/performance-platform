@@ -1,0 +1,103 @@
+# =============================================================================
+# Scenario 2 - HTTP injection -> SUT endpoint -> DB lookup -> Kafka produce
+# =============================================================================
+# One file for both runtime modes (ADR-053).
+#
+# Flow:
+#   1. platform seeds devices
+#   2. Gatling injects POST /api/events?device_id=... on the SUT
+#   3. SUT checks the device in the DB and publishes an event to device-events
+#   4. platform asserts the Kafka topic contains the expected events
+#
+# The load model is inline in the step (ADR-053), and fanOut: all makes the
+# multi-agent injection an explicit choice (ADR-055).
+#
+# Run (LOCAL):
+#   docker compose -f distribution/example/docker-compose-local.yaml \
+#     run --rm -e SCENARIO_FILE=02-http-to-kafka.yaml platform
+# =============================================================================
+scenario:
+  id: 02-http-to-kafka
+  name: "HTTP injection -> SUT -> DB -> Kafka"
+  version: "1.0.0"
+  tags: [example, http, kafka]
+  metadata:
+    executionGroup: example-sut
+    owner: perf-team
+    sut: sut
+
+  steps:
+    - id: reset-sut-db
+      task: database
+      phase: PREPARATION
+      parameters:
+        datasource: sut-db
+        operation: PURGE
+        table: devices
+      timeout: 30s
+
+    - id: seed-sut-db
+      task: database
+      phase: PREPARATION
+      dependsOn: [reset-sut-db]
+      parameters:
+        datasource: sut-db
+        operation: POPULATE
+        scriptPath: "classpath:sql/seed-sut-devices.sql"
+      timeout: 2m
+
+    - id: check-sut
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [seed-sut-db]
+      parameters:
+        target: sut-api
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: inject-events
+      task: gatling
+      phase: INJECTION
+      fanOut: all
+      dependsOn: [check-sut]
+      parameters:
+        target: sut-api
+        path: submit-event
+        method: POST
+        queryParams:
+          device_id: "device-{index:4}"
+        headers:
+          X-Request-Id: "{uuid}"
+        expectedStatus: 200
+        loadModel:
+          type: RAMP
+          parameters: { from: 1, to: 200, durationSeconds: 30 }
+      timeout: 5m
+
+    - id: count-events
+      task: kafka-consumer
+      phase: ASSERTION
+      dependsOn: [inject-events]
+      parameters:
+        cluster: iot-sut
+        topic: device-events
+        operation: COUNT
+      timeout: 1m
+
+    - id: assert-events-produced
+      task: direct-assertion
+      phase: ASSERTION
+      dependsOn: [count-events]
+      ref: count-events
+      description:
+        title: Events published to Kafka
+        sli: number of messages available in device-events
+        slo: at least 1000 messages produced by the HTTP injection
+        rationale: the SUT persisted each device check and published one event per request
+      parameters:
+        metric: kafka.messages.consumed
+        operator: GTE
+        threshold: 1000
+      timeout: 2m

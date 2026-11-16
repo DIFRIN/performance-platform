@@ -1,7 +1,8 @@
 # Spec 03 — Task Framework
 
 **Modules** : `platform-plugin-api` (contrats + annotations),
-`platform-infrastructure` (implémentations internes, registre, plugins)
+`platform-infrastructure` (registre, plugins),
+`infra/executors/platform-executor-*` (implémentations internes, un module par famille, ADR-057)
 **Dépend de** : `platform-domain`, `platform-use-cases`
 
 ---
@@ -144,15 +145,14 @@ Outputs : `containerId`, `status`, `image` (selon action).
   task: kafka-producer
   phase: PREPARATION
   parameters:
-    operation: PRELOAD          # PRODUCE | PRELOAD
-    cluster: default            # cluster nommé (préféré)
-    # bootstrapServers: kafka:9092   # legacy, WARN
+    operation: PRODUCE
+    cluster: default            # cluster nommé (obligatoire)
     topic: input-events         # nom logique -> topic physique via kafka-clusters.<cluster>.topics
     messageCount: 10000
     key: "dev-{index:5}"        # défaut msg-{index}
     headers:                    # valeurs dynamiques (DynamicValues)
       x-correlation-id: "{uuid}"
-    payload:                    # string ou map/list (JSON) ; alias messageTemplate
+    payload:                    # string ou map/list (JSON)
       id: "{index}"
       value: "{random:1-100}"
     batchSize: 500
@@ -178,23 +178,24 @@ Outputs : `messagesProduced`, `messagesFailed`. La tâche échoue si
 ```
 Outputs : `messagesConsumed`, `lag`.
 
-### `mock-server` — PREPARATION
+### `mock-server` — service step
 ```yaml
 - id: start-mock
   task: mock-server
-  phase: PREPARATION
+  during: injection            # service step : START avant INJECTION, STOP après
+  drain: 8s                    # optionnel : retarde le STOP
   parameters:
     deployment: EMBEDDED        # EMBEDDED | EXTERNAL
-    action: START               # START | STOP | RESET | VERIFY
     port: 8090                  # EMBEDDED
     mappingsPath: classpath:mock
-    target: wiremock            # EXTERNAL : cible nommée
-    wiremockUrl: http://mock:8080  # EXTERNAL (legacy)
+    target: wiremock            # EXTERNAL : cible nommée (obligatoire)
 ```
-Outputs : `port`, `url`, `totalRequests` (VERIFY). Un port `0` demande un port éphémère.
+Outputs publiés **au STOP** : `port`, `url`, `totalRequests`. Les assertions les lisent
+via `ref`. Un port `0` demande un port éphémère.
 `mappingsPath` désigne une racine WireMock contenant un sous-répertoire `mappings/`.
 Une racine `classpath:` (ex. `classpath:mock`) charge les mappings embarqués dans
 l'application, y compris depuis un JAR Spring Boot exécutable.
+`parameters.action` (`START`/`STOP`/`RESET`/`VERIFY`) n'existe plus (ADR-054).
 
 ### `http-client` — PREPARATION
 ```yaml
@@ -234,7 +235,7 @@ Un `{nom}` inconnu est laissé tel quel (JSON sûr). Un argument invalide fait �
 Le même contenu dynamique est supporté par les trois phases :
 - **PREPARATION** (`http-client`) : requête unique.
 - **INJECTION** (`gatling`, sans `simulation`) : injection HTTP générique créée dynamiquement (voir ci-dessous) ; placeholders résolus pour chaque requête, avec le même `{index}` pour toutes les parties d'une requête.
-- **ASSERTION** (`http-mock`) : `queryParams` filtre les appels comptés ; valeur statique → `equalTo`, valeur avec placeholder → regex `matches` (`DynamicValues.toRegex`).
+- **ASSERTION** (`direct-assertion`, métrique `http.requests.matched`) : compteur lu sur la cible nommée (`target`), une `mockUrl` explicite, ou la sortie `receivedCalls` d'une tâche via `ref` ; `endpoint`/`method` restreignent le critère WireMock, sans placeholder.
 
 ### `gatling` — INJECTION (voir spec 06)
 Injection HTTP décrite par le scénario (aucune classe de simulation à fournir) :
@@ -454,16 +455,16 @@ public class HttpClientTaskExecutor implements TaskExecutor { ... }
 public class GatlingTaskExecutor implements TaskExecutor { ... }
 
 // Assertions : AssertionExecutor extends TaskExecutor
-@Assertion(name = "gatling-metric", ...)
-public class GatlingMetricAssertionExecutor implements AssertionExecutor { ... }
+// Assertions : AssertionExecutor extends TaskExecutor
+@Assertion(name = "performance-thresholds", ...)
+public class PerformanceThresholdsAssertionExecutor implements AssertionExecutor { ... }
 
-@Assertion(name = "database-assertion", ...)
-public class DatabaseAssertionExecutor implements AssertionExecutor { ... }
+@Assertion(name = "direct-assertion", ...)
+public class DirectAssertionAssertionExecutor implements AssertionExecutor { ... }
 
-@Assertion(name = "kafka", ...)          public class KafkaAssertionExecutor
-@Assertion(name = "wiremock", ...)      public class WireMockAssertionExecutor
-@Assertion(name = "http-mock", ...)     public class HttpMockAssertionExecutor
-@Assertion(name = "file", ...)          public class FileAssertionExecutor
+// Annexe (plugin externe, hors reactor) : panneaux Grafana/Kibana
+@Assertion(name = "panel-assertion", ...)
+public class PanelAssertionExecutor implements AssertionExecutor { ... }
 ```
 
 ### 7.4 Usage — Plugin Externe
@@ -591,8 +592,9 @@ ce que Spring n'offre pas. Ne s'applique **jamais** à `platform-domain` ni
 | SQL simple (COUNT/EXISTS) | `JdbcTemplate` / `JdbcClient` | `Connection` + `PreparedStatement` manuels |
 | Transaction | `TransactionTemplate` / `@Transactional` | `setAutoCommit`/`commit`/`rollback` manuels |
 
-**Dépendances `platform-infrastructure`** : `spring-jdbc` + `HikariCP` (cf. ADR-013).
+**Dépendances `platform-executor-database`** : `spring-jdbc` + `HikariCP` (cf. ADR-013).
 
 > Note POPULATE : `ResourceDatabasePopulator` n'expose pas de `rowsAffected`. L'output
 > de POPULATE devient `scriptExecuted` (et non `rowsAffected`). PURGE conserve
 > `rowsAffected`. Détail : `docs/knowledge/adr/ADR-013-spring-first-infrastructure.md`.
+

@@ -30,6 +30,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- AssertJ (tests des types deplaces : template) -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- ArchUnit — verification 0 Spring + 0 infrastructure dans application -->
         <dependency>
             <groupId>com.tngtech.archunit</groupId>

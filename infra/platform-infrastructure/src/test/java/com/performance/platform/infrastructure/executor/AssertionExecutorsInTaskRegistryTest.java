@@ -27,10 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Spring {@code List<TaskExecutor>}.
  * <p>
  * Ce mecanisme de collection automatique est le meme pour les
- * {@code AssertionExecutor} beans (depuis ISSUE-150, {@code AssertionExecutor}
- * etend {@code TaskExecutor}). Les 6 implementations d'assertion du module
- * {@code platform-assertion} sont donc automatiquement enregistrees dans
- * le {@code DefaultTaskExecutorRegistry} de production.
+ * {@code AssertionExecutor} beans ({@code AssertionExecutor} etend
+ * {@code TaskExecutor}).
  */
 @DisplayName("Spring auto-collection of TaskExecutor beans in DefaultTaskExecutorRegistry")
 class AssertionExecutorsInTaskRegistryTest {
@@ -80,28 +78,28 @@ class AssertionExecutorsInTaskRegistryTest {
         }
 
         @Bean
-        TaskExecutor gatlingMetricAssertion() {
-            return stubExecutor("gatling-metric");
+        TaskExecutor performanceThresholdsAssertion() {
+            return stubExecutor("performance-thresholds");
         }
 
         @Bean
-        TaskExecutor kafkaAssertion() {
-            return stubExecutor("kafka");
+        TaskExecutor directAssertion() {
+            return stubExecutor("direct-assertion");
         }
 
         @Bean
-        TaskExecutor wiremockAssertion() {
-            return stubExecutor("wiremock");
+        TaskExecutor panelAssertion() {
+            return stubExecutor("panel-assertion");
         }
 
         @Bean
-        TaskExecutor httpMockAssertion() {
-            return stubExecutor("http-mock");
+        TaskExecutor gatlingTask() {
+            return stubExecutor("gatling");
         }
 
         @Bean
-        TaskExecutor fileAssertion() {
-            return stubExecutor("file");
+        TaskExecutor shellTask() {
+            return stubExecutor("shell");
         }
 
         @Bean
@@ -123,8 +121,8 @@ class AssertionExecutorsInTaskRegistryTest {
 
             assertThat(taskNames)
                     .containsExactlyInAnyOrder(
-                            "database", "gatling-metric", "kafka",
-                            "wiremock", "http-mock", "file");
+                            "database", "performance-thresholds", "direct-assertion",
+                            "panel-assertion", "gatling", "shell");
         }
 
         @Test
@@ -140,15 +138,15 @@ class AssertionExecutorsInTaskRegistryTest {
         }
 
         @Test
-        @DisplayName("should resolve gatling-metric by taskName")
-        void shouldResolveGatlingMetricByName() {
+        @DisplayName("should resolve performance-thresholds by taskName")
+        void shouldResolvePerformanceThresholdsByName() {
             DefaultTaskExecutorRegistry registry =
                     context.getBean(DefaultTaskExecutorRegistry.class);
 
-            TaskExecutor executor = registry.getFor("gatling-metric");
+            TaskExecutor executor = registry.getFor("performance-thresholds");
 
             assertThat(executor).isNotNull();
-            assertThat(executor.getSupportedTaskName()).isEqualTo("gatling-metric");
+            assertThat(executor.getSupportedTaskName()).isEqualTo("performance-thresholds");
         }
     }
 
@@ -166,18 +164,18 @@ class AssertionExecutorsInTaskRegistryTest {
         }
 
         @Test
-        @DisplayName("should return all 6 assertion-style names")
+        @DisplayName("should return all 6 task names")
         void shouldReturnAllSixAssertionNames() {
             DefaultTaskExecutorRegistry registry =
                     context.getBean(DefaultTaskExecutorRegistry.class);
 
             assertThat(registry.getSupportedTaskNames())
                     .contains("database")
-                    .contains("gatling-metric")
-                    .contains("kafka")
-                    .contains("wiremock")
-                    .contains("http-mock")
-                    .contains("file");
+                    .contains("performance-thresholds")
+                    .contains("direct-assertion")
+                    .contains("panel-assertion")
+                    .contains("gatling")
+                    .contains("shell");
         }
     }
 }

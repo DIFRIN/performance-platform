@@ -36,9 +36,29 @@ final class PerformanceSections {
 
     static String sli(PerformanceAssessment assessment) {
         if (assessment == null) return missing();
-        return checks(assessment.sliSlo()) + "<p>Latency percentiles are reported per agent; "
+        return sloStatements(assessment) + checks(assessment.sliSlo()) + "<p>Latency percentiles are reported per agent; "
                 + "threshold checks use the worst agent, never an average of percentiles. "
                 + "Throughput checks use the lowest agent rate; error rate is request-weighted.</p>";
+    }
+
+    /**
+     * Section SLI/SLO textuelle : titre, ce qui est mesure, l'objectif et la
+     * justification, suivis des checks correspondants (ADR-049/ADR-051).
+     */
+    static String sloStatements(PerformanceAssessment assessment) {
+        if (assessment == null || assessment.sloStatements().isEmpty()) return "";
+        var html = new StringBuilder("<h3>Service level objectives</h3>");
+        for (var section : assessment.sloStatements()) {
+            if (!section.described() && section.checks().isEmpty()) continue;
+            html.append("<div class=\"slo-section\"><h4>")
+                    .append(escape(section.title().isBlank() ? section.assertionId() : section.title()))
+                    .append("</h4><table>");
+            if (!section.sli().isBlank()) html.append(row("SLI", section.sli()));
+            if (!section.slo().isBlank()) html.append(row("SLO", section.slo()));
+            if (!section.rationale().isBlank()) html.append(row("Why this threshold", section.rationale()));
+            html.append("</table>").append(checks(section.checks())).append("</div>");
+        }
+        return html.toString();
     }
 
     static String technical(PerformanceAssessment assessment) {
@@ -76,8 +96,16 @@ final class PerformanceSections {
     }
 
     static String validation(PerformanceAssessment assessment) {
-        if (assessment == null) return "<p>Validation evidence unavailable; legacy report verdict is not a full performance approval.</p>";
+        if (assessment == null) return "<p>Validation evidence unavailable; the execution verdict is not a full performance approval.</p>";
+        String review = "";
+        if (assessment.review() != null
+                && assessment.review().state() != com.performance.platform.reporting.model.ReviewState.NONE) {
+            review = "<p><strong>Review: " + escape(assessment.review().state().name()) + "</strong>"
+                    + (assessment.review().rationale().isBlank() ? ""
+                            : " - " + escape(assessment.review().rationale())) + "</p>";
+        }
         return "<p><strong>" + assessment.validation().status() + "</strong></p>"
+                + review
                 + "<p>SUCCESS: all required checks passed. PARTIAL / WARNING: minor threshold failure or incomplete evidence. "
                 + "FAILED: critical threshold failure or technical / functional execution failure.</p>"
                 + checks(assessment.validation().criteria()) + "<h3>Missing requirements / limitations</h3>"

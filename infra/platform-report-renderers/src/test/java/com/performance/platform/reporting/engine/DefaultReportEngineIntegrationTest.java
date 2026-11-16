@@ -2,7 +2,7 @@ package com.performance.platform.reporting.engine;
 
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.event.ReportGenerated;
 import com.performance.platform.domain.event.ScenarioFinished;
@@ -156,14 +156,12 @@ class DefaultReportEngineIntegrationTest {
         }
 
         @Test
-        @DisplayName("should classify tasks with AssertionResult as assertion phase")
+        @DisplayName("should classify tasks with AssertionSummary as assertion phase")
         void shouldClassifyAssertionTasksCorrectly() {
             var assertId = TaskId.of("assert-1");
-            var assertResult = new AssertionResult(
-                    assertId, AssertionStatus.PASSED, "check passed",
-                    null, Duration.ofMillis(10), now);
+            var assertResult = AssertionSummary.verdictOnly(assertId, AssertionStatus.PASSED, "check passed", Duration.ofMillis(10), now);
             var taskResult = TaskResult.success(assertId, "metric-check",
-                    Duration.ofMillis(10), Map.of("assertionResult", assertResult));
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertId.value(), "agent-1", taskResult);
@@ -175,14 +173,14 @@ class DefaultReportEngineIntegrationTest {
             assertEquals(0, report.injectionResults().size());
             assertEquals(1, report.assertionResults().size());
             assertEquals(assertId, report.assertionResults().get(0).assertionId());
-            assertEquals(AssertionStatus.PASSED, report.assertionResults().get(0).result().status());
+            assertEquals(AssertionStatus.PASSED, report.assertionResults().get(0).verdict());
         }
 
         @Test
-        @DisplayName("should classify tasks with neither InjectionResult nor AssertionResult as preparation")
+        @DisplayName("should classify tasks with neither InjectionResult nor AssertionSummary as preparation")
         void shouldClassifyGenericTasksAsPreparation() {
             var prepId = TaskId.of("prep-1");
-            // TaskResult with generic outputs, no InjectionResult or AssertionResult
+            // TaskResult with generic outputs, no InjectionResult or AssertionSummary
             var taskResult = TaskResult.success(prepId, "shell-cleanup",
                     Duration.ofSeconds(1), Map.of("files_deleted", 10, "exit_code", 0));
 
@@ -201,7 +199,7 @@ class DefaultReportEngineIntegrationTest {
         @Test
         @DisplayName("should classify mixed tasks into correct phases")
         void shouldClassifyMixedTasks() {
-            // Preparation: no InjectionResult or AssertionResult
+            // Preparation: no InjectionResult or AssertionSummary
             var prepId = TaskId.of("prep-1");
             var prepResult = TaskResult.success(prepId, "db-purge",
                     Duration.ofSeconds(2), Map.of("rows", 100));
@@ -212,13 +210,11 @@ class DefaultReportEngineIntegrationTest {
             var injTaskResult = TaskResult.success(injId, "gatling",
                     Duration.ofSeconds(5), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
-            // Assertion: has AssertionResult in outputs
+            // Assertion: has AssertionSummary in outputs
             var assertId = TaskId.of("assert-1");
-            var assertResult = new AssertionResult(
-                    assertId, AssertionStatus.FAILED, "threshold breached",
-                    null, Duration.ofMillis(20), now);
-            var assertTaskResult = TaskResult.success(assertId, "gatling-metric",
-                    Duration.ofMillis(20), Map.of("assertionResult", assertResult));
+            var assertResult = AssertionSummary.verdictOnly(assertId, AssertionStatus.FAILED, "threshold breached", Duration.ofMillis(20), now);
+            var assertTaskResult = TaskResult.success(assertId, "direct-assertion",
+                    Duration.ofMillis(20), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
@@ -260,11 +256,9 @@ class DefaultReportEngineIntegrationTest {
 
             // Assertion: 0.5 sec
             var assertId = TaskId.of("assert-1");
-            var assertResult = new AssertionResult(
-                    assertId, AssertionStatus.PASSED, "ok",
-                    null, Duration.ofMillis(500), now);
-            var assertTaskResult = TaskResult.success(assertId, "gatling-metric",
-                    Duration.ofMillis(500), Map.of("assertionResult", assertResult));
+            var assertResult = AssertionSummary.verdictOnly(assertId, AssertionStatus.PASSED, "ok", Duration.ofMillis(500), now);
+            var assertTaskResult = TaskResult.success(assertId, "direct-assertion",
+                    Duration.ofMillis(500), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
@@ -394,11 +388,9 @@ class DefaultReportEngineIntegrationTest {
                     Duration.ofSeconds(2), Map.of());
 
             var assertId = TaskId.of("assert-1");
-            var assertResult = new AssertionResult(
-                    assertId, AssertionStatus.PASSED, "row count matches",
-                    null, Duration.ofMillis(100), now);
-            var assertTaskResult = TaskResult.success(assertId, "database-assertion",
-                    Duration.ofMillis(100), Map.of("assertionResult", assertResult));
+            var assertResult = AssertionSummary.verdictOnly(assertId, AssertionStatus.PASSED, "row count matches", Duration.ofMillis(100), now);
+            var assertTaskResult = TaskResult.success(assertId, "direct-assertion",
+                    Duration.ofMillis(100), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(prepId.value(), "agent-1", prepResult)
@@ -429,18 +421,14 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("WARNING when checks pass but required evidence is missing or skipped")
         void successWhenAllPassedOrSkipped() {
             var assertA = TaskId.of("assert-a");
-            var passedResult = new AssertionResult(
-                    assertA, AssertionStatus.PASSED, "p95 ok", null,
-                    Duration.ofMillis(10), now);
+            var passedResult = AssertionSummary.verdictOnly(assertA, AssertionStatus.PASSED, "p95 ok", Duration.ofMillis(10), now);
             var taskResultA = TaskResult.success(assertA, "check",
-                    Duration.ofMillis(10), Map.of("assertionResult", passedResult));
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, passedResult));
 
             var assertB = TaskId.of("assert-b");
-            var skippedResult = new AssertionResult(
-                    assertB, AssertionStatus.SKIPPED, "no data to check", null,
-                    Duration.ofMillis(5), now);
+            var skippedResult = AssertionSummary.verdictOnly(assertB, AssertionStatus.SKIPPED, "no data to check", Duration.ofMillis(5), now);
             var taskResultB = TaskResult.success(assertB, "check",
-                    Duration.ofMillis(5), Map.of("assertionResult", skippedResult));
+                    Duration.ofMillis(5), Map.of(AssertionSummary.OUTPUT_KEY, skippedResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskResultA)
@@ -458,18 +446,14 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("FAILED when an assertion fails without an explicit minor severity")
         void warningWhenFailedNoError() {
             var assertA = TaskId.of("assert-a");
-            var passedResult = new AssertionResult(
-                    assertA, AssertionStatus.PASSED, "ok", null,
-                    Duration.ofMillis(10), now);
+            var passedResult = AssertionSummary.verdictOnly(assertA, AssertionStatus.PASSED, "ok", Duration.ofMillis(10), now);
             var taskResultA = TaskResult.success(assertA, "check",
-                    Duration.ofMillis(10), Map.of("assertionResult", passedResult));
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, passedResult));
 
             var assertB = TaskId.of("assert-b");
-            var failedResult = new AssertionResult(
-                    assertB, AssertionStatus.FAILED, "threshold exceeded", null,
-                    Duration.ofMillis(10), now);
+            var failedResult = AssertionSummary.verdictOnly(assertB, AssertionStatus.FAILED, "threshold exceeded", Duration.ofMillis(10), now);
             var taskResultB = TaskResult.success(assertB, "check",
-                    Duration.ofMillis(10), Map.of("assertionResult", failedResult));
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, failedResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskResultA)
@@ -487,18 +471,14 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("FAILED when at least one ERROR regardless of other statuses")
         void failedWhenErrorPresent() {
             var assertA = TaskId.of("assert-a");
-            var passedResult = new AssertionResult(
-                    assertA, AssertionStatus.PASSED, "ok", null,
-                    Duration.ofMillis(10), now);
+            var passedResult = AssertionSummary.verdictOnly(assertA, AssertionStatus.PASSED, "ok", Duration.ofMillis(10), now);
             var taskResultA = TaskResult.success(assertA, "check",
-                    Duration.ofMillis(10), Map.of("assertionResult", passedResult));
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, passedResult));
 
             var assertB = TaskId.of("assert-b");
-            var errorResult = new AssertionResult(
-                    assertB, AssertionStatus.ERROR, "null pointer in evaluator", null,
-                    Duration.ofMillis(5), now);
+            var errorResult = AssertionSummary.verdictOnly(assertB, AssertionStatus.ERROR, "null pointer in evaluator", Duration.ofMillis(5), now);
             var taskResultB = TaskResult.success(assertB, "check",
-                    Duration.ofMillis(5), Map.of("assertionResult", errorResult));
+                    Duration.ofMillis(5), Map.of(AssertionSummary.OUTPUT_KEY, errorResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskResultA)
@@ -516,25 +496,19 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("ERROR has priority over FAILED — multiple assertions")
         void errorPriorityOverFailed() {
             var assertA = TaskId.of("assert-a");
-            var failedA = new AssertionResult(
-                    assertA, AssertionStatus.FAILED, "threshold A", null,
-                    Duration.ofMillis(10), now);
+            var failedA = AssertionSummary.verdictOnly(assertA, AssertionStatus.FAILED, "threshold A", Duration.ofMillis(10), now);
             var taskResultA = TaskResult.success(assertA, "check",
-                    Duration.ofMillis(10), Map.of("assertionResult", failedA));
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, failedA));
 
             var assertB = TaskId.of("assert-b");
-            var failedB = new AssertionResult(
-                    assertB, AssertionStatus.FAILED, "threshold B", null,
-                    Duration.ofMillis(10), now);
+            var failedB = AssertionSummary.verdictOnly(assertB, AssertionStatus.FAILED, "threshold B", Duration.ofMillis(10), now);
             var taskResultB = TaskResult.success(assertB, "check",
-                    Duration.ofMillis(10), Map.of("assertionResult", failedB));
+                    Duration.ofMillis(10), Map.of(AssertionSummary.OUTPUT_KEY, failedB));
 
             var assertC = TaskId.of("assert-c");
-            var errorC = new AssertionResult(
-                    assertC, AssertionStatus.ERROR, "crash", null,
-                    Duration.ofMillis(5), now);
+            var errorC = AssertionSummary.verdictOnly(assertC, AssertionStatus.ERROR, "crash", Duration.ofMillis(5), now);
             var taskResultC = TaskResult.success(assertC, "check",
-                    Duration.ofMillis(5), Map.of("assertionResult", errorC));
+                    Duration.ofMillis(5), Map.of(AssertionSummary.OUTPUT_KEY, errorC));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskResultA)
@@ -563,18 +537,14 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("should generate report with only SKIPPED assertions")
         void shouldHandleOnlySkippedAssertions() {
             var skipA = TaskId.of("skip-a");
-            var skippedA = new AssertionResult(
-                    skipA, AssertionStatus.SKIPPED, "no data", null,
-                    Duration.ofMillis(1), now);
+            var skippedA = AssertionSummary.verdictOnly(skipA, AssertionStatus.SKIPPED, "no data", Duration.ofMillis(1), now);
             var taskResultA = TaskResult.success(skipA, "check",
-                    Duration.ofMillis(1), Map.of("assertionResult", skippedA));
+                    Duration.ofMillis(1), Map.of(AssertionSummary.OUTPUT_KEY, skippedA));
 
             var skipB = TaskId.of("skip-b");
-            var skippedB = new AssertionResult(
-                    skipB, AssertionStatus.SKIPPED, "dependency failed", null,
-                    Duration.ofMillis(1), now);
+            var skippedB = AssertionSummary.verdictOnly(skipB, AssertionStatus.SKIPPED, "dependency failed", Duration.ofMillis(1), now);
             var taskResultB = TaskResult.success(skipB, "check",
-                    Duration.ofMillis(1), Map.of("assertionResult", skippedB));
+                    Duration.ofMillis(1), Map.of(AssertionSummary.OUTPUT_KEY, skippedB));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(skipA.value(), "agent-1", taskResultA)
@@ -595,11 +565,9 @@ class DefaultReportEngineIntegrationTest {
         void shouldHandleFailedAssertionStatusInVerdict() {
             // Testing FAILED assertion status (not ERROR)
             var assertId = TaskId.of("assert-1");
-            var failedAssert = new AssertionResult(
-                    assertId, AssertionStatus.FAILED, "p99 exceeded 100ms", null,
-                    Duration.ofMillis(15), now);
-            var taskResult = TaskResult.success(assertId, "gatling-metric",
-                    Duration.ofMillis(15), Map.of("assertionResult", failedAssert));
+            var failedAssert = AssertionSummary.verdictOnly(assertId, AssertionStatus.FAILED, "p99 exceeded 100ms", Duration.ofMillis(15), now);
+            var taskResult = TaskResult.success(assertId, "direct-assertion",
+                    Duration.ofMillis(15), Map.of(AssertionSummary.OUTPUT_KEY, failedAssert));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertId.value(), "agent-1", taskResult);
@@ -615,9 +583,9 @@ class DefaultReportEngineIntegrationTest {
 
         @Test
         @DisplayName("should handle assertion with null result in VerdictCalculator")
-        void shouldHandleNullAssertionResult() {
+        void shouldHandleNullAssertionSummary() {
             // The VerdictCalculator skips entries with null result
-            // DefaultReportEngine uses AssertionResult from ExecutionContext, so it's never null
+            // DefaultReportEngine uses AssertionSummary from ExecutionContext, so it's never null
             // But we test the edge case at the calculator level
             assertEquals(Verdict.SUCCESS,
                     VerdictCalculator.calculate(List.of()));
@@ -633,11 +601,9 @@ class DefaultReportEngineIntegrationTest {
                     Duration.ofSeconds(3), Map.of(InjectionResult.OUTPUT_KEY, injResult));
 
             var assertId = TaskId.of("assert-1");
-            var assertResult = new AssertionResult(
-                    assertId, AssertionStatus.PASSED, "throughput >= 100", null,
-                    Duration.ofMillis(30), now);
+            var assertResult = AssertionSummary.verdictOnly(assertId, AssertionStatus.PASSED, "throughput >= 100", Duration.ofMillis(30), now);
             var assertTask = TaskResult.success(assertId, "custom-assertion-plugin",
-                    Duration.ofMillis(30), Map.of("assertionResult", assertResult));
+                    Duration.ofMillis(30), Map.of(AssertionSummary.OUTPUT_KEY, assertResult));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(injId.value(), "agent-1", injTask)
@@ -651,7 +617,7 @@ class DefaultReportEngineIntegrationTest {
             assertEquals(Verdict.WARNING, report.verdict());
             // Assertion entry is correctly classified as assertion (not preparation)
             assertEquals(1, report.assertionResults().size());
-            assertEquals("throughput >= 100", report.assertionResults().get(0).result().description());
+            assertEquals("throughput >= 100", report.assertionResults().get(0).summary().description());
             // No tasks classified as preparation (both are typed)
             assertEquals(0, report.preparationResults().size());
         }
@@ -668,20 +634,20 @@ class DefaultReportEngineIntegrationTest {
         @DisplayName("should generate report with all verdict reason fields populated")
         void shouldPopulateAllVerdictReasonFields() {
             var assertA = TaskId.of("assert-a");
-            var passedA = new AssertionResult(assertA, AssertionStatus.PASSED, "ok", null, Duration.ofMillis(5), now);
-            var taskA = TaskResult.success(assertA, "check", Duration.ofMillis(5), Map.of("assertionResult", passedA));
+            var passedA = AssertionSummary.verdictOnly(assertA, AssertionStatus.PASSED, "ok", Duration.ofMillis(5), now);
+            var taskA = TaskResult.success(assertA, "check", Duration.ofMillis(5), Map.of(AssertionSummary.OUTPUT_KEY, passedA));
 
             var assertB = TaskId.of("assert-b");
-            var failedB = new AssertionResult(assertB, AssertionStatus.FAILED, "fail", null, Duration.ofMillis(5), now);
-            var taskB = TaskResult.success(assertB, "check", Duration.ofMillis(5), Map.of("assertionResult", failedB));
+            var failedB = AssertionSummary.verdictOnly(assertB, AssertionStatus.FAILED, "fail", Duration.ofMillis(5), now);
+            var taskB = TaskResult.success(assertB, "check", Duration.ofMillis(5), Map.of(AssertionSummary.OUTPUT_KEY, failedB));
 
             var assertC = TaskId.of("assert-c");
-            var errorC = new AssertionResult(assertC, AssertionStatus.ERROR, "error", null, Duration.ofMillis(5), now);
-            var taskC = TaskResult.success(assertC, "check", Duration.ofMillis(5), Map.of("assertionResult", errorC));
+            var errorC = AssertionSummary.verdictOnly(assertC, AssertionStatus.ERROR, "error", Duration.ofMillis(5), now);
+            var taskC = TaskResult.success(assertC, "check", Duration.ofMillis(5), Map.of(AssertionSummary.OUTPUT_KEY, errorC));
 
             var assertD = TaskId.of("assert-d");
-            var skippedD = new AssertionResult(assertD, AssertionStatus.SKIPPED, "skip", null, Duration.ofMillis(5), now);
-            var taskD = TaskResult.success(assertD, "check", Duration.ofMillis(5), Map.of("assertionResult", skippedD));
+            var skippedD = AssertionSummary.verdictOnly(assertD, AssertionStatus.SKIPPED, "skip", Duration.ofMillis(5), now);
+            var taskD = TaskResult.success(assertD, "check", Duration.ofMillis(5), Map.of(AssertionSummary.OUTPUT_KEY, skippedD));
 
             var context = ExecutionContext.initial(executionId, scenarioId)
                     .with(assertA.value(), "agent-1", taskA)

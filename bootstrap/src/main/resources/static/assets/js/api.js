@@ -157,7 +157,7 @@ export async function rerunExecution(id) {
  * GET /api/v1/catalog
  *
  * @returns {Promise<Array<{key: string, scenarioId: string, name: string, version: string,
- *   tags: string[], executionMode: string, stepCount: number, valid: boolean,
+ *   tags: string[], stepCount: number, valid: boolean,
  *   error: string|null, steps: Array}>>}
  */
 export async function listCatalog() {
@@ -173,6 +173,87 @@ export async function listCatalog() {
  */
 export async function runCatalogScenario(key) {
     return request(BASE + "/catalog/" + encodeURIComponent(key) + "/run", {
+        method: "POST",
+    });
+}
+
+// ---- Scheduled runs ----
+
+/**
+ * Submit a scenario immediately or for a deferred/recurring run.
+ * POST /api/v1/schedules
+ *
+ * The expression is resolved by the server: empty or "now" runs immediately,
+ * "in 10m" schedules a one-shot run, "cron:0 0 2 * * *" schedules a recurrence.
+ *
+ * @param {string} yaml — scenario YAML
+ * @param {string} schedule — schedule expression (may be empty)
+ * @returns {Promise<{executionId: string|null, scheduleId: string|null, status: string, nextRunAt: string|null}>}
+ */
+export async function scheduleScenario(yaml, schedule) {
+    return request(BASE + "/schedules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scenarioYaml: yaml, schedule: schedule || "" }),
+    });
+}
+
+/**
+ * List scheduled runs (pending and recent history).
+ * GET /api/v1/schedules?limit=N
+ *
+ * @param {number} [limit=50]
+ * @returns {Promise<Array<{scheduleId: string, scenarioId: string, kind: string, schedule: string,
+ *   nextRunAt: string, status: string, lastExecutionId: string|null,
+ *   createdAt: string, updatedAt: string}>>}
+ */
+export async function listScheduledRuns(limit) {
+    const params = new URLSearchParams();
+    if (limit && limit > 0) params.set("limit", String(limit));
+    const qs = params.toString();
+    return request(BASE + "/schedules" + (qs ? "?" + qs : ""));
+}
+
+/**
+ * Cancel a pending scheduled run.
+ * DELETE /api/v1/schedules/{id}
+ *
+ * @param {string} id — scheduled run identifier
+ * @returns {Promise<null>} 204 No Content
+ */
+export async function cancelScheduledRun(id) {
+    return request(BASE + "/schedules/" + encodeURIComponent(id), {
+        method: "DELETE",
+    });
+}
+
+/**
+ * Replace the schedule expression of a pending scheduled run.
+ * PUT /api/v1/schedules/{id}
+ *
+ * @param {string} id — scheduled run identifier
+ * @param {string} schedule — new expression (in 10m, ISO date-time, cron:...)
+ * @returns {Promise<{scheduleId: string, scenarioId: string, kind: string, schedule: string,
+ *   nextRunAt: string, status: string, lastExecutionId: string|null,
+ *   createdAt: string, updatedAt: string}>}
+ */
+export async function rescheduleScheduledRun(id, schedule) {
+    return request(BASE + "/schedules/" + encodeURIComponent(id), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ schedule: schedule || "" }),
+    });
+}
+
+/**
+ * Trigger a pending scheduled run immediately.
+ * POST /api/v1/schedules/{id}/run
+ *
+ * @param {string} id — scheduled run identifier
+ * @returns {Promise<{executionId: string|null, scheduleId: string|null, status: string, nextRunAt: string|null}>}
+ */
+export async function runScheduledRunNow(id) {
+    return request(BASE + "/schedules/" + encodeURIComponent(id) + "/run", {
         method: "POST",
     });
 }
@@ -244,6 +325,49 @@ export async function uploadScenario({ file, yaml } = {}) {
 
     // 400 → ValidationErrorResponse or generic error
     const err = new Error(body.message || body.error || "Upload failed");
+    err.status = res.status;
+    err.code = body.error;
+    err.details = body.details || [];
+    throw err;
+}
+
+/**
+ * Validate a scenario YAML without executing it.
+ * POST /api/v1/scenarios/validate (multipart)
+ *
+ * Accepts either a File object ({@code file}) or a YAML string ({@code yaml}).
+ * Returns the parsed scenario preview ({@code scenarioId, name, version,
+ * stepCount, steps[]}) and never creates an execution.
+ *
+ * @param {{file?: File, yaml?: string}} params
+ * @returns {Promise<{scenarioId: string, name: string, version: string,
+ *   stepCount: number,
+ *   steps: Array<{id: string, taskName: string, phase: string}>}>}
+ * @throws {Error} with {@code .details[]} on validation failure
+ */
+export async function validateScenario({ file, yaml } = {}) {
+    const formData = new FormData();
+
+    if (file) {
+        formData.append("file", file);
+    } else if (yaml) {
+        formData.append("file", new Blob([yaml], { type: "text/plain" }), "scenario.yaml");
+    } else {
+        throw new Error("Either 'file' or 'yaml' parameter is required");
+    }
+
+    const res = await fetch(BASE + "/scenarios/validate", {
+        method: "POST",
+        body: formData,
+    });
+
+    const body = await res.json();
+
+    if (res.ok) {
+        return body;
+    }
+
+    const err = new Error(body.message || body.error || "Validation failed");
     err.status = res.status;
     err.code = body.error;
     err.details = body.details || [];

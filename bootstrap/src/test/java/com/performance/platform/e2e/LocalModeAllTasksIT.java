@@ -1,6 +1,5 @@
 package com.performance.platform.e2e;
 
-import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.application.exception.ExecutionException;
 import com.performance.platform.application.exception.ReportGenerationException;
@@ -12,9 +11,6 @@ import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.app.api.ApiExceptionHandler;
 import com.performance.platform.app.api.ScenarioController;
-import com.performance.platform.domain.agent.AgentCapabilities;
-import com.performance.platform.domain.agent.AgentDescriptor;
-import com.performance.platform.domain.agent.AgentState;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.PhaseStatus;
@@ -25,11 +21,7 @@ import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.campaign.ExecutionEngine;
-import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
-import com.performance.platform.engine.local.LocalStepDispatcher;
-import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.campaign.plan.DefaultExecutionPlanBuilder;
-import com.performance.platform.engine.retry.DefaultRetryExecutor;
 import com.performance.platform.infrastructure.persistence.ExecutionStateEntity;
 import com.performance.platform.infrastructure.persistence.TaskResultEntity;
 import com.performance.platform.infrastructure.persistence.mapper.ExecutionStateMapper;
@@ -120,6 +112,7 @@ class LocalModeAllTasksIT {
     static DefaultReportEngine reportEngine;
     static InMemoryExecutionTransport transport;
     static TaskAgentRuntime localAgent;
+    static LocalTransportHarness harness;
 
     @BeforeAll
     static void setUp() throws Exception {
@@ -153,34 +146,31 @@ class LocalModeAllTasksIT {
         var gatlingStub = createGatlingStub();
 
         // 5. Stub AssertionExecutors pour les assertions du scenario
-        var httpMockAssertionStub = new StubAssertionExecutor("http-mock");
-        var gatlingMetricAssertionStub = new StubAssertionExecutor("gatling-metric");
+        var directAssertionStub = new StubAssertionExecutor("direct-assertion");
+        var performanceThresholdsStub = new StubAssertionExecutor("performance-thresholds");
 
-        // 6. TaskExecutorLookup
-        var lookup = new TaskExecutorLookup() {
-            @Override
-            public TaskExecutor findTaskExecutor(String taskName) {
-                return switch (taskName) {
-                    case "mock-server" -> mockServerStub;
-                    case "gatling" -> gatlingStub;
-                    case "http-mock" -> httpMockAssertionStub;
-                    case "gatling-metric" -> gatlingMetricAssertionStub;
-                    default -> null;
-                };
-            }
-        };
+        // 6. Executors exposes a l'agent embarque (tasks + assertions)
+        var taskExecutors = List.<TaskExecutor>of(
+                mockServerStub, gatlingStub, directAssertionStub, performanceThresholdsStub);
+        var supportedTaskNames = java.util.Set.of(
+                "mock-server", "gatling", "direct-assertion", "performance-thresholds");
 
         // 7. Supporting components
         var planBuilder = new DefaultExecutionPlanBuilder();
-        var retryExecutor = new DefaultRetryExecutor();
         List<Object> publishedEvents = new CopyOnWriteArrayList<>();
         ApplicationEventPublisher eventPublisher = publishedEvents::add;
 
-        // 8. LocalExecutionEngine
+        // 8. Transport in-memory + agent embarque (ADR-059)
+        harness = new LocalTransportHarness(
+                executionRepository, eventPublisher, taskExecutors, supportedTaskNames);
+        harness.start();
+        transport = harness.transport();
+        localAgent = harness.agent();
+
+        // 9. ExecutionEngine (un seul chemin d'execution, tous modes)
         var engine = new ExecutionEngine(
-                planBuilder, executionRepository, eventPublisher, signal -> { },
-                new LocalStepDispatcher(lookup, retryExecutor),
-                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
+                planBuilder, executionRepository, eventPublisher,
+                harness.lifecycleDispatcher(), harness.stepDispatcher());
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();
@@ -242,29 +232,12 @@ class LocalModeAllTasksIT {
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
-
-        // 13. Transport InMemory + LocalAgent (pour verification canExecute)
-        transport = new InMemoryExecutionTransport();
-        transport.connect();
-
-        var allTaskNames = Set.of("mock-server", "gatling", "http-mock", "gatling-metric");
-        var executorList = List.<TaskExecutor>of(mockServerStub, gatlingStub);
-        var descriptor = new AgentDescriptor(
-                AgentId.generate(), "local-agent", "localhost", 8080, null,
-                allTaskNames, new AgentCapabilities(10, "1.0.0"),
-                AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
-
-        var agentFilter = new DefaultTaskSpecializationFilter(
-                descriptor.supportedTaskNames(), descriptor.id());
-        localAgent = new TaskAgentRuntime(transport, transport, transport, transport, agentFilter, descriptor,
-                Duration.ofMinutes(5), executorList, List.of(), null, null,
-                new com.performance.platform.assertion.lifecycle.DefaultLifecycleSignalHandler(descriptor.supportedTaskNames()::contains));
     }
 
     @AfterAll
     static void tearDown() {
-        if (transport != null) {
-            transport.disconnect();
+        if (harness != null) {
+            harness.close();
         }
         if (sessionFactory != null) {
             sessionFactory.close();
@@ -358,8 +331,8 @@ class LocalModeAllTasksIT {
     void localAgentShouldSupportAllScenarioTaskNames() {
         assertThat(localAgent.canExecute("mock-server")).isTrue();
         assertThat(localAgent.canExecute("gatling")).isTrue();
-        assertThat(localAgent.canExecute("http-mock")).isTrue();
-        assertThat(localAgent.canExecute("gatling-metric")).isTrue();
+        assertThat(localAgent.canExecute("direct-assertion")).isTrue();
+        assertThat(localAgent.canExecute("performance-thresholds")).isTrue();
 
         // Task non enregistree
         assertThat(localAgent.canExecute("unknown-task")).isFalse();
@@ -421,7 +394,7 @@ class LocalModeAllTasksIT {
         // In LOCAL mode, LocalAgent derives supportedTaskNames from executor registry,
         // NOT from agent.supported-tasks configuration (ADR-015).
         // All registered tasks are supported regardless of what would be in config.
-        var allScenarioTasks = Set.of("mock-server", "gatling", "http-mock", "gatling-metric");
+        var allScenarioTasks = Set.of("mock-server", "gatling", "direct-assertion", "performance-thresholds");
         for (String taskName : allScenarioTasks) {
             assertThat(localAgent.canExecute(taskName))
                     .as("LocalAgent should support '%s' regardless of agent.supported-tasks config", taskName)
@@ -438,8 +411,8 @@ class LocalModeAllTasksIT {
         // This is verified via canExecute() above.
         assertThat(localAgent.canExecute("mock-server")).isTrue();
         assertThat(localAgent.canExecute("gatling")).isTrue();
-        assertThat(localAgent.canExecute("http-mock")).isTrue();
-        assertThat(localAgent.canExecute("gatling-metric")).isTrue();
+        assertThat(localAgent.canExecute("direct-assertion")).isTrue();
+        assertThat(localAgent.canExecute("performance-thresholds")).isTrue();
     }
 
     // ---- Helpers ----
@@ -534,18 +507,14 @@ class LocalModeAllTasksIT {
         }
 
         @Override
-        public com.performance.platform.domain.assertion.AssertionResult evaluate(
+        public com.performance.platform.domain.assertion.AssertionSummary evaluate(
+
                 com.performance.platform.domain.execution.ExecutionContext context,
                 com.performance.platform.domain.scenario.StepDefinition step) {
-            var evidence = new com.performance.platform.domain.assertion.Evidence(
-                    1L, 1L,
-                    com.performance.platform.domain.assertion.AssertionOperator.EQ,
-                    null, Map.of("stub", true));
-            return new com.performance.platform.domain.assertion.AssertionResult(
+            return com.performance.platform.domain.assertion.AssertionSummary.verdictOnly(
                     step.id(),
                     com.performance.platform.domain.assertion.AssertionStatus.PASSED,
                     "stub assertion passed",
-                    evidence,
                     Duration.ofMillis(1),
                     Instant.now());
         }

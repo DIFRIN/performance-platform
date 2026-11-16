@@ -43,7 +43,7 @@ class ExecutionProgressApiTest {
                 new com.performance.platform.domain.execution.ExecutionTask(
                         TaskId.of("load-test"), "gatling", Phase.INJECTION, true),
                 new com.performance.platform.domain.execution.ExecutionTask(
-                        TaskId.of("assert-db-intact"), "database-assertion", Phase.ASSERTION, false));
+                        TaskId.of("assert-db-intact"), "direct-assertion", Phase.ASSERTION, false));
         var state = new ExecutionState(id, scenarioId, ExecutionStatus.RUNNING, Map.of(),
                 ExecutionContext.initial(id, scenarioId), now, now, 3, tasks);
         var repository = mock(ExecutionRepository.class);

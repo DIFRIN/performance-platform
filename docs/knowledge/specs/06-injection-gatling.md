@@ -26,7 +26,8 @@ public class GatlingTaskExecutor implements TaskExecutor {
     @Override
     public TaskResult execute(ExecutionContext context, StepDefinition step) {
         // 1. Extraire les paramètres depuis step.parameters()
-        // 2. Résoudre le LoadModel depuis step.parameters().get("loadModel")
+        // 2. Lire le load model inline : step.parameters().get("loadModel")
+        //    (plus de registre nommé `loadModels`, ADR-053)
         // 3. Configurer la simulation Gatling
         // 4. Lancer via GatlingRunner
         // 5. Parser les résultats
@@ -154,6 +155,37 @@ return TaskResult.success(
 );
 // L'orchestrateur fait ensuite : context.with(step.id().value(), agentId, taskResult)
 ```
+
+### 6.1 Charge multi-agents — `fanOut: all` (ADR-055)
+
+Une étape d'injection ne s'exécute sur plusieurs agents que si elle le déclare :
+
+```yaml
+- id: inject-events
+  task: gatling
+  phase: INJECTION
+  fanOut: all
+  dependsOn: [check-sut]
+  parameters:
+    target: sut-api
+    path: submit-event
+    method: POST
+    loadModel:
+      type: RAMP
+      parameters: { from: 1, to: 200, durationSeconds: 30 }
+  timeout: 5m
+```
+
+- `fanOut: one` (défaut) : un seul agent accordé exécute la simulation ; le résultat est
+  stocké sous `context[taskId]`.
+- `fanOut: all` : tous les agents compétents accordés dans la fenêtre de claim
+  (`execution.claim-window`) exécutent **le même** load model ; chaque agent produit un
+  `InjectionResult` stocké sous `taskId → agentId`. La charge totale est la somme des
+  charges de chaque agent : dimensionner le load model en conséquence.
+- L'agrégation des résultats multi-agents se fait dans les assertions, par règle déclarée
+  sur la métrique (ADR-049) — jamais par une politique globale de sélection.
+- Les autres étapes (préparation, assertions, actions à effet de bord) restent en
+  `fanOut: one` : elles ne s'exécutent qu'une fois.
 
 ---
 

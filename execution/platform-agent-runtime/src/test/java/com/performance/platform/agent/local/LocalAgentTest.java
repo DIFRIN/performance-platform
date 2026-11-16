@@ -14,6 +14,7 @@ import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.runtime.TaskAgentRuntime;
+import com.performance.platform.agent.support.GrantingDispatch;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.TransportException;
@@ -333,7 +334,7 @@ class LocalAgentTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_COMPLETED.equals(e.eventType())));
@@ -370,7 +371,7 @@ class LocalAgentTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_FAILED.equals(e.eventType())));
@@ -391,7 +392,7 @@ class LocalAgentTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_FAILED.equals(e.eventType())));
@@ -434,7 +435,7 @@ class LocalAgentTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             // Wait for work-in-progress events (progress every 1s with 3s timeout)
             await().atMost(10, TimeUnit.SECONDS).until(() ->
@@ -475,7 +476,7 @@ class LocalAgentTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_COMPLETED.equals(e.eventType())));
@@ -525,7 +526,7 @@ class LocalAgentTest {
             for (int i = 0; i < taskCount; i++) {
                 var executionId = ExecutionId.generate();
                 var request = createRequest("http-get", executionId);
-                transport.dispatchTask(request);
+                GrantingDispatch.dispatchAndGrant(transport, request);
             }
 
             await().atMost(15, TimeUnit.SECONDS).until(() ->
@@ -582,7 +583,7 @@ class LocalAgentTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             // Wait for the task to be claimed and registered in activeTasks
             await().atMost(5, TimeUnit.SECONDS).until(() ->
@@ -809,11 +810,13 @@ class LocalAgentTest {
 
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             // Wait for task to start
             try { startedLatch.await(5, TimeUnit.SECONDS); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
 
+            await().atMost(5, TimeUnit.SECONDS).until(() ->
+                    agent.getState() == AgentState.EXECUTING);
             assertThat(agent.getState()).isEqualTo(AgentState.EXECUTING);
             assertThat(agent.activeTaskCount()).isEqualTo(1);
 
@@ -885,8 +888,8 @@ class LocalAgentTest {
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
 
-            // Dispatch via transport (simulating orchestrator side)
-            transport.dispatchTask(request);
+            // Dispatch via transport (simulating orchestrator side) then grant
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_COMPLETED.equals(e.eventType())));
@@ -931,7 +934,7 @@ class LocalAgentTest {
             // Dispatch a task for a supported name that has no executor
             var executionId = ExecutionId.generate();
             var request = createRequest("http-get", executionId);
-            transport.dispatchTask(request);
+            GrantingDispatch.dispatchAndGrant(transport, request);
 
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     events.stream().anyMatch(e -> ExecutionEvent.TASK_FAILED.equals(e.eventType())));

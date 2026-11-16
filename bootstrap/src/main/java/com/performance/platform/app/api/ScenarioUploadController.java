@@ -1,5 +1,6 @@
 package com.performance.platform.app.api;
 
+import com.performance.platform.app.api.dto.ScenarioPreviewResponse;
 import com.performance.platform.app.api.dto.SubmitResponse;
 import com.performance.platform.app.api.dto.ValidationErrorResponse;
 import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
@@ -20,12 +21,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * REST controller for uploading scenario files or YAML text for immediate execution.
+ * REST controller for uploading and validating scenario files or YAML text.
  * <p>
  * Accepts either a multipart file ({@code file}) or a form text parameter ({@code yaml}).
- * Validates the scenario and executes it immediately, returning {@code 202 Accepted}
- * with the execution identifier. Uploading does not alter the read-only catalog
- * served from {@code platform.scenarios.directory} (see {@link ScenarioCatalogController}).
+ * {@code /scenarios/validate} parses and validates only; {@code /scenarios/upload}
+ * validates and executes immediately, returning {@code 202 Accepted} with the
+ * execution identifier. Uploading does not alter the read-only catalog served
+ * from {@code platform.scenarios.directory} (see {@link ScenarioCatalogController}).
  */
 @RestController
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -47,6 +49,28 @@ public class ScenarioUploadController {
     }
 
     /**
+     * Valide un scenario sans l'executer.
+     * Accepts either a multipart {@code file} or a form field {@code yaml}.
+     *
+     * @param request the HTTP request
+     * @return 200 OK avec le resume du scenario, ou 400 sur YAML invalide
+     */
+    @PostMapping(value = "/scenarios/validate")
+    public ResponseEntity<?> validate(HttpServletRequest request) {
+        log.info("action=validate_scenario");
+
+        String yamlContent = extractYamlContent(request);
+        if (yamlContent == null) {
+            return missingInput();
+        }
+
+        var scenario = parsingUseCase.parse(yamlContent);
+        log.info("action=scenario_validated scenarioId={} steps={}",
+                scenario.id().value(), scenario.steps().size());
+        return ResponseEntity.ok(ScenarioPreviewResponse.from(scenario));
+    }
+
+    /**
      * Uploads a scenario for immediate execution.
      * Accepts either a multipart {@code file} or a form field {@code yaml}.
      * If neither is provided, returns {@code 400} with a validation error.
@@ -61,12 +85,7 @@ public class ScenarioUploadController {
         String yamlContent = extractYamlContent(request);
         if (yamlContent == null) {
             log.warn("action=upload_scenario_missing_input");
-            return ResponseEntity.badRequest()
-                    .body(new ValidationErrorResponse(
-                            "SCENARIO_VALIDATION_FAILED",
-                            "Either 'file' or 'yaml' parameter is required",
-                            List.of(new ValidationErrorResponse.FieldError(
-                                    "input", "Either 'file' or 'yaml' parameter is required", null))));
+            return missingInput();
         }
 
         var scenario = parsingUseCase.parse(yamlContent);
@@ -75,6 +94,15 @@ public class ScenarioUploadController {
         log.info("action=scenario_accepted executionId={}", executionId.value());
         return ResponseEntity.accepted()
                 .body(new SubmitResponse(executionId.value(), STATUS_ACCEPTED));
+    }
+
+    private static ResponseEntity<ValidationErrorResponse> missingInput() {
+        return ResponseEntity.badRequest()
+                .body(new ValidationErrorResponse(
+                        "SCENARIO_VALIDATION_FAILED",
+                        "Either 'file' or 'yaml' parameter is required",
+                        List.of(new ValidationErrorResponse.FieldError(
+                                "input", "Either 'file' or 'yaml' parameter is required", null))));
     }
 
     private String extractYamlContent(HttpServletRequest request) {

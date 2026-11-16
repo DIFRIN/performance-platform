@@ -2,7 +2,7 @@
 
 **Date** : 2026-06-05  
 **Statut** : ACCEPTED  
-**Décideurs** : Équipe Architecture
+**Décideurs** : Équipe Architecture`n**Note d'implémentation** : LOCAL est le moteur distribué avec transport mémoire et un agent embarqué (ADR-059).
 
 ---
 

@@ -2,7 +2,7 @@ package com.performance.platform.reporting.engine;
 
 import com.performance.platform.application.exception.ReportGenerationException;
 import com.performance.platform.application.ports.out.ExecutionRepository;
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.assertion.AssertionSummary;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.event.ReportGenerated;
@@ -59,10 +59,9 @@ public class DefaultReportEngine implements ReportEngine {
 
     private static final Logger log = LoggerFactory.getLogger(DefaultReportEngine.class);
     private static final ObjectMapper RESULT_MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
-            .addMixIn(AssertionSummary.class, DerivedAssertionProperties.class)
-            .addMixIn(AssertionResult.class, DerivedAssertionProperties.class);
+            .addMixIn(AssertionSummary.class, DerivedAssertionProperties.class);
 
-    // isPassed() is serialized by Jackson but is derived from verdict/status on reload.
+    // isPassed() is serialized by Jackson but is derived from verdict on reload.
     @JsonIgnoreProperties(value = "passed", allowGetters = true)
     private abstract static class DerivedAssertionProperties {}
 
@@ -185,10 +184,6 @@ public class DefaultReportEngine implements ReportEngine {
                 if (assertion instanceof Map<?, ?>) {
                     outputs.put(AssertionSummary.OUTPUT_KEY, RESULT_MAPPER.convertValue(assertion, AssertionSummary.class));
                 }
-                Object legacy = outputs.get("assertionResult");
-                if (legacy instanceof Map<?, ?>) {
-                    outputs.put("assertionResult", RESULT_MAPPER.convertValue(legacy, AssertionResult.class));
-                }
                 context = context.with(task.getKey(), agent.getKey(), new TaskResult(result.taskId(), result.taskName(),
                         result.status(), result.duration(), outputs, result.errorMessage(), result.cause(), result.completedAt()));
             }
@@ -219,7 +214,7 @@ public class DefaultReportEngine implements ReportEngine {
             Map<String, TaskResult> agentResults = entry.getValue();
             allAgentIds.addAll(agentResults.keySet());
             var planned = state.tasks().stream().filter(task -> task.id().value().equals(taskId)).findFirst();
-            if (planned.isPresent()) {
+            if (planned.isPresent() && planned.get().phase() != null) {
                 switch (planned.get().phase()) {
                     case INJECTION -> injTaskIds.add(taskId);
                     case ASSERTION -> assertTaskIds.add(taskId);
@@ -235,7 +230,7 @@ public class DefaultReportEngine implements ReportEngine {
                 continue;
             }
 
-            Optional<AssertionResult> assertOpt = resolveAssertionResult(state.context(), taskId);
+            Optional<AssertionSummary> assertOpt = resolveAssertionSummary(state.context(), taskId);
             if (assertOpt.isPresent()) {
                 assertTaskIds.add(taskId);
                 continue;
@@ -247,23 +242,13 @@ public class DefaultReportEngine implements ReportEngine {
     }
 
     /**
-     * Resout un resultat d'assertion : d'abord la cle contractuelle
-     * {@code "assertion"} ({@link AssertionSummary}), puis l'ancien lookup
-     * type-erasé pour les producteurs historiques/fixtures.
+     * Resout le resume d'assertion porte par la cle contractuelle
+     * {@code "assertion"}. Source unique du verdict, des checks et du SLO.
      */
-    private static Optional<AssertionResult> resolveAssertionResult(
+    private static Optional<AssertionSummary> resolveAssertionSummary(
             com.performance.platform.domain.execution.ExecutionContext context,
             String taskId) {
-        Optional<AssertionSummary> summary = context
-                .getFirstOutput(taskId, AssertionSummary.OUTPUT_KEY, AssertionSummary.class);
-        if (summary.isPresent()) {
-            var s = summary.get();
-            return Optional.of(new AssertionResult(
-                    s.assertionId(), s.verdict(), s.description(),
-                    null, s.evaluationDuration(), s.evaluatedAt()));
-        }
-        // Producteurs historiques / fixtures : cle legacy "assertionResult".
-        return context.getFirstOutput(taskId, "assertionResult", AssertionResult.class);
+        return context.getFirstOutput(taskId, AssertionSummary.OUTPUT_KEY, AssertionSummary.class);
     }
 
     // ──────────────────────────────────────────────
@@ -305,8 +290,9 @@ public class DefaultReportEngine implements ReportEngine {
         for (String taskIdStr : taskIds) {
             state.context().getAll(taskIdStr).forEach((agent, result) -> {
                 var context = ExecutionContext.initial(state.id(), state.scenarioId()).with(taskIdStr, agent, result);
-                resolveAssertionResult(context, taskIdStr).ifPresent(ar ->
-                        entries.add(new AssertionReportEntry(new TaskId(taskIdStr), ar, ar.evidence())));
+                resolveAssertionSummary(context, taskIdStr)
+                        .ifPresent(summary -> entries.add(
+                                new AssertionReportEntry(new TaskId(taskIdStr), summary)));
             });
         }
         return entries;
@@ -332,12 +318,13 @@ public class DefaultReportEngine implements ReportEngine {
                 var result = agent.getValue();
                 var context = ExecutionContext.initial(state.id(), state.scenarioId())
                         .with(task.getKey(), agent.getKey(), result);
-                var assertionResult = resolveAssertionResult(context, task.getKey());
-                if (assertionResult.isPresent()) {
-                    switch (assertionResult.get().status()) {
+                var assertionSummary = resolveAssertionSummary(context, task.getKey());
+                if (assertionSummary.isPresent()) {
+                    switch (assertionSummary.get().verdict()) {
                         case PASSED -> successful++;
                         case FAILED, ERROR -> failed++;
-                        case SKIPPED -> skipped++;
+                        // SKIPPED et INCONCLUSIVE : ni succes ni echec
+                        case SKIPPED, INCONCLUSIVE -> skipped++;
                     }
                 } else {
                     switch (result.status()) {
@@ -371,18 +358,16 @@ public class DefaultReportEngine implements ReportEngine {
     }
 
     private String buildVerdictReason(List<AssertionReportEntry> assertionResults) {
-        long passed = assertionResults.stream()
-                .filter(e -> e.result().status() == com.performance.platform.domain.assertion.AssertionStatus.PASSED)
-                .count();
-        long failed = assertionResults.stream()
-                .filter(e -> e.result().status() == com.performance.platform.domain.assertion.AssertionStatus.FAILED)
-                .count();
-        long errors = assertionResults.stream()
-                .filter(e -> e.result().status() == com.performance.platform.domain.assertion.AssertionStatus.ERROR)
-                .count();
-        long skipped = assertionResults.stream()
-                .filter(e -> e.result().status() == com.performance.platform.domain.assertion.AssertionStatus.SKIPPED)
-                .count();
-        return String.format("%d passed, %d failed, %d error, %d skipped", passed, failed, errors, skipped);
+        long passed = countVerdict(assertionResults, AssertionStatus.PASSED);
+        long failed = countVerdict(assertionResults, AssertionStatus.FAILED);
+        long errors = countVerdict(assertionResults, AssertionStatus.ERROR);
+        long skipped = countVerdict(assertionResults, AssertionStatus.SKIPPED);
+        long inconclusive = countVerdict(assertionResults, AssertionStatus.INCONCLUSIVE);
+        return String.format("%d passed, %d failed, %d error, %d skipped, %d inconclusive",
+                passed, failed, errors, skipped, inconclusive);
+    }
+
+    private static long countVerdict(List<AssertionReportEntry> entries, AssertionStatus status) {
+        return entries.stream().filter(entry -> entry.verdict() == status).count();
     }
 }

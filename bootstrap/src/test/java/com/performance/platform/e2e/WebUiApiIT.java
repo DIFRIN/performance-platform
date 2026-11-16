@@ -12,7 +12,6 @@ import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.AgentRegistryPort;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.application.usecase.ExecutionProgressCalculator;
-import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.runtime.TaskAgentRuntime;
 import com.performance.platform.app.api.AgentController;
 import com.performance.platform.app.api.ApiExceptionHandler;
@@ -35,11 +34,7 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.campaign.ExecutionEngine;
-import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
-import com.performance.platform.engine.local.LocalStepDispatcher;
-import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.campaign.plan.DefaultExecutionPlanBuilder;
-import com.performance.platform.engine.retry.DefaultRetryExecutor;
 import com.performance.platform.infrastructure.persistence.ExecutionStateEntity;
 import com.performance.platform.infrastructure.persistence.TaskResultEntity;
 import com.performance.platform.infrastructure.persistence.mapper.ExecutionStateMapper;
@@ -132,6 +127,7 @@ class WebUiApiIT {
     static Path outputDir;
     static InMemoryExecutionTransport transport;
     static TaskAgentRuntime localAgent;
+    static LocalTransportHarness harness;
     static StubAgentRegistry agentRegistry;
     static ExecutionProgressCalculator progressCalculator;
 
@@ -165,33 +161,27 @@ class WebUiApiIT {
         // 4. Stub TaskExecutors
         var stubExecutor = new StubTaskExecutor("stub-task",
                 Map.of("result", "ok"));
-        var taskExecutorList = List.<TaskExecutor>of(stubExecutor);
 
         // 5. Stub AssertionExecutor
         var stubAssertion = new StubAssertionExecutor("stub-assertion");
+        var taskExecutorList = List.<TaskExecutor>of(stubExecutor, stubAssertion);
 
-        // 6. TaskExecutorLookup
-        var lookup = new TaskExecutorLookup() {
-            @Override
-            public TaskExecutor findTaskExecutor(String taskName) {
-                if ("stub-assertion".equals(taskName)) {
-                    return stubAssertion;
-                }
-                return "stub-task".equals(taskName) ? stubExecutor : null;
-            }
-        };
-
-        // 7. Supporting components
+        // 6. Supporting components
         var planBuilder = new DefaultExecutionPlanBuilder();
-        var retryExecutor = new DefaultRetryExecutor();
         List<Object> publishedEvents = new ArrayList<>();
         ApplicationEventPublisher eventPublisher = publishedEvents::add;
 
-        // 8. LocalExecutionEngine
+        // 7. Transport in-memory + agent embarque (ADR-059)
+        harness = new LocalTransportHarness(executionRepository, eventPublisher, taskExecutorList,
+                Set.of("stub-task", "stub-assertion"));
+        harness.start();
+        transport = harness.transport();
+        localAgent = harness.agent();
+
+        // 8. ExecutionEngine (un seul chemin d'execution)
         var engine = new ExecutionEngine(
-                planBuilder, executionRepository, eventPublisher, signal -> { },
-                new LocalStepDispatcher(lookup, retryExecutor),
-                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
+                planBuilder, executionRepository, eventPublisher,
+                harness.lifecycleDispatcher(), harness.stepDispatcher());
 
         // 9. Scenario parsing
         var parser = new YamlScenarioParser();
@@ -304,27 +294,12 @@ class WebUiApiIT {
                         agentController)
                 .setControllerAdvice(new ApiExceptionHandler())
                 .build();
-
-        // 15. Transport InMemory + LocalAgent
-        transport = new InMemoryExecutionTransport();
-        transport.connect();
-
-        var agentDesc = new AgentDescriptor(
-                AgentId.generate(), "local-agent", "localhost", 8080, null,
-                Set.of("stub-task"), new AgentCapabilities(10, "1.0.0"),
-                AgentState.OFFLINE, Instant.now(), Instant.now(), Duration.ofMinutes(5));
-
-        var agentFilter = new DefaultTaskSpecializationFilter(
-                agentDesc.supportedTaskNames(), agentDesc.id());
-        localAgent = new TaskAgentRuntime(transport, transport, transport, transport, agentFilter, agentDesc,
-                Duration.ofMinutes(5), taskExecutorList, List.of(), null, null,
-                new com.performance.platform.assertion.lifecycle.DefaultLifecycleSignalHandler(agentDesc.supportedTaskNames()::contains));
     }
 
     @AfterAll
     static void tearDown() throws IOException {
-        if (transport != null) {
-            transport.disconnect();
+        if (harness != null) {
+            harness.close();
         }
         if (sessionFactory != null) {
             sessionFactory.close();
@@ -617,8 +592,6 @@ class WebUiApiIT {
                   id: e2e-minimal
                   name: "E2E Minimal"
                   version: "1.0.0"
-                  execution:
-                    mode: LOCAL
                   steps:
                     - id: inject-step
                       task: stub-task
@@ -702,17 +675,13 @@ class WebUiApiIT {
         }
 
         @Override
-        public com.performance.platform.domain.assertion.AssertionResult evaluate(
+        public com.performance.platform.domain.assertion.AssertionSummary evaluate(
+
                 ExecutionContext context, StepDefinition step) {
-            var evidence = new com.performance.platform.domain.assertion.Evidence(
-                    1L, 1L,
-                    com.performance.platform.domain.assertion.AssertionOperator.EQ,
-                    null, Map.of("stub", true));
-            return new com.performance.platform.domain.assertion.AssertionResult(
+            return com.performance.platform.domain.assertion.AssertionSummary.verdictOnly(
                     step.id(),
                     com.performance.platform.domain.assertion.AssertionStatus.PASSED,
                     "stub assertion passed",
-                    evidence,
                     Duration.ofMillis(1),
                     Instant.now());
         }

@@ -1,9 +1,15 @@
 package com.performance.platform.plugin;
 
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionFamily;
 import com.performance.platform.domain.assertion.AssertionStatus;
 import com.performance.platform.domain.assertion.AssertionSummary;
-import com.performance.platform.domain.assertion.Evidence;
+import com.performance.platform.domain.assertion.Check;
+import com.performance.platform.domain.assertion.Expectation;
+import com.performance.platform.domain.assertion.MetricId;
+import com.performance.platform.domain.assertion.Observation;
+import com.performance.platform.domain.assertion.Rollup;
+import com.performance.platform.domain.assertion.Severity;
+import com.performance.platform.domain.assertion.TimeWindow;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
@@ -27,9 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Tests pour l'interface {@link AssertionExecutor} etendue de {@link TaskExecutor}.
- * Verifie les default methods {@code execute()}, {@code getSupportedTaskName()},
- * et la conversion {@code AssertionResult → TaskResult} avec {@link AssertionSummary}.
+ * Verifie le contrat {@link AssertionExecutor} : une implementation ne produit
+ * qu'un {@link AssertionSummary}, la conversion en {@link TaskResult} est
+ * unique et fournie par le core.
  */
 @DisplayName("AssertionExecutor extends TaskExecutor")
 class AssertionExecutorTest {
@@ -41,27 +47,28 @@ class AssertionExecutorTest {
     private static final StepDefinition STEP =
             new StepDefinition(ASSERTION_ID, ASSERTION_NAME, Phase.ASSERTION,
                     Map.of(), List.of(), List.of(), null, null);
+    private static final Instant NOW = Instant.now();
+    private static final Duration DURATION = Duration.ofMillis(42);
 
-    // --- execute() appelle evaluate() et retourne TaskResult ---
+    private static AssertionSummary summary(AssertionStatus status, String description,
+                                            List<Check> checks) {
+        return new AssertionSummary(ASSERTION_ID, status, description,
+                List.of(), DURATION, NOW,
+                AssertionFamily.DIRECT, null, checks, Rollup.all());
+    }
 
-    @Test
-    @DisplayName("execute() should call evaluate() and return TaskResult with AssertionSummary")
-    void executeShouldCallEvaluateAndReturnTaskResult() {
-        var now = Instant.now();
-        var duration = Duration.ofMillis(42);
-        var evidence = new Evidence(100.0, 200.0,
-                com.performance.platform.domain.assertion.AssertionOperator.GT,
-                "ms",
-                Map.of("metric", "responseTime"));
+    private static Check passingCheck() {
+        var metric = MetricId.of("injection.latency.p95");
+        var observation = Observation.of(metric, 320, "ms",
+                TimeWindow.of(Instant.EPOCH, Instant.EPOCH.plusSeconds(60)), "test");
+        return Check.passed(observation, Expectation.atMost(500, Severity.CRITICAL), "p95");
+    }
 
-        var assertionResult = new AssertionResult(
-                ASSERTION_ID, AssertionStatus.PASSED, "Test passed",
-                evidence, duration, now);
-
-        AssertionExecutor executor = new AssertionExecutor() {
+    private static AssertionExecutor executor(AssertionStatus status) {
+        return new AssertionExecutor() {
             @Override
-            public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
-                return assertionResult;
+            public AssertionSummary evaluate(ExecutionContext context, StepDefinition step) {
+                return summary(status, status + " outcome", List.of(passingCheck()));
             }
 
             @Override
@@ -69,136 +76,55 @@ class AssertionExecutorTest {
                 return ASSERTION_NAME;
             }
         };
+    }
 
-        TaskResult result = executor.execute(CONTEXT, STEP);
+    @Test
+    @DisplayName("execute() converts the summary into a TaskResult with the canonical output key")
+    void executeShouldConvertSummary() {
+        TaskResult result = executor(AssertionStatus.PASSED).execute(CONTEXT, STEP);
 
-        // --- TaskResult assertions ---
         assertEquals(ASSERTION_ID, result.taskId());
         assertEquals(ASSERTION_NAME, result.taskName());
         assertEquals(TaskStatus.SUCCESS, result.status());
-        assertEquals(duration, result.duration());
-        assertEquals(now, result.completedAt());
+        assertEquals(DURATION, result.duration());
+        assertEquals(NOW, result.completedAt());
         assertNull(result.errorMessage());
         assertNull(result.cause());
-        assertNotNull(result.outputs());
-        assertTrue(result.outputs().containsKey("assertion"),
-                "outputs should contain key 'assertion'");
 
-        // --- AssertionSummary assertions ---
-        AssertionSummary summary = (AssertionSummary) result.outputs().get("assertion");
-        assertNotNull(summary, "AssertionSummary must not be null");
-        assertEquals(ASSERTION_ID, summary.assertionId());
+        AssertionSummary summary = (AssertionSummary) result.outputs().get(AssertionSummary.OUTPUT_KEY);
+        assertNotNull(summary);
         assertEquals(AssertionStatus.PASSED, summary.verdict());
-        assertEquals("Test passed", summary.description());
-        assertEquals(duration, summary.evaluationDuration());
-        assertEquals(now, summary.evaluatedAt());
-        assertTrue(summary.collectedData().containsKey("metric"),
-                "collectedData should contain evidence details");
-        assertEquals("responseTime", summary.collectedData().get("metric"));
+        assertEquals(1, summary.checks().size());
+        assertEquals(320.0, summary.checks().get(0).actualValue());
     }
 
     @Test
-    @DisplayName("execute() should handle FAILED assertion and map to TaskStatus.FAILED")
-    void executeShouldHandleFailedAssertion() {
-        var now = Instant.now();
-        var duration = Duration.ofMillis(10);
+    @DisplayName("FAILED and ERROR map to a FAILED task with the description as error message")
+    void failedAndErrorMapToFailedTask() {
+        TaskResult failed = executor(AssertionStatus.FAILED).execute(CONTEXT, STEP);
+        assertEquals(TaskStatus.FAILED, failed.status());
+        assertTrue(failed.errorMessage().contains("FAILED outcome"));
 
-        var assertionResult = new AssertionResult(
-                ASSERTION_ID, AssertionStatus.FAILED, "Expected >= 100, got 50",
-                null, duration, now);
-
-        AssertionExecutor executor = new AssertionExecutor() {
-            @Override
-            public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
-                return assertionResult;
-            }
-
-            @Override
-            public String getSupportedAssertionName() {
-                return ASSERTION_NAME;
-            }
-        };
-
-        TaskResult result = executor.execute(CONTEXT, STEP);
-
-        assertEquals(TaskStatus.FAILED, result.status());
-        assertEquals("Expected >= 100, got 50", result.errorMessage());
-
-        AssertionSummary summary = (AssertionSummary) result.outputs().get("assertion");
-        assertEquals(AssertionStatus.FAILED, summary.verdict());
+        TaskResult error = executor(AssertionStatus.ERROR).execute(CONTEXT, STEP);
+        assertEquals(TaskStatus.FAILED, error.status());
+        assertTrue(error.errorMessage().contains("ERROR outcome"));
     }
 
     @Test
-    @DisplayName("execute() should handle SKIPPED assertion and map to TaskStatus.SKIPPED")
-    void executeShouldHandleSkippedAssertion() {
-        var now = Instant.now();
-
-        var assertionResult = new AssertionResult(
-                ASSERTION_ID, AssertionStatus.SKIPPED, "No data to evaluate",
-                null, Duration.ZERO, now);
-
-        AssertionExecutor executor = new AssertionExecutor() {
-            @Override
-            public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
-                return assertionResult;
-            }
-
-            @Override
-            public String getSupportedAssertionName() {
-                return ASSERTION_NAME;
-            }
-        };
-
-        TaskResult result = executor.execute(CONTEXT, STEP);
-
-        assertEquals(TaskStatus.SKIPPED, result.status());
-        assertNull(result.errorMessage());
-
-        AssertionSummary summary = (AssertionSummary) result.outputs().get("assertion");
-        assertEquals(AssertionStatus.SKIPPED, summary.verdict());
+    @DisplayName("SKIPPED maps to SKIPPED, INCONCLUSIVE stays a successful task")
+    void skippedAndInconclusive() {
+        assertEquals(TaskStatus.SKIPPED, executor(AssertionStatus.SKIPPED).execute(CONTEXT, STEP).status());
+        assertEquals(TaskStatus.SUCCESS,
+                executor(AssertionStatus.INCONCLUSIVE).execute(CONTEXT, STEP).status());
     }
 
     @Test
-    @DisplayName("execute() should handle ERROR assertion and map to TaskStatus.FAILED")
-    void executeShouldHandleErrorAssertion() {
-        var now = Instant.now();
-        var duration = Duration.ofMillis(5);
-
-        var assertionResult = new AssertionResult(
-                ASSERTION_ID, AssertionStatus.ERROR, "Connection refused",
-                null, duration, now);
-
-        AssertionExecutor executor = new AssertionExecutor() {
+    @DisplayName("getSupportedTaskName() delegates to the assertion name")
+    void taskNameDelegates() {
+        var custom = new AssertionExecutor() {
             @Override
-            public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
-                return assertionResult;
-            }
-
-            @Override
-            public String getSupportedAssertionName() {
-                return ASSERTION_NAME;
-            }
-        };
-
-        TaskResult result = executor.execute(CONTEXT, STEP);
-
-        assertEquals(TaskStatus.FAILED, result.status());
-        assertNotNull(result.errorMessage());
-        assertTrue(result.errorMessage().contains("Connection refused"));
-
-        AssertionSummary summary = (AssertionSummary) result.outputs().get("assertion");
-        assertEquals(AssertionStatus.ERROR, summary.verdict());
-    }
-
-    // --- getSupportedTaskName() delegue ---
-
-    @Test
-    @DisplayName("getSupportedTaskName() should delegate to getSupportedAssertionName()")
-    void getSupportedTaskNameShouldDelegate() {
-        AssertionExecutor executor = new AssertionExecutor() {
-            @Override
-            public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
-                return null;
+            public AssertionSummary evaluate(ExecutionContext context, StepDefinition step) {
+                return summary(AssertionStatus.PASSED, "ok", List.of());
             }
 
             @Override
@@ -206,62 +132,6 @@ class AssertionExecutorTest {
                 return "custom-assertion";
             }
         };
-
-        assertEquals("custom-assertion", executor.getSupportedTaskName());
-    }
-
-    // --- Backward compatibility ---
-
-    @Test
-    @DisplayName("stub implementing only evaluate() and getSupportedAssertionName() should inherit execute()")
-    void stubImplementingOnlyAssertionMethodsShouldInheritExecute() {
-        var now = Instant.now();
-
-        // Stub: implemente uniquement les methodes d'AssertionExecutor, pas execute() ni getSupportedTaskName()
-        AssertionExecutor stub = new AssertionExecutor() {
-            @Override
-            public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
-                return new AssertionResult(
-                        step.id(),
-                        AssertionStatus.PASSED,
-                        "Backward-compatible stub",
-                        null,
-                        Duration.ofMillis(1),
-                        now);
-            }
-
-            @Override
-            public String getSupportedAssertionName() {
-                return "stub";
-            }
-        };
-
-        // La methode execute() heritee de la default method doit fonctionner
-        TaskResult result = stub.execute(CONTEXT, STEP);
-
-        assertEquals(ASSERTION_ID, result.taskId());
-        assertEquals("stub", result.taskName());
-        assertEquals(TaskStatus.SUCCESS, result.status());
-
-        AssertionSummary summary = (AssertionSummary) result.outputs().get("assertion");
-        assertEquals("Backward-compatible stub", summary.description());
-    }
-
-    @Test
-    @DisplayName("backward compat: stub with only evaluate() + getSupportedAssertionName() compiles and inherits getSupportedTaskName()")
-    void backwardCompatGetSupportedTaskNameInherited() {
-        AssertionExecutor stub = new AssertionExecutor() {
-            @Override
-            public AssertionResult evaluate(ExecutionContext context, StepDefinition step) {
-                return null;
-            }
-
-            @Override
-            public String getSupportedAssertionName() {
-                return "compat-stub";
-            }
-        };
-
-        assertEquals("compat-stub", stub.getSupportedTaskName());
+        assertEquals("custom-assertion", custom.getSupportedTaskName());
     }
 }

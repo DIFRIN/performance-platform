@@ -1,9 +1,10 @@
 # Architecture — Performance Engineering Platform
 
-> **Document de référence de l'architecture courante.**
-> Mis à jour : 2026-10-29. Source de vérité : le code des 20 modules Maven.
-> Les décisions historiques sont dans `docs/knowledge/adr/` ; en cas de divergence,
-> le code et les ADR récents (028 → 038) priment sur ce document.
+> **Document de référence de l'architecture courante (ADR-061).**
+> Mis à jour : 2026-11-15. Source de vérité : le code des 20 modules Maven.
+> Ce document est **la** description de l'état courant ; les ADR de
+> `docs/knowledge/adr/` expliquent **pourquoi** et ne sont pas nécessaires pour savoir
+> ce que le système est. Les specs détaillent chaque domaine.
 
 ---
 
@@ -17,7 +18,7 @@ Le POM racine agrege directement les 20 modules.
 | `core/` | `platform-domain`, `platform-use-cases`, `platform-plugin-api`, `platform-transport-api`, `platform-report-api` |
 | `execution/` | `platform-execution-engine`, `platform-agent-runtime` |
 | `performance/` | `platform-scenario-dsl`, `platform-campaign-engine`, `platform-assertion`, `platform-reporting` |
-| `infra/` | `platform-scenario-yaml`, `platform-transport`, `platform-infrastructure`, `platform-injection-gatling`, `platform-assertion-adapters`, `platform-report-renderers`, `platform-observability` |
+| `infra/` | `platform-scenario-yaml`, `platform-transport`, `platform-infrastructure`, `platform-persistence`, `executors/platform-executor-*` (7 familles, ADR-057), `platform-injection-gatling`, `platform-assertion-adapters`, `platform-report-renderers`, `platform-observability` |
 | `bootstrap/` | `platform-bootstrap`, seul executable |
 | `distribution/` | `platform-distribution`, image Docker et un exemple exécutable ; le SUT est dans `example/sut/` hors reactor |
 
@@ -43,13 +44,19 @@ deux modes d'exécution :
 
 | Mode | Topologie | Qui exécute les tâches |
 |---|---|---|
-| `LOCAL` | Une seule JVM | Un `TaskAgentRuntime` local, via `InMemoryExecutionTransport` |
-| `DISTRIBUTED` | Orchestrateur + N agents, JVMs séparées | Les agents, via un transport réseau (Kafka, RabbitMQ, HTTP, Socket) |
+| `LOCAL` | Une seule JVM | Orchestrateur + **un agent embarqué** via `InMemoryExecutionTransport` |
+| `DISTRIBUTED` | Orchestrateur + N agents, JVMs séparées | Les agents, via un transport réseau (Kafka, HTTP) |
+
+`LOCAL` n'est pas un second moteur : c'est le moteur distribué avec le transport en
+mémoire et un agent embarqué, dans un processus (ADR-059). Il n'existe **qu'un seul
+chemin d'exécution** (`TransportStepDispatcher`, `TransportLifecycleDispatcher`,
+`TransportExecutionEventHandler`), identique dans les deux modes. Le transport en mémoire
+livre sur Virtual Threads, jamais sur le thread de l'émetteur.
 
 Le mode et le rôle sont résolus **au démarrage** (variable d'environnement > argument CLI >
 property > défaut, ADR-006/ADR-032). Ni le moteur ni l'agent ne contiennent de `if/switch`
-sur le mode : la sélection est portée par des beans Spring conditionnels et par les
-collaborations injectées (ADR-037).
+sur le mode : la sélection est portée par des beans Spring conditionnels ; le mode n'est
+lu que par la racine de composition (ADR-026/ADR-059).
 
 ```mermaid
 flowchart TB
@@ -69,13 +76,13 @@ flowchart TB
   PLAN["ExecutionPlanBuilder"]
   ENGINE["ExecutionEngine"]
   DAG["DagPhaseExecutor"]
-  DISP["StepDispatcher<br/>LOCAL | REMOTE"]
+  DISP["StepDispatcher<br/>TransportStepDispatcher"]
   AGENT["TaskAgentRuntime"]
   EXECS["TaskExecutors"]
-  TRANSPORT["platform-transport"]
+  TRANSPORT["platform-transport<br/>IN_MEMORY | HTTP | KAFKA"]
 
   subgraph SUPPORT["Sorties et capacités"]
-    INFRA["platform-infrastructure"]
+    INFRA["platform-infrastructure<br/>platform-persistence"]
     REPORT["platform-reporting"]
     OBS["platform-observability"]
   end
@@ -88,8 +95,7 @@ flowchart TB
   PLAN --> ENGINE
   PORTS -.-> ENGINE
   ENGINE --> DAG --> DISP
-  DISP -->|LOCAL| EXECS
-  DISP -->|DISTRIBUTED| TRANSPORT
+  DISP -->|"toujours"| TRANSPORT
   TRANSPORT --> AGENT
   AGENT --> EXECS
   EXECS --> INFRA
@@ -103,7 +109,8 @@ flowchart TB
    framework (Spring, JPA, Jackson interdit dans le domaine).
 2. **Ports & adapters** : le métier dépend d'interfaces (`application.ports.*`,
    `plugin.*`) ; les implémentations vivent dans les modules d'infrastructure.
-3. **Même artefact, deux modes** : aucun profil Maven ni `main()` distinct.
+3. **Même artefact, deux modes** : aucun profil Maven ni `main()` distinct. LOCAL est le
+   moteur distribué avec le transport en mémoire et un agent embarqué (ADR-059).
 4. **Sélection déclarative** : `@ConditionalOnProperty` / `@ConditionalOnExpression`,
    jamais de dispatch sur une chaîne de type runtime dans le code métier (CF-03).
 5. **I/O bloquants sur Virtual Threads** : DAG, HTTP, Kafka, JPA, Gatling.
@@ -111,6 +118,8 @@ flowchart TB
 7. **Events de domaine** : communication inter-modules par `ApplicationEventPublisher`
    (dans la JVM) et par canaux de transport (entre JVMs). Pas d'appel direct
    entre modules fonctionnels.
+8. **Un seul orchestrateur par déploiement** (ADR-058) : pas de reprise après
+   redémarrage, pas de haute disponibilité. Un redémarrage échoue les exécutions en cours.
 
 ---
 
@@ -123,81 +132,118 @@ Ordre de construction : parent → `platform-domain` → `platform-plugin-api` �
 `platform-use-cases` → modules fonctionnels → `platform-bootstrap` → `distribution`.
 
 ### `platform-domain` — cœur métier (0 framework)
+
+**Cible (ADR-060)** : uniquement ce dont le modèle d'exécution générique a besoin —
+`scenario`, `execution`, `task`, `agent`, `event`, `id`.
+
 ```
 com.performance.platform.domain
-├── agent/        AgentDescriptor, AgentCapabilities, AgentHeartbeat, AgentState
-├── assertion/    AssertionResult, AssertionStatus, AssertionSummary, AssertionOperator,
-│                 AssertionSample, Evidence
-├── event/        Scenario*, Phase*, Task*, Agent*, ExecutionLifecycleSignal,
-│                 ScenarioRestartSignal, Report*, Assertion*
-├── execution/    ExecutionContext, PartialExecutionContext, ExecutionPlan, ExecutionStep,
-│                 ExecutionState, ExecutionProgress, ExecutionStatus, PhaseStatus,
-│                 RetryPolicy, TaskCompletionPolicy
-├── id/           ExecutionId, ScenarioId, TaskId, AgentId, EventId, MessageId, ReportId, SignalId
-├── injection/    LoadModel, LoadModelType, InjectionResult
-├── report/       ReportFormat, Verdict
-├── scenario/     ScenarioDefinition, StepDefinition, Phase, ExecutionMode
-└── task/         TaskResult, TaskStatus
+├── agent/      AgentDescriptor, AgentCapabilities, AgentHeartbeat, AgentState
+├── event/      Scenario*, Phase*, Task*, Agent*, ExecutionLifecycleSignal,
+│               ScenarioRestartSignal, TaskGrantSignal, Report*, Assertion*
+├── execution/  ExecutionContext, PartialExecutionContext, ExecutionPlan, ExecutionStep,
+│               ExecutionState, ExecutionProgress, ExecutionStatus, PhaseStatus, RetryPolicy
+├── id/         ExecutionId, ScenarioId, TaskId, AgentId, EventId, MessageId, ReportId,
+│               SignalId, ScheduledRunId
+├── scenario/   ScenarioDefinition, StepDefinition, Phase, ServiceScope, FanOut
+└── task/       TaskResult, TaskStatus
 ```
+
+Règle d'admission : un type n'entre dans `platform-domain` que si au moins deux modules
+de dossiers racine différents (`execution/`, `performance/`, `infra/`, `bootstrap/`) en
+ont besoin et qu'aucun ne peut le posséder.
+
+**État actuel : le déplacement de paquets n'est pas terminé.** Les paquets de
+fonctionnalité encore présents dans `core/platform-domain` sont `assertion`,
+`injection`, `report`, `schedule` et `template`. Leur destination est `platform-report-api`
+(`report`), les contrats de `performance/` (`assertion`, `injection`), le scheduling
+(`schedule`, ADR-048) et la résolution de valeurs dynamiques (`template`, ADR-039).
+Tant qu'ils restent, `execution/` continue de les voir.
 
 ### `platform-plugin-api` — API publique des plugins (0 framework)
 ```
 plugin/
 ├── TaskExecutor            execute(context, step) + getSupportedTaskName()
+├── ServiceTaskExecutor     executeService(context, step, control) — service step (ADR-054)
+├── ServiceControl          awaitStop() / isStopRequested()
 ├── AssertionExecutor       extends TaskExecutor ; evaluate() + getSupportedAssertionName()
 ├── Preparation             @Preparation(name=…)
 ├── Injection               @Injection(name=…)
 ├── Assertion               @Assertion(name=…)
-└── StatefulResourceCleaner cleanup(executionId | null)
+├── StatefulResourceCleaner cleanup(executionId | null)
+├── resource/               Endpoint, EndpointResolver (ADR-036), NamedResourceResolver (ADR-042),
+│                           MessageChannel, MessageChannelFactory — ports de ressources nommées
+└── template/               DynamicValues, MessageTemplate, JsonText — valeurs dynamiques (ADR-039)
 ```
+
+Tout ce dont un executor (built-in ou plugin externe) a besoin vit ici : un module
+d'executor ne dépend que de `platform-plugin-api` et `platform-domain` (ADR-057).
 
 ### `platform-use-cases` — ports et use cases (0 framework)
 ```
 application/
-├── config/     ExecutionConfig, ResultSelectionPolicy
+├── config/     ExecutionConfig
 ├── exception/  ExecutionException, InvalidScenarioException, NoAvailableAgentException,
 │               ReportGenerationException, ScenarioParsingException
 ├── ports/in/   ExecuteScenarioUseCase, CancelExecutionUseCase, GetExecutionStatusUseCase,
 │               ListExecutionsUseCase, DeleteExecutionUseCase, ScenarioParsingUseCase,
 │               GenerateReportUseCase
-├── ports/out/  ExecutionRepository, AgentRegistryPort, EndpointResolver, Endpoint,
-│               LifecycleSignalHandler
+├── ports/out/  ExecutionRepository, AgentRegistryPort, LifecycleSignalHandler,
+│               ExecutionPlanBuilder
 └── usecase/    GetExecutionStatusService, ListExecutionsService, DeleteExecutionService,
                 ExecutionProgressCalculator
 ```
+
+`ExecutionConfig` porte `taskAvailabilityTimeout`, `taskExecutionTimeout` et
+`claimWindow` (`execution.claim-window`, ADR-055) ; les politiques globales de complétion
+et de sélection de résultat ont été supprimées.
 
 ### `platform-scenario-dsl` — validation et modeles de charge (0 framework)
 ```
 scenario/
 ├── validation/  DefaultScenarioValidator, DagCycleDetector, ValidationResult/Error/Warning
-├── loadmodel/   LoadModelRegistry, DefaultLoadModelRegistry
 └── usecase/     DefaultScenarioParsingService
 ```
+
+Le registre nommé de load models (`LoadModelRegistry`) est supprimé : le load model est
+inline dans `parameters.loadModel` (ADR-053).
 
 `ScenarioParser` est un port du core. `YamlScenarioParser`, les DTOs et
 `DurationParser` vivent dans `infra/platform-scenario-yaml`.
 
 ### `platform-campaign-engine` — politique de campagne LOCAL/DISTRIBUTED
 
-`campaign.ExecutionEngine` implemente les use cases d'execution et d'annulation.
-`campaign.plan.DefaultExecutionPlanBuilder` choisit les phases et les assertions
-liees. Le port `ExecutionPlanBuilder` appartient au core.
+`campaign.ExecutionEngine` implemente les use cases d'execution et d'annulation, et
+coordonne les durées de vie des service steps (ADR-054).
+`campaign.plan.DefaultExecutionPlanBuilder` choisit les phases, sépare les service steps
+par portée et calcule le DAG intra-phase. Le port `ExecutionPlanBuilder` appartient au
+core.
+`campaign.schedule.ScheduleRunService` porte la planification (immédiate,
+one-shot, cron) et `campaign.schedule.ScheduledRunDispatcher` réveille les runs
+arrivés à échéance ; les ports `ScheduleScenarioUseCase`,
+`ListScheduledRunsUseCase`, `CancelScheduledRunUseCase`, `ScheduledRunRepository`
+et `ScheduleCalculator` appartiennent au core.
 
 ### `platform-execution-engine` — orchestration generique
 ```
 engine/
-├── ExecutionLifecycleDispatcher signaux START/STOP
-├── OutcomeEventPublisher        publication locale des outcomes (no-op en DISTRIBUTED)
-├── shared/    StepDispatcher (stratégie), DagPhaseExecutor (parcours DAG)
-├── local/     LocalStepDispatcher, LocalOutcomeEventPublisher, TaskExecutorLookup
-├── remote/    RemoteStepDispatcher, TransportExecutionEventHandler, PartialContextBuilder
+├── ExecutionLifecycleDispatcher  port START/STOP
+├── shared/    StepDispatcher (port), StepDispatchResult, DagPhaseExecutor
+├── remote/    TransportStepDispatcher, TransportExecutionEventHandler, PartialContextBuilder
+├── local/     TaskExecutorLookup
+├── lifecycle/ TransportLifecycleDispatcher (seule implémentation, ADR-059)
 ├── plan/      DagLevelCalculator
-├── correlation/ TaskCorrelationTracker, DefaultTaskCorrelationTracker
+├── correlation/ TaskCorrelationTracker, DefaultTaskCorrelationTracker, GrantDecision
 ├── availability/ AgentAvailabilityChecker, DefaultAgentAvailabilityChecker
-├── retry/     RetryExecutor, DefaultRetryExecutor
-├── lifecycle/ LocalLifecycleDispatcher, RemoteLifecycleDispatcher
-└── config/    ExecutionEngineConfiguration, ExecutionEngineProperties
+├── retry/     RetryExecutor, DefaultRetryExecutor (défini, non câblé)
+└── config/    ExecutionEngineConfiguration, ExecutionEngineProperties,
+               OrchestratorRestartFailureModel
 ```
+
+`LocalStepDispatcher`, `LocalLifecycleDispatcher`, `LocalOutcomeEventPublisher` et
+`RemoteLifecycleDispatcher` sont supprimés (ADR-059) : un seul dispatcher et un seul
+dispatcher de signaux, dans tous les modes. `OrchestratorRestartFailureModel` applique le
+modèle de défaillance de l'orchestrateur unique (ADR-058).
 
 ### `platform-agent-runtime` — runtime d'agent et registre d'orchestrateur
 ```
@@ -221,26 +267,30 @@ transport/
 ├── ExecutionTransport   façade composite (extends les 5 ports)
 ├── TaskChannel · SignalChannel · EventChannel · LifecycleChannel · ConnectionLifecycle
 ├── message/  TaskExecutionRequest, ExecutionEvent
-├── inmemory/ InMemoryExecutionTransport
+├── inmemory/ InMemoryExecutionTransport (Virtual Threads, ADR-059)
 ├── kafka/    KafkaExecutionTransport, DynamicKafkaListenerRegistry, KafkaMessageCodec
-├── rabbitmq/ RabbitMQExecutionTransport, RabbitMQConsumerManager, RabbitMQMessageCodec
-├── http/     HttpExecutionTransport, HttpEventCallbackController
-├── socket/   SocketExecutionTransport, SocketConnectionRegistry
+├── http/     HttpExecutionTransport, HttpEventCallbackController, HttpTransportListener
 └── config/   TransportConfiguration, *TransportProperties, KafkaTransportBeans
 ```
+
+Transports supportés : `IN_MEMORY`, `HTTP`, `KAFKA` (ADR-056). RabbitMQ et socket ne
+font plus partie du build cœur ; ils peuvent être fournis comme plugins via `CUSTOM`.
+`TransportType` vaut `KAFKA`, `HTTP`, `IN_MEMORY`, `CUSTOM`.
 
 ### Modules de capacités
 | Module | Contenu principal |
 |---|---|
-| `platform-infrastructure` | Exécuteurs `database`, `docker`, `filesystem`, `http-client`, `kafka-producer`, `kafka-consumer`, `mock-server`, `shell` ; `TaskExecutorRegistry` ; persistance JPA ; `PluginLoader`/`AnnotationScanner`/`PluginRegistry` |
+| `platform-infrastructure` | Socle runtime commun : `TaskExecutorRegistry` (`infrastructure.executor`), `infrastructure.plugin` (`PluginLoader`/`AnnotationScanner`/`PluginRegistry`), `infrastructure.scheduling` (`SpringScheduleCalculator`). Aucune dépendance technique lourde. |
+| `platform-persistence` | Store de l'orchestrateur : `infrastructure.persistence` (JPA, Flyway `db/migration`, runs programmés), `PersistenceDataSourceConfiguration` (DataSource primaire `platform.datasources.default`). |
+| `platform-executor-<famille>` (`infra/executors/`) | Un module par famille (ADR-057) : `database` (`database`, `DatasourceProvider`), `docker`, `filesystem` (paquet `.fs`), `http` (`http-client`, `HttpTargetRegistry` = `EndpointResolver`), `kafka` (`kafka-producer`, `kafka-consumer`, `KafkaClusterRegistry`), `mock` (`mock-server`, service step), `shell`. Dépendances : `platform-domain`, `platform-plugin-api` (ports `plugin.resource`, valeurs dynamiques `plugin.template`) et leurs bibliothèques techniques uniquement. |
 | `platform-injection-gatling` | `GatlingTaskExecutor` (`@Injection(name="gatling")`), `GatlingRunner`, `SimulationInjectionHolder`, `DefaultLoadModelTranslator`, `DefaultGatlingResultParser`, `ProtocolSupportInfo` |
-| `platform-assertion` | `AssertionResultMapper`, sampling `assertion.lifecycle.DefaultLifecycleSignalHandler` |
-| `platform-assertion-adapters` | Exécuteurs `database-assertion`, `file`, `gatling-metric`, `http-mock`, `kafka`, `wiremock` (`AssertionExecutor`) |
+| `platform-assertion` | `CheckEvaluator`, `TemporalCheckEvaluator`, `ParameterBinder`, `OperatorResolver`, `AssertionSummaryFactory`, sampling `assertion.lifecycle.DefaultLifecycleSignalHandler` |
+| `platform-assertion-adapters` | `performance-thresholds`, `direct-assertion` (ADR-049), `DirectMeasurementResolver` |
 | `platform-report-api` | Modeles et ports `ReportEngine`, `ReportRenderer`, `ReportOutput` |
 | `platform-reporting` | `DefaultReportEngine` (écoute `ScenarioFinished`), `PerformanceAssessmentBuilder`, `VerdictCalculator` |
 | `platform-report-renderers` | Renderers HTML/PDF/JSON, `ReportFileWriter` implementant `ReportOutput` |
 | `platform-observability` | `ObservabilityEventListener`, `MicrometerExecutionMetrics`, `ExecutionContextMdcFilter` |
-| `platform-bootstrap` | `PerformancePlatformApplication`, contrôleurs REST, `CliScenarioRunner`, configuration d'assemblage, sécurité, IHM, bootstrap plugins, résolution runtime |
+| `platform-bootstrap` | `PerformancePlatformApplication`, contrôleurs REST (`Scenario`, `ScenarioUpload`, `Schedule`, `Execution`, `Agent`, `Report`), `CliScenarioRunner`, configuration d'assemblage, sécurité, IHM, bootstrap plugins, résolution runtime |
 | `distribution` | Dockerfile, compose LOCAL/DISTRIBUTED et exemple exécutable (`example/`) |
 
 ---
@@ -259,6 +309,8 @@ flowchart LR
     DSL["platform-scenario-dsl"]
     TRANSPORT["platform-transport"]
     INFRA["platform-infrastructure"]
+    PERSIST["platform-persistence"]
+    EXECUTORS["platform-executor-* (7)"]
     GATLING["platform-injection-gatling"]
     ASSERT["platform-assertion"]
     REPORT["platform-reporting"]
@@ -274,6 +326,8 @@ flowchart LR
   APP --> ENGINE
   APP --> AGENT
   APP --> INFRA
+  APP --> PERSIST
+  APP --> EXECUTORS
   APP --> GATLING
   APP --> ASSERT
   APP --> REPORT
@@ -295,6 +349,8 @@ flowchart LR
   TRANSPORT --> DOMAIN
   INFRA --> PORTS
   INFRA --> PLUGIN
+  PERSIST --> PORTS
+  EXECUTORS --> PLUGIN
   GATLING --> PLUGIN
   ASSERT --> PORTS
   ASSERT --> PLUGIN
@@ -316,8 +372,11 @@ Règles effectives :
   (`bootstrap/src/test/.../arch`) : scan bytecode **ASM** (compatible Java 25)
   des `target/classes`, avec test de non-vacuité. Arêtes interdites : engine ↛
   assertion, engine ↛ agent, reporting ↛ injection, assertion ↛ injection,
-  assertion ↛ infrastructure. Les modules d'execution generique ne dependent
-  ni des politiques de performance ni des adaptateurs de transport (ADR-045).
+  assertion ↛ infrastructure, executor ↛ autre executor, executor ↛
+  persistence, persistence ↛ executor, executor ↛ `platform-use-cases`, JPA hors
+  `platform-persistence` (ADR-057).
+  Les modules d'execution generique ne dependent ni des politiques de
+  performance ni des adaptateurs de transport (ADR-045).
 - **Spring Modulith a été retiré** (ADR-035). `spring-modulith-bom` reste dans le BOM
   pour compatibilité, mais aucune annotation `@Modulith`/`@ApplicationModuleListener`
   n'est utilisée.
@@ -381,35 +440,39 @@ Les profils `agent-*` sont reconnus par `RuntimeConfigResolver.isAgentProfile(..
 ### 5.1 D'un scénario YAML à un plan DAG
 1. `YamlScenarioParser` parse le YAML en `ScenarioDefinition` (SnakeYAML) puis mappe les
    DTOs avec Jackson (`FAIL_ON_UNKNOWN_PROPERTIES`). Les clés inconnues sont **rejetées**
-   (validation structurelle explicite : `ROOT_KEYS`, `SCENARIO_KEYS`, `STEP_KEYS`, …).
-2. `DefaultScenarioParsingService` valide via `DefaultScenarioValidator` :
-   ids uniques, `taskName`, phase, `dependsOn`, cycles DAG, `requiredContexts`,
-   références de `loadModels`, timeouts d'injection.
-3. `DefaultExecutionPlanBuilder` produit un `ExecutionPlan` :
-   `preparationSteps`, `injectionSteps`, `assertionSteps`, `assertionIntervalSteps`
-   (assertions liées à l'injection), `initialContext`.
+   (`ROOT_KEYS`, `SCENARIO_KEYS`, `STEP_KEYS`, `RETRY_KEYS`) : `execution.mode`,
+   `loadModels`, `parameters.refTaskId` et `parameters.linkedTo` n'existent plus
+   (ADR-053).
+2. `DefaultScenarioParsingService` valide via `DefaultScenarioValidator` : ids uniques,
+   `taskName`, `phase` ou `during`, `dependsOn` intra-phase et cycles, `ref`,
+   `requiredContexts` effectifs, load model inline, timeouts d'injection (spec 01 §5).
+3. `DefaultExecutionPlanBuilder` produit un `ExecutionPlan` : `preparationSteps`,
+   `injectionSteps`, `assertionSteps`, `injectionServices`, `scenarioServices`,
+   `initialContext` (ADR-054).
 4. `ExecutionStep` = `StepDefinition` + dépendances résolues + `dagLevel` +
-   `requiredContextKeys`.
+   `requiredContextKeys` (= `resolvedRequiredContexts()`).
 
-### 5.2 Engine unique (ADR-037)
-`ExecutionEngine` est l'unique implémentation de `ExecuteScenarioUseCase` et
-`CancelExecutionUseCase`. Il est actif en `LOCAL` ou en `DISTRIBUTED + ORCHESTRATOR`.
-Son comportement est identique dans les deux modes ; seule la stratégie de dispatch change :
+### 5.2 Engine unique (ADR-037, ADR-059)
+`ExecutionEngine` est l'unique implémentation de `ExecuteScenarioUseCase`,
+`SubmitScenarioUseCase` et `CancelExecutionUseCase`. Il est actif en `LOCAL` ou en
+`DISTRIBUTED + ORCHESTRATOR`. Il n'y a **aucune** différence de chemin entre les modes :
 
-| Collaborateur | LOCAL | DISTRIBUTED |
+| Collaborateur | Rôle | Modes |
 |---|---|---|
-| `StepDispatcher` | `LocalStepDispatcher` : appel direct du `TaskExecutor` | `RemoteStepDispatcher` : broadcast + attente |
-| `OutcomeEventPublisher` | publie `TaskCompleted`/`TaskFailed` avec l'agent local | no-op (le handler transport publie avec l'agent réel) |
-| `ExecutionLifecycleDispatcher` | `LocalLifecycleDispatcher` → `TaskAgentRuntime` | `RemoteLifecycleDispatcher` → `SignalChannel` |
-| Réception des résultats | synchrone (retour d'appel) | `TransportExecutionEventHandler` → tracker + repository |
+| `StepDispatcher` | `TransportStepDispatcher` : dispatch via les ports de transport, grant, service steps | tous |
+| `ExecutionLifecycleDispatcher` | `TransportLifecycleDispatcher` : START/STOP sur le `SignalChannel` | tous |
+| `TransportExecutionEventHandler` | consomme les événements agent, alimente tracker + repository, publie les events | tous |
+| Réception des résultats | toujours asynchrone, via le transport | tous |
 
 Déroulé d'une exécution :
 1. `initializeExecution` : plan, `ExecutionState` initial persisté **avant** toute phase
    (sinon l'API/CLI ne peut pas suivre l'exécution).
-2. `PREPARATION` → signaux START aux assertions d'intervalle → `INJECTION` →
-   signaux STOP → `ASSERTION`.
-3. Chaque phase : `PhaseStarted`, `DagPhaseExecutor.executePhase`, publication des
-   outcomes, `PhaseCompleted`, mise à jour de l'état persisté.
+2. `startServices(scenarioServices)` → `PREPARATION` → `startServices(injectionServices)`
+   → `INJECTION` → `stopServices(injectionServices)` → `ASSERTION` →
+   `stopServices(scenarioServices)`.
+3. Chaque phase : `PhaseStarted`, `DagPhaseExecutor.executePhase`, `PhaseCompleted`, mise
+   à jour de l'état persisté. Les `TaskCompleted`/`TaskFailed` sont publiés par
+   `TransportExecutionEventHandler`, pas par le moteur.
 4. Verdict :
    - `CANCELLED` si annulation demandée ;
    - `FAILED` si une tâche a échoué ou si aucun agent n'est disponible ;
@@ -417,7 +480,7 @@ Déroulé d'une exécution :
    - `SUCCESS` sinon.
 5. `ScenarioFinished` est publié ; `DefaultReportEngine` génère alors le rapport.
 
-### 5.2.1 Séquence LOCAL et DISTRIBUTED
+### 5.2.1 Séquence (identique en LOCAL et DISTRIBUTED)
 
 ```mermaid
 sequenceDiagram
@@ -425,55 +488,47 @@ sequenceDiagram
     participant CALL as API / CLI
     participant EE as ExecutionEngine
     participant DAG as DagPhaseExecutor
-    participant L as LocalStepDispatcher
-    participant EX as TaskExecutor
-    participant REPO as ExecutionRepository
-    participant BUS as ApplicationEventPublisher
-
-    CALL->>EE: execute(scenario)
-    EE->>EE: build ExecutionPlan
-    EE->>REPO: save(initial ExecutionState)
-    loop PREPARATION → INJECTION → ASSERTION
-        EE->>DAG: executePhase(steps, context)
-        DAG->>L: dispatch(step, context)
-        L->>EX: execute(context, step)
-        EX-->>L: TaskResult
-        L-->>DAG: TaskResult
-        DAG-->>EE: PhaseResult
-        EE->>REPO: updatePhase + save
-    end
-    EE-->>CALL: ExecutionId
-    EE->>BUS: ScenarioFinished
-```
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant ORCH as RemoteStepDispatcher
+    participant DISP as TransportStepDispatcher
     participant TRK as TaskCorrelationTracker
-    participant TX as TaskChannel
+    participant TX as TaskChannel / SignalChannel
     participant AG as TaskAgentRuntime
-    participant EX as TaskExecutor
     participant EV as EventChannel
     participant H as TransportExecutionEventHandler
     participant REPO as ExecutionRepository
 
-    ORCH->>TRK: trackDispatched(messageId)
-    ORCH->>TX: dispatchTask(request)
+    CALL->>EE: execute(scenario)
+    EE->>EE: build ExecutionPlan
+    EE->>REPO: save(initial ExecutionState)
+    EE->>DISP: startService(scenario services)
+    EE->>DAG: executePhase(PREPARATION)
+    DAG->>DISP: dispatch(step, context)
+    DISP->>TRK: trackDispatched(messageId, fanOut)
+    DISP->>TX: dispatchTask(request)
     TX->>AG: TaskExecutionRequest (broadcast)
     AG->>EV: TASK_CLAIMED
     EV->>H: onEvent
     H->>TRK: onClaimed(agentId)
-    AG->>EX: execute(context, step)
-    EX-->>AG: TaskResult
+    H->>TX: TaskGrantSignal (granted)
+    TX->>AG: grant
     AG->>EV: TASK_COMPLETED
     EV->>H: onEvent
     H->>TRK: onCompleted(agentId, result)
     H->>REPO: saveTaskResult(...)
-    TRK-->>ORCH: completion signal
-    ORCH->>TRK: resultsInCompletionOrder()
-    ORCH->>TRK: release(messageId)
+    TRK-->>DISP: completion signal
+    DISP->>TRK: getResults(messageId) + release
+    DAG-->>EE: PhaseResult
+    EE->>REPO: updatePhase + save
+    EE->>DISP: startService(injection services)
+    EE->>DAG: executePhase(INJECTION)
+    EE->>DISP: stopService(injection services)
+    EE->>DAG: executePhase(ASSERTION)
+    EE->>DISP: stopService(scenario services)
+    EE-->>CALL: ExecutionId
+    EE->>EE: publie ScenarioFinished
 ```
+
+En LOCAL, `TX` est l'`InMemoryExecutionTransport` et `AG` est l'agent embarqué : la
+séquence est la même, seule la latence change (ADR-059).
 
 ### 5.3 Parcours DAG et exécution parallèle
 `DagPhaseExecutor` :
@@ -484,8 +539,7 @@ sequenceDiagram
 - envoie un signal START avant l'exécution et STOP après ;
 - supporte l'annulation coopérative : les futures en attente sont annulés ; les steps
   non terminés ne produisent pas de résultat et la phase est marquée en échec ;
-- retourne `PhaseResult(updatedContext, anyFailed, outcomes)` ; l'engine seul publie les
-  événements de domaine.
+- retourne `PhaseResult(updatedContext, anyFailed, outcomes)`.
 
 ### 5.4 ExecutionContext et outputs nommés (ADR-031)
 ```java
@@ -500,12 +554,16 @@ record ExecutionContext(ExecutionId, ScenarioId,
   `getFirstOutput(taskId, outputName, type)` (ordre déterministe par `agentId`).
   Les clés contractuelles sont `InjectionResult.OUTPUT_KEY = "result"` et
   `AssertionSummary.OUTPUT_KEY = "assertion"`.
+- `fanOut: one` (défaut) stocke le résultat sous `context[taskId]` : le cas courant ne
+  manipule pas de map indexée par agent. `fanOut: all` stocke un résultat par agent
+  accordé et les assertions agrègent par règle déclarée sur la métrique (ADR-049,
+  ADR-055).
 - `PartialExecutionContext` transporte vers les agents uniquement les
-  `requiredContexts`, sous la forme `taskId → agentId → Map<String,Object>` (tous les
-  outputs nommés). Les anciens payloads à valeur brute restent tolérés.
+  `requiredContexts` effectifs, sous la forme `taskId → agentId → Map<String,Object>`
+  (tous les outputs nommés). Les anciens payloads à valeur brute restent tolérés.
 
-### 5.5 Dispatch distant : corrélation, multi-claim, perte d'agent
-`RemoteStepDispatcher` :
+### 5.5 Dispatch : claim, grant et perte d'agent (ADR-055)
+`TransportStepDispatcher` (unique, tous modes) :
 1. attend un agent disponible (`AgentAvailabilityChecker`, timeout
    `ExecutionConfig.taskAvailabilityTimeout`) ;
 2. construit le `PartialExecutionContext` ;
@@ -513,33 +571,66 @@ record ExecutionContext(ExecutionId, ScenarioId,
    `targetAgentId`) ;
 4. `tracker.trackDispatched(...)` **avant** `transport.dispatchTask(...)` pour éviter la
    course, puis `tracker.release(...)` en `finally` ;
-5. attend un `CompletableFuture` complété par le tracker (aucun polling) ;
-6. sélectionne un résultat de façon déterministe selon
-   `TaskCompletionPolicy` (`FIRST_COMPLETE`/`ALL_COMPLETE`) et `ResultSelectionPolicy`
-   (`FIRST_COMPLETED`/`LAST_COMPLETED`), avec préférence pour un résultat réussi.
+5. attend le **grant** : premier claim en `fanOut: one`, settlement de la fenêtre
+   (`execution.claim-window`) en `fanOut: all` ; un agent sans grant n'exécute pas ;
+6. attend la complétion (`CompletableFuture` du tracker, aucun polling) ;
+7. retourne un `StepDispatchResult` par agent accordé, trié par `AgentId`.
+
+Il n'y a plus de `completion-policy` ni de `result-selection-policy` : le fan-out est
+déclaré par étape (`fanOut: one | all`).
 
 `TransportExecutionEventHandler` consomme `EventChannel` :
-- `TASK_CLAIMED` → `tracker.onClaimed`, publie `TaskClaimedByAgent` ;
+- `TASK_CLAIMED` → `tracker.onClaimed`, publie `TaskClaimedByAgent` et diffuse le
+  `TaskGrantSignal` correspondant ;
 - `TASK_COMPLETED` → reconstruit `TaskResult`, `tracker.onCompleted`, persiste
   `saveTaskResult`, publie `TaskCompleted` ;
 - `TASK_FAILED` → `tracker.onFailed` ;
 - `TASK_WORK_IN_PROGRESS` → log/trace ;
-- événements inconnus ou déjà libérés → ignorés (protection contre les messages tardifs).
-- `@EventListener onAgentLost(AgentLost)` → `tracker.onAgentLost(agentId)` : les claims
-  non terminés échouent immédiatement (fast-fail) au lieu d'attendre le timeout.
+- événements inconnus ou déjà libérés → ignorés (protection contre les messages tardifs) ;
+- résultat tardif pour une exécution terminale → journalisé et ignoré (ADR-058).
+- `@EventListener onAgentLost(AgentLost)` → `tracker.onAgentLost(agentId)` : les grants
+  non répondus échouent immédiatement (fast-fail) au lieu d'attendre le timeout.
 
 ### 5.6 Retry
 `RetryPolicy(maxAttempts, initialDelay, multiplier, maxDelay, retryableExceptions)` avec
-backoff exponentiel ; défaut 3 tentatives, 1 s → 30 s. Appliqué par
-`LocalStepDispatcher` via `RetryExecutor`. En DISTRIBUTED, la politique est transmise
-dans `TaskExecutionRequest`, mais `TaskExecutionPipeline` ne l'applique pas encore :
-l'agent exécute la tâche **une seule fois**. Le retry distribué reste à implémenter.
+backoff exponentiel ; défaut 3 tentatives, 1 s → 30 s. **État actuel** : la politique
+voyage dans `TaskExecutionRequest`, mais ni `TransportStepDispatcher` ni
+`TaskExecutionPipeline` ne l'appliquent — une tâche est exécutée **une seule fois**.
+`RetryExecutor`/`DefaultRetryExecutor` restent disponibles, non câblés.
+
+### 5.7 Service steps (ADR-054)
+Une service step déclare `during` et a une durée de vie : démarrée, maintenue, arrêtée.
+
+| Portée | START | STOP |
+|---|---|---|
+| `during: injection` | avant INJECTION | après INJECTION |
+| `during: scenario` | avant PREPARATION | après ASSERTION |
+
+- L'orchestrateur envoie START puis, à la fin de la portée, un
+  `ExecutionLifecycleSignal` STOP ; l'agent exécute
+  `ServiceTaskExecutor.executeService(...)` et publie son résultat **au STOP**.
+- `drain` retarde le STOP et remplace les steps `shell sleep`.
+- Les assertions lisent le résultat de la service step via `ref`.
+- `mock-server` est une service step : `parameters.action: START|STOP` a disparu.
+- Règle : l'orchestrateur coordonne des **durées de vie**, jamais des messages
+  individuels. Un enchaînement requête → réponse reste interne à un exécuteur.
+
+### 5.8 Orchestrateur unique et redémarrage (ADR-058)
+- Un seul orchestrateur par déploiement ; le grant et la coordination de groupe
+  (ADR-046) sont corrects par construction, sans verrou distribué.
+- Au démarrage, `OrchestratorRestartFailureModel` marque toute exécution non terminale
+  `FAILED` (raison `orchestrator restarted`) et publie `ScenarioFinished`.
+- `work-in-progress-reset-interval` est supprimé : les seuls mécanismes de vivacité sont
+  `task-execution-timeout`, le claim/grant et la perte d'agent (ADR-033).
+- Pas de reprise, pas de haute disponibilité.
 
 ---
 
 ## 6. Runtime d'agent (ADR-037)
 
-`TaskAgentRuntime` est l'unique runtime (LOCAL et DISTRIBUTED). Deux collaborations
+`TaskAgentRuntime` est l'unique runtime (LOCAL et DISTRIBUTED). En LOCAL, il est
+démarré par la racine de composition (`SmartLifecycle`) et reçoit ses messages du
+transport en mémoire ; il n'existe plus de `LocalAgent` (ADR-059). Deux collaborations
 optionnelles portent la différence :
 - `registrationPort == null` → LOCAL : pas d'enregistrement, pas de heartbeat ;
 - `registrationPort != null` → DISTRIBUTED : `TransportAgentRegistration` +
@@ -553,7 +644,7 @@ stateDiagram-v2
     OFFLINE --> IDLE: start() · LOCAL
     REGISTERING --> IDLE: registered
     REGISTERING --> OFFLINE: registration failed
-    IDLE --> EXECUTING: task claimed
+    IDLE --> EXECUTING: grant received
     EXECUTING --> IDLE: activeTasks == 0
     IDLE --> DRAINING: stop()
     EXECUTING --> DRAINING: stop()
@@ -568,10 +659,12 @@ Mécanismes :
 - **Réception** : `TaskSpecializationFilter` (égalité `taskName` ∈
   `supportedTaskNames`) ; les messages non concernés sont ignorés silencieusement.
   L'idempotence est assurée par `MessageId` (set des messages déjà traités).
-- **Exécution** : `TaskExecutionPipeline` publie `TASK_CLAIMED`, exécute le
-  `TaskExecutor` sur un Virtual Thread, publie un `TaskWorkInProgress` périodique
-  (intervalle = `taskExecutionTimeout / 3`, min 1 s), puis `TASK_COMPLETED`/`TASK_FAILED`
-  avec statut, durée, erreur et outputs.
+- **Claim puis grant (ADR-055)** : le runtime publie `TASK_CLAIMED` et attend un
+  `TaskGrantSignal` ; un claim rejeté n'exécute rien.
+- **Exécution** : `TaskExecutionPipeline` exécute le `TaskExecutor` sur un Virtual Thread
+  (ou `ServiceTaskExecutor.executeService(...)` jusqu'au STOP pour une service step),
+  publie un `TaskWorkInProgress` périodique (intervalle = `taskExecutionTimeout / 3`,
+  min 1 s), puis `TASK_COMPLETED`/`TASK_FAILED` avec statut, durée, erreur et outputs.
 - **Arrêt** : `DRAINING`, attente des tâches actives (timeout = 2 ×
   `taskExecutionTimeout`), annulation du reste, arrêt du heartbeat, désenregistrement,
   déconnexion, `OFFLINE`.
@@ -599,8 +692,8 @@ Mécanismes :
 
 | Port | Responsabilité | Consommateurs |
 |---|---|---|
-| `TaskChannel` | `dispatchTask` / `receiveTask` | `RemoteStepDispatcher`, `TaskAgentRuntime` |
-| `SignalChannel` | `broadcastSignal` / `receiveSignal` | `RemoteLifecycleDispatcher`, `TaskAgentRuntime` |
+| `TaskChannel` | `dispatchTask` / `receiveTask` | `TransportStepDispatcher`, `TaskAgentRuntime` |
+| `SignalChannel` | `broadcastSignal` / `receiveSignal` | `TransportStepDispatcher` (grants, STOP), `TransportLifecycleDispatcher`, `TaskAgentRuntime` |
 | `EventChannel` | `publishEvent` / `subscribe` | `TaskExecutionPipeline`, `TransportExecutionEventHandler` |
 | `LifecycleChannel` | `publishAgentEvent` / `subscribeAgentEvents` | `TransportAgentRegistration`, `AgentLifecycleIngestion` |
 | `ConnectionLifecycle` | `connect` / `disconnect` / `isConnected` | `TaskAgentRuntime` |
@@ -626,9 +719,7 @@ classDiagram
     }
     class InMemoryExecutionTransport
     class KafkaExecutionTransport
-    class RabbitMQExecutionTransport
     class HttpExecutionTransport
-    class SocketExecutionTransport
 
     ExecutionTransport --|> TaskChannel
     ExecutionTransport --|> SignalChannel
@@ -637,9 +728,7 @@ classDiagram
     ExecutionTransport --|> ConnectionLifecycle
     InMemoryExecutionTransport ..|> ExecutionTransport
     KafkaExecutionTransport ..|> ExecutionTransport
-    RabbitMQExecutionTransport ..|> ExecutionTransport
     HttpExecutionTransport ..|> ExecutionTransport
-    SocketExecutionTransport ..|> ExecutionTransport
 ```
 
 `getType()` n'existe plus : le type est une propriété de configuration, jamais une
@@ -647,22 +736,25 @@ branche de code.
 
 | Transport | Sélection | Modèle | Notes |
 |---|---|---|---|
-| `IN_MEMORY` | défaut (`matchIfMissing=true`) | synchrone, même JVM | LOCAL et tests |
+| `IN_MEMORY` | défaut (`matchIfMissing=true`) | livraison asynchrone sur Virtual Threads, même JVM | LOCAL et tests (ADR-059) |
 | `KAFKA` | `transport.type=KAFKA` | topics tasks/signals/events, consumer group par agent (ADR-009) | `DynamicKafkaListenerRegistry`, `AckMode.RECORD`, `auto.offset.reset=earliest` |
-| `RABBITMQ` | `transport.type=RABBITMQ` | exchanges FANOUT, queue exclusive auto-delete, ack manuel | `RabbitMQConsumerManager` |
 | `HTTP` | `transport.type=HTTP` | POST vers `httpCallbackUrl`, callbacks sur `/api/v1/events` | `broadcastMode=ALL_CAPABLE|FIRST_AVAILABLE` ; **pas d'endpoint entrant de tâches** ; AGENT sans serveur web (ADR-019) |
-| `SOCKET` | `transport.type=SOCKET` | TCP persistant, détection rôle bind/connect | best-effort, reconnexion agent |
+| `CUSTOM` | `transport.type=CUSTOM` | fourni comme plugin | RabbitMQ, socket ou tout autre protocole (ADR-056) |
 
 Messages :
 - `TaskExecutionRequest(MessageId id, ExecutionId, StepDefinition, PartialExecutionContext,
-  Instant dispatchedAt, RetryPolicy)` — broadcast, sans `targetAgentId`.
+  Instant dispatchedAt, RetryPolicy)` — broadcast, sans `targetAgentId`, avec `fanOut`
+  dans le `StepDefinition`.
 - `ExecutionEvent(EventId, ExecutionId, MessageId correlationId, AgentId, String eventType,
   Map<String,Object> payload, Instant)` — enveloppe les événements agent → orchestrateur.
+- `TaskGrantSignal(SignalId, ExecutionId, TaskId, MessageId, AgentId, boolean granted,
+  Instant)` — réponse au claim, sur le `SignalChannel` (ADR-055).
 - `AgentLifecycleEvent` — canal séparé pour `AgentRegistered`, `AgentHeartbeat`,
   `AgentDeregistered`, `AgentLost` (ADR-012).
 
-Garanties : Kafka/RabbitMQ at-least-once ; InMemory synchrone ; HTTP avec retry/timeouts ;
-Socket best-effort. L'idempotence côté agent est portée par `TaskExecutionRequest.id`.
+Garanties : Kafka at-least-once ; InMemory livraison asynchrone hors du thread de
+l'émetteur ; HTTP avec retry/timeouts. L'idempotence côté agent est portée par
+`TaskExecutionRequest.id`.
 
 ---
 
@@ -671,14 +763,20 @@ Socket best-effort. L'idempotence côté agent est portée par `TaskExecutionReq
 - Un `TaskExecutor` implémente `execute(ExecutionContext, StepDefinition)` et
   `getSupportedTaskName()` ; il est annoté **exactement** `@Preparation`, `@Injection`
   ou `@Assertion`. Le `name()` de l'annotation est la clé de résolution YAML.
+- `ServiceTaskExecutor` (optionnel) ajoute `executeService(context, step,
+  ServiceControl)` : contrat d'une service step, démarrée puis arrêtée par
+  l'orchestrateur, résultat publié au STOP (ADR-054). `mock-server` l'implémente ; un
+  exécuteur sans ce contrat ne peut pas servir une étape `during`.
 - `AssertionExecutor extends TaskExecutor` : `evaluate(...)` retourne toujours un
-  `AssertionResult` (jamais d'exception) ; `execute(...)` par défaut convertit le
-  résultat en `TaskResult` avec `AssertionSummary` sous la clé `"assertion"` (mapping
-  `PASSED→SUCCESS`, `FAILED→FAILED`, `SKIPPED→SKIPPED`, `ERROR→FAILED`).
+  `AssertionSummary` (jamais d'exception) ; `execute(...)` par défaut convertit le
+  résumé en `TaskResult` avec `AssertionSummary` sous la clé `"assertion"` (mapping
+  `PASSED→SUCCESS`, `FAILED→FAILED`, `SKIPPED→SKIPPED`, `INCONCLUSIVE→SUCCESS`,
+  `ERROR→FAILED`).
 - `TaskExecutorRegistry` / `DefaultTaskExecutorRegistry` collecte les beans Spring
   (les plugins JAR sont enregistrés dans `PluginRegistry`, non raccordé au moteur).
-- `RegistryTaskExecutorLookup` expose `findTaskExecutor(taskName)` au moteur LOCAL
-  (chemin unique pour toutes les phases).
+- `TaskExecutorLookup` expose `findTaskExecutor(taskName)` (chemin unique pour toutes
+  les phases) ; `RegistryTaskExecutorLookup` (composition root) l'implémente au-dessus
+  du registre.
 - Plugins externes : `PluginLoader` scanne `platform.plugins.dir` au démarrage
   (`platform.plugins.enabled=true`), `AnnotationScanner` découvre les classes annotées,
   `PluginRegistry` résout `(phase, taskName) → implémentation`. Un JAR invalide produit
@@ -692,9 +790,14 @@ Socket best-effort. L'idempotence côté agent est portée par `TaskExecutionReq
   Kafka, DB, Docker, Shell) l'implémente pour le restart propre.
 
 Exécuteurs fournis : `database`, `docker`, `filesystem`, `http-client`,
-`kafka-producer`, `kafka-consumer`, `mock-server`, `shell`, `gatling` ;
-assertions : `database-assertion`, `file`, `gatling-metric`, `http-mock`, `kafka`,
-`wiremock`.
+`kafka-producer`, `kafka-consumer`, `mock-server` (service step), `shell`, `gatling` ;
+assertions : `performance-thresholds`, `direct-assertion`, `panel-assertion` (plugin).
+
+Les exécuteurs built-in sont découverts exactement comme les plugins (beans Spring +
+annotations). Chaque famille est un module Maven `infra/executors/platform-executor-*`
+(ADR-057) ; les ressources partagées passent par les ports `plugin.resource`
+de `platform-plugin-api` : `mock-server` résout ses cibles externes via
+`EndpointResolver`, sans dépendre du module http.
 
 ---
 
@@ -705,13 +808,18 @@ assertions : `database-assertion`, `file`, `gatling-metric`, `http-mock`, `kafka
 - Adapter : `JpaExecutionRepository` (Spring Data JPA + mappers), entités
   `ExecutionStateEntity` et `TaskResultEntity` (clé composite `executionId + taskId +
   agentId`).
+- Module `platform-persistence` (ADR-057), indépendant des executors.
 - `JpaConfiguration` : configuration JPA manuelle (Spring Boot 4.0 a retiré les
-  auto-configurations JPA/Hibernate), activée uniquement si un `DataSource` existe
-  (`@ConditionalOnBean`, ADR-025).
-- `DatasourceConfiguration` résout les datasources nommées `platform.datasources.*`
-  (ADR-014) ; la datasource `default` est primaire.
-- L'état est persisté avant les phases puis après chaque phase et à chaque résultat
-  distant ; l'API/CLI lit le même repository (read-model CQRS-lean).
+  auto-configurations JPA/Hibernate), activée par la propriété
+  `platform.datasources.default.url` (et non `@ConditionalOnBean`, sensible à
+  l'ordre d'enregistrement), comme les repositories JPA.
+- `PersistenceDataSourceConfiguration` crée la `DataSource` primaire depuis
+  `platform.datasources.default.*`. Les datasources nommées utilisées par les
+  scénarios (`platform.datasources.*`, ADR-014) sont résolues par
+  `DatasourceConfiguration` dans `platform-executor-database`.
+- L'état est persisté avant les phases, après chaque phase et à chaque résultat de tâche
+  (les deux modes passent par le transport) ; l'API/CLI lit le même repository
+  (read-model CQRS-lean).
 - En AGENT sans datasource, aucun bean JPA n'est créé : l'application démarre sans
   persistance.
 
@@ -813,8 +921,8 @@ sequenceDiagram
 | Préfixe | Contenu |
 |---|---|
 | `runtime.*` | `mode`, `role` |
-| `execution.*` | timeouts de disponibilité/exécution, `completion-policy`, `result-selection-policy` |
-| `transport.*` | `type` + blocs `kafka`, `rabbitmq`, `http`, `socket` |
+| `execution.*` | `task-availability-timeout`, `task-execution-timeout`, `claim-window` |
+| `transport.*` | `type` + blocs `kafka`, `http` |
 | `agent.*` | `supported-tasks`, `registry.ttl-check-interval-seconds`, identité/heartbeat |
 | `platform.datasources.*` | datasources nommées (ADR-014) |
 | `platform.http-targets.*` | cibles nommées + timeouts + mapping de chemins (ADR-036) |
@@ -841,7 +949,8 @@ Variables d'environnement prioritaires : `RUNTIME_MODE`, `MODE`,
 - Tests d'architecture : `DomainArchitectureTest`, `ModuleDependencyTest` (ASM),
   `InfrastructurePackageSeparationTest` (ArchUnit — vide sur Java 25, voir §3).
 - Tests de contrat : `LocalDistributedEquivalenceIT` (même verdict/statuts dans les deux
-  modes), `LocalFlowIT`, `LocalModeAllTasksIT`, `WebUiApiIT`, `AgentLossRecoveryIT`.
+  modes — garde de régression depuis ADR-059), `LocalFlowIT`, `LocalModeAllTasksIT`,
+  `WebUiApiIT`, `AgentLossRecoveryIT`.
 - Sur `/mnt/c` (9p), le classpath Java est très lent : préférer un checkout WSL ext4
   pour les builds complets. Un build complet mesure ~2 min sur ext4 contre ~20 min sur 9p.
 
@@ -852,9 +961,10 @@ Variables d'environnement prioritaires : `RUNTIME_MODE`, `MODE`,
 | Extension | Mécanisme |
 |---|---|
 | Nouvelle tâche de préparation/injection | Bean annoté `@Preparation(name="…")` ou `@Injection(name="…")` + `getSupportedTaskName()` |
+| Nouvelle service step | Implémenter `ServiceTaskExecutor` (au-dessus de `TaskExecutor`) ; le scénario déclare `during` (ADR-054) |
 | Nouvelle assertion | Bean annoté `@Assertion(name="…")` implémentant `AssertionExecutor` |
 | Plugin externe | JAR dans `platform.plugins.dir`, `platform.plugins.enabled=true` (découverte OK ; exécution non raccordée — voir §8) |
-| Nouveau transport | Implémenter les 5 canaux + bean `@ConditionalOnProperty(transport.type=…)` |
+| Nouveau transport | Implémenter les 5 canaux + bean `@ConditionalOnProperty(transport.type=…)` ; les protocoles non cœur (RabbitMQ, socket) passent par `CUSTOM` (ADR-056) |
 | Nouvelle cible HTTP | `platform.http-targets.<nom>` (base-url, timeouts, paths) |
 | Nouveau cluster Kafka | `platform.kafka-clusters.<nom>` (bootstrap, acks, topics) |
 | Nouvelle datasource | `platform.datasources.<nom>` (ADR-014) |
@@ -870,7 +980,16 @@ Variables d'environnement prioritaires : `RUNTIME_MODE`, `MODE`,
 | Transport abstrait, priorité config, plugin JAR | ADR-002, ADR-006, ADR-007 |
 | Spécialisation d'agent par configuration | ADR-015 (remplace ADR-008) |
 | Consumer group Kafka par agent | ADR-009 |
-| PartialExecutionContext, multi-claim, lifecycle séparé | ADR-010, ADR-011, ADR-012 |
+| PartialExecutionContext, lifecycle séparé | ADR-010, ADR-012 |
+| **Modèle de scénario simplifié (mode runtime, `ref`, `dependsOn` intra-phase, load model inline)** | **ADR-053** |
+| **Service steps (`during`, `drain`, `ServiceTaskExecutor`)** | **ADR-054** |
+| **Claim unique par défaut et `fanOut` par étape (remplace ADR-011 et ADR-034)** | **ADR-055** |
+| **Surface de transport réduite (IN_MEMORY, HTTP, KAFKA)** | **ADR-056** |
+| Exécuteurs par famille de capacité | ADR-057 |
+| **Orchestrateur unique et modèle de défaillance au redémarrage** | **ADR-058** |
+| **LOCAL = moteur distribué + transport mémoire + agent embarqué** | **ADR-059** |
+| **Domaine minimal (`scenario`, `execution`, `task`, `agent`, `event`, `id`)** | **ADR-060** |
+| **Hygiène des ADR + architecture.md comme description unique** | **ADR-061** |
 | Spring-first infrastructure, datasources | ADR-013, ADR-014 |
 | IHM/sécurité, CLI headless, sortie locale des rapports | ADR-019, ADR-021, ADR-022 |
 | Read-model et progression | ADR-020 |
@@ -881,13 +1000,15 @@ Variables d'environnement prioritaires : `RUNTIME_MODE`, `MODE`,
 | **ExecutionContext : outputs nommés + store persistant** | **ADR-031** |
 | Détection de rôle au bootstrap | ADR-032 |
 | **Ingestion lifecycle agent + perte de claim** | **ADR-033** |
-| Sélection déterministe multi-claim | ADR-034 |
 | **Retrait de Spring Modulith + test ASM** | **ADR-035** |
 | Port `EndpointResolver` | ADR-036 |
 | **Consolidation moteur + agent** | **ADR-037** |
 | **Posture de sécurité** | **ADR-038** |
+| Pattern des ressources externes nommées | ADR-062 |
+| Doctrine des exécuteurs (dédié vs shell) | ADR-063 |
 
-> ADR obsolètes/superseded : ADR-001 (Java 21/Modulith, voir ADR-035),
-> ADR-008 (agentTags, voir ADR-015), ADR-022 `report-output-local-only` reste valide ;
-> les fichiers `ADR-022-spring-boot-bom-single-source` et
-> `ADR-024-spring-boot-bom-single-source` sont des doublons historiques de numérotation.
+> Numérotation (ADR-061) : `ADR-015-named-resource-registry-pattern` est renuméroté
+> **ADR-062** et `ADR-022-task-executor-doctrine` **ADR-063** (fichiers tombstone).
+> ADR-011 (multi-claim) et ADR-034 (sélection déterministe) sont remplacés par ADR-055.
+> ADR-001 (Java 21/Modulith) est historique, voir ADR-035 ; ADR-008 (agentTags) est
+> remplacé par ADR-015 ; ADR-022 `report-output-local-only` reste valide.

@@ -67,7 +67,6 @@ class CliScenarioRunnerHeadlessTest {
               id: test-scenario
               name: Test Scenario
               version: "1.0"
-              executionMode: LOCAL
               steps:
                 - id: step1
                   phase: PREPARATION
@@ -93,7 +92,8 @@ class CliScenarioRunnerHeadlessTest {
     void setUp() {
         runner = new CliScenarioRunner(
                 parsingUseCase, executeUseCase, statusUseCase,
-                executionRepository, progressCalculator, resourceLoader);
+                executionRepository, progressCalculator, resourceLoader,
+                new com.performance.platform.infrastructure.scheduling.SpringScheduleCalculator());
         // Capture stdout
         originalStdout = System.out;
         capturedStdout = new ByteArrayOutputStream();
@@ -125,7 +125,7 @@ class CliScenarioRunnerHeadlessTest {
     static ScenarioDefinition createScenario(String id, String name) {
         return new ScenarioDefinition(
                 ScenarioId.of(id), name, "1.0",
-                List.of(), Map.of(), null, List.of(), Map.of());
+                List.of(), Map.of(), List.of(), null, null);
     }
 
     /**
@@ -362,6 +362,75 @@ class CliScenarioRunnerHeadlessTest {
 
             int code = runner.executeScenario();
             assertThat(capturedOutput()).contains("My Custom Test (test-scenario)");
+        }
+    }
+
+    // ---- executeScenario — scheduling option ----
+
+    @Nested
+    @DisplayName("executeScenario — scheduling")
+    class ExecuteScenarioScheduling {
+
+        private void setSchedule(String expression) {
+            ReflectionTestUtils.setField(runner, "scheduleExpression", expression);
+        }
+
+        private void stubScenarioLoad() throws Exception {
+            setScenarioPath(VALID_SCENARIO_PATH);
+            when(resourceLoader.getResource(VALID_SCENARIO_PATH)).thenReturn(resource);
+            when(resource.exists()).thenReturn(true);
+            when(resource.getContentAsString(StandardCharsets.UTF_8)).thenReturn(VALID_YAML);
+        }
+
+        @Test
+        @DisplayName("should return exit code 2 when the schedule expression is invalid")
+        void shouldReturn2OnInvalidSchedule() throws Exception {
+            stubScenarioLoad();
+            when(parsingUseCase.parse(VALID_YAML)).thenReturn(createScenario("sc", "S"));
+            setSchedule("in soon");
+
+            int code = runner.executeScenario();
+
+            assertThat(code).isEqualTo(2);
+            assertThat(capturedOutput()).contains("INVALID_SCHEDULE");
+        }
+
+        @Test
+        @DisplayName("should return exit code 2 when a cron schedule is requested headlessly")
+        void shouldReturn2OnCronSchedule() throws Exception {
+            stubScenarioLoad();
+            when(parsingUseCase.parse(VALID_YAML)).thenReturn(createScenario("sc", "S"));
+            setSchedule("cron:0 0 2 * * *");
+
+            int code = runner.executeScenario();
+
+            assertThat(code).isEqualTo(2);
+            assertThat(capturedOutput()).contains("CRON_NOT_SUPPORTED_IN_CLI");
+        }
+
+        @Test
+        @DisplayName("should execute after a one-shot delay already elapsed")
+        void shouldExecuteWhenOneShotIsDue() throws Exception {
+            stubScenarioLoad();
+            var scenario = createScenario("sc", "S");
+            var executionId = ExecutionId.of("exec-sched");
+            when(parsingUseCase.parse(VALID_YAML)).thenReturn(scenario);
+            when(executeUseCase.execute(scenario)).thenReturn(executionId);
+            when(statusUseCase.getStatus(executionId)).thenReturn(ExecutionStatus.COMPLETED);
+            when(statusUseCase.getState(executionId)).thenReturn(Optional.empty());
+
+            setSchedule("in 1ms");
+
+            int code = runner.executeScenario();
+
+            assertThat(code).isEqualTo(0);
+            assertThat(capturedOutput()).contains("schedule   : once at");
+        }
+
+        @Test
+        @DisplayName("awaitUntil returns immediately for a past instant")
+        void shouldNotWaitForPastInstant() {
+            assertThat(CliScenarioRunner.awaitUntil(Instant.now().minusSeconds(5))).isTrue();
         }
     }
 

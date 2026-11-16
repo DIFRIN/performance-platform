@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * Scenario-driven description of the HTTP request replayed by {@link HttpScenarioSimulation}.
- * Every textual part is a template: {@code com.performance.platform.domain.template.DynamicValues}
+ * Every textual part is a template: {@code com.performance.platform.plugin.template.DynamicValues}
  * placeholders are resolved for each request sent.
  *
  * @param path        path template, may contain {@code {name}} variables bound by {@code pathParams}

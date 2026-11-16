@@ -4,11 +4,17 @@ import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.domain.event.AgentLost;
 import com.performance.platform.domain.event.TaskClaimedByAgent;
 import com.performance.platform.domain.event.TaskCompleted;
+import com.performance.platform.domain.event.TaskGrantSignal;
+import com.performance.platform.domain.execution.ExecutionStatus;
+import com.performance.platform.domain.id.AgentId;
+import com.performance.platform.domain.id.SignalId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
+import com.performance.platform.engine.correlation.GrantDecision;
 import com.performance.platform.engine.correlation.TaskCorrelationTracker;
 import com.performance.platform.transport.EventChannel;
+import com.performance.platform.transport.SignalChannel;
 import com.performance.platform.transport.message.ExecutionEvent;
 
 import org.slf4j.Logger;
@@ -22,13 +28,15 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Consomme les {@link ExecutionEvent} du transport en mode DISTRIBUTED et
- * alimente le tracker de correlation, le repository et le bus d'evenements.
+ * Consomme les {@link ExecutionEvent} du transport et alimente le tracker de
+ * correlation, le repository et le bus d'evenements.
  * <p>
- * Extrait de l'ancien {@code RemoteExecutionEngine} (PDR-050) : l'engine
- * unique ne connait plus le transport. Les evenements dont le correlationId
- * n'est pas (ou plus) suivi sont ignores, ce qui protege aussi contre les
- * evenements tardifs apres {@code tracker.release(...)}.
+ * Unique dans tous les modes (ADR-059) : en LOCAL, l'agent embarque publie ses
+ * evenements sur le transport en memoire.
+ * <p>
+ * Les claims declenchent la decision de grant (ADR-055) : {@code one} accorde
+ * le premier claim et rejette les suivants ; {@code all} laisse le dispatcher
+ * accorder les claims a la fin de la fenetre de claim.
  */
 public final class TransportExecutionEventHandler {
 
@@ -40,14 +48,17 @@ public final class TransportExecutionEventHandler {
     static final String PAYLOAD_DURATION_MS = "durationMs";
 
     private final TaskCorrelationTracker tracker;
+    private final SignalChannel signalChannel;
     private final ExecutionRepository executionRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public TransportExecutionEventHandler(EventChannel transport,
+                                          SignalChannel signalChannel,
                                           TaskCorrelationTracker tracker,
                                           ExecutionRepository executionRepository,
                                           ApplicationEventPublisher eventPublisher) {
         Objects.requireNonNull(transport, "transport must not be null");
+        this.signalChannel = Objects.requireNonNull(signalChannel, "signalChannel must not be null");
         this.tracker = Objects.requireNonNull(tracker, "tracker must not be null");
         this.executionRepository = Objects.requireNonNull(executionRepository,
                 "executionRepository must not be null");
@@ -56,18 +67,15 @@ public final class TransportExecutionEventHandler {
     }
 
     /**
-     * Invalide les claims d'un agent perdu (fast-fail).
+     * Invalide les grants d'un agent perdu (fast-fail).
      */
     @EventListener
     public void onAgentLost(AgentLost event) {
         tracker.onAgentLost(event.agentId());
-        log.warn("action=agent_lost_claims_invalidated agentId={} reason={}",
+        log.warn("action=agent_lost_grants_invalidated agentId={} reason={}",
                 event.agentId().value(), event.reason());
     }
 
-    /**
-     * Handler appele par le transport pour chaque evenement d'execution.
-     */
     public void onEvent(ExecutionEvent event) {
         if (event == null || event.executionId() == null) {
             return;
@@ -91,7 +99,9 @@ public final class TransportExecutionEventHandler {
             case ExecutionEvent.TASK_CLAIMED -> handleTaskClaimed(event, taskId);
             case ExecutionEvent.TASK_COMPLETED -> handleTaskCompleted(event, taskId);
             case ExecutionEvent.TASK_FAILED -> handleTaskFailed(event, taskId);
-            case ExecutionEvent.TASK_WORK_IN_PROGRESS -> handleTaskWorkInProgress(event, taskId);
+            case ExecutionEvent.TASK_WORK_IN_PROGRESS -> log.debug(
+                    "action=task_progress messageId={} taskId={} executionId={}",
+                    event.correlationId().value(), taskId.value(), event.executionId().value());
             default -> {
                 // Heartbeats / registration : canal lifecycle separe.
             }
@@ -102,16 +112,34 @@ public final class TransportExecutionEventHandler {
         if (event.agentId() == null) {
             return;
         }
-        tracker.onClaimed(event.correlationId(), event.agentId());
-        log.info("action=task_claimed messageId={} agentId={} executionId={}",
-                event.correlationId().value(), event.agentId().value(), event.executionId().value());
+        GrantDecision decision = tracker.onClaimed(event.correlationId(), event.agentId());
+        log.info("action=task_claimed messageId={} agentId={} executionId={} decision={}",
+                event.correlationId().value(), event.agentId().value(),
+                event.executionId().value(), decision);
         eventPublisher.publishEvent(new TaskClaimedByAgent(
                 event.executionId(), taskId, event.agentId(),
                 event.correlationId(), event.occurredAt()));
+
+        if (decision != GrantDecision.PENDING) {
+            publishGrant(event, taskId, event.agentId(), decision == GrantDecision.GRANTED);
+        }
+    }
+
+    private void publishGrant(ExecutionEvent claim, TaskId taskId, AgentId agentId, boolean granted) {
+        signalChannel.broadcastSignal(new TaskGrantSignal(
+                SignalId.generate(), claim.executionId(), taskId, claim.correlationId(),
+                agentId, granted, Instant.now()));
+        log.info("action=grant_published messageId={} agentId={} granted={}",
+                claim.correlationId().value(), agentId.value(), granted);
     }
 
     private void handleTaskCompleted(ExecutionEvent event, TaskId taskId) {
         if (event.agentId() == null) {
+            return;
+        }
+        if (isExecutionTerminal(event)) {
+            log.warn("action=late_result_discarded messageId={} taskId={} executionId={}",
+                    event.correlationId().value(), taskId.value(), event.executionId().value());
             return;
         }
 
@@ -132,7 +160,6 @@ public final class TransportExecutionEventHandler {
         if (event.agentId() == null) {
             return;
         }
-
         String error = (String) event.payload().getOrDefault(PAYLOAD_ERROR, "unknown error");
         tracker.onFailed(event.correlationId(), event.agentId(), error);
 
@@ -141,11 +168,14 @@ public final class TransportExecutionEventHandler {
                 taskId.value(), error, event.executionId().value());
     }
 
-    private void handleTaskWorkInProgress(ExecutionEvent event, TaskId taskId) {
-        log.debug("action=task_progress messageId={} agentId={} taskId={} executionId={}",
-                event.correlationId().value(), taskId.value(),
-                event.agentId() != null ? event.agentId().value() : "unknown",
-                event.executionId().value());
+    /**
+     * ADR-058 : un agent qui termine une tache dont l'execution est deja
+     * terminale voit son resultat journalise puis jete.
+     */
+    private boolean isExecutionTerminal(ExecutionEvent event) {
+        var persisted = executionRepository.findById(
+                new com.performance.platform.domain.id.ExecutionId(event.executionId().value()));
+        return persisted.map(state -> state.status() != ExecutionStatus.RUNNING).orElse(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -177,7 +207,8 @@ public final class TransportExecutionEventHandler {
         }
 
         Instant completedAt = event.occurredAt();
-        return new TaskResult(taskId, taskId.value(), status, duration, outputs,
+        String taskName = payload.getOrDefault("taskName", taskId.value()).toString();
+        return new TaskResult(taskId, taskName, status, duration, outputs,
                 errorMessage, null, completedAt);
     }
 }

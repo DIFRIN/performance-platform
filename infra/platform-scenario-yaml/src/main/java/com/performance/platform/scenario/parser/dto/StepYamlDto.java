@@ -11,8 +11,13 @@ public record StepYamlDto(
     String id,
     String task,
     String phase,
+    Map<String, Object> description,
     List<String> requiredContexts,
     List<String> dependsOn,
+    String ref,
+    String during,
+    String drain,
+    String fanOut,
     Map<String, Object> parameters,
     String timeout,
     RetryPolicyYamlDto retryPolicy

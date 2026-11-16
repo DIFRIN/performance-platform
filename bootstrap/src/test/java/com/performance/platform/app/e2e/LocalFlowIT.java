@@ -10,7 +10,8 @@ import com.performance.platform.application.ports.in.ScenarioParsingUseCase;
 import com.performance.platform.application.ports.out.ExecutionRepository;
 import com.performance.platform.app.api.ApiExceptionHandler;
 import com.performance.platform.app.api.ScenarioController;
-import com.performance.platform.assertion.file.FileAssertionExecutor;
+import com.performance.platform.assertion.direct.DirectAssertionAssertionExecutor;
+import com.performance.platform.assertion.measure.DirectMeasurementResolver;
 import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.PhaseStatus;
@@ -23,13 +24,9 @@ import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.domain.task.TaskStatus;
 import com.performance.platform.campaign.ExecutionEngine;
-import com.performance.platform.engine.local.LocalOutcomeEventPublisher;
-import com.performance.platform.engine.local.LocalStepDispatcher;
-import com.performance.platform.engine.local.TaskExecutorLookup;
 import com.performance.platform.campaign.plan.DefaultExecutionPlanBuilder;
 import com.performance.platform.application.ports.out.ExecutionPlanBuilder;
-import com.performance.platform.engine.retry.DefaultRetryExecutor;
-import com.performance.platform.engine.retry.RetryExecutor;
+import com.performance.platform.e2e.LocalTransportHarness;
 import com.performance.platform.infrastructure.executor.fs.FilesystemTaskExecutor;
 import com.performance.platform.infrastructure.executor.shell.ShellTaskExecutor;
 import com.performance.platform.infrastructure.persistence.ExecutionStateEntity;
@@ -110,6 +107,7 @@ class LocalFlowIT {
     static MockMvc mockMvc;
     static ExecutionRepository executionRepository;
     static DefaultReportEngine reportEngine;
+    static LocalTransportHarness harness;
 
     @BeforeAll
     static void setUp() throws Exception {
@@ -140,32 +138,26 @@ class LocalFlowIT {
         // 4. Task executors (no-arg constructors, no dependencies)
         var filesystemExecutor = new FilesystemTaskExecutor();
         var shellExecutor = new ShellTaskExecutor();
-        var fileAssertionExecutor = new FileAssertionExecutor();
+        var directAssertionExecutor = new DirectAssertionAssertionExecutor(
+                new DirectMeasurementResolver(noDataSource()));
+        var taskExecutors = List.<TaskExecutor>of(
+                filesystemExecutor, shellExecutor, directAssertionExecutor);
 
-        // 5. TaskExecutorLookup (simple map lookup)
-        var lookup = new TaskExecutorLookup() {
-            @Override
-            public TaskExecutor findTaskExecutor(String taskName) {
-                return switch (taskName) {
-                    case "filesystem" -> filesystemExecutor;
-                    case "shell" -> shellExecutor;
-                    case "file" -> fileAssertionExecutor;
-                    default -> null;
-                };
-            }
-        };
-
-        // 6. Supporting components
+        // 5. Supporting components
         var planBuilder = new DefaultExecutionPlanBuilder();
-        var retryExecutor = new DefaultRetryExecutor();
         List<Object> publishedEvents = new ArrayList<>();
         ApplicationEventPublisher eventPublisher = publishedEvents::add;
 
-        // 7. LocalExecutionEngine
+        // 6. Transport in-memory + agent embarque (ADR-059) : le moteur
+        // dispatch toujours via les ports de transport.
+        harness = new LocalTransportHarness(executionRepository, eventPublisher, taskExecutors,
+                java.util.Set.of("filesystem", "shell", "direct-assertion"));
+        harness.start();
+
+        // 7. ExecutionEngine
         var engine = new ExecutionEngine(
-                planBuilder, executionRepository, eventPublisher, signal -> { },
-                new LocalStepDispatcher(lookup, retryExecutor),
-                new LocalOutcomeEventPublisher(eventPublisher, executionRepository));
+                planBuilder, executionRepository, eventPublisher,
+                harness.lifecycleDispatcher(), harness.stepDispatcher());
 
         // 8. Scenario parsing
         var parser = new YamlScenarioParser();
@@ -233,6 +225,9 @@ class LocalFlowIT {
 
     @AfterAll
     static void tearDown() {
+        if (harness != null) {
+            harness.close();
+        }
         if (sessionFactory != null) {
             sessionFactory.close();
         }
@@ -484,5 +479,29 @@ class LocalFlowIT {
                 em.close();
             }
         }
+    }
+    /** Aucune datasource : les metriques base de donnees sont indisponibles en IT. */
+    private static org.springframework.beans.factory.ObjectProvider<javax.sql.DataSource> noDataSource() {
+        return new org.springframework.beans.factory.ObjectProvider<>() {
+            @Override
+            public javax.sql.DataSource getObject() {
+                return null;
+            }
+
+            @Override
+            public javax.sql.DataSource getObject(Object... args) {
+                return null;
+            }
+
+            @Override
+            public javax.sql.DataSource getIfAvailable() {
+                return null;
+            }
+
+            @Override
+            public javax.sql.DataSource getIfUnique() {
+                return null;
+            }
+        };
     }
 }

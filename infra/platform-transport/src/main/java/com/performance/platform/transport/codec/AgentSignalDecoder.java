@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.performance.platform.domain.event.AgentSignal;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
+import com.performance.platform.domain.event.TaskGrantSignal;
 
 /**
- * Decodes the existing signal wire format without requiring a new discriminator.
+ * Decodes the signal wire format without requiring a new discriminator.
+ * The three signal kinds are disjoint by their required fields.
  */
 public final class AgentSignalDecoder {
 
@@ -16,7 +18,14 @@ public final class AgentSignalDecoder {
 
     public static AgentSignal decode(ObjectMapper mapper, Object payload) {
         JsonNode node = mapper.valueToTree(payload);
+        boolean grant = node.has("messageId") && node.has("granted") && node.has("agentId");
         boolean lifecycle = node.has("action") || node.has("taskId");
+        if (grant && lifecycle && node.has("action")) {
+            throw new IllegalArgumentException("Ambiguous signal: grant fields and lifecycle action");
+        }
+        if (grant) {
+            return mapper.convertValue(payload, TaskGrantSignal.class);
+        }
         if (lifecycle && node.has("reason")) {
             throw new IllegalArgumentException("Ambiguous signal: lifecycle fields and restart reason");
         }

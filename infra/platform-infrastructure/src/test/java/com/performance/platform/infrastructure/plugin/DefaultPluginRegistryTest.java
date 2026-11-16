@@ -72,16 +72,16 @@ class DefaultPluginRegistryTest {
         }
     }
 
-    @Assertion(name = "gatling-metric", version = "1.0.0")
+    @Assertion(name = "panel-assertion", version = "1.0.0")
     public static class InternalAssertionExecutor implements TaskExecutor {
         @Override
         public TaskResult execute(ExecutionContext context, StepDefinition step) {
-            return TaskResult.success(step.id(), "gatling-metric", java.time.Duration.ofMillis(1), java.util.Map.of());
+            return TaskResult.success(step.id(), "panel-assertion", java.time.Duration.ofMillis(1), java.util.Map.of());
         }
 
         @Override
         public String getSupportedTaskName() {
-            return "gatling-metric";
+            return "panel-assertion";
         }
     }
 
@@ -271,7 +271,7 @@ class DefaultPluginRegistryTest {
             TaskExecutor gatling = registry.lookup(Phase.INJECTION, "gatling");
             assertThat(gatling).isInstanceOf(InternalGatlingExecutor.class);
 
-            TaskExecutor assertion = registry.lookup(Phase.ASSERTION, "gatling-metric");
+            TaskExecutor assertion = registry.lookup(Phase.ASSERTION, "panel-assertion");
             assertThat(assertion).isInstanceOf(InternalAssertionExecutor.class);
         }
 
@@ -281,7 +281,7 @@ class DefaultPluginRegistryTest {
             assertThat(registry.contains(Phase.PREPARATION, "database")).isTrue();
             assertThat(registry.contains(Phase.PREPARATION, "shell")).isTrue();
             assertThat(registry.contains(Phase.INJECTION, "gatling")).isTrue();
-            assertThat(registry.contains(Phase.ASSERTION, "gatling-metric")).isTrue();
+            assertThat(registry.contains(Phase.ASSERTION, "panel-assertion")).isTrue();
         }
 
         @Test
@@ -302,7 +302,7 @@ class DefaultPluginRegistryTest {
             assertThat(inj).containsExactly("gatling");
 
             Set<String> asrt = registry.namesFor(Phase.ASSERTION);
-            assertThat(asrt).containsExactly("gatling-metric");
+            assertThat(asrt).containsExactly("panel-assertion");
         }
 
         @Test
@@ -420,9 +420,9 @@ class DefaultPluginRegistryTest {
             assertThat(registry.namesFor(Phase.INJECTION))
                     .containsExactlyInAnyOrder("gatling", "custom-injector");
 
-            // ASSERTION: gatling-metric + custom-assertion
+            // ASSERTION: panel-assertion + custom-assertion
             assertThat(registry.namesFor(Phase.ASSERTION))
-                    .containsExactlyInAnyOrder("gatling-metric", "custom-assertion");
+                    .containsExactlyInAnyOrder("panel-assertion", "custom-assertion");
         }
     }
 

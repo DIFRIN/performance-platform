@@ -2,7 +2,8 @@
 
 > **Document historique.** Toutes les phases ci-dessous ont été livrées (196 issues,
 > voir `progress.md`). Les cases ne sont pas maintenues à jour ; certains termes
-> (`LocalExecutionEngine`, `ReportPublisher`, `RemoteExecutionEngine`) ont été remplacés
+> (`LocalExecutionEngine`, `ReportPublisher`, `RemoteExecutionEngine`,
+> `AssertionResult` → `AssertionSummary` + `Check`) ont été remplacés
 > — voir `architecture.md` et le glossaire pour l'état courant.
 >
 > L'ordre des phases était obligatoire. Chaque phase est un prérequis de la suivante.
@@ -99,13 +100,10 @@ Critères de done :
 **Objectif** : Évaluer les assertions post-injection.
 
 Livrables :
-- [ ] `AssertionExecutor` interface + `AssertionExecutorRegistry`
-- [ ] `GatlingMetricAssertionExecutor` (errorRate, p95, p99, throughput)
-- [ ] `DatabaseAssertionExecutor` (count, exists, custom SQL)
-- [ ] `KafkaAssertionExecutor` (produced count, consumed count, lag)
-- [ ] `HttpAssertionExecutor` (mock received calls, endpoint state)
-- [ ] `FileAssertionExecutor` (exists, checksum)
-- [ ] `AssertionResult` avec Evidence détaillée
+- [ ] `AssertionExecutor` interface + `TaskExecutorRegistry`
+- [ ] `PerformanceThresholdsAssertionExecutor` (latency, errorRate, throughput)
+- [ ] `DirectAssertionAssertionExecutor` (database, filesystem, http, kafka)
+- [ ] `AssertionSummary` avec `Check[]`, `SloStatement` et `Rollup`
 
 Critères de done :
 - Assertion PASSED et FAILED avec evidence testées

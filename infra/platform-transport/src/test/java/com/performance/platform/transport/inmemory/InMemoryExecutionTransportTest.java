@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("InMemoryExecutionTransport")
@@ -150,7 +151,8 @@ class InMemoryExecutionTransportTest {
             var request = sampleRequest();
             transport.dispatchTask(request);
 
-            assertThat(received).containsExactly(request);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received).containsExactly(request));
         }
 
         @Test
@@ -164,8 +166,10 @@ class InMemoryExecutionTransportTest {
             var request = sampleRequest();
             transport.dispatchTask(request);
 
-            assertThat(received1).containsExactly(request);
-            assertThat(received2).containsExactly(request);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received1).containsExactly(request));
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received2).containsExactly(request));
         }
 
         @Test
@@ -215,7 +219,8 @@ class InMemoryExecutionTransportTest {
             var event = sampleEvent();
             transport.publishEvent(event);
 
-            assertThat(received).containsExactly(event);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received).containsExactly(event));
         }
 
         @Test
@@ -229,8 +234,10 @@ class InMemoryExecutionTransportTest {
             var event = sampleEvent();
             transport.publishEvent(event);
 
-            assertThat(received1).containsExactly(event);
-            assertThat(received2).containsExactly(event);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received1).containsExactly(event));
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received2).containsExactly(event));
         }
 
         @Test
@@ -261,7 +268,8 @@ class InMemoryExecutionTransportTest {
             transport.publishEvent(event);
 
             assertThat(received1).isEmpty();
-            assertThat(received2).containsExactly(event);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received2).containsExactly(event));
         }
 
         @Test
@@ -335,7 +343,7 @@ class InMemoryExecutionTransportTest {
 
             // Première publication : reçue
             transport.publishEvent(sampleEvent());
-            assertThat(received).hasSize(1);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> assertThat(received).hasSize(1));
 
             // Annulation
             subscription.cancel();
@@ -359,7 +367,8 @@ class InMemoryExecutionTransportTest {
             var signal = sampleSignal();
             transport.broadcastSignal(signal);
 
-            assertThat(received).containsExactly(signal);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received).containsExactly(signal));
         }
 
         @Test
@@ -373,8 +382,10 @@ class InMemoryExecutionTransportTest {
             var signal = sampleSignal();
             transport.broadcastSignal(signal);
 
-            assertThat(received1).containsExactly(signal);
-            assertThat(received2).containsExactly(signal);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received1).containsExactly(signal));
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(received2).containsExactly(signal));
         }
 
         @Test
@@ -432,9 +443,12 @@ class InMemoryExecutionTransportTest {
             transport.publishEvent(event);
             transport.broadcastSignal(signal);
 
-            assertThat(tasks).containsExactly(request);
-            assertThat(events).containsExactly(event);
-            assertThat(signals).containsExactly(signal);
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(tasks).containsExactly(request));
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(events).containsExactly(event));
+            await().atMost(Duration.ofSeconds(2)).untilAsserted(() ->
+                    assertThat(signals).containsExactly(signal));
         }
     }
 }

@@ -1,9 +1,9 @@
 package com.performance.platform.reporting.model;
 
-import com.performance.platform.domain.assertion.AssertionOperator;
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionFamily;
 import com.performance.platform.domain.assertion.AssertionStatus;
-import com.performance.platform.domain.assertion.Evidence;
+import com.performance.platform.domain.assertion.AssertionSummary;
+import com.performance.platform.domain.assertion.Rollup;
 import com.performance.platform.domain.id.ReportId;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
@@ -50,10 +50,10 @@ class CampaignReportTest {
                             1.0, 20.0, 10, 15, 20, 25, 30, 35, 5, 8.5,
                             Path.of("/tmp/gatling"), Map.of()),
                     Path.of("/tmp/gatling"));
-            var evidence = new Evidence(99L, 100L, AssertionOperator.GTE, "requests", Map.of());
-            var assertResult = new AssertionResult(taskId, AssertionStatus.PASSED, "enough requests",
-                    evidence, duration, now);
-            var assertEntry = new AssertionReportEntry(taskId, assertResult, evidence);
+            var assertSummary = new AssertionSummary(taskId, AssertionStatus.PASSED,
+                    "enough requests", List.of(), duration, now,
+                    AssertionFamily.DIRECT, null, List.of(), Rollup.all());
+            var assertEntry = new AssertionReportEntry(taskId, assertSummary);
 
             var report = new CampaignReport(
                     reportId, scenarioId, "Test Scenario", "1.0",
@@ -243,13 +243,17 @@ class CampaignReportTest {
     class AssertionReportEntryTests {
 
         @Test
-        @DisplayName("should construct without evidence")
-        void shouldConstructWithoutEvidence() {
-            var result = new AssertionResult(taskId, AssertionStatus.PASSED, "ok", null, duration, now);
-            var entry = new AssertionReportEntry(taskId, result, null);
+        @DisplayName("carries the assertion summary as the single source of truth")
+        void shouldCarrySummary() {
+            var summary = new AssertionSummary(taskId, AssertionStatus.PASSED, "ok",
+                    List.of(), duration, now, AssertionFamily.DIRECT, null,
+                    List.of(), Rollup.all());
+            var entry = new AssertionReportEntry(taskId, summary);
+
             assertEquals(taskId, entry.assertionId());
-            assertEquals(result, entry.result());
-            assertNull(entry.evidence());
+            assertEquals(AssertionStatus.PASSED, entry.verdict());
+            assertTrue(entry.checks().isEmpty());
+            assertTrue(entry.slo().blank());
         }
     }
 

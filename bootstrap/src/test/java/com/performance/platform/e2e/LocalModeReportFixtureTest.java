@@ -44,14 +44,15 @@ class LocalModeReportFixtureTest {
                 "mock-server", new LocalModeAllTasksIT.StubTaskExecutor("mock-server",
                         Map.of("url", "http://localhost:0")),
                 "gatling", LocalModeAllTasksIT.createGatlingStub(),
-                "http-mock", new LocalModeAllTasksIT.StubAssertionExecutor("http-mock"),
-                "gatling-metric", new LocalModeAllTasksIT.StubAssertionExecutor("gatling-metric"));
+                "direct-assertion", new LocalModeAllTasksIT.StubAssertionExecutor("direct-assertion"),
+                "performance-thresholds", new LocalModeAllTasksIT.StubAssertionExecutor("performance-thresholds"));
         for (var step : scenario.steps()) {
             var result = executors.get(step.taskName()).execute(context, step);
             context = context.with(step.id().value(), "agent-local", result);
         }
         var tasks = includePlannedTasks ? scenario.steps().stream()
-                .map(step -> new ExecutionTask(step.id(), step.taskName(), step.phase(), true))
+                .map(step -> new ExecutionTask(step.id(), step.taskName(),
+                        step.phase() == null ? com.performance.platform.domain.scenario.Phase.INJECTION : step.phase(), true))
                 .toList() : List.<ExecutionTask>of();
         var now = Instant.now();
         var state = new ExecutionState(id, scenario.id(), ExecutionStatus.COMPLETED, Map.of(),

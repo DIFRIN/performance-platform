@@ -12,7 +12,7 @@
 
 platform:
   datasources:
-    # Used by `database` / `database-assertion` on the agent that owns them.
+    # Used by the `database` task on the agent that owns it.
     sut-db:
       url: ${SUT_DB_URL:jdbc:postgresql://localhost:5433/sut_devices}
       username: ${SUT_DB_USERNAME:postgres}

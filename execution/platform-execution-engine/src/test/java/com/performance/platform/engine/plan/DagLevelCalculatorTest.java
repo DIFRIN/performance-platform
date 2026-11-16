@@ -178,7 +178,7 @@ class DagLevelCalculatorTest {
         }
 
         @Test
-        @DisplayName("cross-phase dependency: injection step depends on preparation step")
+        @DisplayName("cross-phase dependency is ignored for ordering (ADR-053)")
         void crossPhaseDependency() {
             var prep = new StepDefinition(
                     TaskId.of("prep-db"), "prep-db", Phase.PREPARATION,
@@ -192,7 +192,8 @@ class DagLevelCalculatorTest {
             Map<TaskId, Integer> levels = DagLevelCalculator.compute(steps);
 
             assertEquals(0, levels.get(TaskId.of("prep-db")));
-            assertEquals(1, levels.get(TaskId.of("inject")));
+            assertEquals(0, levels.get(TaskId.of("inject")),
+                    "a cross-phase reference must not order the step");
         }
     }
 
@@ -212,7 +213,7 @@ class DagLevelCalculatorTest {
         }
 
         @Test
-        @DisplayName("self-loop A → A")
+        @DisplayName("self-loop A → A is rejected")
         void selfLoop() {
             List<StepDefinition> steps = List.of(step("A", "A"));
             assertThrows(InvalidScenarioException.class,

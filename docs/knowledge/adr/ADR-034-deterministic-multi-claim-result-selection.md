@@ -1,7 +1,7 @@
 # ADR-034 — Selection deterministe du resultat multi-claim
 
 **Date** : 2026-10-19
-**Statut** : ACCEPTED
+**Statut** : SUPERSEDED BY ADR-055
 **Décideurs** : Architect + implémentation (Claude Code), sur constat de l'audit `improvements.md` (B2)
 **Raffine** : ADR-011 (multi-claim `ALL_COMPLETE`)
 **Impacte interfaces publiques** : OUI (additif) — `ResultSelectionPolicy`, méthodes de tracker, composant `ExecutionConfig`

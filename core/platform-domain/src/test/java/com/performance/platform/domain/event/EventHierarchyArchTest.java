@@ -116,9 +116,9 @@ class EventHierarchyArchTest {
         assertPermitsExhaustive("AssertionEvent", Set.of(
                 "AssertionPassed", "AssertionFailed"));
 
-        // AgentSignal — 2 records
+        // AgentSignal — 3 records (ADR-055 ajoute le grant)
         assertPermitsExhaustive("AgentSignal", Set.of(
-                "ScenarioRestartSignal", "ExecutionLifecycleSignal"));
+                "ScenarioRestartSignal", "ExecutionLifecycleSignal", "TaskGrantSignal"));
     }
 
     /**

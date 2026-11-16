@@ -39,7 +39,8 @@ Ajouter la section YAML dans le PDR ou l'Issue correspondante.
 ## Étape 3 : Implémenter l'executor
 
 ```java
-// Composant interne : infra/platform-infrastructure/adapter/out/task/
+// Composant interne : infra/executors/platform-executor-<famille>/ (paquet infrastructure.executor.<famille>, ADR-057)
+//   dépendances : platform-domain, platform-plugin-api, platform-use-cases + libs techniques ; jamais un autre executor
 // Plugin externe  : projet séparé, dépendance sur platform-plugin-api uniquement
 
 @Preparation(name = "mon-executor")   // ← annotation obligatoire — PAS @Component seul

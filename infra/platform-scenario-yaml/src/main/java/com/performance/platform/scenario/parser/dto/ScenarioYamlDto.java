@@ -14,7 +14,6 @@ public record ScenarioYamlDto(
     String version,
     List<String> tags,
     Map<String, String> metadata,
-    ExecutionYamlDto execution,
     Integer taskAvailabilityTimeoutSeconds,
     List<StepYamlDto> steps,
     ReportDefinition report

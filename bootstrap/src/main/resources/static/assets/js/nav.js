@@ -64,7 +64,6 @@ export function renderNav(navEl, { orchestrator }) {
         const a = document.createElement("a");
         a.href = "#/" + item.path;
         a.className = "nav-link";
-        a.setAttribute("aria-current", currentPath === item.path ? "page" : "false");
 
         const icon = document.createElement("span");
         icon.className = "nav-link__icon";
@@ -77,10 +76,14 @@ export function renderNav(navEl, { orchestrator }) {
         a.appendChild(icon);
         a.appendChild(label);
 
-        // Highlight active route
-        if (currentPath === item.path) {
+        // Highlight active route (also for nested routes such as scenarios/{id})
+        const active = currentPath === item.path
+            || currentPath.indexOf(item.path + "/") === 0;
+        if (active) {
             a.classList.add("nav-link--active");
         }
+
+        a.setAttribute("aria-current", active ? "page" : "false");
 
         li.appendChild(a);
         list.appendChild(li);
@@ -98,5 +101,7 @@ export function renderNav(navEl, { orchestrator }) {
 function getCurrentHashPath() {
     const hash = window.location.hash;
     if (!hash || hash === "#") return "executions";
-    return hash.startsWith("#/") ? hash.slice(2) : hash.slice(1);
+    const path = hash.startsWith("#/") ? hash.slice(2) : hash.slice(1);
+    const question = path.indexOf("?");
+    return question === -1 ? path : path.slice(0, question);
 }

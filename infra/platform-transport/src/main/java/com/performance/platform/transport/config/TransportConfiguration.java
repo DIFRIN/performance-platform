@@ -4,8 +4,6 @@ import com.performance.platform.application.ports.out.AgentRegistryPort;
 import com.performance.platform.transport.ExecutionTransport;
 import com.performance.platform.transport.http.HttpExecutionTransport;
 import com.performance.platform.transport.inmemory.InMemoryExecutionTransport;
-import com.performance.platform.transport.rabbitmq.RabbitMQExecutionTransport;
-import com.performance.platform.transport.socket.SocketExecutionTransport;
 import com.performance.platform.transport.tls.TransportTls;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -19,12 +17,12 @@ import org.springframework.context.annotation.Import;
 /**
  * Configuration automatique du transport.
  *
- * <p>Active les {@code @ConfigurationProperties} des 4 transports et
+ * <p>Active les {@code @ConfigurationProperties} des transports supportes et
  * expose les {@code @Bean} conditionnels. Le {@code Bean} IN_MEMORY
  * est l'implementation par defaut ({@code matchIfMissing = true}).
  *
- * <p>Les transports KAFKA, RABBITMQ, HTTP, et SOCKET sont des
- * implementations completes (ISSUE-029, 030, 031, 032).
+ * <p>Les transports supportes sont IN_MEMORY, HTTP et KAFKA (ADR-056).
+ * RabbitMQ et le transport socket sont des plugins externes via CUSTOM.
  *
  * <p><strong>TransportType IN_MEMORY</strong> est le defaut pour le mode LOCAL
  * et les tests. Les transports reels sont selectionnes via
@@ -40,10 +38,8 @@ import org.springframework.context.annotation.Import;
 @Import(TransportTlsConfiguration.class)
 @EnableConfigurationProperties({
         KafkaTransportProperties.class,
-        RabbitMQTransportProperties.class,
         HttpTransportProperties.class,
-        HttpListenerProperties.class,
-        SocketTransportProperties.class
+        HttpListenerProperties.class
 })
 public class TransportConfiguration {
 
@@ -60,19 +56,6 @@ public class TransportConfiguration {
     }
 
     /**
-     * Transport RABBITMQ — implementation complete (ISSUE-030).
-     * <p>
-     * Utilise des exchanges FANOUT pour le broadcast des tasks/signals/events.
-     * Chaque agent cree une file exclusive auto-delete.
-     * Ack manuel (at-least-once). I/O sur Virtual Threads.
-     */
-    @Bean
-    @ConditionalOnProperty(name = "transport.type", havingValue = "RABBITMQ")
-    public ExecutionTransport rabbitMQExecutionTransport(RabbitMQTransportProperties props, TransportTls tls) {
-        return new RabbitMQExecutionTransport(props, tls);
-    }
-
-    /**
      * Transport HTTP — implementation complete (ISSUE-031).
      * <p>
      * POST les {@code TaskExecutionRequest} aux agents capables via leur
@@ -86,20 +69,5 @@ public class TransportConfiguration {
             ObjectProvider<AgentRegistryPort> registryProvider, HttpListenerProperties listener,
             TransportTls tls, @Value("${runtime.role:ORCHESTRATOR}") String role) {
         return new HttpExecutionTransport(props, registryProvider.getIfAvailable(), listener, tls, role);
-    }
-
-    /**
-     * Transport SOCKET — implementation complete (ISSUE-032).
-     * <p>
-     * Connexions TCP persistantes. Detection automatique du role :
-     * bind reussi = orchestrateur, port deja utilise = agent.
-     * Best-effort (pas de garantie at-least-once). Reconnexion
-     * automatique cote agent.
-     */
-    @Bean
-    @ConditionalOnProperty(name = "transport.type", havingValue = "SOCKET")
-    public ExecutionTransport socketExecutionTransport(SocketTransportProperties props, TransportTls tls,
-            @Value("${runtime.role:AUTO}") String role) {
-        return new SocketExecutionTransport(props, tls, role);
     }
 }

@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 
 /**
@@ -21,12 +20,11 @@ import java.util.Set;
  * <ul>
  *   <li>dagLevel = 0 si aucune dependance</li>
  *   <li>dagLevel = max(niveau des dependances) + 1 sinon</li>
- *   <li>Cycle detecte → {@link InvalidScenarioException}</li>
+ *   <li>Cycle detecte -> {@link InvalidScenarioException}</li>
  * </ul>
  *
- * <p>Le calcul est global (toutes phases confondues) pour garantir la coherence
- * des niveaux en presence de dependances inter-phases. Les etapes sont ensuite
- * reparties par phase dans {@link DefaultExecutionPlanBuilder}.</p>
+ * <p>Seules les aretes intra-phase entre action steps ordonnent le DAG (ADR-053) :
+ * une reference a une autre phase ou a une service step est ignoree.</p>
  */
 public final class DagLevelCalculator {
 
@@ -38,7 +36,7 @@ public final class DagLevelCalculator {
      * Calcule le dagLevel pour toutes les etapes du scenario.
      *
      * @param steps les etapes du scenario (toutes phases confondues)
-     * @return map immuable {@code TaskId → dagLevel} pour chaque etape
+     * @return map immuable {@code TaskId -> dagLevel} pour chaque etape
      * @throws InvalidScenarioException si un cycle est detecte dans le graphe de dependances
      */
     public static Map<TaskId, Integer> compute(List<StepDefinition> steps) {
@@ -46,18 +44,20 @@ public final class DagLevelCalculator {
             return Map.of();
         }
 
-        // Etape 1 : collecter tous les nœuds (steps + dependances referencees)
-        var allNodes = new LinkedHashSet<TaskId>();
+        Map<TaskId, StepDefinition> byId = new LinkedHashMap<>();
         for (StepDefinition step : steps) {
-            allNodes.add(step.id());
-            List<TaskId> deps = step.dependsOn();
-            if (deps != null) {
-                allNodes.addAll(deps);
+            if (step.id() != null) {
+                byId.put(step.id(), step);
             }
         }
 
-        // Etape 2 : construire le graphe et calculer les degres entrants
-        // Arete : dep → step (la dependance doit s'executer avant le step)
+        // Etape 1 : collecter tous les nœuds
+        var allNodes = new LinkedHashSet<TaskId>();
+        for (StepDefinition step : steps) {
+            allNodes.add(step.id());
+        }
+
+        // Etape 2 : construire le graphe des aretes intra-phase
         var inDegree = new LinkedHashMap<TaskId, Integer>();
         var adjacency = new LinkedHashMap<TaskId, List<TaskId>>();
 
@@ -68,8 +68,15 @@ public final class DagLevelCalculator {
 
         for (StepDefinition step : steps) {
             List<TaskId> deps = step.dependsOn();
-            if (deps == null) continue;
+            if (deps == null || step.hasLifetime()) continue;
             for (TaskId dep : deps) {
+                StepDefinition depStep = byId.get(dep);
+                if (dep.equals(step.id())) {
+                    throw new InvalidScenarioException(
+                            "Self-dependency detected on step: " + step.id().value());
+                }
+                if (depStep == null || depStep.hasLifetime()) continue;
+                if (depStep.phase() != step.phase()) continue;
                 adjacency.get(dep).add(step.id());
                 inDegree.merge(step.id(), 1, Integer::sum);
             }
@@ -93,7 +100,6 @@ public final class DagLevelCalculator {
             processed++;
 
             for (TaskId neighbor : adjacency.get(node)) {
-                // neighbor herite du niveau de node + 1, ou plus si deja superieur
                 dagLevels.merge(neighbor, currentLevel + 1, Math::max);
                 int newDegree = inDegree.get(neighbor) - 1;
                 inDegree.put(neighbor, newDegree);
@@ -103,7 +109,6 @@ public final class DagLevelCalculator {
             }
         }
 
-        // Etape 4 : verification d'absence de cycle
         if (processed != allNodes.size()) {
             throw new InvalidScenarioException(
                 "Cycle detected in step dependencies: " + processed

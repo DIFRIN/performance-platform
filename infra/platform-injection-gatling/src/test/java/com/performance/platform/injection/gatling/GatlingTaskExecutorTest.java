@@ -115,10 +115,10 @@ class GatlingTaskExecutorTest {
     // ── Generic HTTP injection (no simulation) ───────────────────────────────
 
     private GatlingTaskExecutor httpExecutor() {
-        var target = new com.performance.platform.application.ports.out.Endpoint(
+        var target = new com.performance.platform.plugin.resource.Endpoint(
                 "http://localhost:9999", null, null,
                 Map.of("X-Env", "perf"), Map.of("devices", "/api/devices/{deviceId}"));
-        com.performance.platform.application.ports.out.EndpointResolver resolver =
+        com.performance.platform.plugin.resource.EndpointResolver resolver =
                 name -> "api".equals(name) ? target : null;
         return new GatlingTaskExecutor(stubRunner, stubParser, java.util.List.of(
                 new com.performance.platform.injection.gatling.http.HttpInjectionProtocol(resolver)));

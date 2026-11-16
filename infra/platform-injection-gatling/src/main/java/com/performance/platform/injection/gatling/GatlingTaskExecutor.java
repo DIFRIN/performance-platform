@@ -119,7 +119,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
     /** HTTP-only executor (no target resolver), for custom simulations and standalone use. */
     public GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser) {
-        this(runner, parser, List.of(new HttpInjectionProtocol((com.performance.platform.application.ports.out.EndpointResolver) null)));
+        this(runner, parser, List.of(new HttpInjectionProtocol((com.performance.platform.plugin.resource.EndpointResolver) null)));
     }
 
     GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser, List<InjectionProtocol> protocols) {

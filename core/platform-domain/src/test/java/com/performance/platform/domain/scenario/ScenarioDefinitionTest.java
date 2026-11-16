@@ -2,8 +2,6 @@ package com.performance.platform.domain.scenario;
 
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests pour ScenarioDefinition — immuabilité, copies défensives, validation.
+ * ADR-053 : plus de mode d'exécution ni de registre de load models dans le scénario.
  */
 @DisplayName("ScenarioDefinition")
 class ScenarioDefinitionTest {
@@ -32,12 +31,6 @@ class ScenarioDefinitionTest {
         );
     }
 
-    private static LoadModel validLoadModel() {
-        return new LoadModel(LoadModelType.CONSTANT, Map.of("users", 10));
-    }
-
-    // ─── Construction nominale ────────────────────────────────────────
-
     @Nested
     @DisplayName("Construction nominale")
     class NominalConstruction {
@@ -46,13 +39,12 @@ class ScenarioDefinitionTest {
         @DisplayName("construction avec tous les champs")
         void fullConstruction() {
             var steps = List.of(validStep());
-            var loadModels = Map.of("main", validLoadModel());
             var scenario = new ScenarioDefinition(
                 validId(), "test-scenario", "1.0",
                 List.of("smoke", "critical"),
                 Map.of("owner", "team-a"),
-                ExecutionMode.DISTRIBUTED,
-                steps, loadModels
+                steps,
+                "yaml-source", null
             );
 
             assertEquals(validId(), scenario.id());
@@ -60,9 +52,8 @@ class ScenarioDefinitionTest {
             assertEquals("1.0", scenario.version());
             assertEquals(List.of("smoke", "critical"), scenario.tags());
             assertEquals(Map.of("owner", "team-a"), scenario.metadata());
-            assertEquals(ExecutionMode.DISTRIBUTED, scenario.executionMode());
             assertEquals(steps, scenario.steps());
-            assertEquals(loadModels, scenario.loadModels());
+            assertEquals("yaml-source", scenario.sourceYaml());
         }
 
         @Test
@@ -77,13 +68,10 @@ class ScenarioDefinitionTest {
             assertNull(scenario.version());
             assertEquals(List.of(), scenario.tags());
             assertEquals(Map.of(), scenario.metadata());
-            assertNull(scenario.executionMode());
             assertEquals(List.of(), scenario.steps());
-            assertEquals(Map.of(), scenario.loadModels());
+            assertNull(scenario.sourceYaml());
         }
     }
-
-    // ─── Validation ────────────────────────────────────────────────────
 
     @Nested
     @DisplayName("Validation")
@@ -97,8 +85,6 @@ class ScenarioDefinitionTest {
             );
         }
     }
-
-    // ─── Immuabilité / copies défensives ───────────────────────────────
 
     @Nested
     @DisplayName("Immuabilité — copies défensives")
@@ -137,27 +123,13 @@ class ScenarioDefinitionTest {
         void stepsDefensiveCopy() {
             var mutableSteps = new ArrayList<>(List.of(validStep()));
             var scenario = new ScenarioDefinition(
-                validId(), null, null, null, null, null, mutableSteps, null
+                validId(), null, null, null, null, mutableSteps, null, null
             );
 
             mutableSteps.add(validStep());
 
             assertEquals(1, scenario.steps().size(),
                 "modifying source list must not affect record");
-        }
-
-        @Test
-        @DisplayName("modifier la map loadModels source après construction ne modifie pas le record")
-        void loadModelsDefensiveCopy() {
-            var mutableModels = new HashMap<>(Map.of("main", validLoadModel()));
-            var scenario = new ScenarioDefinition(
-                validId(), null, null, null, null, null, null, mutableModels
-            );
-
-            mutableModels.put("extra", validLoadModel());
-
-            assertEquals(1, scenario.loadModels().size(),
-                "modifying source map must not affect record");
         }
 
         @Test
@@ -175,26 +147,13 @@ class ScenarioDefinitionTest {
         @DisplayName("record.steps() lève UnsupportedOperationException si tentative de modification")
         void stepsReturnedListIsUnmodifiable() {
             var scenario = new ScenarioDefinition(
-                validId(), null, null, null, null, null, List.of(validStep()), null
+                validId(), null, null, null, null, List.of(validStep()), null, null
             );
 
             assertThrows(UnsupportedOperationException.class,
                 () -> scenario.steps().add(validStep()));
         }
-
-        @Test
-        @DisplayName("record.loadModels() lève UnsupportedOperationException si tentative de modification")
-        void loadModelsReturnedMapIsUnmodifiable() {
-            var scenario = new ScenarioDefinition(
-                validId(), null, null, null, null, null, null, Map.of("m", validLoadModel())
-            );
-
-            assertThrows(UnsupportedOperationException.class,
-                () -> scenario.loadModels().put("new", validLoadModel()));
-        }
     }
-
-    // ─── toString / equals ─────────────────────────────────────────────
 
     @Nested
     @DisplayName("toString / equals")
@@ -204,17 +163,14 @@ class ScenarioDefinitionTest {
         @DisplayName("deux records identiques sont égaux")
         void identicalRecordsAreEqual() {
             var steps = List.of(validStep());
-            var models = Map.of("main", validLoadModel());
 
             var s1 = new ScenarioDefinition(
                 ScenarioId.of("s1"), "name", "1.0",
-                List.of("tag"), Map.of("k", "v"),
-                ExecutionMode.LOCAL, steps, models
+                List.of("tag"), Map.of("k", "v"), steps, null, null
             );
             var s2 = new ScenarioDefinition(
                 ScenarioId.of("s1"), "name", "1.0",
-                List.of("tag"), Map.of("k", "v"),
-                ExecutionMode.LOCAL, steps, models
+                List.of("tag"), Map.of("k", "v"), steps, null, null
             );
 
             assertEquals(s1, s2);

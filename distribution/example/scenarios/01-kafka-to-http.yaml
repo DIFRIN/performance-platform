@@ -1,0 +1,103 @@
+# =============================================================================
+# Scenario 1 - Kafka injection -> SUT -> DB lookup -> HTTP to device address
+# =============================================================================
+# One file for both runtime modes (ADR-053): the mode is a runtime property
+# (runtime.mode), never declared in the scenario.
+#
+# Flow:
+#   1. platform starts WireMock EMBEDDED on port 8090 (mock-server service step)
+#   2. platform seeds devices; each device_dns points at the embedded mock
+#   3. platform produces commands into Kafka (iot-commands)
+#   4. SUT stub consumes, reads device_dns from the DB, POSTs to that address
+#   5. platform asserts the mock received calls (direct-assertion)
+#
+# The mock is a service step: started before INJECTION, stopped after it.
+# Its drain replaces the former shell sleep, and its result (request count)
+# is read by the assertion through `ref`.
+#
+# Run (LOCAL):
+#   docker compose -f distribution/example/docker-compose-local.yaml \
+#     run --rm -e SCENARIO_FILE=01-kafka-to-http.yaml platform
+# Run (DISTRIBUTED):
+#   docker compose -f distribution/example/docker-compose-distributed.yaml \
+#     run --rm -e SCENARIO_FILE=01-kafka-to-http.yaml platform
+# =============================================================================
+scenario:
+  id: 01-kafka-to-http
+  name: "Kafka injection -> SUT -> DB -> HTTP device endpoint"
+  version: "1.0.0"
+  tags: [example, kafka, http]
+  metadata:
+    executionGroup: example-sut
+    owner: perf-team
+    sut: sut
+
+  steps:
+    - id: start-mock
+      task: mock-server
+      during: injection
+      drain: 8s
+      parameters:
+        deployment: EMBEDDED
+        port: 8090
+        mappingsPath: classpath:mock
+      timeout: 30s
+
+    - id: reset-sut-db
+      task: database
+      phase: PREPARATION
+      parameters:
+        datasource: sut-db
+        operation: PURGE
+        table: devices
+      timeout: 30s
+
+    - id: seed-sut-db
+      task: database
+      phase: PREPARATION
+      dependsOn: [reset-sut-db]
+      parameters:
+        datasource: sut-db
+        operation: POPULATE
+        scriptPath: "classpath:sql/seed-sut-devices.sql"
+      timeout: 2m
+
+    - id: check-sut
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [seed-sut-db]
+      parameters:
+        target: sut-api
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: inject-commands
+      task: kafka-producer
+      phase: INJECTION
+      dependsOn: [check-sut]
+      parameters:
+        cluster: iot-sut
+        topic: iot-commands
+        operation: PRODUCE
+        messageCount: 1000
+        payload: '{"device_id":"device-{index:4}","command":"ping"}'
+      timeout: 2m
+
+    # The assertion reads the service result, published at STOP.
+    - id: assert-mock-called
+      task: direct-assertion
+      phase: ASSERTION
+      dependsOn: [inject-commands]
+      ref: start-mock
+      description:
+        title: Device commands reached the mock
+        sli: number of HTTP calls received by the embedded mock
+        slo: at least one call received at the end of the run
+        rationale: proves the SUT consumed the command and called device_dns
+      parameters:
+        metric: http.requests.matched
+        operator: GTE
+        threshold: 1
+      timeout: 1m

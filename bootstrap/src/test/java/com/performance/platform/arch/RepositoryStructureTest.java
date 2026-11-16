@@ -18,7 +18,7 @@ class RepositoryStructureTest {
     void reactorModulesAndParentsResolveFromTheirNewLocations() throws Exception {
         Path root = repositoryRoot();
         var modules = readPom(root.resolve("pom.xml")).getElementsByTagName("module");
-        assertThat(modules.getLength()).isEqualTo(20);
+        assertThat(modules.getLength()).isEqualTo(28);
         for (int i = 0; i < modules.getLength(); i++) {
             Path directory = root.resolve(modules.item(i).getTextContent());
             assertThat(directory.resolve("pom.xml")).isRegularFile();
@@ -60,7 +60,7 @@ class RepositoryStructureTest {
         assertThat(root.resolve(".claude/knowledge")).doesNotExist();
         assertThat(root.resolve(".claude/skills/testing-strategy/SKILL.md")).isRegularFile();
         assertThat(root.resolve("distribution/example/sut/pom.xml")).isRegularFile();
-        assertThat(root.resolve("distribution/example/scenarios/01-kafka-to-http-local.yaml")).isRegularFile();
+        assertThat(root.resolve("distribution/example/scenarios/01-kafka-to-http.yaml")).isRegularFile();
         assertThat(root.resolve("distribution/example/MODOP.md")).isRegularFile();
     }
 

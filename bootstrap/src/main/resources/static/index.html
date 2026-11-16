@@ -24,6 +24,9 @@
                 <span class="app-header__subtitle" id="runtime-badge"></span>
             </div>
         </div>
+        <button type="button" class="icon-button" id="theme-toggle"
+                aria-pressed="false" aria-label="Switch to dark theme" title="Switch to dark theme">
+        </button>
     </header>
 
     <div class="app-body">
@@ -42,11 +45,20 @@
 <script type="module">
     import { registerRoute, startRouter } from "/assets/js/router.js";
     import { renderNav } from "/assets/js/nav.js";
+    import { initTheme, toggleTheme } from "/assets/js/theme.js";
     import { mount as mountExecutions } from "/assets/js/views/executions.js";
     import { mount as mountExecutionDetail } from "/assets/js/views/execution-detail.js";
     import { mount as mountScenarios } from "/assets/js/views/scenarios.js";
     import { mount as mountAgents } from "/assets/js/views/agents.js";
     import { mount as mountReport } from "/assets/js/views/report.js";
+
+    initTheme();
+    const themeToggle = document.getElementById("theme-toggle");
+    if (themeToggle) {
+        themeToggle.addEventListener("click", function () {
+            toggleTheme();
+        });
+    }
 
     // ----------------------------------------------------------------
     // Orchestrator detection — placeholder (ISSUE-126).
@@ -77,6 +89,8 @@
     }
 
     registerRoute("scenarios", (el, params) => mountScenarios(el));
+    registerRoute("scenarios/{scenarioId}", (el, params) =>
+        mountScenarios(el, { scenarioId: decodeURIComponent(params.scenarioId) }));
     registerRoute("executions", (el, params) => mountExecutions(el));
     registerRoute("executions/{id}", (el, params) =>
         mountExecutionDetail(el, params.id));

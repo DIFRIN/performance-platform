@@ -6,16 +6,13 @@ import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.domain.execution.RetryPolicy;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
-import com.performance.platform.domain.scenario.ExecutionMode;
+import com.performance.platform.domain.scenario.FanOut;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
+import com.performance.platform.domain.scenario.ServiceScope;
 import com.performance.platform.domain.scenario.StepDefinition;
-import com.performance.platform.scenario.parser.dto.LoadModelYamlDto;
 import com.performance.platform.scenario.parser.dto.RetryPolicyYamlDto;
 import com.performance.platform.scenario.parser.dto.ScenarioYamlDto;
-import com.performance.platform.scenario.parser.dto.ScenarioYamlRoot;
 import com.performance.platform.scenario.parser.dto.StepYamlDto;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -47,13 +44,13 @@ import java.util.Set;
  */
 public class YamlScenarioParser implements ScenarioParser {
 
-    private static final Set<String> ROOT_KEYS = Set.of("scenario", "loadModels");
+    private static final Set<String> ROOT_KEYS = Set.of("scenario");
     private static final Set<String> SCENARIO_KEYS = Set.of(
-            "id", "name", "version", "tags", "metadata", "execution",
+            "id", "name", "version", "tags", "metadata",
             "taskAvailabilityTimeoutSeconds", "steps", "report");
-    private static final Set<String> EXECUTION_KEYS = Set.of("mode");
     private static final Set<String> STEP_KEYS = Set.of(
-            "id", "task", "phase", "requiredContexts", "dependsOn",
+            "id", "task", "phase", "description", "requiredContexts", "dependsOn",
+            "ref", "during", "drain", "fanOut",
             "parameters", "timeout", "retryPolicy");
     private static final Set<String> RETRY_KEYS = Set.of(
             "maxAttempts", "initialDelay", "multiplier", "maxDelay", "retryableExceptions");
@@ -104,8 +101,7 @@ public class YamlScenarioParser implements ScenarioParser {
         validateStructure(yamlContent);
         var scenario = parseInternal(loadYaml(yamlContent));
         return new ScenarioDefinition(scenario.id(), scenario.name(), scenario.version(), scenario.tags(),
-                scenario.metadata(), scenario.executionMode(), scenario.steps(), scenario.loadModels(), yamlContent,
-                scenario.report());
+                scenario.metadata(), scenario.steps(), yamlContent, scenario.report());
     }
 
     @Override
@@ -136,8 +132,7 @@ public class YamlScenarioParser implements ScenarioParser {
      * Refuse les proprietes inconnues et rapporte le numero de ligne :
      * une faute de frappe ({@code duraton:}) ne doit jamais produire un
      * scenario silencieusement different de celui ecrit. Les sections
-     * libres ({@code parameters}, {@code metadata}, {@code loadModels})
-     * restent ouvertes.
+     * libres ({@code parameters}, {@code metadata}) restent ouvertes.
      */
     private void validateStructure(String content) {
         List<String> errors = new ArrayList<>();
@@ -158,16 +153,11 @@ public class YamlScenarioParser implements ScenarioParser {
         if (rootMapping != null) {
             validateKeys(rootMapping, "root", ROOT_KEYS, errors);
             for (NodeTuple tuple : rootMapping.getValue()) {
-                String key = keyOf(tuple);
-                if ("scenario".equals(key)) {
+                if ("scenario".equals(keyOf(tuple))) {
                     MappingNode scenario = asMapping(tuple.getValueNode(), "scenario", errors);
                     if (scenario != null) {
                         validateScenario(scenario, errors);
                     }
-                } else if ("loadModels".equals(key)
-                        && !(tuple.getValueNode() instanceof MappingNode)) {
-                    errors.add(location(tuple.getValueNode())
-                            + "'loadModels' must be a mapping in root");
                 }
             }
         }
@@ -181,13 +171,7 @@ public class YamlScenarioParser implements ScenarioParser {
     private void validateScenario(MappingNode scenario, List<String> errors) {
         validateKeys(scenario, "scenario", SCENARIO_KEYS, errors);
         for (NodeTuple tuple : scenario.getValue()) {
-            String key = keyOf(tuple);
-            if ("execution".equals(key)) {
-                MappingNode execution = asMapping(tuple.getValueNode(), "scenario.execution", errors);
-                if (execution != null) {
-                    validateKeys(execution, "scenario.execution", EXECUTION_KEYS, errors);
-                }
-            } else if ("steps".equals(key)) {
+            if ("steps".equals(keyOf(tuple))) {
                 validateSteps(tuple.getValueNode(), errors);
             }
         }
@@ -257,27 +241,23 @@ public class YamlScenarioParser implements ScenarioParser {
             throw new ScenarioParsingException("Failed to parse scenario YAML", errors);
         }
 
-        // Convertir le map brut en DTO
-        ScenarioYamlRoot root;
+        // Convertir la section scenario en DTO
+        ScenarioYamlDto dto;
         try {
-            root = objectMapper.convertValue(rawYaml, ScenarioYamlRoot.class);
+            Object scenarioNode = rawYaml.get("scenario");
+            if (scenarioNode == null) {
+                errors.add("Missing required 'scenario' section");
+                throw new ScenarioParsingException("Failed to parse scenario YAML", errors);
+            }
+            dto = objectMapper.convertValue(scenarioNode, ScenarioYamlDto.class);
         } catch (IllegalArgumentException e) {
             errors.add("YAML structure error: " + e.getMessage());
             throw new ScenarioParsingException("Failed to parse scenario YAML", errors);
         }
 
-        if (root.scenario() == null) {
-            errors.add("Missing required 'scenario' section");
-            throw new ScenarioParsingException("Failed to parse scenario YAML", errors);
-        }
-
-        ScenarioYamlDto dto = root.scenario();
-
         // Mapper vers le domaine
         ScenarioId scenarioId = parseScenarioId(dto, errors);
-        ExecutionMode executionMode = parseExecutionMode(dto, errors);
         List<StepDefinition> steps = parseSteps(dto, errors);
-        Map<String, LoadModel> loadModels = parseLoadModels(root.loadModels(), errors);
 
         if (!errors.isEmpty()) {
             throw new ScenarioParsingException("Failed to parse scenario YAML: " + errors.size() + " error(s)", errors);
@@ -289,9 +269,9 @@ public class YamlScenarioParser implements ScenarioParser {
             dto.version(),
             dto.tags() != null ? dto.tags() : List.of(),
             dto.metadata() != null ? dto.metadata() : Map.of(),
-            executionMode,
             steps,
-            loadModels, null, dto.report()
+            null,
+            dto.report()
         );
     }
 
@@ -305,19 +285,6 @@ public class YamlScenarioParser implements ScenarioParser {
         } catch (Exception e) {
             errors.add("scenario.id: " + e.getMessage());
             return null;
-        }
-    }
-
-    private ExecutionMode parseExecutionMode(ScenarioYamlDto dto, List<String> errors) {
-        if (dto.execution() == null || dto.execution().mode() == null || dto.execution().mode().isBlank()) {
-            return ExecutionMode.LOCAL;
-        }
-        try {
-            return ExecutionMode.valueOf(dto.execution().mode().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            errors.add("execution.mode: invalid value '" + dto.execution().mode()
-                + "'. Expected LOCAL or DISTRIBUTED");
-            return ExecutionMode.LOCAL;
         }
     }
 
@@ -362,28 +329,61 @@ public class YamlScenarioParser implements ScenarioParser {
             errors.add(prefix + ".task is required (example task: " + (dto.id() != null ? dto.id() : "?") + ")");
         }
 
-        // phase
+        // phase / during : une action step declare phase, une service step declare during
         Phase phase = null;
-        if (dto.phase() == null || dto.phase().isBlank()) {
-            errors.add(prefix + ".phase is required. Expected PREPARATION, INJECTION, or ASSERTION");
-        } else {
-            try {
-                phase = Phase.valueOf(dto.phase().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                errors.add(prefix + ".phase: invalid value '" + dto.phase()
-                    + "'. Expected PREPARATION, INJECTION, or ASSERTION");
+        ServiceScope during = parseDuring(dto.during(), prefix, errors);
+
+        if (during == null) {
+            if (dto.phase() == null || dto.phase().isBlank()) {
+                errors.add(prefix + ".phase is required. Expected PREPARATION, INJECTION, or ASSERTION");
+            } else {
+                try {
+                    phase = Phase.valueOf(dto.phase().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    errors.add(prefix + ".phase: invalid value '" + dto.phase()
+                        + "'. Expected PREPARATION, INJECTION, or ASSERTION");
+                }
             }
+        } else if (dto.phase() != null && !dto.phase().isBlank()) {
+            errors.add(prefix + ".phase: a service step (during: " + dto.during()
+                + ") must not declare a phase");
         }
 
         // parameters
         Map<String, Object> parameters = dto.parameters() != null
             ? new HashMap<>(dto.parameters())
-            : Map.of();
+            : new HashMap<>();
+
+        // description (SLI/SLO textuel) — conservee dans les parametres sous
+        // la cle "description" pour ne pas modifier StepDefinition (ADR-049).
+        if (dto.description() != null && !dto.description().isEmpty()) {
+            parameters.put("description", new HashMap<>(dto.description()));
+        }
 
         // dependsOn
         List<TaskId> dependsOn = parseDependsOn(dto, prefix, errors);
 
-        // requiredContexts
+        // ref (ADR-053, premiere classe)
+        TaskId ref = parseRef(dto.ref(), prefix, errors);
+
+        // drain : uniquement pour une service step (ADR-054)
+        Duration drain = Duration.ZERO;
+        if (dto.drain() != null && !dto.drain().isBlank()) {
+            if (during == null) {
+                errors.add(prefix + ".drain is only valid on a service step (during: ...)");
+            } else {
+                try {
+                    drain = DurationParser.parse(dto.drain());
+                } catch (IllegalArgumentException e) {
+                    errors.add(prefix + ".drain: " + e.getMessage());
+                }
+            }
+        }
+
+        // fanOut (ADR-055)
+        FanOut fanOut = parseFanOut(dto.fanOut(), prefix, errors);
+
+        // requiredContexts (override explicite ; defaut = dependsOn + ref)
         List<String> requiredContexts = dto.requiredContexts() != null
             ? List.copyOf(dto.requiredContexts())
             : List.of();
@@ -403,15 +403,56 @@ public class YamlScenarioParser implements ScenarioParser {
             return new StepDefinition(
                 taskId,
                 taskName != null ? taskName : "",
-                phase != null ? phase : Phase.PREPARATION,
+                phase,
                 parameters,
                 dependsOn,
+                ref,
+                during,
+                drain,
+                fanOut,
                 requiredContexts,
                 timeout,
                 retryPolicy
             );
         } catch (Exception e) {
             errors.add(prefix + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    private ServiceScope parseDuring(String during, String prefix, List<String> errors) {
+        if (during == null || during.isBlank()) {
+            return null;
+        }
+        try {
+            return ServiceScope.valueOf(during.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            errors.add(prefix + ".during: invalid value '" + during
+                + "'. Expected INJECTION or SCENARIO");
+            return null;
+        }
+    }
+
+    private FanOut parseFanOut(String fanOut, String prefix, List<String> errors) {
+        if (fanOut == null || fanOut.isBlank()) {
+            return FanOut.ONE;
+        }
+        try {
+            return FanOut.valueOf(fanOut.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            errors.add(prefix + ".fanOut: invalid value '" + fanOut + "'. Expected one or all");
+            return FanOut.ONE;
+        }
+    }
+
+    private TaskId parseRef(String ref, String prefix, List<String> errors) {
+        if (ref == null || ref.isBlank()) {
+            return null;
+        }
+        try {
+            return TaskId.of(ref);
+        } catch (Exception e) {
+            errors.add(prefix + ".ref: " + e.getMessage());
             return null;
         }
     }
@@ -478,41 +519,5 @@ public class YamlScenarioParser implements ScenarioParser {
             errors.add(prefix + ".retryPolicy: " + e.getMessage());
             return null;
         }
-    }
-
-    private Map<String, LoadModel> parseLoadModels(Map<String, LoadModelYamlDto> loadModelsDto, List<String> errors) {
-        if (loadModelsDto == null || loadModelsDto.isEmpty()) {
-            return Map.of();
-        }
-
-        Map<String, LoadModel> result = new LinkedHashMap<>();
-        for (Map.Entry<String, LoadModelYamlDto> entry : loadModelsDto.entrySet()) {
-            String name = entry.getKey();
-            LoadModelYamlDto dto = entry.getValue();
-
-            if (dto == null) {
-                errors.add("loadModels." + name + ": load model is null");
-                continue;
-            }
-
-            if (dto.getType() == null || dto.getType().isBlank()) {
-                errors.add("loadModels." + name + ".type is required");
-                continue;
-            }
-
-            LoadModelType type;
-            try {
-                type = LoadModelType.valueOf(dto.getType().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                errors.add("loadModels." + name + ".type: invalid value '" + dto.getType()
-                    + "'. Expected one of: RAMP, CONSTANT, SPIKE, STAIR, SOAK, BURST, RAMP_UP_DOWN, CUSTOM");
-                continue;
-            }
-
-            Map<String, Object> parameters = new LinkedHashMap<>(dto.getParameters());
-            result.put(name, new LoadModel(type, parameters));
-        }
-
-        return result;
     }
 }

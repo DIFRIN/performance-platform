@@ -7,15 +7,17 @@ import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionPlan;
 import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.scenario.ExecutionMode;
+import com.performance.platform.domain.scenario.FanOut;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
+import com.performance.platform.domain.scenario.ServiceScope;
 import com.performance.platform.domain.scenario.StepDefinition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,9 +63,8 @@ class DefaultExecutionPlanBuilderTest {
                 com.performance.platform.domain.id.ScenarioId.of("test-scenario"),
                 "Test Scenario", "1.0",
                 List.of(), Map.of(),
-                ExecutionMode.LOCAL,
                 List.of(steps),
-                Map.of()
+                null, null
         );
     }
 
@@ -195,11 +196,11 @@ class DefaultExecutionPlanBuilderTest {
     }
 
     @Nested
-    @DisplayName("Cross-phase dependencies")
+    @DisplayName("Cross-phase dependencies (ADR-053)")
     class CrossPhaseDependencies {
 
         @Test
-        @DisplayName("injection step depends on preparation step")
+        @DisplayName("a preparation dependency does not raise the injection dagLevel")
         void injectionDependsOnPrep() {
             StepDefinition prep = step("prep-db", Phase.PREPARATION);
             StepDefinition inject = step("inject", Phase.INJECTION, "prep-db");
@@ -209,13 +210,15 @@ class DefaultExecutionPlanBuilderTest {
 
             assertEquals(1, plan.preparationSteps().size());
             assertEquals(1, plan.injectionSteps().size());
-            // prep gets dagLevel 0, inject gets dagLevel 1
+            // Seules les aretes intra-phase ordonnent le DAG ; l'ordre des phases
+            // garantit que PREPARATION precede INJECTION.
             assertEquals(0, plan.preparationSteps().getFirst().dagLevel());
-            assertEquals(1, plan.injectionSteps().getFirst().dagLevel());
+            assertEquals(0, plan.injectionSteps().getFirst().dagLevel());
+            assertTrue(plan.injectionSteps().getFirst().dependencies().contains(TaskId.of("prep-db")));
         }
 
         @Test
-        @DisplayName("assertion step depends on injection step")
+        @DisplayName("an injection dependency does not raise the assertion dagLevel")
         void assertionDependsOnInjection() {
             StepDefinition inject = step("inject", Phase.INJECTION);
             StepDefinition asrt = step("assert", Phase.ASSERTION, "inject");
@@ -226,11 +229,11 @@ class DefaultExecutionPlanBuilderTest {
             assertEquals(1, plan.injectionSteps().size());
             assertEquals(1, plan.assertionSteps().size());
             assertEquals(0, plan.injectionSteps().getFirst().dagLevel());
-            assertEquals(1, plan.assertionSteps().getFirst().dagLevel());
+            assertEquals(0, plan.assertionSteps().getFirst().dagLevel());
         }
 
         @Test
-        @DisplayName("full chain: prep → inject → assert")
+        @DisplayName("full chain: all steps stay at dagLevel 0 across phases")
         void fullChain() {
             StepDefinition prep = step("prep", Phase.PREPARATION);
             StepDefinition inject = step("inj", Phase.INJECTION, "prep");
@@ -240,8 +243,8 @@ class DefaultExecutionPlanBuilderTest {
             ExecutionPlan plan = builder.build(scenario);
 
             assertEquals(0, plan.preparationSteps().getFirst().dagLevel());
-            assertEquals(1, plan.injectionSteps().getFirst().dagLevel());
-            assertEquals(2, plan.assertionSteps().getFirst().dagLevel());
+            assertEquals(0, plan.injectionSteps().getFirst().dagLevel());
+            assertEquals(0, plan.assertionSteps().getFirst().dagLevel());
         }
     }
 
@@ -348,8 +351,8 @@ class DefaultExecutionPlanBuilderTest {
         }
 
         @Test
-        @DisplayName("self-dependency cycle propagates exception")
-        void selfCyclePropagates() {
+        @DisplayName("self-dependency is rejected")
+        void selfDependencyIgnored() {
             StepDefinition a = step("a", Phase.PREPARATION, "a");
             ScenarioDefinition scenario = scenario(a);
 
@@ -378,128 +381,102 @@ class DefaultExecutionPlanBuilderTest {
     }
 
     @Nested
-    @DisplayName("Assertion interval steps (linkedTo)")
-    class AssertionIntervalSteps {
+    @DisplayName("Service steps (ADR-054)")
+    class ServiceSteps {
 
-        private static StepDefinition injectionStep(String id) {
-            return step(id, Phase.INJECTION);
-        }
-
-        private static StepDefinition assertionWithLinkedTo(String id, String linkedTo) {
+        private static StepDefinition serviceStep(String id, ServiceScope scope, String... dependsOn) {
+            List<TaskId> deps = dependsOn == null || dependsOn.length == 0
+                    ? List.of()
+                    : List.of(dependsOn).stream().map(TaskId::of).toList();
             return new StepDefinition(
-                    TaskId.of(id), id, Phase.ASSERTION,
-                    Map.of("linkedTo", linkedTo),
-                    List.of(), List.of(), null, null
-            );
-        }
-
-        private static StepDefinition assertionWithIntervalParams(String id, String linkedTo,
-                                                                    int intervalSeconds, String stopBehavior) {
-            return new StepDefinition(
-                    TaskId.of(id), id, Phase.ASSERTION,
-                    Map.of("linkedTo", linkedTo,
-                            "intervalSeconds", intervalSeconds,
-                            "stopBehavior", stopBehavior),
-                    List.of(), List.of(), null, null
+                    TaskId.of(id), id, null, Map.of(), deps, null, scope,
+                    Duration.ofSeconds(2), FanOut.ONE, List.of(), Duration.ofSeconds(30), null
             );
         }
 
         @Test
-        @DisplayName("assertions with linkedTo go to assertionIntervalSteps")
-        void linkedToAssertionsInIntervalSteps() {
-            StepDefinition inj = injectionStep("inject-1");
-            StepDefinition asrt = assertionWithLinkedTo("assert-interval", "inject-1");
-            ScenarioDefinition scenario = scenario(inj, asrt);
-
-            ExecutionPlan plan = builder.build(scenario);
-
-            assertEquals(1, plan.injectionSteps().size());
-            assertEquals(0, plan.assertionSteps().size());
-            assertEquals(1, plan.assertionIntervalSteps().size());
-            assertEquals("assert-interval", plan.assertionIntervalSteps().getFirst().step().taskName());
-        }
-
-        @Test
-        @DisplayName("assertions without linkedTo stay in assertionSteps")
-        void nonLinkedToAssertionsInAssertionSteps() {
-            StepDefinition inj = injectionStep("inject-1");
-            StepDefinition asrt = step("assert-point", Phase.ASSERTION);
-            ScenarioDefinition scenario = scenario(inj, asrt);
-
-            ExecutionPlan plan = builder.build(scenario);
-
-            assertEquals(1, plan.injectionSteps().size());
-            assertEquals(1, plan.assertionSteps().size());
-            assertEquals(0, plan.assertionIntervalSteps().size());
-            assertEquals("assert-point", plan.assertionSteps().getFirst().step().taskName());
-        }
-
-        @Test
-        @DisplayName("mixed: some linkedTo, some not")
-        void mixedLinkedToAndNonLinkedTo() {
-            StepDefinition inj = injectionStep("inject-1");
-            StepDefinition interval = assertionWithLinkedTo("interval", "inject-1");
-            StepDefinition point = step("point", Phase.ASSERTION);
-            ScenarioDefinition scenario = scenario(inj, interval, point);
-
-            ExecutionPlan plan = builder.build(scenario);
-
-            assertEquals(1, plan.injectionSteps().size());
-            assertEquals(1, plan.assertionSteps().size());
-            assertEquals(1, plan.assertionIntervalSteps().size());
-            assertEquals("point", plan.assertionSteps().getFirst().step().taskName());
-            assertEquals("interval", plan.assertionIntervalSteps().getFirst().step().taskName());
-        }
-
-        @Test
-        @DisplayName("interval assertion parameters are preserved")
-        void intervalAssertionParametersPreserved() {
-            StepDefinition inj = injectionStep("inject-1");
-            StepDefinition interval = assertionWithIntervalParams(
-                    "monitor", "inject-1", 5, "completeCurrentCycle");
-            ScenarioDefinition scenario = scenario(inj, interval);
-
-            ExecutionPlan plan = builder.build(scenario);
-
-            var step = plan.assertionIntervalSteps().getFirst();
-            assertEquals(5, step.step().parameters().get("intervalSeconds"));
-            assertEquals("completeCurrentCycle", step.step().parameters().get("stopBehavior"));
-        }
-
-        @Test
-        @DisplayName("linkedTo referencing non-existent injection throws InvalidScenarioException")
-        void linkedToUnknownInjection() {
-            StepDefinition asrt = assertionWithLinkedTo("assert-1", "nonexistent");
-            ScenarioDefinition scenario = scenario(asrt);
-
-            assertThrows(InvalidScenarioException.class, () -> builder.build(scenario));
-        }
-
-        @Test
-        @DisplayName("linkedTo with empty string value treated as no linkedTo")
-        void linkedToEmptyStringTreatedAsNoLinkedTo() {
-            StepDefinition inj = injectionStep("inject-1");
-            StepDefinition asrt = new StepDefinition(
-                    TaskId.of("asrt-1"), "asrt-1", Phase.ASSERTION,
-                    Map.of("linkedTo", ""),
-                    List.of(), List.of(), null, null
-            );
-            ScenarioDefinition scenario = scenario(inj, asrt);
-
-            ExecutionPlan plan = builder.build(scenario);
-
-            assertEquals(1, plan.assertionSteps().size());
-            assertEquals(0, plan.assertionIntervalSteps().size());
-        }
-
-        @Test
-        @DisplayName("totalSteps includes assertionIntervalSteps")
-        void totalStepsIncludesIntervalSteps() {
+        @DisplayName("injection-scoped service lands in injectionServices")
+        void injectionServiceInInjectionServices() {
             StepDefinition prep = step("prep", Phase.PREPARATION);
-            StepDefinition inj = injectionStep("inject-1");
-            StepDefinition interval = assertionWithLinkedTo("interval", "inject-1");
-            StepDefinition point = step("point", Phase.ASSERTION);
-            ScenarioDefinition scenario = scenario(prep, inj, interval, point);
+            StepDefinition service = serviceStep("mock-server", ServiceScope.INJECTION);
+            StepDefinition inject = step("inject", Phase.INJECTION);
+            ScenarioDefinition scenario = scenario(prep, service, inject);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertEquals(1, plan.preparationSteps().size());
+            assertEquals(1, plan.injectionSteps().size());
+            assertTrue(plan.assertionSteps().isEmpty());
+            assertEquals(1, plan.injectionServices().size());
+            assertTrue(plan.scenarioServices().isEmpty());
+            assertEquals("mock-server", plan.injectionServices().getFirst().step().taskName());
+        }
+
+        @Test
+        @DisplayName("scenario-scoped service lands in scenarioServices")
+        void scenarioServiceInScenarioServices() {
+            StepDefinition service = serviceStep("collector", ServiceScope.SCENARIO);
+            StepDefinition inject = step("inject", Phase.INJECTION);
+            ScenarioDefinition scenario = scenario(service, inject);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertEquals(1, plan.injectionSteps().size());
+            assertTrue(plan.injectionServices().isEmpty());
+            assertEquals(1, plan.scenarioServices().size());
+            assertEquals("collector", plan.scenarioServices().getFirst().step().taskName());
+        }
+
+        @Test
+        @DisplayName("service steps never appear in phase lists")
+        void serviceStepsExcludedFromPhases() {
+            StepDefinition service = serviceStep("service-a", ServiceScope.INJECTION);
+            ScenarioDefinition scenario = scenario(service);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertTrue(plan.preparationSteps().isEmpty());
+            assertTrue(plan.injectionSteps().isEmpty());
+            assertTrue(plan.assertionSteps().isEmpty());
+            assertEquals(1, plan.injectionServices().size());
+        }
+
+        @Test
+        @DisplayName("service steps do not participate in DAG ordering")
+        void serviceStepDagLevel() {
+            StepDefinition prep = step("prep-db", Phase.PREPARATION);
+            StepDefinition service = serviceStep("mock-server", ServiceScope.INJECTION, "prep-db");
+            ScenarioDefinition scenario = scenario(prep, service);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            assertEquals(0, plan.preparationSteps().getFirst().dagLevel());
+            assertEquals(0, plan.injectionServices().getFirst().dagLevel());
+        }
+
+        @Test
+        @DisplayName("service step keeps its scope and drain duration")
+        void serviceStepKeepsScopeAndDrain() {
+            StepDefinition service = serviceStep("mock-server", ServiceScope.SCENARIO);
+            ScenarioDefinition scenario = scenario(service);
+
+            ExecutionPlan plan = builder.build(scenario);
+
+            var built = plan.scenarioServices().getFirst().step();
+            assertTrue(built.hasLifetime());
+            assertEquals(ServiceScope.SCENARIO, built.during());
+            assertEquals(Duration.ofSeconds(2), built.drain());
+            assertEquals(FanOut.ONE, built.fanOut());
+        }
+
+        @Test
+        @DisplayName("totalSteps includes service steps")
+        void totalStepsIncludesServices() {
+            StepDefinition prep = step("prep", Phase.PREPARATION);
+            StepDefinition inject = step("inject", Phase.INJECTION);
+            StepDefinition injectionService = serviceStep("mock-server", ServiceScope.INJECTION);
+            StepDefinition scenarioService = serviceStep("collector", ServiceScope.SCENARIO);
+            ScenarioDefinition scenario = scenario(prep, inject, injectionService, scenarioService);
 
             ExecutionPlan plan = builder.build(scenario);
 

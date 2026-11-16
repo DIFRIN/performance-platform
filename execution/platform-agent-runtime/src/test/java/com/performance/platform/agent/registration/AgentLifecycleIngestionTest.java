@@ -24,8 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @DisplayName("AgentLifecycleIngestion")
 class AgentLifecycleIngestionTest {
@@ -50,7 +52,7 @@ class AgentLifecycleIngestionTest {
                 "localhost",
                 9090,
                 null,
-                Set.of("gatling", "database-assertion"),
+                Set.of("gatling", "direct-assertion"),
                 new AgentCapabilities(4, "1.0.0"),
                 AgentState.IDLE,
                 Instant.parse("2026-01-01T00:00:00Z"),
@@ -80,9 +82,10 @@ class AgentLifecycleIngestionTest {
             publish(AgentLifecycleEvent.AGENT_REGISTERED, descriptor.id(),
                     AgentLifecyclePayloadCodec.encode(descriptor));
 
-            assertThat(registry.findById(descriptor.id())).contains(descriptor);
+            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                    assertThat(registry.findById(descriptor.id())).contains(descriptor));
             assertThat(registry.hasAgentFor("gatling")).isTrue();
-            assertThat(registry.hasAgentFor("database-assertion")).isTrue();
+            assertThat(registry.hasAgentFor("direct-assertion")).isTrue();
         }
 
         @Test
@@ -103,7 +106,8 @@ class AgentLifecycleIngestionTest {
         void shouldRecoverAfterOrchestratorRestartFromTheNextHeartbeat() {
             var registration = new TransportAgentRegistration(transport);
             registration.register(descriptor);
-            assertThat(registry.findById(descriptor.id())).contains(descriptor);
+            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                    assertThat(registry.findById(descriptor.id())).contains(descriptor));
 
             ingestion.destroy();
             registry = new InMemoryAgentRegistry();
@@ -116,6 +120,8 @@ class AgentLifecycleIngestionTest {
             var heartbeat = new AgentHeartbeat(descriptor.id(), AgentState.EXECUTING, 2, Instant.now());
             registration.sendHeartbeat(descriptor.id(), heartbeat);
 
+            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                    assertThat(registry.findById(descriptor.id())).isPresent());
             var recovered = registry.findById(descriptor.id()).orElseThrow();
             assertThat(recovered.name()).isEqualTo(descriptor.name());
             assertThat(recovered.host()).isEqualTo(descriptor.host());
@@ -130,6 +136,7 @@ class AgentLifecycleIngestionTest {
             assertThat(registry.hasAgentFor("gatling")).isTrue();
 
             // Kafka converts sets and nested maps to JSON collections.
+            await().atMost(5, TimeUnit.SECONDS).until(() -> !events.isEmpty());
             var codec = new KafkaMessageCodec();
             var decoded = codec.decodeEvent(codec.encodeAgentLifecycleEvent(events.getFirst()));
             assertThat(decoded).isInstanceOf(AgentLifecycleEvent.class);
@@ -148,9 +155,10 @@ class AgentLifecycleIngestionTest {
             var heartbeat = new AgentHeartbeat(descriptor.id(), AgentState.IDLE, 0, Instant.now());
             registration.sendHeartbeat(descriptor.id(), heartbeat);
 
-            assertThat(registry.findById(descriptor.id())).isPresent();
+            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                    assertThat(registry.findById(descriptor.id())).isPresent());
             assertThat(registry.findExpired(heartbeat.sentAt())).isEmpty();
-            assertThat(registry.findByTaskName("database-assertion")).hasSize(1);
+            assertThat(registry.findByTaskName("direct-assertion")).hasSize(1);
         }
 
         @Test
@@ -164,6 +172,9 @@ class AgentLifecycleIngestionTest {
             publish(AgentLifecycleEvent.AGENT_HEARTBEAT, descriptor.id(),
                     AgentLifecyclePayloadCodec.encode(heartbeat));
 
+            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                    assertThat(registry.findById(descriptor.id()))
+                            .hasValueSatisfying(a -> assertThat(a.state()).isEqualTo(AgentState.EXECUTING)));
             var updated = registry.findById(descriptor.id()).orElseThrow();
             assertThat(updated.state()).isEqualTo(AgentState.EXECUTING);
             assertThat(updated.lastHeartbeatAt()).isEqualTo(heartbeat.sentAt());
@@ -193,7 +204,8 @@ class AgentLifecycleIngestionTest {
 
             publish(AgentLifecycleEvent.AGENT_DEREGISTERED, descriptor.id(), Map.of());
 
-            assertThat(registry.findById(descriptor.id())).isEmpty();
+            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                    assertThat(registry.findById(descriptor.id())).isEmpty());
         }
 
         @Test
@@ -204,7 +216,8 @@ class AgentLifecycleIngestionTest {
 
             publish(AgentLifecycleEvent.AGENT_LOST, descriptor.id(), Map.of());
 
-            assertThat(registry.findById(descriptor.id())).isEmpty();
+            await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+                    assertThat(registry.findById(descriptor.id())).isEmpty());
             assertThat(publishedEvents)
                     .filteredOn(AgentLost.class::isInstance)
                     .singleElement()

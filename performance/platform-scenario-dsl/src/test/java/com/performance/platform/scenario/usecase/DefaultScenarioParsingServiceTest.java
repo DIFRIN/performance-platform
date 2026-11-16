@@ -2,7 +2,6 @@ package com.performance.platform.scenario.usecase;
 
 import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.domain.id.ScenarioId;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.scenario.parser.ScenarioParser;
 import com.performance.platform.scenario.validation.ScenarioValidator;
@@ -34,9 +33,9 @@ class DefaultScenarioParsingServiceTest {
             "1.0.0",
             List.of(),
             java.util.Map.of(),
-            ExecutionMode.LOCAL,
             List.of(),
-            java.util.Map.of()
+            null,
+            null
         );
     }
 

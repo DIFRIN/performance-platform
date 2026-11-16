@@ -1,7 +1,7 @@
 package com.performance.platform.injection.gatling.http;
 
-import com.performance.platform.domain.template.DynamicValues;
-import com.performance.platform.domain.template.DynamicValues.Context;
+import com.performance.platform.plugin.template.DynamicValues;
+import com.performance.platform.plugin.template.DynamicValues.Context;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

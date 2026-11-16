@@ -1,6 +1,6 @@
 package com.performance.platform.injection.gatling.kafka;
 
-import com.performance.platform.domain.template.MessageTemplate;
+import com.performance.platform.plugin.template.MessageTemplate;
 
 import com.typesafe.scalalogging.Logger;
 import io.gatling.commons.stats.KO$;

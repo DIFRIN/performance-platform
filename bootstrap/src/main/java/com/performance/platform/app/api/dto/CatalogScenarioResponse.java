@@ -10,7 +10,6 @@ import java.util.List;
  * @param name         nom du scenario
  * @param version      version du scenario
  * @param tags         tags du scenario
- * @param executionMode mode d'execution declare (LOCAL / DISTRIBUTED)
  * @param stepCount    nombre d'etapes
  * @param valid        true si le fichier a ete parse avec succes
  * @param error        message d'erreur de parsing, {@code null} si valide
@@ -23,7 +22,6 @@ public record CatalogScenarioResponse(
         String name,
         String version,
         List<String> tags,
-        String executionMode,
         int stepCount,
         boolean valid,
         String error,

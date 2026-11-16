@@ -473,9 +473,7 @@ class TransportInterfaceTest {
         void shouldContainExpectedValues() {
             assertThat(TransportType.values()).containsExactly(
                     TransportType.KAFKA,
-                    TransportType.RABBITMQ,
                     TransportType.HTTP,
-                    TransportType.SOCKET,
                     TransportType.IN_MEMORY,
                     TransportType.CUSTOM
             );
@@ -485,9 +483,7 @@ class TransportInterfaceTest {
         @DisplayName("valueOf should work for all types")
         void valueOfShouldWork() {
             assertThat(TransportType.valueOf("KAFKA")).isEqualTo(TransportType.KAFKA);
-            assertThat(TransportType.valueOf("RABBITMQ")).isEqualTo(TransportType.RABBITMQ);
             assertThat(TransportType.valueOf("HTTP")).isEqualTo(TransportType.HTTP);
-            assertThat(TransportType.valueOf("SOCKET")).isEqualTo(TransportType.SOCKET);
             assertThat(TransportType.valueOf("IN_MEMORY")).isEqualTo(TransportType.IN_MEMORY);
         }
     }

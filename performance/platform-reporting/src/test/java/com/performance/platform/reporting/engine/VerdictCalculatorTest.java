@@ -1,8 +1,10 @@
 package com.performance.platform.reporting.engine;
 
 import com.performance.platform.domain.assertion.AssertionOperator;
-import com.performance.platform.domain.assertion.AssertionResult;
+import com.performance.platform.domain.assertion.AssertionFamily;
 import com.performance.platform.domain.assertion.AssertionStatus;
+import com.performance.platform.domain.assertion.AssertionSummary;
+import com.performance.platform.domain.assertion.Rollup;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.report.Verdict;
 import com.performance.platform.reporting.model.AssertionReportEntry;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -137,9 +140,7 @@ class VerdictCalculatorTest {
 
     // ── helper ──
     private static AssertionReportEntry entry(AssertionStatus status) {
-        var result = new AssertionResult(
-                taskId, status, "assertion " + status,
-                null, duration, now);
-        return new AssertionReportEntry(taskId, result, null);
+        var summary = new AssertionSummary(taskId, status, "assertion " + status, List.of(), duration, now, AssertionFamily.CUSTOM, null, List.of(), Rollup.all());
+        return new AssertionReportEntry(taskId, summary);
     }
 }

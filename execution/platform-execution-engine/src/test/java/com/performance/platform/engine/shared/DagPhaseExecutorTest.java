@@ -3,11 +3,11 @@ package com.performance.platform.engine.shared;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.LifecycleAction;
 import com.performance.platform.domain.execution.ExecutionContext;
+import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
@@ -30,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("DagPhaseExecutor")
 class DagPhaseExecutorTest {
+
+    private static final AgentId AGENT = AgentId.of("test-agent");
 
     private static TaskId t(String id) { return TaskId.of(id); }
     private static ScenarioId sId(String id) { return ScenarioId.of(id); }
@@ -93,10 +95,11 @@ class DagPhaseExecutorTest {
 
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                public java.util.List<StepDispatchResult> dispatch(ExecutionStep execStep, ExecutionContext context) {
                     super.dispatch(execStep, context);
-                    return TaskResult.success(execStep.step().id(), execStep.step().taskName(),
-                            Duration.ofMillis(5), Map.of());
+                    return List.of(new StepDispatchResult(AGENT,
+                            TaskResult.success(execStep.step().id(), execStep.step().taskName(),
+                                    Duration.ofMillis(5), Map.of())));
                 }
             };
 
@@ -131,11 +134,12 @@ class DagPhaseExecutorTest {
             var cancelled = new AtomicBoolean(false);
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                public java.util.List<StepDispatchResult> dispatch(ExecutionStep execStep, ExecutionContext context) {
                     super.dispatch(execStep, context);
                     cancelled.set(true); // Cancel after first step
-                    return TaskResult.success(execStep.step().id(), execStep.step().taskName(),
-                            Duration.ofMillis(5), Map.of());
+                    return List.of(new StepDispatchResult(AGENT,
+                            TaskResult.success(execStep.step().id(), execStep.step().taskName(),
+                                    Duration.ofMillis(5), Map.of())));
                 }
             };
 
@@ -167,14 +171,16 @@ class DagPhaseExecutorTest {
 
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                public java.util.List<StepDispatchResult> dispatch(ExecutionStep execStep, ExecutionContext context) {
                     super.dispatch(execStep, context);
                     if (execStep.step().id().value().equals("A")) {
-                        return TaskResult.failed(execStep.step().id(), execStep.step().taskName(),
-                                Duration.ofMillis(5), "failure", null);
+                        return List.of(new StepDispatchResult(AGENT,
+                                TaskResult.failed(execStep.step().id(), execStep.step().taskName(),
+                                        Duration.ofMillis(5), "failure", null)));
                     }
-                    return TaskResult.success(execStep.step().id(), execStep.step().taskName(),
-                            Duration.ofMillis(5), Map.of());
+                    return List.of(new StepDispatchResult(AGENT,
+                            TaskResult.success(execStep.step().id(), execStep.step().taskName(),
+                                    Duration.ofMillis(5), Map.of())));
                 }
             };
 
@@ -206,10 +212,11 @@ class DagPhaseExecutorTest {
 
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                public java.util.List<StepDispatchResult> dispatch(ExecutionStep execStep, ExecutionContext context) {
                     super.dispatch(execStep, context);
-                    return TaskResult.success(execStep.step().id(), execStep.step().taskName(),
-                            Duration.ofMillis(5), Map.of());
+                    return List.of(new StepDispatchResult(AGENT,
+                            TaskResult.success(execStep.step().id(), execStep.step().taskName(),
+                                    Duration.ofMillis(5), Map.of())));
                 }
             };
 
@@ -277,7 +284,7 @@ class DagPhaseExecutorTest {
 
             assertThrows(UnsupportedOperationException.class,
                     () -> result.outcomes().add(new DagPhaseExecutor.StepOutcome(
-                            t("X"), "tx", TaskResult.skipped(t("X"), "tx", "test"), TaskStatus.SKIPPED)));
+                            t("X"), AGENT, "tx", TaskResult.skipped(t("X"), "tx", "test"), TaskStatus.SKIPPED)));
         }
     }
 
@@ -315,10 +322,11 @@ class DagPhaseExecutorTest {
 
             var dispatcher = new StubStepDispatcher() {
                 @Override
-                public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+                public java.util.List<StepDispatchResult> dispatch(ExecutionStep execStep, ExecutionContext context) {
                     super.dispatch(execStep, context);
-                    return TaskResult.failed(execStep.step().id(), execStep.step().taskName(),
-                            Duration.ofMillis(5), "failure", null);
+                    return List.of(new StepDispatchResult(AGENT,
+                            TaskResult.failed(execStep.step().id(), execStep.step().taskName(),
+                                    Duration.ofMillis(5), "failure", null)));
                 }
             };
             var lifecycleDispatcher = new CapturingLifecycleDispatcher();
@@ -401,13 +409,24 @@ class DagPhaseExecutorTest {
         private final List<String> calledTaskIds = new CopyOnWriteArrayList<>();
 
         @Override
-        public TaskResult dispatch(ExecutionStep execStep, ExecutionContext context) {
+        public java.util.List<StepDispatchResult> dispatch(ExecutionStep execStep, ExecutionContext context) {
             calledTaskIds.add(execStep.step().id().value());
-            return TaskResult.success(
-                    execStep.step().id(),
-                    execStep.step().taskName(),
-                    Duration.ofMillis(1),
-                    Map.of());
+            return List.of(new StepDispatchResult(AGENT,
+                    TaskResult.success(
+                            execStep.step().id(),
+                            execStep.step().taskName(),
+                            Duration.ofMillis(1),
+                            Map.of())));
+        }
+
+        @Override
+        public void startService(ExecutionStep execStep, ExecutionContext context) {
+            dispatch(execStep, context);
+        }
+
+        @Override
+        public java.util.List<StepDispatchResult> stopService(ExecutionStep execStep, ExecutionContext context) {
+            return dispatch(execStep, context);
         }
 
         int getCallCount() { return calledTaskIds.size(); }

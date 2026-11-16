@@ -118,6 +118,52 @@ public class AgentRuntimeConfiguration {
     }
 
     // ========================================================================
+    // Cycle de vie de l'agent LOCAL (ADR-059 : agent embarque reellement demarre)
+    // ========================================================================
+
+    /**
+     * Demarre l'agent LOCAL avec le contexte Spring et l'arrete proprement a la
+     * fermeture. Sans ce lifecycle, l'agent embarque ne souscrit pas au
+     * transport en memoire et aucun step ne pourrait etre execute.
+     */
+    @Bean
+    @ConditionalOnProperty(name = "runtime.mode", havingValue = "LOCAL")
+    public SmartLifecycle localAgentRuntimeLifecycle(TaskAgentRuntime localAgentRuntime) {
+        return new SmartLifecycle() {
+            private volatile boolean running;
+
+            @Override
+            public void start() {
+                localAgentRuntime.start();
+                running = true;
+            }
+
+            @Override
+            public void stop() {
+                if (running) {
+                    localAgentRuntime.stop();
+                    running = false;
+                }
+            }
+
+            @Override
+            public boolean isRunning() {
+                return running;
+            }
+
+            @Override
+            public boolean isAutoStartup() {
+                return true;
+            }
+
+            @Override
+            public int getPhase() {
+                return 0;
+            }
+        };
+    }
+
+    // ========================================================================
     // Mode DISTRIBUTED, role AGENT : TaskAgentRuntime avec config
     // ========================================================================
 

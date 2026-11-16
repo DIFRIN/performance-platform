@@ -1,5 +1,9 @@
 # ADR-030 — Suppression de `AssertionExecutorRegistry` et `DefaultAssertionExecutorRegistry`
 
+> **Note (2026-11-13)** : la collision de nom `database` a disparu avec ADR-049 :
+> les seuls noms d'assertion sont `performance-thresholds`, `direct-assertion` et
+> `panel-assertion`. La suppression du registre dédié reste valide.
+
 **Date** : 2026-10-19
 **Statut** : ACCEPTED
 **Décideurs** : Architect + implémentation (Claude Code), sur constat de l'audit `improvements.md` (A2)

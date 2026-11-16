@@ -20,7 +20,7 @@ import static org.awaitility.Awaitility.await;
 @DisplayName("DefaultLifecycleSignalHandler")
 class DefaultLifecycleSignalHandlerTest {
 
-    private static final String SUPPORTED_TASK = "gatling-metric";
+    private static final String SUPPORTED_TASK = "direct-assertion";
     private static final String UNSUPPORTED_TASK = "unsupported-task";
 
     private Set<String> supportedTaskNames;

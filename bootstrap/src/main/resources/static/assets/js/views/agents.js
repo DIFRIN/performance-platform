@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Agents dashboard view.
  * PDR-029 — ISSUE-129
  *
@@ -15,6 +15,12 @@
  */
 
 import { listAgents } from "/assets/js/api.js";
+import {
+    createPoller,
+    refreshStatusText,
+    copyableIdHtml,
+    handleCopyClick
+} from "/assets/js/ui.js";
 
 /** Polling interval in milliseconds. */
 const POLL_INTERVAL_MS = 3000;
@@ -27,7 +33,7 @@ const POLL_INTERVAL_MS = 3000;
  */
 export function mount(el) {
     /* ---- State ---- */
-    let intervalId = null;
+    let poller = null;
     let agents = [];
     let error = null;
     let unavailable = false;
@@ -36,6 +42,11 @@ export function mount(el) {
     el.innerHTML = buildSkeleton();
 
     const bodyEl = el.querySelector("#agents-list-body");
+    const refreshStateEl = el.querySelector("[data-refresh-state]");
+
+    bodyEl.addEventListener("click", function (e) {
+        handleCopyClick(e);
+    });
 
     /* ---- Fetch & Render loop ---- */
 
@@ -50,7 +61,7 @@ export function mount(el) {
                 // LOCAL mode: the registry endpoint only exists in ORCHESTRATOR.
                 unavailable = true;
                 error = null;
-                stopPolling();
+                if (poller) poller.pause();
             } else {
                 error = e.message || "Failed to load agents";
                 // Keep previous agents so the table does not blank
@@ -59,23 +70,19 @@ export function mount(el) {
         renderBody(bodyEl, agents, error, unavailable);
     }
 
-    function stopPolling() {
-        if (intervalId !== null) {
-            clearInterval(intervalId);
-            intervalId = null;
+    poller = createPoller({
+        run: fetchAndRender,
+        intervalMs: POLL_INTERVAL_MS,
+        onState: function (next) {
+            if (refreshStateEl) refreshStateEl.textContent = refreshStatusText(next);
         }
-    }
-
-    // Initial fetch
-    fetchAndRender();
-
-    // Start polling
-    intervalId = setInterval(fetchAndRender, POLL_INTERVAL_MS);
+    });
+    poller.start();
 
     /* ---- Cleanup ---- */
     return {
         cleanup: function () {
-            stopPolling();
+            poller.stop();
         }
     };
 }
@@ -90,10 +97,14 @@ export function mount(el) {
  */
 function buildSkeleton() {
     return '' +
+        '<div class="page-header">' +
+        '  <h1 class="page-title" data-page-heading>Agents</h1>' +
+        '  <span class="refresh-state" data-refresh-state aria-live="polite">Waiting for data\u2026</span>' +
+        '</div>' +
         '<div class="card">' +
         '  <div class="flex-between mb-2">' +
-        '    <div class="card__title">Agents</div>' +
-        '    <span class="text-muted" style="font-size:0.8125rem" id="agents-count"></span>' +
+        '    <div class="card__title">Registered agents</div>' +
+        '    <span class="text-muted agents-count" id="agents-count"></span>' +
         '  </div>' +
         '  <div id="agents-list-body"></div>' +
         '</div>';
@@ -183,7 +194,7 @@ function renderRow(agent) {
 
     return '' +
         '<tr>' +
-        '  <td><span class="text-mono">' + escapeHtml(shortId) + '</span></td>' +
+        '  <td>' + copyableIdHtml(agent.agentId, { title: "Copy agent ID" }) + '</td>' +
         '  <td><span class="status ' + stateClass + '">' + escapeHtml(agent.state || "UNKNOWN") + '</span></td>' +
         '  <td><span class="agents-table__tasks">' + escapeHtml(tasks) + '</span></td>' +
         '  <td class="agents-table__heartbeat">' + escapeHtml(heartbeat) + '</td>' +

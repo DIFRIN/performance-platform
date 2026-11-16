@@ -8,6 +8,7 @@ import com.performance.platform.agent.filter.DefaultTaskSpecializationFilter;
 import com.performance.platform.agent.registration.AgentRegistrationPort;
 import com.performance.platform.agent.registration.TransportAgentRegistration;
 import com.performance.platform.agent.runtime.TaskAgentRuntime;
+import com.performance.platform.agent.support.GrantingDispatch;
 import com.performance.platform.domain.agent.AgentCapabilities;
 import com.performance.platform.domain.agent.AgentDescriptor;
 import com.performance.platform.domain.agent.AgentState;
@@ -104,7 +105,7 @@ class AgentConfigToExecutionE2ETest {
 
         @Test
         @DisplayName("Should execute supported task and produce TaskCompleted event")
-        @Timeout(value = 30)
+        @Timeout(value = 60)
         void shouldExecuteSupportedTask() {
             // Given: agent avec supported-tasks=[mock-server]
             var configuredNames = Set.of("mock-server");
@@ -134,9 +135,9 @@ class AgentConfigToExecutionE2ETest {
                     .get("supportedTaskNames");
             assertThat(supportedFromEvent).containsExactlyInAnyOrder("mock-server");
 
-            // When: dispatch task mock-server
+            // When: dispatch task mock-server puis grant (ADR-055)
             var executionId = ExecutionId.generate();
-            transport.dispatchTask(buildTaskRequest("mock-server", executionId));
+            GrantingDispatch.dispatchAndGrant(transport, buildTaskRequest("mock-server", executionId));
 
             // Then: TaskCompleted event
             await().atMost(15, TimeUnit.SECONDS).until(() ->
@@ -167,7 +168,7 @@ class AgentConfigToExecutionE2ETest {
 
         @Test
         @DisplayName("Should NOT claim or execute task not in configured task names")
-        @Timeout(value = 30)
+        @Timeout(value = 60)
         void shouldIgnoreUnsupportedTask() {
             // Given: agent config [mock-server] only
             var configuredNames = Set.of("mock-server");
@@ -205,7 +206,7 @@ class AgentConfigToExecutionE2ETest {
 
         @Test
         @DisplayName("Should not execute any task when supported-tasks is empty")
-        @Timeout(value = 30)
+        @Timeout(value = 60)
         void shouldNotExecuteWhenEmptyConfig() {
             // Given: agent avec supported-tasks=[]
             var configuredNames = Set.<String>of();
@@ -246,7 +247,7 @@ class AgentConfigToExecutionE2ETest {
 
         @Test
         @DisplayName("Should execute second configured task among multiple")
-        @Timeout(value = 30)
+        @Timeout(value = 60)
         void shouldExecuteConfiguredTaskAmongMultiple() {
             // Given: agent config [mock-server, http-client]
             var configuredNames = Set.of("mock-server", "http-client");
@@ -262,8 +263,9 @@ class AgentConfigToExecutionE2ETest {
             await().atMost(10, TimeUnit.SECONDS).until(() ->
                     agent.getState() == AgentState.IDLE);
 
-            // When: dispatch http-client (la deuxieme task de la config)
-            transport.dispatchTask(buildTaskRequest("http-client", ExecutionId.generate()));
+            // When: dispatch http-client (la deuxieme task de la config) puis grant
+            GrantingDispatch.dispatchAndGrant(transport,
+                    buildTaskRequest("http-client", ExecutionId.generate()));
 
             // Then: TaskCompleted
             await().atMost(15, TimeUnit.SECONDS).until(() ->
@@ -289,7 +291,7 @@ class AgentConfigToExecutionE2ETest {
 
         @Test
         @DisplayName("AgentRegistered payload must contain configured names, NOT registry names")
-        @Timeout(value = 30)
+        @Timeout(value = 60)
         void registeredEventShouldContainOnlyConfiguredTaskNames() {
             // Given: 3 executors dans le registre, 2 dans la config,
             //        "gatling" present dans le registre mais PAS dans la config

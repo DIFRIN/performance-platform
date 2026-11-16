@@ -5,6 +5,8 @@ import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.PartialExecutionContext;
 import com.performance.platform.domain.id.*;
 import com.performance.platform.domain.task.TaskResult;
+import com.performance.platform.plugin.ServiceControl;
+import com.performance.platform.plugin.ServiceTaskExecutor;
 import com.performance.platform.plugin.TaskExecutor;
 import com.performance.platform.transport.EventChannel;
 import com.performance.platform.transport.TransportException;
@@ -46,6 +48,9 @@ public class TaskExecutionPipeline {
     private final ConcurrentMap<MessageId, Future<?>> activeTasks;
     private final AtomicInteger activeTaskCount;
     private final AtomicReference<AgentState> currentState;
+
+    /** Services vivants : executionId::taskId -> controle de STOP (ADR-054). */
+    private final ConcurrentMap<String, ServiceControlHandle> activeServices = new ConcurrentHashMap<>();
 
     public TaskExecutionPipeline(
             EventChannel transport,
@@ -112,8 +117,13 @@ public class TaskExecutionPipeline {
             // Construire l'ExecutionContext à partir du PartialExecutionContext
             var executionContext = toExecutionContext(request.context());
 
-            // Exécuter la tâche
-            var result = executor.execute(executionContext, step);
+            // Exécuter la tâche : service (ADR-054) ou action
+            TaskResult result;
+            if (step.hasLifetime()) {
+                result = executeService(executor, step, executionContext, executionId, taskId);
+            } else {
+                result = executor.execute(executionContext, step);
+            }
             var duration = Duration.between(startTime, Instant.now());
 
             // Publier le résultat
@@ -149,6 +159,75 @@ public class TaskExecutionPipeline {
                     }
                 }
             }
+        }
+    }
+
+    // === Services (ADR-054) ===
+
+    private TaskResult executeService(TaskExecutor executor, com.performance.platform.domain.scenario.StepDefinition step,
+                                      ExecutionContext executionContext, ExecutionId executionId, TaskId taskId) {
+        if (!(executor instanceof ServiceTaskExecutor serviceExecutor)) {
+            return TaskResult.failed(taskId, step.taskName(), Duration.ZERO,
+                    "TaskExecutor '" + step.taskName() + "' does not implement ServiceTaskExecutor "
+                            + "but the step declares during=" + step.during(), null);
+        }
+
+        var handle = new ServiceControlHandle();
+        activeServices.put(serviceKey(executionId, taskId), handle);
+        try {
+            log.info("action=service_running agentId={} executionId={} taskId={} during={}",
+                    agentId.value(), executionId.value(), taskId.value(), step.during());
+            return serviceExecutor.executeService(executionContext, step, handle);
+        } finally {
+            activeServices.remove(serviceKey(executionId, taskId));
+        }
+    }
+
+    /**
+     * Demande l'arret d'un service vivant pour une execution et une etape.
+     *
+     * @return true si un service vivant a ete trouve et arrete
+     */
+    public boolean stopService(ExecutionId executionId, TaskId taskId) {
+        if (executionId == null || taskId == null) {
+            return false;
+        }
+        ServiceControlHandle handle = activeServices.get(serviceKey(executionId, taskId));
+        if (handle == null) {
+            return false;
+        }
+        log.info("action=service_stop_requested agentId={} executionId={} taskId={}",
+                agentId.value(), executionId.value(), taskId.value());
+        handle.requestStop();
+        return true;
+    }
+
+    private static String serviceKey(ExecutionId executionId, TaskId taskId) {
+        return executionId.value() + "::" + taskId.value();
+    }
+
+    /** Controle de duree de vie d'un service : STOP signale par l'orchestrateur. */
+    static final class ServiceControlHandle implements ServiceControl {
+
+        private final CountDownLatch stopSignal = new CountDownLatch(1);
+
+        void requestStop() {
+            stopSignal.countDown();
+        }
+
+        @Override
+        public boolean awaitStop(Duration timeout) throws InterruptedException {
+            return stopSignal.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void awaitStop() throws InterruptedException {
+            stopSignal.await();
+        }
+
+        @Override
+        public boolean isStopRequested() {
+            return stopSignal.getCount() == 0;
         }
     }
 
@@ -278,7 +357,8 @@ public class TaskExecutionPipeline {
         if (value instanceof Map<?, ?> map) {
             return (Map<String, Object>) map;
         }
-        // Compatibilite avec les anciens messages partiels (valeur brute).
-        return Map.of("value", value);
+        throw new IllegalArgumentException(
+                "Partial context entries must be named-output maps, got: "
+                        + (value == null ? "null" : value.getClass().getName()));
     }
 }

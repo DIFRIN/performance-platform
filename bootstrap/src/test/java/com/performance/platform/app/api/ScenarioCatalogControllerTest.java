@@ -6,7 +6,6 @@ import com.performance.platform.application.ports.in.SubmitScenarioUseCase;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.scenario.ExecutionMode;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
@@ -67,13 +66,14 @@ class ScenarioCatalogControllerTest {
                     .andExpect(jsonPath("$[0].scenarioId").value(SCENARIO_ID))
                     .andExpect(jsonPath("$[0].name").value("Scenario"))
                     .andExpect(jsonPath("$[0].version").value("1.0.0"))
-                    .andExpect(jsonPath("$[0].executionMode").value("LOCAL"))
                     .andExpect(jsonPath("$[0].stepCount").value(1))
                     .andExpect(jsonPath("$[0].valid").value(true))
                     .andExpect(jsonPath("$[0].yaml").value("yaml"))
                     .andExpect(jsonPath("$[0].steps[0].id").value("prep"))
                     .andExpect(jsonPath("$[0].steps[0].taskName").value("mock-server"))
                     .andExpect(jsonPath("$[0].steps[0].phase").value("PREPARATION"))
+                    .andExpect(jsonPath("$[0].steps[0].fanOut").value("ONE"))
+                    .andExpect(jsonPath("$[0].steps[0].dependsOn").isEmpty())
                     .andExpect(jsonPath("$[0].steps[0].timeoutMillis").value(30000))
                     .andExpect(jsonPath("$[0].steps[0].parameters.port").value(8090));
         }
@@ -164,9 +164,8 @@ class ScenarioCatalogControllerTest {
                 "1.0.0",
                 List.of("test"),
                 Map.of(),
-                ExecutionMode.LOCAL,
                 List.of(step),
-                Map.of(),
-                "yaml");
+                "yaml",
+                null);
     }
 }
