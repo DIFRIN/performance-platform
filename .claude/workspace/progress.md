@@ -209,14 +209,14 @@
 | ISSUE-194 | ExecutionContext Named Outputs + Persistent Store | DONE | PDR-053 | - |
 | ISSUE-195 | Migrate Context Consumers | DONE | PDR-053 | ISSUE-194 |
 | ISSUE-196 | Security Posture Decision | DONE | PDR-054 | - |
-| ISSUE-197 | Interface ExecutorAvailability | APPROVED | PDR-055 | - |
+| ISSUE-197 | Interface ExecutorAvailability | DONE | PDR-055 | - |
 | ISSUE-198 | Refus de claim si executor indisponible | WAITING | PDR-055 | ISSUE-197 |
 | ISSUE-199 | Limite de concurrence d'injection par agent | WAITING | PDR-055 | ISSUE-197 |
 | ISSUE-200 | InjectionWorkerMain et run directory | WAITING | PDR-055 | ISSUE-199 |
 | ISSUE-201 | Lanceur de worker et bascule de l'executor | WAITING | PDR-055 | ISSUE-200 |
 | ISSUE-202 | Annulation et arrêt du worker | WAITING | PDR-055 | ISSUE-201 |
 | ISSUE-203 | Test d'intégration worker en mode LOCAL | WAITING | PDR-055 | ISSUE-202 |
-| ISSUE-204 | Records WorkloadPlan et codec | WAITING | PDR-056 | - |
+| ISSUE-204 | Records WorkloadPlan et codec | APPROVED | PDR-056 | - |
 | ISSUE-205 | Presets : expansion des 8 types | WAITING | PDR-056 | ISSUE-204 |
 | ISSUE-206 | Parsing YAML de workload et presets | WAITING | PDR-056 | ISSUE-205 |
 | ISSUE-207 | Validation du plan au parsing | WAITING | PDR-056 | ISSUE-204 |
@@ -1091,3 +1091,7 @@
 | 2026-11-16 | ISSUE-197 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-16 | ISSUE-197 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-16 | ISSUE-197 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-16 | ISSUE-197 | APPROVED → DONE | issue-next.sh |
+| 2026-11-16 | ISSUE-204 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-16 | ISSUE-204 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-16 | ISSUE-204 | IN_REVIEW → APPROVED | Reviewer approved |

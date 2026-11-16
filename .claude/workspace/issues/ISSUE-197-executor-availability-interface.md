@@ -2,7 +2,7 @@
 
 **PDR** : PDR-055
 **Module** : `platform-plugin-api`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : —
 **Estime** : S (< 1h)
