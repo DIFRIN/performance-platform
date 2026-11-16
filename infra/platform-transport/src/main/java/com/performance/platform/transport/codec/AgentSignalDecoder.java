@@ -2,6 +2,8 @@ package com.performance.platform.transport.codec;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.performance.platform.domain.execution.GrantShare;
 import com.performance.platform.domain.event.AgentSignal;
 import com.performance.platform.domain.event.ExecutionLifecycleSignal;
 import com.performance.platform.domain.event.ScenarioRestartSignal;
@@ -24,6 +26,11 @@ public final class AgentSignalDecoder {
             throw new IllegalArgumentException("Ambiguous signal: grant fields and lifecycle action");
         }
         if (grant) {
+            // Champ share absent (ancien emetteur) => GrantShare.single() (ADR-067)
+            if (!node.hasNonNull("share") && node instanceof ObjectNode obj) {
+                obj.set("share", mapper.valueToTree(GrantShare.single()));
+                return mapper.convertValue(obj, TaskGrantSignal.class);
+            }
             return mapper.convertValue(payload, TaskGrantSignal.class);
         }
         if (lifecycle && node.has("reason")) {

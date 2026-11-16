@@ -2,7 +2,7 @@
 
 **PDR** : PDR-060
 **Module** : `platform-domain`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : —
 **Estime** : S (< 1h)

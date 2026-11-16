@@ -2,7 +2,7 @@
 
 **PDR** : PDR-060
 **Module** : `platform-transport`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1
 **Bloquée par** : ISSUE-227
 **Estime** : S (< 1h)

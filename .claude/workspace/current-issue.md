@@ -1,11 +1,11 @@
-# ISSUE-228: StepDefinition : minAgents et onAgentLoss
+# ISSUE-231: Codec transport du GrantShare
 **Status**: APPROVED
 **PDR**: PDR-060
-**Module**: platform-domain
-**Started**: 2026-11-16T22:53+01:00
-**IssueFile**: issues/ISSUE-228-step-min-agents-loss-policy.md
+**Module**: platform-transport
+**Started**: 2026-11-16T22:57+01:00
+**IssueFile**: issues/ISSUE-231-grant-share-signal-codec.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-228-step-min-agents-loss-policy.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-231-grant-share-signal-codec.md`
 
 ## Reviewer Feedback
 (None yet)
