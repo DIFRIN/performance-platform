@@ -7,6 +7,7 @@ import com.performance.platform.domain.event.TaskDispatched;
 import com.performance.platform.domain.event.TaskGrantSignal;
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.execution.ExecutionStep;
+import com.performance.platform.domain.execution.GrantShare;
 import com.performance.platform.domain.execution.RetryPolicy;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.MessageId;
@@ -51,6 +52,8 @@ import java.util.concurrent.TimeoutException;
 public class TransportStepDispatcher implements StepDispatcher {
 
     private static final Logger log = LoggerFactory.getLogger(TransportStepDispatcher.class);
+
+    private static final String NO_AGENT_GRANTED = "No agent was granted the task";
 
     private final TaskChannel taskChannel;
     private final SignalChannel signalChannel;
@@ -107,8 +110,9 @@ public class TransportStepDispatcher implements StepDispatcher {
             availabilityChecker.awaitAgentFor(stepDef.taskName(), config.taskAvailabilityTimeout());
             MessageId messageId = dispatchRequest(execStep, context);
             try {
-                if (!awaitGrant(messageId, stepDef.fanOut(), stepDef.timeout())) {
-                    return failure(stepDef, "No agent was granted the task");
+                String grantFailure = awaitGrant(messageId, stepDef);
+                if (grantFailure != null) {
+                    return failure(stepDef, grantFailure);
                 }
                 Duration timeout = stepDef.timeout() != null ? stepDef.timeout() : config.taskExecutionTimeout();
                 if (!awaitCompletion(messageId, timeout)) {
@@ -153,10 +157,11 @@ public class TransportStepDispatcher implements StepDispatcher {
         try {
             availabilityChecker.awaitAgentFor(stepDef.taskName(), config.taskAvailabilityTimeout());
             MessageId messageId = dispatchRequest(execStep, context);
-            if (!awaitGrant(messageId, stepDef.fanOut(), stepDef.timeout())) {
+            String grantFailure = awaitGrant(messageId, stepDef);
+            if (grantFailure != null) {
                 tracker.release(messageId);
                 throw new IllegalStateException(
-                        "No agent was granted service step " + stepDef.id().value());
+                        grantFailure + " (service step " + stepDef.id().value() + ")");
             }
             runningServices.put(key, messageId);
             log.info("action=service_started taskId={} messageId={} executionId={}",
@@ -219,10 +224,14 @@ public class TransportStepDispatcher implements StepDispatcher {
     /**
      * Attend les claims : premier claim en {@code one}, fenetre de claim en
      * {@code all} puis settlement. Les grants {@code one} sont diffuses par
-     * le handler d'evenements ; ceux de {@code all} sont diffuses ici.
+     * le handler d'evenements ; ceux de {@code all} sont diffuses ici, avec
+     * leur part egale (ADR-067) apres controle de {@code minAgents}.
+     *
+     * @return {@code null} si accorde, sinon le motif d'echec
      */
-    private boolean awaitGrant(MessageId messageId, FanOut fanOut, Duration stepTimeout)
-            throws InterruptedException {
+    private String awaitGrant(MessageId messageId, StepDefinition stepDef) throws InterruptedException {
+        FanOut fanOut = stepDef.fanOut();
+        Duration stepTimeout = stepDef.timeout();
         Duration claimWindow = stepTimeout != null && stepTimeout.compareTo(config.claimWindow()) < 0
                 ? stepTimeout
                 : config.claimWindow();
@@ -230,31 +239,47 @@ public class TransportStepDispatcher implements StepDispatcher {
             tracker.claimSignal(messageId).get(claimWindow.toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             if (fanOut == FanOut.ALL) {
-                // Fenetre ecoulee sans claim : settlement a vide, echec explicite plus bas.
+                // Fenetre ecoulee sans claim : settlement a vide, controle minAgents plus bas.
                 log.debug("action=claim_window_closed_without_claim messageId={}", messageId.value());
             } else {
                 log.warn("action=claim_timeout messageId={} windowMs={}",
                         messageId.value(), claimWindow.toMillis());
-                return false;
+                return NO_AGENT_GRANTED;
             }
         } catch (ExecutionException e) {
             log.warn("action=claim_signal_failed messageId={}", messageId.value(), e);
-            return false;
+            return NO_AGENT_GRANTED;
         }
 
         if (fanOut == FanOut.ALL) {
-            List<AgentId> granted = tracker.settleClaims(messageId);
+            List<AgentId> granted = tracker.settleClaims(messageId).stream()
+                    .sorted(java.util.Comparator.comparing(AgentId::value))
+                    .toList();
             var executionId = tracker.executionIdFor(messageId);
             var taskId = tracker.taskIdFor(messageId);
-            for (AgentId agentId : granted) {
+            int required = stepDef.minAgents();
+            if (granted.size() < required) {
+                log.warn("action=min_agents_not_met granted={} required={} messageId={}",
+                        granted.size(), required, messageId.value());
+                for (AgentId agentId : granted) {
+                    signalChannel.broadcastSignal(new TaskGrantSignal(
+                            SignalId.generate(), executionId, taskId, messageId, agentId,
+                            false, Instant.now(), GrantShare.single()));
+                }
+                return "min_agents_not_met granted=" + granted.size() + " required=" + required;
+            }
+            int count = granted.size();
+            for (int i = 0; i < count; i++) {
+                AgentId agentId = granted.get(i);
                 tracker.onGranted(messageId, agentId);
                 signalChannel.broadcastSignal(new TaskGrantSignal(
-                        SignalId.generate(), executionId, taskId, messageId, agentId, true, Instant.now()));
+                        SignalId.generate(), executionId, taskId, messageId, agentId, true,
+                        Instant.now(), GrantShare.equal(i, count)));
             }
-            log.info("action=claims_settled messageId={} granted={}", messageId.value(), granted.size());
+            log.info("action=claims_settled messageId={} granted={}", messageId.value(), count);
         }
 
-        return !tracker.grantedFor(messageId).isEmpty();
+        return tracker.grantedFor(messageId).isEmpty() ? NO_AGENT_GRANTED : null;
     }
 
     private boolean awaitCompletion(MessageId messageId, Duration timeout) throws InterruptedException {

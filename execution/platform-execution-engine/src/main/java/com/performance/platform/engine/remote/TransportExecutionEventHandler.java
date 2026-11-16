@@ -6,6 +6,7 @@ import com.performance.platform.domain.event.TaskClaimedByAgent;
 import com.performance.platform.domain.event.TaskCompleted;
 import com.performance.platform.domain.event.TaskGrantSignal;
 import com.performance.platform.domain.execution.ExecutionStatus;
+import com.performance.platform.domain.execution.GrantShare;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.SignalId;
 import com.performance.platform.domain.id.TaskId;
@@ -128,7 +129,7 @@ public final class TransportExecutionEventHandler {
     private void publishGrant(ExecutionEvent claim, TaskId taskId, AgentId agentId, boolean granted) {
         signalChannel.broadcastSignal(new TaskGrantSignal(
                 SignalId.generate(), claim.executionId(), taskId, claim.correlationId(),
-                agentId, granted, Instant.now()));
+                agentId, granted, Instant.now(), GrantShare.single()));
         log.info("action=grant_published messageId={} agentId={} granted={}",
                 claim.correlationId().value(), agentId.value(), granted);
     }
