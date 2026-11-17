@@ -69,4 +69,14 @@ class InjectionMeasurementsReportTest {
         assertNull(s.globalPercentiles());
         assertEquals(10L, s.worstAgentPercentiles().get("p95"));
     }
+
+    @Test
+    void toMapExposesCanonicalSections() {
+        var h = LatencyHistogram.empty().with(10, true);
+        var a = entry("a", 10, h, List.of(new LoadWindow(T0, W, 5, 4, 1, 0, false)), GeneratorHealth.unknown());
+        var m = InjectionMeasurementsSection.build(List.of(a)).toMap();
+        for (var k : List.of("timeline", "globalPercentiles", "worstAgentPercentiles", "agents", "health", "evidence"))
+            assertTrue(m.containsKey(k), k);
+        assertEquals("non mesuré", ((Map<?, ?>) ((List<?>) m.get("timeline")).get(0)).get("label"));
+    }
 }

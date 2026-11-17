@@ -161,7 +161,9 @@ public class DefaultReportEngine implements ReportEngine {
                     preparationResults, injectionResults, assertionResults,
                     verdict, buildVerdictReason(assertionResults) + "; Performance validation: " + verdict + "; "
                             + performance.validation().limitations().size() + " missing requirements",
-                    generatedAt, totalDuration, performance
+                    generatedAt, totalDuration, performance,
+                    injectionResults.isEmpty() ? Map.of()
+                            : InjectionMeasurementsSection.build(injectionResults).toMap()
             );
         } catch (ReportGenerationException e) {
             throw e;

@@ -55,6 +55,57 @@ public record InjectionMeasurementsSection(
         }
     }
 
+    /** Forme canonique (Map/List/Number/String/Boolean) pour {@code CampaignReport.injectionMeasurements}. */
+    public Map<String, Object> toMap() {
+        var out = new LinkedHashMap<String, Object>();
+        var tl = new ArrayList<Object>();
+        for (var t : timeline) {
+            var m = new LinkedHashMap<String, Object>();
+            m.put("start", t.start().toString());
+            m.put("lengthMs", t.length().toMillis());
+            m.put("planned", t.planned());
+            m.put("achieved", t.achieved());
+            m.put("requests", t.requests());
+            m.put("failures", t.failures());
+            m.put("measured", t.measured());
+            m.put("label", t.label());
+            tl.add(m);
+        }
+        out.put("timeline", tl);
+        out.put("globalAvailable", globalAvailable());
+        if (globalPercentiles != null) out.put("globalPercentiles", new LinkedHashMap<>(globalPercentiles));
+        out.put("worstAgentPercentiles", new LinkedHashMap<>(worstAgentPercentiles));
+        var ag = new ArrayList<Object>();
+        for (var a : agents) {
+            ag.add(new LinkedHashMap<>(Map.of("agentId", a.agentId(), "requests", a.requests(),
+                    "failures", a.failures(), "requestShare", a.requestShare())));
+        }
+        out.put("agents", ag);
+        var hl = new ArrayList<Object>();
+        for (var h : health) {
+            hl.add(new LinkedHashMap<>(Map.of("agentId", h.agentId(), "cpuLoad", h.cpuLoad(),
+                    "gcPauseMs", h.gcPause().toMillis(), "peakHeapBytes", h.peakHeapBytes())));
+        }
+        out.put("health", hl);
+        var ev = new LinkedHashMap<String, Object>();
+        ev.put("mergedHistogram", evidence.mergedHistogram().toMap());
+        var ws = new ArrayList<Object>();
+        for (var w : evidence.aggregatedWindows()) {
+            var m = new LinkedHashMap<String, Object>();
+            m.put("start", w.start().toString());
+            m.put("lengthMs", w.length().toMillis());
+            m.put("plannedArrivals", w.plannedArrivals());
+            m.put("startedUsers", w.startedUsers());
+            m.put("requests", w.requests());
+            m.put("failures", w.failures());
+            m.put("measured", w.measured());
+            ws.add(m);
+        }
+        ev.put("aggregatedWindows", ws);
+        out.put("evidence", ev);
+        return out;
+    }
+
     public static InjectionMeasurementsSection build(List<InjectionReportEntry> entries) {
         // Chronologie : somme par début de fenêtre (horloge murale)
         Map<Instant, long[]> sums = new TreeMap<>();
