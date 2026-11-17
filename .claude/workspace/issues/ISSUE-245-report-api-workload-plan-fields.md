@@ -2,7 +2,7 @@
 
 **PDR** : PDR-056
 **Module** : `platform-report-api`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-208
 **Estime** : S (< 1h)

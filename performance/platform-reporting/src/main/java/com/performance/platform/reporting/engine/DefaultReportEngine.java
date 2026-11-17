@@ -278,11 +278,24 @@ public class DefaultReportEngine implements ReportEngine {
             state.context().getAll(taskIdStr).entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(agent -> {
                 Object output = agent.getValue().outputs().get(InjectionResult.OUTPUT_KEY);
                 if (output instanceof InjectionResult inj) {
-                    entries.add(new InjectionReportEntry(new TaskId(taskIdStr), inj, inj.gatlingReportDirectory(), agent.getKey()));
+                    entries.add(injectionEntry(new TaskId(taskIdStr), agent.getKey(), inj, agent.getValue().outputs()));
                 }
             });
         }
         return entries;
+    }
+
+    /** Plan résolu + hash lus depuis les sorties du TaskResult ; absents (ancien run) => plan non enregistré. */
+    static InjectionReportEntry injectionEntry(TaskId taskId, String agentId, InjectionResult inj,
+                                               Map<String, Object> outputs) {
+        Map<String, Object> plan = Map.of();
+        if (outputs.get("workloadPlan") instanceof Map<?, ?> m) {
+            var copy = new java.util.LinkedHashMap<String, Object>();
+            m.forEach((k, v) -> copy.put(String.valueOf(k), v));
+            plan = copy;
+        }
+        String hash = outputs.get("workloadPlanHash") instanceof String h ? h : "";
+        return new InjectionReportEntry(taskId, inj, inj.gatlingReportDirectory(), agentId, plan, hash);
     }
 
     private List<AssertionReportEntry> buildAssertionEntries(ExecutionState state,

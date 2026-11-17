@@ -223,7 +223,7 @@
 | ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | DONE | PDR-056 | ISSUE-206, ISSUE-201 |
 | ISSUE-209 | Modèle fermé (utilisateurs concurrents) | DONE | PDR-056 | ISSUE-208 |
 | ISSUE-210 | Suppression de LoadModel et LoadModelType | DONE | PDR-056 | ISSUE-207, ISSUE-208 |
-| ISSUE-211 | Plan résolu et hash dans le rapport | WAITING | PDR-056 | ISSUE-208, ISSUE-245 |
+| ISSUE-211 | Plan résolu et hash dans le rapport | APPROVED | PDR-056 | ISSUE-208, ISSUE-245 |
 | ISSUE-212 | InjectionCapabilities dans plugin-api | DONE | PDR-057 | ISSUE-204 |
 | ISSUE-213 | Admission du plan et simulations opaques | DONE | PDR-057 | ISSUE-212, ISSUE-208 |
 | ISSUE-214 | Garde-fou de débit par agent | DONE | PDR-057 | ISSUE-213 |
@@ -257,7 +257,7 @@
 | ISSUE-242 | Résultats par nom de requête | DONE | PDR-061 | ISSUE-240, ISSUE-218, ISSUE-238 |
 | ISSUE-243 | Métriques d'assertion par requête | DONE | PDR-061 | ISSUE-242, ISSUE-219 |
 | ISSUE-244 | Documentation, exemples et acceptation des ADR | WAITING | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
-| ISSUE-245 | InjectionReportEntry : plan résolu et hash | APPROVED | PDR-056 | ISSUE-208 |
+| ISSUE-245 | InjectionReportEntry : plan résolu et hash | DONE | PDR-056 | ISSUE-208 |
 | ISSUE-246 | CampaignReport : mesures d'injection (forme neutre) | WAITING | PDR-058 | ISSUE-219 |
 
 ## PDRs
@@ -1294,3 +1294,7 @@
 | 2026-11-17 | ISSUE-245 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-245 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-245 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-245 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-211 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-211 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-211 | IN_REVIEW → APPROVED | Reviewer approved |

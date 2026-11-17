@@ -2,7 +2,7 @@
 
 **PDR** : PDR-056
 **Module** : `platform-reporting`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P2
 **Bloquée par** : ISSUE-208, ISSUE-245
 **Estime** : M (1-3h)
