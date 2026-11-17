@@ -2,7 +2,7 @@
 
 **PDR** : PDR-060
 **Module** : `platform-bootstrap`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-233, ISSUE-236
 **Estime** : M (1-3h)

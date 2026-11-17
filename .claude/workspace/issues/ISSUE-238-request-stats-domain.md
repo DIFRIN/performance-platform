@@ -2,7 +2,7 @@
 
 **PDR** : PDR-061
 **Module** : `platform-domain`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P2
 **Bloquée par** : ISSUE-215
 **Estime** : S (< 1h)

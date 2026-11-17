@@ -39,7 +39,8 @@ public record InjectionResult(
     LatencyHistogram histogram,
     List<LoadWindow> windows,
     GeneratorHealth generatorHealth,
-    boolean complete
+    boolean complete,
+    Map<String, RequestStats> perRequest
 ) {
 
     /**
@@ -47,6 +48,20 @@ public record InjectionResult(
      * {@code TaskResult}. Utilisee par les executors et les assertions.
      */
     public static final String OUTPUT_KEY = "result";
+
+    /**
+     * Constructeur de compatibilité (sans {@code perRequest}) : résultats par requête vides.
+     */
+    public InjectionResult(TaskId taskId, String simulationClass, Duration duration, long totalRequests,
+                           long successfulRequests, long failedRequests, double errorRate, double throughput,
+                           long p50Ms, long p75Ms, long p90Ms, long p95Ms, long p99Ms, long maxMs, long minMs,
+                           double meanMs, Path gatlingReportDirectory, Map<String, Object> rawStats,
+                           Instant startedAt, Instant endedAt, LatencyHistogram histogram,
+                           List<LoadWindow> windows, GeneratorHealth generatorHealth, boolean complete) {
+        this(taskId, simulationClass, duration, totalRequests, successfulRequests, failedRequests, errorRate,
+            throughput, p50Ms, p75Ms, p90Ms, p95Ms, p99Ms, maxMs, minMs, meanMs, gatlingReportDirectory,
+            rawStats, startedAt, endedAt, histogram, windows, generatorHealth, complete, Map.of());
+    }
 
     /**
      * Constructeur de compatibilité (signature antérieure). Valeurs par défaut : instants epoch,
@@ -60,7 +75,7 @@ public record InjectionResult(
         this(taskId, simulationClass, duration, totalRequests, successfulRequests, failedRequests, errorRate,
             throughput, p50Ms, p75Ms, p90Ms, p95Ms, p99Ms, maxMs, minMs, meanMs, gatlingReportDirectory,
             rawStats, Instant.EPOCH, Instant.EPOCH, LatencyHistogram.empty(), List.of(),
-            GeneratorHealth.unknown(), false);
+            GeneratorHealth.unknown(), false, Map.of());
     }
 
     public InjectionResult {
@@ -95,6 +110,7 @@ public record InjectionResult(
         histogram = histogram == null ? LatencyHistogram.empty() : histogram;
         windows = windows == null ? List.of() : List.copyOf(windows);
         generatorHealth = generatorHealth == null ? GeneratorHealth.unknown() : generatorHealth;
+        perRequest = perRequest == null ? Map.of() : Map.copyOf(perRequest);
     }
 
     /**

@@ -1,11 +1,11 @@
-# ISSUE-237: Test d'intégration : scope global distribué
+# ISSUE-238: RequestStats et résultats par requête
 **Status**: APPROVED
-**PDR**: PDR-060
-**Module**: platform-bootstrap
-**Started**: 2026-11-17T15:46+01:00
-**IssueFile**: issues/ISSUE-237-global-scope-integration-test.md
+**PDR**: PDR-061
+**Module**: platform-domain
+**Started**: 2026-11-17T16:09+01:00
+**IssueFile**: issues/ISSUE-238-request-stats-domain.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-237-global-scope-integration-test.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-238-request-stats-domain.md`
 
 ## Reviewer Feedback
 (None yet)
