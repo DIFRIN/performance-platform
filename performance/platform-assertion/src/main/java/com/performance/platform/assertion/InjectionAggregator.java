@@ -3,6 +3,7 @@ package com.performance.platform.assertion;
 import com.performance.platform.domain.injection.InjectionResult;
 import com.performance.platform.domain.injection.LatencyHistogram;
 import com.performance.platform.domain.injection.LoadWindow;
+import com.performance.platform.domain.injection.RequestStats;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -40,12 +41,34 @@ public final class InjectionAggregator {
     }
 
     /** Métriques réduites, indexées par identifiant du catalogue. */
-    public record Aggregate(Map<String, Measure> metrics) {
+    public record Aggregate(Map<String, Measure> metrics, Map<String, Map<String, Measure>> perRequest) {
         public Aggregate {
             metrics = Map.copyOf(metrics);
+            perRequest = Map.copyOf(perRequest);
         }
 
+        public Aggregate(Map<String, Measure> metrics) {
+            this(metrics, Map.of());
+        }
+
+        /**
+         * Résout {@code metric} ou {@code metric[name]}. Sans suffixe = total. Nom inconnu dans les
+         * résultats => INCONCLUSIVE ; métrique inconnue => {@link IllegalArgumentException}.
+         */
         public Measure get(String metric) {
+            int open = metric.indexOf('[');
+            if (open > 0 && metric.endsWith("]")) {
+                String base = metric.substring(0, open);
+                String name = metric.substring(open + 1, metric.length() - 1);
+                if (!metrics.containsKey(base) || !NAMED_METRICS.contains(base)) {
+                    throw new IllegalArgumentException("unknown metric: " + metric);
+                }
+                Map<String, Measure> byName = perRequest.get(name);
+                if (byName == null) {
+                    return Measure.inconclusive("unknown request name: " + name);
+                }
+                return byName.get(base);
+            }
             Measure m = metrics.get(metric);
             if (m == null) {
                 throw new IllegalArgumentException("unknown metric: " + metric);
@@ -53,6 +76,11 @@ public final class InjectionAggregator {
             return m;
         }
     }
+
+    private static final Set<String> NAMED_METRICS = Set.of(
+        "injection.latency.p50", "injection.latency.p75", "injection.latency.p90",
+        "injection.latency.p95", "injection.latency.p99",
+        "injection.requests.total", "injection.requests.failed", "injection.error.rate");
 
     private InjectionAggregator() {
     }
@@ -99,7 +127,38 @@ public final class InjectionAggregator {
             Measure.of(rs.stream().mapToDouble(r -> r.generatorHealth().cpuLoad()).max().orElse(0)));
         out.put("injection.generator.gc.pause",
             Measure.of(rs.stream().mapToLong(r -> r.generatorHealth().gcPause().toMillis()).max().orElse(0)));
-        return new Aggregate(out);
+        return new Aggregate(out, perRequest(rs));
+    }
+
+    /** Agrège par nom de requête : compteurs sommés, histogrammes fusionnés entre agents. */
+    private static Map<String, Map<String, Measure>> perRequest(List<InjectionResult> rs) {
+        Set<String> names = new TreeSet<>();
+        rs.forEach(r -> names.addAll(r.perRequest().keySet()));
+        Map<String, Map<String, Measure>> result = new LinkedHashMap<>();
+        for (String name : names) {
+            long requests = 0;
+            long failed = 0;
+            LatencyHistogram merged = LatencyHistogram.empty();
+            for (InjectionResult r : rs) {
+                RequestStats st = r.perRequest().get(name);
+                if (st != null) {
+                    requests += st.requests();
+                    failed += st.failures();
+                    merged = merged.merge(st.histogram());
+                }
+            }
+            Map<String, Measure> m = new LinkedHashMap<>();
+            for (int i = 0; i < PERCENTILES.length; i++) {
+                m.put("injection.latency." + PERCENTILES[i], merged.count() > 0
+                    ? Measure.of(merged.quantile(QUANTILES[i]))
+                    : Measure.inconclusive("no histogram for request " + name));
+            }
+            m.put("injection.requests.total", Measure.of(requests));
+            m.put("injection.requests.failed", Measure.of(failed));
+            m.put("injection.error.rate", Measure.of(InjectionResult.computeErrorRate(requests, failed)));
+            result.put(name, m);
+        }
+        return result;
     }
 
     private static long percentileOf(InjectionResult r, int idx) {
