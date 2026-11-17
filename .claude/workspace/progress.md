@@ -221,8 +221,8 @@
 | ISSUE-206 | Parsing YAML de workload et presets | DONE | PDR-056 | ISSUE-205 |
 | ISSUE-207 | Validation du plan au parsing | DONE | PDR-056 | ISSUE-204 |
 | ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | DONE | PDR-056 | ISSUE-206, ISSUE-201 |
-| ISSUE-209 | Modèle fermé (utilisateurs concurrents) | APPROVED | PDR-056 | ISSUE-208 |
-| ISSUE-210 | Suppression de LoadModel et LoadModelType | WAITING | PDR-056 | ISSUE-207, ISSUE-208 |
+| ISSUE-209 | Modèle fermé (utilisateurs concurrents) | DONE | PDR-056 | ISSUE-208 |
+| ISSUE-210 | Suppression de LoadModel et LoadModelType | APPROVED | PDR-056 | ISSUE-207, ISSUE-208 |
 | ISSUE-211 | Plan résolu et hash dans le rapport | WAITING | PDR-056 | ISSUE-208 |
 | ISSUE-212 | InjectionCapabilities dans plugin-api | WAITING | PDR-057 | ISSUE-204 |
 | ISSUE-213 | Admission du plan et simulations opaques | WAITING | PDR-057 | ISSUE-212, ISSUE-208 |
@@ -1165,3 +1165,7 @@
 | 2026-11-17 | ISSUE-209 | CHANGES_REQUESTED → IN_PROGRESS (resume) | issue-start.sh |
 | 2026-11-17 | ISSUE-209 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-209 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-209 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-210 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-210 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-210 | IN_REVIEW → APPROVED | Reviewer approved |

@@ -5,10 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/** Expansion des presets (types historiques de {@link LoadModelType}) en {@link WorkloadPlan}. */
+/** Expansion des presets (types de preset historiques) en {@link WorkloadPlan}. */
 public final class LoadPresets {
 
     private LoadPresets() {
+    }
+
+    private enum PresetType {
+        RAMP, RAMP_UP_DOWN, CONSTANT, SPIKE, STAIR, SOAK, BURST, CUSTOM
     }
 
     /** type = RAMP | RAMP_UP_DOWN | CONSTANT | SPIKE | STAIR | SOAK | BURST | CUSTOM. */
@@ -16,9 +20,9 @@ public final class LoadPresets {
         if (type == null || type.isBlank()) {
             throw new IllegalArgumentException("Missing required parameter: type");
         }
-        LoadModelType t;
+        PresetType t;
         try {
-            t = LoadModelType.valueOf(type.trim().toUpperCase());
+            t = PresetType.valueOf(type.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unknown preset type: " + type);
         }

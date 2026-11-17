@@ -2,8 +2,6 @@ package com.performance.platform.scenario.validation;
 
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.domain.scenario.StepDefinition;
@@ -108,12 +106,7 @@ class DefaultScenarioValidatorTest {
                         Duration.ofMinutes(20), null
                     )
                 ),
-                Map.of("api-load", new LoadModel(LoadModelType.RAMP, Map.of(
-                    "stages", List.of(
-                        Map.of("duration", "2m", "usersPerSecond", 10),
-                        Map.of("duration", "5m", "usersPerSecond", 100)
-                    )
-                )))
+                Map.of()
             );
 
             ValidationResult result = validator.validate(scenario);
@@ -143,7 +136,7 @@ class DefaultScenarioValidatorTest {
                         Duration.ofMinutes(20), null
                     )
                 ),
-                Map.of("api-load", new LoadModel(LoadModelType.RAMP, Map.of()))
+                Map.of()
             );
 
             ValidationResult result = validator.validate(scenario);
@@ -173,7 +166,7 @@ class DefaultScenarioValidatorTest {
                         Duration.ofMinutes(20), null
                     )
                 ),
-                Map.of("api-load", new LoadModel(LoadModelType.RAMP, Map.of()))
+                Map.of()
             );
 
             ValidationResult result = validator.validate(scenario);
@@ -986,7 +979,7 @@ class DefaultScenarioValidatorTest {
                         Duration.ofMinutes(1), null
                     )
                 ),
-                Map.of("constant-load", new LoadModel(LoadModelType.CONSTANT, Map.of("usersPerSecond", 50)))
+                Map.of()
             );
 
             ValidationResult result = validator.validate(scenario);

@@ -45,7 +45,7 @@
 | `ExecutionStatus` | ✅ STABLE | PDR-001 | ISSUE-002 |
 | `AgentState` | ✅ STABLE | PDR-001 | ISSUE-002 |
 | `TaskCompletionPolicy` | ✅ STABLE | PDR-001 | ISSUE-002 |
-| `LoadModelType` | ✅ STABLE | PDR-001 | ISSUE-002 |
+| `LoadModelType` | ❌ REMOVED | PDR-001 | ISSUE-002 |
 | `AssertionOperator` | ✅ STABLE | PDR-001 | ISSUE-002 |
 | `AssertionStatus` | ✅ STABLE | PDR-001 | ISSUE-002 |
 | `Verdict` | ✅ STABLE | PDR-001 | ISSUE-002 |
@@ -54,7 +54,7 @@
 | `TransportType` | ❌ REMOVED | PDR-001 | — (noms de protocoles → déplacé dans platform-transport, ISSUE-028) |
 | `ScenarioDefinition` | ✅ STABLE | PDR-001 | ISSUE-003 ; ADR-043 (+sourceYaml provenance), ADR-044 (+ReportDefinition) |
 | `StepDefinition` | ✅ STABLE | PDR-001 | ISSUE-003 |
-| `LoadModel` | ✅ STABLE | PDR-001 | ISSUE-003 |
+| `LoadModel` | ❌ REMOVED | PDR-001 | ISSUE-003 |
 | `RetryPolicy` | ✅ STABLE | PDR-001 | ISSUE-003 |
 | `TaskResult` (String taskName) | ✅ STABLE | PDR-001 | ISSUE-004 |
 | `ExecutionContext` | ✅ STABLE | PDR-001 | ISSUE-005 |
