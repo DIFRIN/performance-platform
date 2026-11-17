@@ -20,6 +20,7 @@ import com.performance.platform.injection.gatling.worker.WorkerOutcome;
 import com.performance.platform.injection.gatling.worker.WorkerRunSpec;
 import com.performance.platform.plugin.ExecutorAvailability;
 import com.performance.platform.domain.injection.ArrivalModel;
+import com.performance.platform.injection.gatling.load.InjectionLimits;
 import com.performance.platform.injection.gatling.load.PlanAdmission;
 import com.performance.platform.injection.gatling.load.PlanRejectedException;
 import com.performance.platform.injection.gatling.protocol.ProtocolSupportInfo;
@@ -133,6 +134,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     /** Injections en cours d'execution (ADR-066, regle interimaire). */
     private final AtomicInteger runningInjections = new AtomicInteger();
     private final int maxConcurrent;
+    private final InjectionLimits limits;
 
     // ── Dependencies ──────────────────────────────────────────────────────────
 
@@ -145,14 +147,17 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     @Autowired
     public GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
                                ObjectProvider<InjectionProtocol> protocols,
-                               ObjectProvider<InjectionWorkerProperties> workerProperties) {
+                               ObjectProvider<InjectionWorkerProperties> workerProperties,
+                               ObjectProvider<InjectionLimits> limits) {
         this(launcher, parser, protocols.orderedStream().toList(),
-                workerProperties.getIfAvailable(InjectionWorkerProperties::defaults));
+                workerProperties.getIfAvailable(InjectionWorkerProperties::defaults),
+                limits.getIfAvailable(InjectionLimits::none));
     }
 
     private GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
-                                List<InjectionProtocol> protocols, InjectionWorkerProperties props) {
-        this(launcher, parser, protocols, props.maxConcurrent(), props.stopGrace());
+                                List<InjectionProtocol> protocols, InjectionWorkerProperties props,
+                                InjectionLimits limits) {
+        this(launcher, parser, protocols, props.maxConcurrent(), props.stopGrace(), limits);
     }
 
     /** HTTP-only executor (no target resolver), for custom simulations and standalone use. */
@@ -172,6 +177,13 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
     GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
                         List<InjectionProtocol> protocols, int maxConcurrent, Duration stopGrace) {
+        this(launcher, parser, protocols, maxConcurrent, stopGrace, InjectionLimits.none());
+    }
+
+    GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
+                        List<InjectionProtocol> protocols, int maxConcurrent, Duration stopGrace,
+                        InjectionLimits limits) {
+        this.limits = Objects.requireNonNull(limits, "limits must not be null");
         this.maxConcurrent = Math.max(1, maxConcurrent);
         this.stopGrace = Objects.requireNonNull(stopGrace, "stopGrace must not be null");
         this.launcher = Objects.requireNonNull(launcher, "launcher must not be null");
@@ -243,7 +255,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
         // Admission : rejet avant tout worker/trafic. Simulation custom = opaque (pas de provider).
         try {
-            PlanAdmission.check(plan, CAPABILITIES);
+            PlanAdmission.check(plan, CAPABILITIES, limits);
         } catch (PlanRejectedException e) {
             log.warn("action=gatling_plan_rejected executionId={} stepId={} feature={}",
                     executionKey, step.id().value(), e.feature());
