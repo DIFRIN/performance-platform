@@ -2,7 +2,7 @@
 
 **PDR** : PDR-055
 **Module** : `platform-agent-runtime`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : ISSUE-197
 **Estime** : M (1-3h)

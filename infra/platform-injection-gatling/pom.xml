@@ -82,6 +82,12 @@
             <version>2.0.17</version>
         </dependency>
 
+        <!-- Spring Boot (@ConfigurationProperties) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+
         <!-- Spring Context (@Component) -->
         <dependency>
             <groupId>org.springframework</groupId>

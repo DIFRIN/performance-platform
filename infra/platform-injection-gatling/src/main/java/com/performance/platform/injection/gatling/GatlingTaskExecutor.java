@@ -15,6 +15,8 @@ import com.performance.platform.injection.gatling.result.ResultParsingException;
 import com.performance.platform.injection.gatling.runner.GatlingExecutionException;
 import com.performance.platform.injection.gatling.runner.GatlingRunConfig;
 import com.performance.platform.injection.gatling.runner.GatlingRunner;
+import com.performance.platform.injection.gatling.worker.InjectionWorkerProperties;
+import com.performance.platform.plugin.ExecutorAvailability;
 import com.performance.platform.plugin.Injection;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
@@ -32,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * {@link TaskExecutor} pour l'injection de charge Gatling.
@@ -78,7 +81,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Injection(name = "gatling", description = "Gatling load injection")
 @Component
-public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleaner {
+public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleaner, ExecutorAvailability {
 
     private static final Logger log = LoggerFactory.getLogger(GatlingTaskExecutor.class);
 
@@ -104,6 +107,10 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
     private final Map<String, Boolean> activeExecutions = new ConcurrentHashMap<>();
 
+    /** Injections en cours d'execution (ADR-066, regle interimaire). */
+    private final AtomicInteger runningInjections = new AtomicInteger();
+    private final int maxConcurrent;
+
     // ── Dependencies ──────────────────────────────────────────────────────────
 
     private final GatlingRunner runner;
@@ -113,8 +120,10 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     /** Protocols are Spring beans discovered by name: adding one needs no change here. */
     @Autowired
     public GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser,
-                               ObjectProvider<InjectionProtocol> protocols) {
-        this(runner, parser, protocols.orderedStream().toList());
+                               ObjectProvider<InjectionProtocol> protocols,
+                               ObjectProvider<InjectionWorkerProperties> workerProperties) {
+        this(runner, parser, protocols.orderedStream().toList(),
+                workerProperties.getIfAvailable(InjectionWorkerProperties::defaults).maxConcurrent());
     }
 
     /** HTTP-only executor (no target resolver), for custom simulations and standalone use. */
@@ -123,11 +132,24 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     }
 
     GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser, List<InjectionProtocol> protocols) {
+        this(runner, parser, protocols, InjectionWorkerProperties.DEFAULT_MAX_CONCURRENT);
+    }
+
+    GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser, List<InjectionProtocol> protocols,
+                        int maxConcurrent) {
+        this.maxConcurrent = Math.max(1, maxConcurrent);
         this.runner = Objects.requireNonNull(runner, "runner must not be null");
         this.parser = Objects.requireNonNull(parser, "parser must not be null");
         var byName = new LinkedHashMap<String, InjectionProtocol>();
         protocols.forEach(p -> byName.put(p.name(), p));
         this.protocols = Map.copyOf(byName);
+    }
+
+    // ── ExecutorAvailability contract ─────────────────────────────────────────
+
+    @Override
+    public boolean canAcceptNewTask() {
+        return runningInjections.get() < maxConcurrent;
     }
 
     // ── TaskExecutor contract ─────────────────────────────────────────────────
@@ -206,6 +228,14 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                 Duration.ofSeconds(timeoutSeconds)
         );
 
+        if (runningInjections.incrementAndGet() > maxConcurrent) {
+            runningInjections.decrementAndGet();
+            if (prepared != null) prepared.close();
+            log.warn("action=gatling_rejected executionId={} stepId={} maxConcurrent={}",
+                    executionKey, step.id().value(), maxConcurrent);
+            return fail(step, startNanos, "Injection concurrency limit reached (injection.worker.max-concurrent="
+                    + maxConcurrent + ")");
+        }
         activeExecutions.put(executionKey, true);
         try {
             // 3. Lancer la simulation Gatling
@@ -250,6 +280,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
         } finally {
             if (prepared != null) prepared.close();
             activeExecutions.remove(executionKey);
+            runningInjections.decrementAndGet();
         }
     }
 
