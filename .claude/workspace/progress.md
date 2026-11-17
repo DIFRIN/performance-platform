@@ -222,9 +222,9 @@
 | ISSUE-207 | Validation du plan au parsing | DONE | PDR-056 | ISSUE-204 |
 | ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | DONE | PDR-056 | ISSUE-206, ISSUE-201 |
 | ISSUE-209 | Modèle fermé (utilisateurs concurrents) | DONE | PDR-056 | ISSUE-208 |
-| ISSUE-210 | Suppression de LoadModel et LoadModelType | APPROVED | PDR-056 | ISSUE-207, ISSUE-208 |
-| ISSUE-211 | Plan résolu et hash dans le rapport | WAITING | PDR-056 | ISSUE-208 |
-| ISSUE-212 | InjectionCapabilities dans plugin-api | WAITING | PDR-057 | ISSUE-204 |
+| ISSUE-210 | Suppression de LoadModel et LoadModelType | DONE | PDR-056 | ISSUE-207, ISSUE-208 |
+| ISSUE-211 | Plan résolu et hash dans le rapport | WAITING | PDR-056 | ISSUE-208, ISSUE-245 |
+| ISSUE-212 | InjectionCapabilities dans plugin-api | APPROVED | PDR-057 | ISSUE-204 |
 | ISSUE-213 | Admission du plan et simulations opaques | WAITING | PDR-057 | ISSUE-212, ISSUE-208 |
 | ISSUE-214 | Garde-fou de débit par agent | WAITING | PDR-057 | ISSUE-213 |
 | ISSUE-215 | Histogramme, fenêtres et santé dans InjectionResult | WAITING | PDR-058 | ISSUE-204 |
@@ -257,6 +257,7 @@
 | ISSUE-242 | Résultats par nom de requête | WAITING | PDR-061 | ISSUE-240, ISSUE-218, ISSUE-238 |
 | ISSUE-243 | Métriques d'assertion par requête | WAITING | PDR-061 | ISSUE-242, ISSUE-219 |
 | ISSUE-244 | Documentation, exemples et acceptation des ADR | WAITING | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
+| ISSUE-245 | InjectionReportEntry : plan résolu et hash | WAITING | PDR-056 | ISSUE-208 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -316,7 +317,7 @@
 | PDR-053 | ExecutionContext Named Outputs | platform-domain | DONE | ISSUE-194,195 | PDR-001 |
 | PDR-054 | Security Posture | platform-bootstrap | DONE | ISSUE-196 | PDR-018 |
 | PDR-055 | Injection Worker Process | platform-injection-gatling | WAITING | ISSUE-197..203 | — |
-| PDR-056 | Composable Workload Plan | platform-domain | WAITING | ISSUE-204..211 | PDR-055 |
+| PDR-056 | Composable Workload Plan | platform-domain | WAITING | ISSUE-204..211, ISSUE-245 | PDR-055 |
 | PDR-057 | Injection Capabilities & Guardrails | platform-plugin-api | WAITING | ISSUE-212..214 | PDR-056 |
 | PDR-058 | Mergeable Injection Measurements | platform-domain | WAITING | ISSUE-215..220 | PDR-056, PDR-055 |
 | PDR-059 | Experiment Integrity & INVALID Verdict | platform-domain | WAITING | ISSUE-221..226 | PDR-058 |
@@ -1169,3 +1170,9 @@
 | 2026-11-17 | ISSUE-210 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-210 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-210 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-210 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-211 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-211 | IN_PROGRESS → BLOCKED | InjectionReportEntry (platform-report-api) n'a pas de champ workloadPlan/workloadPlanHash : le modèle de rapport doit changer. Issue dédiée requise pour platform-report-api (ajout champs plan+hash, JSON/HTML), puis ISSUE-211 pourra remplir ces champs dans DefaultReportEngine.buildInjectionEntries (lecture outputs 'workloadPlan'/'workloadPlanHash', absent => 'plan non enregistré'). |
+| 2026-11-17 | ISSUE-212 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-212 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-212 | IN_REVIEW → APPROVED | Reviewer approved |

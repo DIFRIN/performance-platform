@@ -527,7 +527,7 @@
 | `LoadPresets` | platform-domain | ⬜ PLANNED | PDR-056 | ISSUE-205 |
 | `WorkloadPlanTranslator` | platform-injection-gatling | ⬜ PLANNED | PDR-056 | ISSUE-208 |
 | `LoadModel`, `LoadModelType`, `LoadModelTranslator` | platform-domain / gatling | ⚠️ BREAKING → ❌ REMOVED | PDR-056 | ISSUE-208, ISSUE-210 |
-| `InjectionCapabilities`, `InjectionCapabilityProvider` | platform-plugin-api | ⬜ PLANNED | PDR-057 | ISSUE-212 |
+| `InjectionCapabilities`, `InjectionCapabilityProvider` | platform-plugin-api | ✅ IMPLEMENTED (ISSUE-212) | PDR-057 | ISSUE-212 |
 | `PlanAdmission`, `InjectionLimits` | platform-injection-gatling | ⬜ PLANNED | PDR-057 | ISSUE-213, ISSUE-214 |
 | `LatencyHistogram`, `LoadWindow`, `GeneratorHealth`, `InjectionResult` (étendu) | platform-domain | ⬜ PLANNED | PDR-058 | ISSUE-215 |
 | `Reduction.MERGE`, `MetricCatalog` (métriques injection) | platform-domain | ⬜ PLANNED | PDR-058 | ISSUE-216 |

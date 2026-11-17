@@ -2,7 +2,7 @@
 
 **PDR** : PDR-056
 **Module** : `platform-domain`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-207, ISSUE-208
 **Estime** : S (< 1h)

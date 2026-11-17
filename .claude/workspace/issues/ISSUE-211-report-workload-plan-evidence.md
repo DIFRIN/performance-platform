@@ -4,7 +4,7 @@
 **Module** : `platform-reporting`
 **Statut** : WAITING
 **Priorité** : P2
-**Bloquée par** : ISSUE-208
+**Bloquée par** : ISSUE-208, ISSUE-245
 **Estime** : M (1-3h)
 
 ---
@@ -31,7 +31,7 @@ performance/platform-reporting/src/test/java/com/performance/platform/reporting/
 ## Règles Spécifiques
 
 - Données lues depuis les sorties du `TaskResult` ; absentes (ancien run) => « plan non enregistré ».
-- Si le modèle de rapport (`platform-report-api`) doit changer, BLOQUER et demander une Issue dédiée (un module par Issue).
+- Les champs `workloadPlan` / `workloadPlanHash` de `InjectionReportEntry` sont fournis par ISSUE-245 : les renseigner dans `DefaultReportEngine.buildInjectionEntries` à partir des sorties `workloadPlan` / `workloadPlanHash` du `TaskResult`.
 
 ## Critères de Done
 

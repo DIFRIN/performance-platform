@@ -5,7 +5,7 @@
 **Statut** : WAITING
 **Specs de référence** : `docs/knowledge/adr/` ADR-064
 **Dépend de** : PDR-055
-**Issues** : ISSUE-204, ISSUE-205, ISSUE-206, ISSUE-207, ISSUE-208, ISSUE-209, ISSUE-210, ISSUE-211
+**Issues** : ISSUE-204, ISSUE-205, ISSUE-206, ISSUE-207, ISSUE-208, ISSUE-209, ISSUE-210, ISSUE-211, ISSUE-245
 
 ---
 
@@ -87,7 +87,8 @@ public interface WorkloadPlanTranslator {
 | ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | `platform-injection-gatling` | P1 | L | ISSUE-206, ISSUE-201 |
 | ISSUE-209 | Modèle fermé (utilisateurs concurrents) | `platform-injection-gatling` | P2 | M | ISSUE-208 |
 | ISSUE-210 | Suppression de LoadModel et LoadModelType | `platform-domain` | P2 | S | ISSUE-207, ISSUE-208 |
-| ISSUE-211 | Plan résolu et hash dans le rapport | `platform-reporting` | P2 | M | ISSUE-208 |
+| ISSUE-211 | Plan résolu et hash dans le rapport | `platform-reporting` | P2 | M | ISSUE-208, ISSUE-245 |
+| ISSUE-245 | InjectionReportEntry : plan résolu et hash | `platform-report-api` | P1 | S | ISSUE-208 |
 
 ---
 
