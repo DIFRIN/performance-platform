@@ -5,5 +5,6 @@ public enum AssertionFamily {
     PERFORMANCE_THRESHOLDS,
     DIRECT,
     PANEL,
-    CUSTOM
+    CUSTOM,
+    INTEGRITY
 }

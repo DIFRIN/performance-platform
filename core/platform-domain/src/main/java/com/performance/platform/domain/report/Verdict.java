@@ -6,5 +6,6 @@ package com.performance.platform.domain.report;
 public enum Verdict {
     SUCCESS,
     WARNING,
-    FAILED
+    FAILED,
+    INVALID
 }

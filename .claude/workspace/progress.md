@@ -231,9 +231,9 @@
 | ISSUE-216 | Reduction.MERGE et catalogue de métriques | DONE | PDR-058 | ISSUE-215 |
 | ISSUE-217 | Parser : histogramme et fenêtres | DONE | PDR-058 | ISSUE-215, ISSUE-208 |
 | ISSUE-218 | Santé du générateur et sorties du résultat | DONE | PDR-058 | ISSUE-217, ISSUE-202 |
-| ISSUE-219 | Réduction multi-agents : MERGE et fenêtre commune | APPROVED | PDR-058 | ISSUE-216, ISSUE-218 |
-| ISSUE-220 | Rapport : charge planifiée, réalisée et distributions | WAITING | PDR-058 | ISSUE-219 |
-| ISSUE-221 | Verdict INVALID et famille INTEGRITY | WAITING | PDR-059 | ISSUE-216 |
+| ISSUE-219 | Réduction multi-agents : MERGE et fenêtre commune | DONE | PDR-058 | ISSUE-216, ISSUE-218 |
+| ISSUE-220 | Rapport : charge planifiée, réalisée et distributions | WAITING | PDR-058 | ISSUE-219, ISSUE-246 |
+| ISSUE-221 | Verdict INVALID et famille INTEGRITY | APPROVED | PDR-059 | ISSUE-216 |
 | ISSUE-222 | Bloc integrity : validation scénario | WAITING | PDR-059 | ISSUE-221, ISSUE-207 |
 | ISSUE-223 | IntegrityCheckFactory | WAITING | PDR-059 | ISSUE-221, ISSUE-219 |
 | ISSUE-224 | Verdict INVALID dans le moteur de rapport | WAITING | PDR-059 | ISSUE-223 |
@@ -258,6 +258,7 @@
 | ISSUE-243 | Métriques d'assertion par requête | WAITING | PDR-061 | ISSUE-242, ISSUE-219 |
 | ISSUE-244 | Documentation, exemples et acceptation des ADR | WAITING | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
 | ISSUE-245 | InjectionReportEntry : plan résolu et hash | WAITING | PDR-056 | ISSUE-208 |
+| ISSUE-246 | CampaignReport : mesures d'injection (forme neutre) | WAITING | PDR-058 | ISSUE-219 |
 
 ## PDRs
 | ID | Name | Module | Status | Issues | Deps |
@@ -319,7 +320,7 @@
 | PDR-055 | Injection Worker Process | platform-injection-gatling | WAITING | ISSUE-197..203 | — |
 | PDR-056 | Composable Workload Plan | platform-domain | WAITING | ISSUE-204..211, ISSUE-245 | PDR-055 |
 | PDR-057 | Injection Capabilities & Guardrails | platform-plugin-api | WAITING | ISSUE-212..214 | PDR-056 |
-| PDR-058 | Mergeable Injection Measurements | platform-domain | WAITING | ISSUE-215..220 | PDR-056, PDR-055 |
+| PDR-058 | Mergeable Injection Measurements | platform-domain | WAITING | ISSUE-215..220, ISSUE-246 | PDR-056, PDR-055 |
 | PDR-059 | Experiment Integrity & INVALID Verdict | platform-domain | WAITING | ISSUE-221..226 | PDR-058 |
 | PDR-060 | Grant Share & Global Load Scope | platform-domain | WAITING | ISSUE-227..237 | PDR-056, PDR-057, PDR-055 |
 | PDR-061 | Weighted Request Mix | platform-injection-gatling | WAITING | ISSUE-238..243 | PDR-056, PDR-058 |
@@ -1212,3 +1213,12 @@
 | 2026-11-17 | ISSUE-219 | IN_REVIEW → CHANGES_REQUESTED | InjectionAggregator est créé et testé (5 tests OK avec -am) mais n'est branché nulle part : aucun usage hors tests. L'Issue exige de modifier le point de réduction existant (usages de Reduction, ex. TemporalCheckEvaluator / SeriesObservation.reduce, Reduction.MERGE) et de ne pas créer un second pipeline. À faire : 1) brancher la branche MERGE dans le pipeline d'assertion existant pour qu'il appelle InjectionAggregator (ou y déléguer), avec un test d'intégration au niveau de ce point ; 2) garantir qu'un seul agent donne des résultats identiques à l'existant (test de non-régression) ; 3) cocher les critères de Done dans le fichier Issue. |
 | 2026-11-17 | ISSUE-219 | CHANGES_REQUESTED → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-219 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-219 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-220 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-220 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-220 | IN_REVIEW → CHANGES_REQUESTED | InjectionMeasurementsSection (+ test OK) n'est branchée nulle part : aucune référence hors de sa classe/test (DefaultReportEngine / PerformanceAssessmentBuilder inchangés, git diff vide sur le code existant). Donc le modèle de rapport n'expose rien et les preuves (histogramme fusionné + fenêtres, ADR-051) ne sont pas stockées avec le rapport. À faire : appeler InjectionMeasurementsSection.build(injectionResults) dans DefaultReportEngine (ou le builder) et attacher/persister la section + preuves, dans platform-reporting uniquement ; si un changement dans platform-report-api/renderers est requis, BLOQUER et demander une Issue dédiée. Ajouter un test d'intégration engine->section. Note : tests OK avec 'mvn test -pl :platform-reporting -am' (le jar platform-domain installé dans ~/.m2 est obsolète sans -am : NoClassDefFoundError LatencyHistogram). |
+| 2026-11-17 | ISSUE-220 | CHANGES_REQUESTED → IN_PROGRESS (resume) | issue-start.sh |
+| 2026-11-17 | ISSUE-220 | IN_PROGRESS → BLOCKED | CampaignReport/PerformanceAssessment (platform-report-api) n'ont aucun champ pour porter InjectionMeasurementsSection ni les preuves ADR-051. Brancher la section dans DefaultReportEngine exige de modifier platform-report-api (nouveau composant du record + renderers/JSON). Issue dédiée requise : ajouter InjectionMeasurementsSection (ou son contrat) au modèle report-api, puis ISSUE-220 appellera build(injectionResults) dans DefaultReportEngine. |
+| 2026-11-17 | ISSUE-221 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-221 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-221 | IN_REVIEW → APPROVED | Reviewer approved |
