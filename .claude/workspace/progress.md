@@ -256,7 +256,7 @@
 | ISSUE-241 | Mix pondéré Kafka | DONE | PDR-061 | ISSUE-240 |
 | ISSUE-242 | Résultats par nom de requête | DONE | PDR-061 | ISSUE-240, ISSUE-218, ISSUE-238 |
 | ISSUE-243 | Métriques d'assertion par requête | DONE | PDR-061 | ISSUE-242, ISSUE-219 |
-| ISSUE-244 | Documentation, exemples et acceptation des ADR | APPROVED | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
+| ISSUE-244 | Documentation, exemples et acceptation des ADR | DONE | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
 | ISSUE-245 | InjectionReportEntry : plan résolu et hash | DONE | PDR-056 | ISSUE-208 |
 | ISSUE-246 | CampaignReport : mesures d'injection (forme neutre) | DONE | PDR-058 | ISSUE-219 |
 
@@ -1312,3 +1312,4 @@
 | 2026-11-17 | ISSUE-244 | IN_REVIEW → CHANGES_REQUESTED | Critère de Done non rempli: ADR-064..070 toujours PROPOSED. Docs/exemple 04-global-workload.yaml OK, check-adr-hygiene OK. Obtenir la décision @architect (acceptation + éventuelle MAJ CLAUDE.md §8/§10), la consigner dans decisions-log.md, passer les 7 ADR en ACCEPTED (date), puis relancer issue-finish. |
 | 2026-11-17 | ISSUE-244 | CHANGES_REQUESTED → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-244 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-244 | APPROVED → DONE | issue-next.sh |
