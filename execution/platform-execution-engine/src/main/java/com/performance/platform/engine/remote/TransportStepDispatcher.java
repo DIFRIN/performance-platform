@@ -242,8 +242,16 @@ public class TransportStepDispatcher implements StepDispatcher {
         Duration claimWindow = stepTimeout != null && stepTimeout.compareTo(config.claimWindow()) < 0
                 ? stepTimeout
                 : config.claimWindow();
+        long windowStart = System.nanoTime();
         try {
             tracker.claimSignal(messageId).get(claimWindow.toMillis(), TimeUnit.MILLISECONDS);
+            if (fanOut == FanOut.ALL) {
+                // Le premier claim ne ferme pas la fenetre : les autres agents peuvent encore claimer (ADR-067).
+                long remainingMs = claimWindow.toMillis() - (System.nanoTime() - windowStart) / 1_000_000;
+                if (remainingMs > 0) {
+                    Thread.sleep(remainingMs);
+                }
+            }
         } catch (TimeoutException e) {
             if (fanOut == FanOut.ALL) {
                 // Fenetre ecoulee sans claim : settlement a vide, controle minAgents plus bas.

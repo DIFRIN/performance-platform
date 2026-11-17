@@ -352,7 +352,8 @@ public class ExecutionEngine implements ExecuteScenarioUseCase, SubmitScenarioUs
         // sont publies ici.
         publishSkippedOutcomes(executionId, result.outcomes());
 
-        boolean missingOutcomes = !cancelled.get() && result.outcomes().size() != steps.size();
+        boolean missingOutcomes = !cancelled.get() && result.outcomes().stream()
+                .map(DagPhaseExecutor.StepOutcome::taskId).distinct().count() != steps.size();
         boolean anyFailedInPhase = missingOutcomes || checkFailedInPhase(result.updatedContext(), steps);
         PhaseStatus phaseStatus = anyFailedInPhase ? PhaseStatus.FAILED : PhaseStatus.COMPLETED;
 
