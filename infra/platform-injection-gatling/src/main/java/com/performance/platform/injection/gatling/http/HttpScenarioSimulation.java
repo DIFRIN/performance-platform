@@ -47,17 +47,17 @@ public class HttpScenarioSimulation extends Simulation {
             throw new IllegalStateException("No injection steps registered for simulation '" + simId + "'");
         }
 
-        RequestMix mix = HttpRequestSpecHolder.getMix(simId);
+        RequestMix<HttpRequestSpec> mix = HttpRequestSpecHolder.getMix(simId);
         ShareCounter counter = ShareCounter.fromSystemProperties();
         RandomGenerator random = RequestMix.generator(seed());
 
         // One Gatling request per declared name; the drawn name selects which one is sent.
-        List<WeightedRequest> all = mix.requests();
+        List<WeightedRequest<HttpRequestSpec>> all = mix.requests();
         ChainBuilder selected = all.size() == 1 ? exec(buildRequest(all.get(0))) : doSwitch(MIX_KEY).on(
                 all.stream().map(wr -> (io.gatling.javaapi.core.Choice.WithKey) onCase(wr.name())
                         .then(exec(buildRequest(wr)))).toList());
         ChainBuilder iteration = exec(s -> {
-            WeightedRequest wr = all.size() == 1 ? all.get(0) : mix.pick(random);
+            WeightedRequest<HttpRequestSpec> wr = all.size() == 1 ? all.get(0) : mix.pick(random);
             return s.set(MIX_KEY, wr.name())
                     .set(SESSION_KEY, HttpRequestRenderer.render(wr.spec(), counter.next()));
         }).exec(selected);
@@ -80,7 +80,7 @@ public class HttpScenarioSimulation extends Simulation {
         return seed == null ? 0L : Long.parseUnsignedLong(seed);
     }
 
-    private static HttpRequestActionBuilder buildRequest(WeightedRequest wr) {
+    private static HttpRequestActionBuilder buildRequest(WeightedRequest<HttpRequestSpec> wr) {
         HttpRequestSpec spec = wr.spec();
         HttpRequestActionBuilder request = http(wr.name())
                 .httpRequest(spec.method(), s -> rendered(s).target());

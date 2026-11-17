@@ -2,8 +2,8 @@ package com.performance.platform.injection.gatling.http;
 
 import java.util.Objects;
 
-/** One named request of a {@link RequestMix} with its (non-normalized) positive weight. */
-public record WeightedRequest(String name, double weight, HttpRequestSpec spec) {
+/** One named request (HTTP spec or Kafka message template) of a {@link RequestMix} with its (non-normalized) positive weight. */
+public record WeightedRequest<S>(String name, double weight, S spec) {
 
     public WeightedRequest {
         Objects.requireNonNull(name, "name must not be null");

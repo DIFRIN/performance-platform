@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.random.RandomGenerator;
 
 /** Weighted set of requests; each virtual user sends exactly one, drawn by weight (ADR-070). */
-public record RequestMix(List<WeightedRequest> requests) {
+public record RequestMix<S>(List<WeightedRequest<S>> requests) {
 
     public static final String DEFAULT_NAME = "default";
 
@@ -21,8 +21,8 @@ public record RequestMix(List<WeightedRequest> requests) {
     }
 
     /** Current single-request form = mix of one request named {@code default}. */
-    public static RequestMix single(HttpRequestSpec spec) {
-        return new RequestMix(List.of(new WeightedRequest(DEFAULT_NAME, 1.0, spec)));
+    public static <S> RequestMix<S> single(S spec) {
+        return new RequestMix<>(List.of(new WeightedRequest<>(DEFAULT_NAME, 1.0, spec)));
     }
 
     public double normalizedWeight(String name) {
@@ -33,11 +33,11 @@ public record RequestMix(List<WeightedRequest> requests) {
     }
 
     /** Deterministic draw: same generator state => same request. */
-    public WeightedRequest pick(RandomGenerator random) {
+    public WeightedRequest<S> pick(RandomGenerator random) {
         double total = requests.stream().mapToDouble(WeightedRequest::weight).sum();
         double x = random.nextDouble() * total;
         double acc = 0;
-        for (WeightedRequest r : requests) {
+        for (WeightedRequest<S> r : requests) {
             acc += r.weight();
             if (x < acc) return r;
         }

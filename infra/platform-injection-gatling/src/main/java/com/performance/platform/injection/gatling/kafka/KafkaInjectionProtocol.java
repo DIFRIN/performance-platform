@@ -4,6 +4,8 @@ import com.performance.platform.plugin.resource.MessageChannel;
 import com.performance.platform.plugin.resource.MessageChannelFactory;
 import com.performance.platform.injection.gatling.protocol.InjectionProtocol;
 import com.performance.platform.injection.gatling.protocol.PreparedInjection;
+import com.performance.platform.injection.gatling.http.RequestMix;
+import com.performance.platform.injection.gatling.http.WeightedRequest;
 import com.performance.platform.plugin.template.MessageTemplate;
 
 import org.springframework.beans.factory.ObjectProvider;
@@ -11,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -51,9 +56,9 @@ public class KafkaInjectionProtocol implements InjectionProtocol {
         if (factory == null) {
             throw new IllegalArgumentException("No Kafka cluster configured (platform.kafka-clusters)");
         }
-        MessageTemplate template = MessageTemplate.of(executionId, stepId, params);
+        RequestMix<MessageTemplate> mix = mix(executionId, stepId, params);
         MessageChannel publisher = factory.open(cluster, topic, PUBLISH_TIMEOUT);
-        KafkaInjectionSpecHolder.set(stepId, new KafkaInjectionSpec(stepId, template, publisher));
+        KafkaInjectionSpecHolder.set(stepId, new KafkaInjectionSpec(stepId, mix, publisher));
         return new PreparedInjection() {
             @Override
             public String simulationClass() {
@@ -66,6 +71,33 @@ public class KafkaInjectionProtocol implements InjectionProtocol {
                 publisher.close();
             }
         };
+    }
+
+    /** {@code requests} list = weighted mix of templates; absent = single template (mix of one). */
+    private static RequestMix<MessageTemplate> mix(String executionId, String stepId, Map<String, Object> params) {
+        Object raw = params.get("requests");
+        if (raw == null) {
+            return RequestMix.single(MessageTemplate.of(executionId, stepId, params));
+        }
+        if (!(raw instanceof List<?> list) || list.isEmpty()) {
+            throw new IllegalArgumentException("Parameter 'requests' must be a non-empty list");
+        }
+        List<WeightedRequest<MessageTemplate>> requests = new ArrayList<>();
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> entry)) {
+                throw new IllegalArgumentException("Each 'requests' entry must be a mapping");
+            }
+            Map<String, Object> values = new LinkedHashMap<>();
+            entry.forEach((k, v) -> values.put(String.valueOf(k), v));
+            Object name = values.get("name");
+            Object weight = values.get("weight");
+            if (name == null || !(weight instanceof Number w)) {
+                throw new IllegalArgumentException("Each 'requests' entry needs 'name' and numeric 'weight'");
+            }
+            requests.add(new WeightedRequest<>(name.toString(), w.doubleValue(),
+                    MessageTemplate.of(executionId, stepId, values)));
+        }
+        return new RequestMix<>(requests);
     }
 
     private static String text(Map<String, Object> params, String key) {

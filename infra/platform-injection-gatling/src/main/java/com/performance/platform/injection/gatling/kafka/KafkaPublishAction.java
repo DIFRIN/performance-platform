@@ -12,6 +12,11 @@ import io.gatling.core.session.Session;
 import io.gatling.core.stats.StatsEngine;
 import scala.Option;
 
+import com.performance.platform.injection.gatling.http.RequestMix;
+import com.performance.platform.injection.gatling.http.WeightedRequest;
+
+import java.util.random.RandomGenerator;
+
 import com.performance.platform.injection.gatling.load.ShareCounter;
 
 /**
@@ -26,15 +31,17 @@ final class KafkaPublishAction implements Action {
     private final String requestName;
     private final KafkaInjectionSpec spec;
     private final ShareCounter counter;
+    private final RandomGenerator random;
     private final StatsEngine stats;
     private final Clock clock;
     private final Action next;
 
-    KafkaPublishAction(String requestName, KafkaInjectionSpec spec, ShareCounter counter, StatsEngine stats,
+    KafkaPublishAction(String requestName, KafkaInjectionSpec spec, ShareCounter counter, RandomGenerator random, StatsEngine stats,
                        Clock clock, Action next) {
         this.requestName = requestName;
         this.spec = spec;
         this.counter = counter;
+        this.random = random;
         this.stats = stats;
         this.clock = clock;
         this.next = next;
@@ -48,26 +55,31 @@ final class KafkaPublishAction implements Action {
     @Override
     public void execute(Session session) {
         long start = clock.nowMillis();
+        // One arrival = one message, drawn by weight; a single default template keeps the step id as name.
+        var mix = spec.mix();
+        WeightedRequest<MessageTemplate> chosen = mix.requests().size() == 1 ? mix.requests().get(0) : mix.pick(random);
+        String name = mix.requests().size() == 1 && RequestMix.DEFAULT_NAME.equals(chosen.name())
+                ? requestName : chosen.name();
         MessageTemplate.Rendered message;
         try {
-            message = spec.template().render(counter.next());
+            message = chosen.spec().render(counter.next());
         } catch (RuntimeException e) {
-            complete(session, start, false, "render: " + e.getMessage());
+            complete(session, start, name, false, "render: " + e.getMessage());
             return;
         }
         try {
             spec.publisher().publish(message.key(), message.value(), message.headers())
-                    .whenComplete((ok, error) -> complete(session, start, error == null,
+                    .whenComplete((ok, error) -> complete(session, start, name, error == null,
                             error == null ? null : rootMessage(error)));
         } catch (RuntimeException e) {
-            complete(session, start, false, "publish: " + e.getMessage());
+            complete(session, start, name, false, "publish: " + e.getMessage());
         }
     }
 
-    private void complete(Session session, long start, boolean success, String error) {
+    private void complete(Session session, long start, String name, boolean success, String error) {
         long end = clock.nowMillis();
         Status status = success ? OK$.MODULE$ : KO$.MODULE$;
-        stats.logResponse(session.scenario(), session.groups(), requestName, start, end, status,
+        stats.logResponse(session.scenario(), session.groups(), name, start, end, status,
                 Option.empty(), Option.apply(error));
         Session updated = session.logGroupRequestTimings(start, end);
         next.$bang(success ? updated : updated.markAsFailed());

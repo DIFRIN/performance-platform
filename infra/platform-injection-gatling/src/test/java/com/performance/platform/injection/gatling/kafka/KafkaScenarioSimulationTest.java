@@ -141,6 +141,38 @@ class KafkaScenarioSimulationTest {
     }
 
     @Test
+    @DisplayName("publishes a weighted mix of templates, reproducibly, one message per user")
+    void shouldPublishWeightedMix() throws Exception {
+        var factory = new FakeFactory();
+        String simId = "kafka-mix-" + System.nanoTime();
+        Map<String, Object> params = Map.of("cluster", "iot", "topic", "device-events", "requests", List.of(
+                Map.of("name", "create", "weight", 9, "payload", Map.of("op", "create")),
+                Map.of("name", "delete", "weight", 1, "payload", Map.of("op", "delete"))));
+        PreparedInjection prepared = new KafkaInjectionProtocol(factory).prepare("exec-1", simId, params);
+        try {
+            var config = new GatlingRunConfig(prepared.simulationClass(), TestPlans.hold(200, 1),
+                    Map.of(), resultsDir, simId, Duration.ofSeconds(60));
+            new DefaultGatlingRunner(new DefaultWorkloadPlanTranslator()).run(config);
+        } finally {
+            prepared.close();
+        }
+        long creates = factory.sent.stream().filter(s -> s.value().contains("create")).count();
+        long deletes = factory.sent.stream().filter(s -> s.value().contains("delete")).count();
+        assertThat(creates + deletes).isEqualTo(factory.sent.size()).isGreaterThan(0);
+        assertThat(creates / (double) factory.sent.size()).isCloseTo(0.9, org.assertj.core.data.Offset.offset(0.07));
+        assertThat(deletes).isPositive();
+    }
+
+    @Test
+    @DisplayName("rejects invalid requests block at prepare time")
+    void shouldRejectInvalidMix() {
+        var factory = new FakeFactory();
+        assertThatThrownBy(() -> new KafkaInjectionProtocol(factory).prepare("e", "s",
+                Map.of("cluster", "c", "topic", "t", "requests", List.of(Map.of("name", "a")))))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("weight");
+    }
+
+    @Test
     @DisplayName("rejects missing cluster/topic, missing factory and bad templates at prepare time")
     void shouldValidateAtPrepare() {
         var factory = new FakeFactory();
