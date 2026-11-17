@@ -242,10 +242,10 @@
 | ISSUE-227 | GrantShare, signal de grant et contexte | DONE | PDR-060 | - |
 | ISSUE-228 | StepDefinition : minAgents et onAgentLoss | DONE | PDR-060 | - |
 | ISSUE-229 | Parsing YAML : scope, minAgents, onAgentLoss | DONE | PDR-060 | ISSUE-228, ISSUE-206 |
-| ISSUE-230 | Validation : scope global et minAgents | APPROVED | PDR-060 | ISSUE-228, ISSUE-207 |
+| ISSUE-230 | Validation : scope global et minAgents | DONE | PDR-060 | ISSUE-228, ISSUE-207 |
 | ISSUE-231 | Codec transport du GrantShare | DONE | PDR-060 | ISSUE-227 |
 | ISSUE-232 | Moteur : calcul des parts et minAgents | DONE | PDR-060 | ISSUE-227, ISSUE-228 |
-| ISSUE-233 | Moteur : politique de perte d'agent | WAITING | PDR-060 | ISSUE-232, ISSUE-202 |
+| ISSUE-233 | Moteur : politique de perte d'agent | APPROVED | PDR-060 | ISSUE-232, ISSUE-202 |
 | ISSUE-234 | Agent : propagation du share à l'executor | DONE | PDR-060 | ISSUE-227, ISSUE-231 |
 | ISSUE-235 | Mise à l'échelle du plan par le share | WAITING | PDR-060 | ISSUE-234, ISSUE-213 |
 | ISSUE-236 | Compteurs partitionnés, graines et garde-fou sur la part | WAITING | PDR-060 | ISSUE-235, ISSUE-214 |
@@ -1250,3 +1250,7 @@
 | 2026-11-17 | ISSUE-230 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-230 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-230 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-230 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-233 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-233 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-233 | IN_REVIEW → APPROVED | Reviewer approved |

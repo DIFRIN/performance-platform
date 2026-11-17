@@ -108,6 +108,16 @@ public interface TaskCorrelationTracker {
     void onAgentLost(AgentId agentId);
 
     /**
+     * Futur complete des qu'un agent accorde est perdu avant d'avoir repondu.
+     */
+    CompletableFuture<Void> lossSignal(MessageId messageId);
+
+    /**
+     * Agents accordes perdus avant d'avoir repondu.
+     */
+    Set<AgentId> lostFor(MessageId messageId);
+
+    /**
      * Libere l'etat de correlation d'un messageId.
      */
     void release(MessageId messageId);

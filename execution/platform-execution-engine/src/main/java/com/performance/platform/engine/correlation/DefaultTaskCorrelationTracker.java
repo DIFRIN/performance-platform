@@ -229,10 +229,24 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
                     log.warn("action=grant_failed_agent_lost messageId={} agentId={} taskId={}",
                             entry.getKey().value(), agentId.value(),
                             state.taskId != null ? state.taskId.value() : "?");
+                    state.lostAgents.add(agentId);
+                    state.lossSignal.complete(null);
                     signalCompletion(state);
                 }
             }
         }
+    }
+
+    @Override
+    public CompletableFuture<Void> lossSignal(MessageId messageId) {
+        CorrelationState state = states.get(messageId);
+        return state == null ? new CompletableFuture<>() : state.lossSignal;
+    }
+
+    @Override
+    public Set<AgentId> lostFor(MessageId messageId) {
+        CorrelationState state = states.get(messageId);
+        return state == null ? Set.of() : Set.copyOf(state.lostAgents);
     }
 
     @Override
@@ -287,6 +301,8 @@ public class DefaultTaskCorrelationTracker implements TaskCorrelationTracker {
         final Set<AgentId> completedAgents = ConcurrentHashMap.newKeySet();
         final Set<AgentId> failedAgents = ConcurrentHashMap.newKeySet();
         final ConcurrentHashMap<AgentId, TaskResult> results = new ConcurrentHashMap<>();
+        final Set<AgentId> lostAgents = ConcurrentHashMap.newKeySet();
+        final CompletableFuture<Void> lossSignal = new CompletableFuture<>();
         final List<AgentId> completionOrder = new CopyOnWriteArrayList<>();
         final CompletableFuture<Void> claimSignal = new CompletableFuture<>();
         final CompletableFuture<Void> completionSignal = new CompletableFuture<>();

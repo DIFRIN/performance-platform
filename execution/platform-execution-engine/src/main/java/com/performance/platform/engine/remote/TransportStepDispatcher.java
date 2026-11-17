@@ -12,6 +12,7 @@ import com.performance.platform.domain.execution.RetryPolicy;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.MessageId;
 import com.performance.platform.domain.id.SignalId;
+import com.performance.platform.domain.scenario.AgentLossPolicy;
 import com.performance.platform.domain.scenario.FanOut;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -115,8 +117,13 @@ public class TransportStepDispatcher implements StepDispatcher {
                     return failure(stepDef, grantFailure);
                 }
                 Duration timeout = stepDef.timeout() != null ? stepDef.timeout() : config.taskExecutionTimeout();
-                if (!awaitCompletion(messageId, timeout)) {
+                boolean abortOnLoss = stepDef.fanOut() == FanOut.ALL
+                        && stepDef.onAgentLoss() == AgentLossPolicy.ABORT;
+                if (!awaitCompletion(messageId, timeout, abortOnLoss)) {
                     return failure(stepDef, "Task execution timed out");
+                }
+                if (abortOnLoss && !tracker.lostFor(messageId).isEmpty()) {
+                    return agentLostFailure(stepDef, messageId);
                 }
                 return results(stepDef, messageId);
             } finally {
@@ -283,8 +290,21 @@ public class TransportStepDispatcher implements StepDispatcher {
     }
 
     private boolean awaitCompletion(MessageId messageId, Duration timeout) throws InterruptedException {
+        return awaitCompletion(messageId, timeout, false);
+    }
+
+    /**
+     * @param abortOnLoss si vrai, la perte d'un agent accorde interrompt l'attente
+     *                    (politique ABORT) ; le cleanup existant libere les agents restants
+     */
+    private boolean awaitCompletion(MessageId messageId, Duration timeout, boolean abortOnLoss)
+            throws InterruptedException {
         try {
-            tracker.completionSignal(messageId).get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            CompletableFuture<Void> signal = abortOnLoss
+                    ? CompletableFuture.anyOf(tracker.completionSignal(messageId), tracker.lossSignal(messageId))
+                            .thenApply(o -> (Void) null)
+                    : tracker.completionSignal(messageId);
+            signal.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
             return true;
         } catch (TimeoutException e) {
             log.warn("action=completion_timeout messageId={} timeoutMs={}",
@@ -301,11 +321,36 @@ public class TransportStepDispatcher implements StepDispatcher {
         if (results.isEmpty()) {
             return failure(stepDef, "No results received");
         }
+        boolean all = stepDef.fanOut() == FanOut.ALL;
+        int granted = tracker.grantedFor(messageId).size();
+        int reporting = results.size();
         var ordered = new ArrayList<StepDispatchResult>(results.size());
         results.keySet().stream()
                 .sorted(java.util.Comparator.comparing(AgentId::value))
-                .forEach(agentId -> ordered.add(new StepDispatchResult(agentId, results.get(agentId))));
+                .forEach(agentId -> ordered.add(new StepDispatchResult(agentId,
+                        all ? withCounters(results.get(agentId), granted, reporting) : results.get(agentId))));
         return ordered;
+    }
+
+    private static TaskResult withCounters(TaskResult r, int granted, int reporting) {
+        var outputs = new HashMap<String, Object>(r.outputs() == null ? Map.of() : r.outputs());
+        outputs.put("grantedAgents", granted);
+        outputs.put("reportingAgents", reporting);
+        return new TaskResult(r.taskId(), r.taskName(), r.status(), r.duration(), Map.copyOf(outputs),
+                r.errorMessage(), r.cause(), r.completedAt());
+    }
+
+    private List<StepDispatchResult> agentLostFailure(StepDefinition stepDef, MessageId messageId) {
+        String lost = tracker.lostFor(messageId).stream().map(AgentId::value).sorted()
+                .collect(java.util.stream.Collectors.joining(","));
+        log.warn("action=step_aborted_agent_lost taskId={} messageId={} lost={}",
+                stepDef.id().value(), messageId.value(), lost);
+        String message = "agent_lost: " + lost + " (onAgentLoss=abort)";
+        // cause non nulle : echec non transitoire, pas de retry.
+        return List.of(new StepDispatchResult(
+                AgentId.of(TransportStepDispatcher.class.getSimpleName()),
+                TaskResult.failed(stepDef.id(), stepDef.taskName(), Duration.ZERO, message,
+                        new IllegalStateException(message))));
     }
 
     private static List<StepDispatchResult> failure(StepDefinition stepDef, String message) {

@@ -103,4 +103,52 @@ class TransportStepDispatcherTest {
         verify(signalChannel, atLeast(2)).broadcastSignal(captor.capture());
         captor.getAllValues().forEach(s -> assertTrue(!((TaskGrantSignal) s).granted()));
     }
+
+    private List<StepDispatchResult> runWithLoss(AgentLossPolicy policy) {
+        var def = new StepDefinition(TaskId.of("inj"), "gatling", Phase.INJECTION, Map.of(), List.of(),
+                null, null, null, FanOut.ALL, List.of(), Duration.ofSeconds(5), null, 1, policy);
+        var dispatcher = new TransportStepDispatcher(taskChannel, signalChannel,
+                mock(com.performance.platform.engine.availability.AgentAvailabilityChecker.class),
+                tracker, new ExecutionConfig(null, null, Duration.ofMillis(300)),
+                mock(ApplicationEventPublisher.class));
+        org.mockito.Mockito.doAnswer(inv -> {
+            var req = (com.performance.platform.transport.message.TaskExecutionRequest) inv.getArgument(0);
+            for (int i = 1; i <= 3; i++) {
+                tracker.onClaimed(req.id(), AgentId.of("agent-" + i));
+            }
+            new Thread(() -> {
+                try { Thread.sleep(450); } catch (InterruptedException ignored) { }
+                tracker.onAgentLost(AgentId.of("agent-3"));
+                try { Thread.sleep(100); } catch (InterruptedException ignored) { }
+                for (String a : List.of("agent-1", "agent-2")) {
+                    tracker.onCompleted(req.id(), AgentId.of(a), TaskResult.success(
+                            TaskId.of("inj"), "gatling", Duration.ZERO, Map.of()));
+                }
+            }).start();
+            return null;
+        }).when(taskChannel).dispatchTask(any());
+        var ctx = ExecutionContext.initial(ExecutionId.generate(), ScenarioId.of("s"));
+        return dispatcher.dispatch(new ExecutionStep(def, List.of(), 0, java.util.Set.of()), ctx);
+    }
+
+    @Test
+    @DisplayName("ABORT : perte d'un agent sur trois => etape FAILED")
+    void abortOnAgentLoss() {
+        var results = runWithLoss(AgentLossPolicy.ABORT);
+        assertEquals(1, results.size());
+        assertEquals(TaskStatus.FAILED, results.getFirst().result().status());
+        assertTrue(results.getFirst().result().errorMessage().contains("agent_lost: agent-3"));
+    }
+
+    @Test
+    @DisplayName("CONTINUE : perte d'un agent sur trois => 2 resultats, compteurs 3/2")
+    void continueOnAgentLoss() {
+        var results = runWithLoss(AgentLossPolicy.CONTINUE);
+        assertEquals(2, results.size());
+        for (var r : results) {
+            assertEquals(TaskStatus.SUCCESS, r.result().status());
+            assertEquals(3, r.result().outputs().get("grantedAgents"));
+            assertEquals(2, r.result().outputs().get("reportingAgents"));
+        }
+    }
 }

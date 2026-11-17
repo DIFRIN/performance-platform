@@ -1,11 +1,11 @@
-# ISSUE-230: Validation : scope global et minAgents
+# ISSUE-233: Moteur : politique de perte d'agent
 **Status**: APPROVED
 **PDR**: PDR-060
-**Module**: platform-scenario-dsl
-**Started**: 2026-11-17T14:58+01:00
-**IssueFile**: issues/ISSUE-230-validate-global-scope.md
+**Module**: platform-execution-engine
+**Started**: 2026-11-17T15:02+01:00
+**IssueFile**: issues/ISSUE-233-engine-agent-loss-policy.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-230-validate-global-scope.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-233-engine-agent-loss-policy.md`
 
 ## Reviewer Feedback
 (None yet)
