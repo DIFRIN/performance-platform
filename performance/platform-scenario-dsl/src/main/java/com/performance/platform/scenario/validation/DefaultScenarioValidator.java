@@ -29,6 +29,7 @@ public class DefaultScenarioValidator implements ScenarioValidator {
         Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]{0,99}$");
 
     private final WorkloadPlanValidator workloadPlanValidator = new WorkloadPlanValidator();
+    private final IntegrityBlockValidator integrityBlockValidator = new IntegrityBlockValidator();
 
     private static final String GATLING_TASK_NAME = "gatling";
     private static final String METADATA_OWNER_KEY = "owner";
@@ -128,6 +129,9 @@ public class DefaultScenarioValidator implements ScenarioValidator {
 
         // --- Validation du plan de charge (INJECTION gatling, ADR-064) ---
         validateWorkloadPlans(scenario, errors);
+
+        // --- Validation du bloc integrity (ADR-069) ---
+        validateIntegrityBlocks(scenario, errors);
 
         return new ValidationResult(errors.isEmpty(), errors, warnings);
     }
@@ -501,6 +505,13 @@ public class DefaultScenarioValidator implements ScenarioValidator {
             if (step.id() == null || step.phase() != Phase.INJECTION) continue;
             if (!GATLING_TASK_NAME.equals(step.taskName())) continue;
             errors.addAll(workloadPlanValidator.validate(step.id().value(), step.parameters()));
+        }
+    }
+
+    private void validateIntegrityBlocks(ScenarioDefinition scenario, List<ValidationError> errors) {
+        for (StepDefinition step : scenario.steps()) {
+            if (step == null || step.id() == null) continue;
+            errors.addAll(integrityBlockValidator.validate(step.id().value(), step.phase(), step.parameters()));
         }
     }
 }
