@@ -157,9 +157,11 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher, 
             var runDir = new RunDirectory(spec.runDirectory());
             boolean byPlatform = stopped.get();
             Path results = runDir.resultsDirectory();
+            var health = com.performance.platform.domain.injection.GeneratorHealth.unknown();
             if (Files.isRegularFile(runDir.resultFile())) {
                 try {
                     var written = runDir.readResult();
+                    health = written.generatorHealth();
                     if (written.resultsDirectory() != null) results = written.resultsDirectory();
                 } catch (IOException | RuntimeException e) {
                     log.warn("action=worker_result_unreadable simulationId={} error={}",
@@ -169,7 +171,7 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher, 
             log.info("action=worker_exited simulationId={} exitCode={} stoppedByPlatform={}",
                     spec.simulationId(), exit, byPlatform);
             return new WorkerOutcome(exit, exit == 0 && !byPlatform, byPlatform, results,
-                    runDir.resultFile(), tail(logFile, LOG_TAIL_LINES));
+                    runDir.resultFile(), tail(logFile, LOG_TAIL_LINES), health);
         }
 
         @Override

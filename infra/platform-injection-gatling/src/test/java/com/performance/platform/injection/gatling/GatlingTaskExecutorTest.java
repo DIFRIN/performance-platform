@@ -180,6 +180,71 @@ class GatlingTaskExecutorTest {
         assertThat(result.errorMessage()).contains("amqp").contains("http");
     }
 
+    // ── Sorties santé / histogramme / fenêtres ───────────────────────────────
+
+    private static InjectionResult richResult() {
+        var start = java.time.Instant.parse("2026-01-01T10:00:00Z");
+        var end = start.plusSeconds(30);
+        var histogram = new com.performance.platform.domain.injection.LatencyHistogram(
+                Map.of(20L, 900L, 40L, 50L), Map.of(100L, 50L));
+        var windows = java.util.List.of(
+                new com.performance.platform.domain.injection.LoadWindow(
+                        start, Duration.ofSeconds(1), 100, 98, 100, 2, true));
+        return new InjectionResult(TASK_ID, "com.example.Simulation", Duration.ofSeconds(30),
+                1000, 950, 50, 5.0, 33.3, 22, 38, 66, 75, 120, 450, 5, 45.2,
+                RESULTS_DIR, Map.of(), start, end, histogram, windows,
+                com.performance.platform.domain.injection.GeneratorHealth.unknown(), true);
+    }
+
+    @Test
+    @DisplayName("should expose histogram, windows, instants, health, complete and arrivalKnown outputs")
+    void shouldExposeResultOutputs() {
+        stubParser.returns(richResult());
+
+        TaskResult result = httpExecutor().execute(CONTEXT, createStep(httpParams(Map.of(
+                "baseUrl", "http://localhost:9", "path", "/x"))));
+
+        assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+        var out = result.outputs();
+        assertThat(out).containsKeys(GatlingTaskExecutor.OUTPUT_HISTOGRAM, GatlingTaskExecutor.OUTPUT_WINDOWS,
+                GatlingTaskExecutor.OUTPUT_STARTED_AT, GatlingTaskExecutor.OUTPUT_ENDED_AT,
+                GatlingTaskExecutor.OUTPUT_GENERATOR_HEALTH, GatlingTaskExecutor.OUTPUT_COMPLETE,
+                GatlingTaskExecutor.OUTPUT_ARRIVAL_KNOWN);
+        assertThat((Map<?, ?>) out.get(GatlingTaskExecutor.OUTPUT_HISTOGRAM)).isNotEmpty();
+        assertThat((java.util.List<?>) out.get(GatlingTaskExecutor.OUTPUT_WINDOWS)).hasSize(1);
+        assertThat(out.get(GatlingTaskExecutor.OUTPUT_STARTED_AT)).isEqualTo("2026-01-01T10:00:00Z");
+        assertThat(out.get(GatlingTaskExecutor.OUTPUT_ENDED_AT)).isEqualTo("2026-01-01T10:00:30Z");
+        assertThat(out.get(GatlingTaskExecutor.OUTPUT_GENERATOR_HEALTH)).isInstanceOf(Map.class);
+        assertThat(out.get(GatlingTaskExecutor.OUTPUT_COMPLETE)).isEqualTo(true);
+        assertThat(out.get(GatlingTaskExecutor.OUTPUT_ARRIVAL_KNOWN)).isEqualTo(true);
+        var window = (Map<?, ?>) ((java.util.List<?>) out.get(GatlingTaskExecutor.OUTPUT_WINDOWS)).get(0);
+        assertThat(((Number) window.get("plannedArrivals")).longValue()).isEqualTo(100L);
+    }
+
+    @Test
+    @DisplayName("should zero planned arrivals and flag arrivalKnown=false for an opaque simulation")
+    void shouldFlagOpaqueSimulationArrivalsUnknown() {
+        stubParser.returns(richResult());
+
+        TaskResult result = executor.execute(CONTEXT, createStep(validParams()));
+
+        assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+        var out = result.outputs();
+        assertThat(out.get(GatlingTaskExecutor.OUTPUT_ARRIVAL_KNOWN)).isEqualTo(false);
+        var window = (Map<?, ?>) ((java.util.List<?>) out.get(GatlingTaskExecutor.OUTPUT_WINDOWS)).get(0);
+        assertThat(((Number) window.get("plannedArrivals")).longValue()).isZero();
+        assertThat(((Number) window.get("requests")).longValue()).isEqualTo(100L);
+        var injection = (InjectionResult) out.get(GatlingTaskExecutor.OUTPUT_RESULT);
+        assertThat(injection.windows().get(0).plannedArrivals()).isZero();
+    }
+
+    @Test
+    @DisplayName("should declare histogram and windows capabilities")
+    void shouldDeclareHistogramAndWindowsCapabilities() {
+        assertThat(executor.injectionCapabilities().providesHistogram()).isTrue();
+        assertThat(executor.injectionCapabilities().providesWindows()).isTrue();
+    }
+
     // ── Contract ──────────────────────────────────────────────────────────────
 
     @Test

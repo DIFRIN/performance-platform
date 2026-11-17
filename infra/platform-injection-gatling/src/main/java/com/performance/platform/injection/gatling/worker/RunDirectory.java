@@ -2,6 +2,7 @@ package com.performance.platform.injection.gatling.worker;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.performance.platform.domain.injection.GeneratorHealth;
 import com.performance.platform.domain.injection.WorkloadPlan;
 import com.performance.platform.domain.injection.WorkloadPlanCodec;
 
@@ -93,7 +94,18 @@ public final class RunDirectory {
         r.put("stoppedByPlatform", outcome.stoppedByPlatform());
         r.put("resultsDirectory", outcome.resultsDirectory() == null ? null : outcome.resultsDirectory().toString());
         r.put("logTail", outcome.logTail());
+        r.put("generatorHealth", outcome.generatorHealth().toMap());
         MAPPER.writerWithDefaultPrettyPrinter().writeValue(resultFile().toFile(), r);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static GeneratorHealth readHealth(Object raw) {
+        if (!(raw instanceof Map<?, ?> m)) return GeneratorHealth.unknown();
+        try {
+            return GeneratorHealth.fromMap((Map<String, Object>) m);
+        } catch (RuntimeException e) {
+            return GeneratorHealth.unknown();
+        }
     }
 
     public WorkerOutcome readResult() throws IOException {
@@ -102,6 +114,6 @@ public final class RunDirectory {
         return new WorkerOutcome(((Number) r.get("exitCode")).intValue(),
                 Boolean.TRUE.equals(r.get("completed")), Boolean.TRUE.equals(r.get("stoppedByPlatform")),
                 rd == null ? null : Path.of(rd.toString()), resultFile(),
-                r.get("logTail") == null ? "" : r.get("logTail").toString());
+                r.get("logTail") == null ? "" : r.get("logTail").toString(), readHealth(r.get("generatorHealth")));
     }
 }

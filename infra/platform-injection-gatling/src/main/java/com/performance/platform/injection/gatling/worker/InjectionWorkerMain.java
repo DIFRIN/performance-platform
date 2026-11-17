@@ -44,17 +44,18 @@ public final class InjectionWorkerMain {
             System.err.println("action=worker_invalid_run_directory runDirectory=" + args[0] + " error=" + e.getMessage());
             return EXIT_INVALID_RUN_DIRECTORY;
         }
+        var probe = GeneratorHealthProbe.start();
         try {
             Path results = runner.run(new GatlingRunConfig(spec.simulationClass(), plan,
                     spec.systemProperties(), dir.resultsDirectory(), spec.simulationId(), spec.timeout()));
-            dir.writeResult(new WorkerOutcome(EXIT_OK, true, false, results, dir.resultFile(), ""));
+            dir.writeResult(new WorkerOutcome(EXIT_OK, true, false, results, dir.resultFile(), "", probe.stop()));
             return EXIT_OK;
         } catch (Throwable t) {
             System.err.println("action=worker_simulation_failed simulationId=" + spec.simulationId()
                     + " error=" + t.getMessage());
             try {
                 dir.writeResult(new WorkerOutcome(EXIT_SIMULATION_FAILED, false, false, null,
-                        dir.resultFile(), String.valueOf(t.getMessage())));
+                        dir.resultFile(), String.valueOf(t.getMessage()), probe.stop()));
             } catch (Exception ignored) {
                 // le code de sortie reste porteur de l'echec
             }

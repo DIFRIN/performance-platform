@@ -4,7 +4,9 @@ import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.injection.WorkloadPlan;
 import com.performance.platform.domain.injection.WorkloadPlanCodec;
+import com.performance.platform.domain.injection.GeneratorHealth;
 import com.performance.platform.domain.injection.InjectionResult;
+import com.performance.platform.domain.injection.LoadWindow;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
 import com.performance.platform.injection.gatling.http.HttpInjectionProtocol;
@@ -114,13 +116,20 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     static final String OUTPUT_WORKLOAD_PLAN = "workloadPlan";
     static final String OUTPUT_WORKLOAD_PLAN_HASH = "workloadPlanHash";
     static final String OUTPUT_OPAQUE = "opaque";
+    static final String OUTPUT_HISTOGRAM = "histogram";
+    static final String OUTPUT_WINDOWS = "windows";
+    static final String OUTPUT_STARTED_AT = "startedAt";
+    static final String OUTPUT_ENDED_AT = "endedAt";
+    static final String OUTPUT_GENERATOR_HEALTH = "generatorHealth";
+    static final String OUTPUT_COMPLETE = "complete";
+    static final String OUTPUT_ARRIVAL_KNOWN = "arrivalKnown";
 
     private static final InjectionCapabilities CAPABILITIES = new InjectionCapabilities(
             Set.of(ArrivalModel.OPEN, ArrivalModel.CLOSED),
             Set.of("ramp", "hold", "burst", "pause"),
             ProtocolSupportInfo.SUPPORTED_PROTOCOLS.stream()
                     .map(String::toLowerCase).collect(Collectors.toUnmodifiableSet()),
-            false, true, false, false);
+            false, true, true, true);
 
     // ── Defaults ──────────────────────────────────────────────────────────────
 
@@ -318,7 +327,9 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                     executionKey, gatlingResultsDir, step.id().value());
 
             // 4. Parser les resultats
-            InjectionResult injectionResult = parser.parse(gatlingResultsDir, step.id());
+            InjectionResult parsed = parser.parse(gatlingResultsDir, step.id());
+            boolean arrivalKnown = !customSimulation;
+            InjectionResult injectionResult = withHealthAndWindows(parsed, outcome.generatorHealth(), arrivalKnown);
             var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
 
             log.info("action=gatling_execute_success executionId={} totalRequests={} "
@@ -328,11 +339,19 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                     formatDuration(elapsed), step.id().value());
 
             // 5. Assembler le TaskResult
-            return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
-                    Map.of(OUTPUT_RESULT, injectionResult,
-                            OUTPUT_WORKLOAD_PLAN, WorkloadPlanCodec.toMap(plan),
-                            OUTPUT_WORKLOAD_PLAN_HASH, WorkloadPlanCodec.hash(plan),
-                            OUTPUT_OPAQUE, customSimulation));
+            var outputs = new LinkedHashMap<String, Object>();
+            outputs.put(OUTPUT_RESULT, injectionResult);
+            outputs.put(OUTPUT_WORKLOAD_PLAN, WorkloadPlanCodec.toMap(plan));
+            outputs.put(OUTPUT_WORKLOAD_PLAN_HASH, WorkloadPlanCodec.hash(plan));
+            outputs.put(OUTPUT_OPAQUE, customSimulation);
+            outputs.put(OUTPUT_HISTOGRAM, injectionResult.histogram().toMap());
+            outputs.put(OUTPUT_WINDOWS, injectionResult.windows().stream().map(LoadWindow::toMap).toList());
+            outputs.put(OUTPUT_STARTED_AT, injectionResult.startedAt().toString());
+            outputs.put(OUTPUT_ENDED_AT, injectionResult.endedAt().toString());
+            outputs.put(OUTPUT_GENERATOR_HEALTH, injectionResult.generatorHealth().toMap());
+            outputs.put(OUTPUT_COMPLETE, injectionResult.complete());
+            outputs.put(OUTPUT_ARRIVAL_KNOWN, arrivalKnown);
+            return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.copyOf(outputs));
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -437,6 +456,19 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     private TaskResult fail(StepDefinition step, long startNanos, String message) {
         var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
         return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed, message, null);
+    }
+
+    /** Copie du resultat avec la sante du worker ; simulation opaque : arrivees planifiees inconnues (0). */
+    private static InjectionResult withHealthAndWindows(InjectionResult r, GeneratorHealth health,
+                                                        boolean arrivalKnown) {
+        List<LoadWindow> windows = arrivalKnown ? r.windows() : r.windows().stream()
+                .map(w -> new LoadWindow(w.start(), w.length(), 0, w.startedUsers(), w.requests(),
+                        w.failures(), w.measured()))
+                .toList();
+        return new InjectionResult(r.taskId(), r.simulationClass(), r.duration(), r.totalRequests(),
+                r.successfulRequests(), r.failedRequests(), r.errorRate(), r.throughput(), r.p50Ms(), r.p75Ms(),
+                r.p90Ms(), r.p95Ms(), r.p99Ms(), r.maxMs(), r.minMs(), r.meanMs(), r.gatlingReportDirectory(),
+                r.rawStats(), r.startedAt(), r.endedAt(), r.histogram(), windows, health, r.complete());
     }
 
     private static String formatDuration(Duration d) {
