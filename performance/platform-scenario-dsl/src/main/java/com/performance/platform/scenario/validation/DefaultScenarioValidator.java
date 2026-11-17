@@ -1,8 +1,6 @@
 package com.performance.platform.scenario.validation;
 
 import com.performance.platform.domain.assertion.MetricCatalog;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
@@ -29,6 +27,8 @@ public class DefaultScenarioValidator implements ScenarioValidator {
 
     private static final Pattern ID_PATTERN =
         Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9-]{0,99}$");
+
+    private final WorkloadPlanValidator workloadPlanValidator = new WorkloadPlanValidator();
 
     private static final String GATLING_TASK_NAME = "gatling";
     private static final String METADATA_OWNER_KEY = "owner";
@@ -126,8 +126,8 @@ public class DefaultScenarioValidator implements ScenarioValidator {
         // --- Validation requiredContexts (utilise la transitivite du DAG) ---
         validateRequiredContexts(scenario, dependsOnMap, dagResult.hasCycle(), stepsById, errors);
 
-        // --- Validation loadModel references (INJECTION gatling) ---
-        validateLoadModelReferences(scenario, errors);
+        // --- Validation du plan de charge (INJECTION gatling, ADR-064) ---
+        validateWorkloadPlans(scenario, errors);
 
         return new ValidationResult(errors.isEmpty(), errors, warnings);
     }
@@ -496,39 +496,11 @@ public class DefaultScenarioValidator implements ScenarioValidator {
         return false;
     }
 
-    private void validateLoadModelReferences(ScenarioDefinition scenario, List<ValidationError> errors) {
+    private void validateWorkloadPlans(ScenarioDefinition scenario, List<ValidationError> errors) {
         for (StepDefinition step : scenario.steps()) {
-            if (step.id() == null) continue;
-            if (step.phase() != Phase.INJECTION) continue;
+            if (step.id() == null || step.phase() != Phase.INJECTION) continue;
             if (!GATLING_TASK_NAME.equals(step.taskName())) continue;
-
-            Object loadModelRef = step.parameters().get("loadModel");
-            if (loadModelRef == null || loadModelRef instanceof LoadModel) continue;
-            if (loadModelRef instanceof Map<?, ?> inline) {
-                validateInlineLoadModel(inline, step, errors);
-            } else {
-                errors.add(new ValidationError("step.loadModel",
-                    "Step '" + step.id().value()
-                        + "' loadModel must be an inline mapping (named load models were removed)",
-                    "steps"));
-            }
-        }
-    }
-
-    private void validateInlineLoadModel(Map<?, ?> inline, StepDefinition step, List<ValidationError> errors) {
-        Object type = inline.get("type");
-        boolean validType = type instanceof LoadModelType
-            || type instanceof String name
-                && java.util.Arrays.stream(LoadModelType.values())
-                    .anyMatch(value -> value.name().equalsIgnoreCase(name));
-        if (!validType) {
-            errors.add(new ValidationError("step.loadModel.type",
-                "Step '" + step.id().value() + "' inline loadModel requires a valid type", "steps"));
-        }
-        Object parameters = inline.get("parameters");
-        if (parameters != null && !(parameters instanceof Map<?, ?>)) {
-            errors.add(new ValidationError("step.loadModel.parameters",
-                "Step '" + step.id().value() + "' inline loadModel parameters must be a mapping", "steps"));
+            errors.addAll(workloadPlanValidator.validate(step.id().value(), step.parameters()));
         }
     }
 }

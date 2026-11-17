@@ -2,7 +2,7 @@
 
 **PDR** : PDR-056
 **Module** : `platform-scenario-yaml`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : ISSUE-205
 **Estime** : M (1-3h)

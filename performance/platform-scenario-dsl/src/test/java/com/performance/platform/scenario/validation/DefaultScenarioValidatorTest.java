@@ -103,7 +103,7 @@ class DefaultScenarioValidatorTest {
                     ),
                     new StepDefinition(
                         TaskId.of("customer-api-load"), "gatling", Phase.INJECTION,
-                        Map.of("simulation", "com.example.CustomerApiSimulation", "loadModel", Map.of("type", "RAMP")),
+                        Map.of("simulation", "com.example.CustomerApiSimulation", "loadModel", Map.of("type", "RAMP", "parameters", Map.of("from", 1, "to", 10, "durationSeconds", 60))),
                         List.of(TaskId.of("purge-db")), List.of("purge-db"),
                         Duration.ofMinutes(20), null
                     )
@@ -138,7 +138,7 @@ class DefaultScenarioValidatorTest {
                     ),
                     new StepDefinition(
                         TaskId.of("customer-api-load"), "gatling", Phase.INJECTION,
-                        Map.of("simulation", "com.example.CustomerApiSimulation", "loadModel", Map.of("type", "RAMP")),
+                        Map.of("simulation", "com.example.CustomerApiSimulation", "loadModel", Map.of("type", "RAMP", "parameters", Map.of("from", 1, "to", 10, "durationSeconds", 60))),
                         List.of(TaskId.of("purge-db")), List.of("purge-db"),
                         Duration.ofMinutes(20), null
                     )
@@ -168,7 +168,7 @@ class DefaultScenarioValidatorTest {
                     ),
                     new StepDefinition(
                         TaskId.of("customer-api-load"), "gatling", Phase.INJECTION,
-                        Map.of("loadModel", Map.of("type", "RAMP")),
+                        Map.of("loadModel", Map.of("type", "RAMP", "parameters", Map.of("from", 1, "to", 10, "durationSeconds", 60))),
                         List.of(TaskId.of("purge-db")), List.of("purge-db"),
                         Duration.ofMinutes(20), null
                     )
@@ -618,7 +618,7 @@ class DefaultScenarioValidatorTest {
             for (Object model : List.of(
                     Map.of("type", "RAMP", "parameters",
                         Map.of("from", 1, "to", 1000, "durationSeconds", 60)),
-                    new LoadModel(LoadModelType.CONSTANT, Map.of()))) {
+                    Map.of("type", "CONSTANT", "parameters", Map.of("usersPerSec", 5, "durationSeconds", 30)))) {
                 var scenario = scenario(
                     ScenarioId.of("test"), "Test", "1.0.0",
                     List.of(), Map.of(), null,
@@ -645,7 +645,7 @@ class DefaultScenarioValidatorTest {
 
                 var result = validator.validate(scenario);
                 assertFalse(result.valid(), "Should reject loadModel: " + model);
-                assertTrue(result.errors().stream().anyMatch(error -> error.field().startsWith("step.loadModel")));
+                assertTrue(result.errors().stream().anyMatch(error -> error.field().startsWith("step.workload")));
             }
         }
 
@@ -657,7 +657,7 @@ class DefaultScenarioValidatorTest {
                 List.of(), Map.of(), null,
                 List.of(
                     stepWithParams("A", "gatling", Phase.INJECTION,
-                        Map.of("loadModel", Map.of("type", "CONSTANT", "parameters", Map.of())))
+                        Map.of("loadModel", Map.of("type", "CONSTANT", "parameters", Map.of("usersPerSec", 5, "durationSeconds", 30))))
                 ),
                 Map.of()
             );
@@ -976,7 +976,7 @@ class DefaultScenarioValidatorTest {
                     step("setup", "database", Phase.PREPARATION),
                     new StepDefinition(
                         TaskId.of("load"), "gatling", Phase.INJECTION,
-                        Map.of("loadModel", Map.of("type", "CONSTANT", "parameters", Map.of("usersPerSecond", 50))),
+                        Map.of("loadModel", Map.of("type", "CONSTANT", "parameters", Map.of("usersPerSec", 50, "durationSeconds", 60))),
                         List.of(TaskId.of("setup")), List.of("setup"),
                         Duration.ofMinutes(5), null
                     ),
