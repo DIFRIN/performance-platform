@@ -108,4 +108,48 @@ class WorkloadPlanValidatorTest {
             "loadModel", Map.of("type", "RAMP")));
         assertRule(errors, "exclusive");
     }
+
+    private static com.performance.platform.domain.scenario.StepDefinition step(
+            Map<String, Object> params, com.performance.platform.domain.scenario.FanOut fanOut,
+            int minAgents, com.performance.platform.domain.scenario.AgentLossPolicy loss) {
+        return new com.performance.platform.domain.scenario.StepDefinition(
+            new com.performance.platform.domain.id.TaskId("load"), "gatling",
+            com.performance.platform.domain.scenario.Phase.INJECTION, params, null, null, null, null,
+            fanOut, null, null, null, minAgents, loss);
+    }
+
+    private static Map<String, Object> globalParams() {
+        return Map.of("workload", Map.of("model", "open", "scope", "global", "stages", List.of(hold(true))));
+    }
+
+    @Test
+    void globalScopeRequiresFanOutAll() {
+        var one = com.performance.platform.domain.scenario.FanOut.ONE;
+        var all = com.performance.platform.domain.scenario.FanOut.ALL;
+        var abort = com.performance.platform.domain.scenario.AgentLossPolicy.ABORT;
+        var errors = validator.validateStep(step(globalParams(), one, 1, abort));
+        assertEquals(1, errors.size(), errors.toString());
+        assertEquals("step.workload.scope", errors.get(0).field());
+        assertTrue(validator.validateStep(step(globalParams(), all, 1, abort)).isEmpty());
+    }
+
+    @Test
+    void minAgentsAboveOneRequiresFanOutAll() {
+        var one = com.performance.platform.domain.scenario.FanOut.ONE;
+        var all = com.performance.platform.domain.scenario.FanOut.ALL;
+        var abort = com.performance.platform.domain.scenario.AgentLossPolicy.ABORT;
+        var errors = validator.validateStep(step(Map.of(), one, 2, abort));
+        assertEquals("step.minAgents", errors.get(0).field());
+        assertTrue(validator.validateStep(step(Map.of(), all, 2, abort)).isEmpty());
+    }
+
+    @Test
+    void onAgentLossRequiresFanOutAll() {
+        var one = com.performance.platform.domain.scenario.FanOut.ONE;
+        var all = com.performance.platform.domain.scenario.FanOut.ALL;
+        var cont = com.performance.platform.domain.scenario.AgentLossPolicy.CONTINUE;
+        var errors = validator.validateStep(step(Map.of(), one, 1, cont));
+        assertEquals("step.onAgentLoss", errors.get(0).field());
+        assertTrue(validator.validateStep(step(Map.of(), all, 1, cont)).isEmpty());
+    }
 }

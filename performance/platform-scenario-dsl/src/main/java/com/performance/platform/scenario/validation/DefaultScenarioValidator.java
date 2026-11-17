@@ -512,6 +512,7 @@ public class DefaultScenarioValidator implements ScenarioValidator {
         for (StepDefinition step : scenario.steps()) {
             if (step == null || step.id() == null) continue;
             errors.addAll(integrityBlockValidator.validate(step.id().value(), step.phase(), step.parameters()));
+            errors.addAll(workloadPlanValidator.validateStep(step));
         }
     }
 }

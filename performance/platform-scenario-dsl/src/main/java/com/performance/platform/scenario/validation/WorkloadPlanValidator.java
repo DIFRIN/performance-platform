@@ -4,7 +4,11 @@ import com.performance.platform.domain.injection.ArrivalModel;
 import com.performance.platform.domain.injection.Burst;
 import com.performance.platform.domain.injection.LoadPresets;
 import com.performance.platform.domain.injection.WorkloadPlan;
+import com.performance.platform.domain.injection.LoadScope;
 import com.performance.platform.domain.injection.WorkloadPlanCodec;
+import com.performance.platform.domain.scenario.AgentLossPolicy;
+import com.performance.platform.domain.scenario.FanOut;
+import com.performance.platform.domain.scenario.StepDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +47,35 @@ public final class WorkloadPlanValidator {
             validateLoadModel(stepId, parameters.get(LOAD_MODEL_KEY), errors);
         }
         return errors;
+    }
+
+    /** Regles de scope et de multi-agents d'un step (ADR-067) : exigent {@code fanOut: all}. */
+    public List<ValidationError> validateStep(StepDefinition step) {
+        List<ValidationError> errors = new ArrayList<>();
+        if (step == null || step.id() == null || step.fanOut() == FanOut.ALL) {
+            return errors;
+        }
+        String stepId = step.id().value();
+        if (declaresGlobalScope(step.parameters())) {
+            errors.add(error("scope", stepId, "scope 'global' requires fanOut: all"));
+        }
+        if (step.minAgents() > 1) {
+            errors.add(new ValidationError("step.minAgents",
+                "Step '" + stepId + "': minAgents > 1 requires fanOut: all", "steps"));
+        }
+        if (step.onAgentLoss() != AgentLossPolicy.ABORT) {
+            errors.add(new ValidationError("step.onAgentLoss",
+                "Step '" + stepId + "': onAgentLoss requires fanOut: all", "steps"));
+        }
+        return errors;
+    }
+
+    private static boolean declaresGlobalScope(Map<String, Object> parameters) {
+        if (parameters == null || !(parameters.get(WorkloadPlanCodec.PARAM_KEY) instanceof Map<?, ?> map)) {
+            return false;
+        }
+        Object scope = map.get("scope");
+        return scope != null && LoadScope.GLOBAL.name().equalsIgnoreCase(scope.toString());
     }
 
     @SuppressWarnings("unchecked")
