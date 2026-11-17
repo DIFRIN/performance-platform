@@ -2,7 +2,7 @@
 
 **PDR** : PDR-055
 **Module** : `platform-injection-gatling`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : ISSUE-197
 **Estime** : S (< 1h)
