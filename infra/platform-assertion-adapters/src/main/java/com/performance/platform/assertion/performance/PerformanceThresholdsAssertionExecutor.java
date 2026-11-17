@@ -3,6 +3,7 @@ package com.performance.platform.assertion.performance;
 import com.performance.platform.assertion.AssertionSummaryFactory;
 import com.performance.platform.assertion.AbstractCheckAssertionExecutor;
 import com.performance.platform.assertion.CheckEvaluator;
+import com.performance.platform.assertion.InjectionAggregator;
 import com.performance.platform.assertion.OperatorResolver;
 import com.performance.platform.assertion.ParameterBinder;
 import com.performance.platform.domain.assertion.AssertionFamily;
@@ -77,7 +78,7 @@ public class PerformanceThresholdsAssertionExecutor extends AbstractCheckAsserti
         Rollup rollup = rollup(params);
 
         try {
-            InjectionResult injection = resolveInjection(context, params);
+            Contributions injection = resolveInjection(context, params);
             if (injection == null) {
                 log.warn("action=assertion_no_injection executionId={} assertionId={}",
                         context.executionId().value(), step.id().value());
@@ -90,7 +91,7 @@ public class PerformanceThresholdsAssertionExecutor extends AbstractCheckAsserti
                         Duration.between(start, Instant.now()), Instant.now());
             }
 
-            TimeWindow window = window(injection);
+            TimeWindow window = window(injection.first());
             checks.addAll(latencyChecks(injection, params, window));
             checks.addAll(errorRateChecks(injection, params, window));
             checks.addAll(throughputChecks(injection, params, window));
@@ -115,7 +116,7 @@ public class PerformanceThresholdsAssertionExecutor extends AbstractCheckAsserti
 
     // ------------------------------------------------------------------
 
-    private List<Check> latencyChecks(InjectionResult injection, ParameterBinder params,
+    private List<Check> latencyChecks(Contributions injection, ParameterBinder params,
                                       TimeWindow window) {
         Map<String, Object> latency = params.optionalMap("latency");
         if (latency.isEmpty()) {
@@ -135,32 +136,31 @@ public class PerformanceThresholdsAssertionExecutor extends AbstractCheckAsserti
         return checks;
     }
 
-    private Check latencyCheck(InjectionResult injection, TimeWindow window, String metric,
+    private Check latencyCheck(Contributions injection, TimeWindow window, String metric,
                                double threshold, Severity severity, double tolerance) {
         MetricDefinition definition = MetricCatalog.require(metric);
         com.performance.platform.domain.assertion.MetricId id = definition.id();
         if (Double.isNaN(threshold)) {
             return Check.skipped(id, metric + " not constrained", "No threshold provided");
         }
-        Observation observation = observation(injection, definition, window);
         Expectation expectation = new Expectation(AssertionOperator.LTE, threshold, tolerance, severity);
-        return CheckEvaluator.evaluate(observation, expectation, id,
+        return evaluate(injection, definition, window, expectation,
                 metric + " <= " + trim(threshold) + " " + definition.unit());
     }
 
-    private List<Check> errorRateChecks(InjectionResult injection, ParameterBinder params,
+    private List<Check> errorRateChecks(Contributions injection, ParameterBinder params,
                                         TimeWindow window) {
         return singleThreshold(injection, params, window, "errorRate", "injection.error.rate",
                 AssertionOperator.LTE, "max", Severity.CRITICAL);
     }
 
-    private List<Check> throughputChecks(InjectionResult injection, ParameterBinder params,
+    private List<Check> throughputChecks(Contributions injection, ParameterBinder params,
                                          TimeWindow window) {
         return singleThreshold(injection, params, window, "throughput", "injection.throughput",
                 AssertionOperator.GTE, "min", Severity.WARNING);
     }
 
-    private List<Check> singleThreshold(InjectionResult injection, ParameterBinder params,
+    private List<Check> singleThreshold(Contributions injection, ParameterBinder params,
                                         TimeWindow window, String blockKey, String metric,
                                         AssertionOperator defaultOperator, String boundKey,
                                         Severity defaultSeverity) {
@@ -179,14 +179,13 @@ public class PerformanceThresholdsAssertionExecutor extends AbstractCheckAsserti
             return List.of(Check.skipped(definition.id(), metric + " not constrained",
                     "No '" + boundKey + "' provided"));
         }
-        Observation observation = observation(injection, definition, window);
         Expectation expectation = new Expectation(defaultOperator, threshold, tolerance, severity);
-        return List.of(CheckEvaluator.evaluate(observation, expectation, definition.id(),
+        return List.of(evaluate(injection, definition, window, expectation,
                 metric + " " + OperatorResolver.symbol(defaultOperator) + " " + trim(threshold)
                         + " " + definition.unit()));
     }
 
-    private List<Check> explicitChecks(InjectionResult injection, ParameterBinder params,
+    private List<Check> explicitChecks(Contributions injection, ParameterBinder params,
                                        TimeWindow window) {
         List<Map<String, Object>> declared = params.optionalListOfMaps("checks");
         if (declared.isEmpty()) {
@@ -206,9 +205,8 @@ public class PerformanceThresholdsAssertionExecutor extends AbstractCheckAsserti
                 throw new IllegalArgumentException(
                         "EQ on metric '" + metricName + "' requires a positive tolerance");
             }
-            Observation observation = observation(injection, definition, window);
             Expectation expectation = new Expectation(operator, threshold, tolerance, severity);
-            checks.add(CheckEvaluator.evaluate(observation, expectation, definition.id(),
+            checks.add(evaluate(injection, definition, window, expectation,
                     check.optionalString("intent", metricName + " "
                             + OperatorResolver.symbol(operator) + " " + trim(threshold))));
         }
@@ -217,14 +215,40 @@ public class PerformanceThresholdsAssertionExecutor extends AbstractCheckAsserti
 
     // ------------------------------------------------------------------
 
-    private static Observation observation(InjectionResult injection, MetricDefinition definition,
-                                           TimeWindow window) {
-        double value = valueOf(injection, definition.id().toString());
-        return new Observation(definition.id(), value, definition.unit(), window,
-                injection.taskId().value(),
-                QueryFingerprint.internal(injection.taskId().value(), window),
-                Map.of("simulationClass", injection.simulationClass(),
-                        "totalRequests", injection.totalRequests()));
+    /** Toutes les contributions d'agents pour une injection ; une seule => chemin historique. */
+    record Contributions(List<InjectionResult> all) {
+        Contributions {
+            all = List.copyOf(all);
+        }
+
+        InjectionResult first() {
+            return all.get(0);
+        }
+    }
+
+    private static Check evaluate(Contributions injection, MetricDefinition definition,
+                                  TimeWindow window, Expectation expectation, String label) {
+        InjectionResult first = injection.first();
+        double value;
+        if (injection.all().size() == 1) {
+            value = valueOf(first, definition.id().toString());
+        } else {
+            // Reduction multi-agents (ADR-068) : MERGE/SUM/MIN/... via InjectionAggregator
+            InjectionAggregator.Measure measure =
+                    InjectionAggregator.aggregate(injection.all()).get(definition.id().toString());
+            if (measure.isInconclusive()) {
+                return Check.inconclusive(definition.id(), label, measure.inconclusiveReason());
+            }
+            value = measure.value();
+        }
+        Observation observation = new Observation(definition.id(), value, definition.unit(), window,
+                first.taskId().value(),
+                QueryFingerprint.internal(first.taskId().value(), window),
+                Map.of("simulationClass", first.simulationClass(),
+                        "totalRequests", injection.all().stream()
+                                .mapToLong(InjectionResult::totalRequests).sum(),
+                        "agents", injection.all().size()));
+        return CheckEvaluator.evaluate(observation, expectation, definition.id(), label);
     }
 
     static double valueOf(InjectionResult result, String metric) {
@@ -259,16 +283,23 @@ public class PerformanceThresholdsAssertionExecutor extends AbstractCheckAsserti
         return Map.copyOf(parameters);
     }
 
-    private static InjectionResult resolveInjection(ExecutionContext context, ParameterBinder params) {
-        String refTaskId = params.optionalString("refTaskId", null);        if (refTaskId != null) {
-            return context.getFirstOutput(refTaskId, InjectionResult.OUTPUT_KEY, InjectionResult.class)
-                    .orElse(null);
+    private static Contributions resolveInjection(ExecutionContext context, ParameterBinder params) {
+        String refTaskId = params.optionalString("refTaskId", null);
+        List<InjectionResult> found = new ArrayList<>();
+        if (refTaskId != null) {
+            for (var result : context.getAll(refTaskId).values()) {
+                Object output = result.outputs().get(InjectionResult.OUTPUT_KEY);
+                if (output instanceof InjectionResult injection) {
+                    found.add(injection);
+                }
+            }
+            return found.isEmpty() ? null : new Contributions(found);
         }
         for (var taskEntry : context.store().entrySet()) {
             for (var agentEntry : taskEntry.getValue().entrySet()) {
                 for (Object output : agentEntry.getValue().outputs().values()) {
                     if (output instanceof InjectionResult injection) {
-                        return injection;
+                        return new Contributions(List.of(injection));
                     }
                 }
             }

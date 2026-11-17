@@ -16,7 +16,12 @@ import com.performance.platform.domain.task.TaskStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.performance.platform.domain.injection.GeneratorHealth;
+import com.performance.platform.domain.injection.LatencyHistogram;
+import com.performance.platform.domain.injection.LoadWindow;
+
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +106,51 @@ class PerformanceThresholdsAssertionExecutorTest {
                 .outputs().get(AssertionSummary.OUTPUT_KEY);
 
         assertThat(summary.checks()).anyMatch(check -> check.status() == AssertionStatus.ERROR);
+    }
+
+    @Test
+    @DisplayName("multi-agent: p95 comes from merged histogram, not from the worst agent")
+    void multiAgentUsesMerge() {
+        Instant t0 = Instant.parse("2026-01-01T00:00:00Z");
+        ExecutionContext ctx = ExecutionContext.initial(EXEC, SCENARIO);
+        LatencyHistogram all = LatencyHistogram.empty();
+        long[] lat = {10, 20, 300};
+        for (int i = 0; i < lat.length; i++) {
+            LatencyHistogram h = LatencyHistogram.empty();
+            for (int n = 0; n < 100; n++) {
+                h = h.with(lat[i], true);
+            }
+            all = all.merge(h);
+            InjectionResult r = new InjectionResult(LOAD, "Sim", Duration.ofSeconds(10), 100, 100, 0, 0.0,
+                    10.0, lat[i], lat[i], lat[i], lat[i], lat[i], lat[i], 1, 1.0, Path.of("."), Map.of(),
+                    t0, t0.plusSeconds(10), h,
+                    List.of(new LoadWindow(t0, Duration.ofSeconds(10), 100, 100, 100, 0, true)),
+                    new GeneratorHealth(0.5, Duration.ofMillis(10), 1), true);
+            ctx = ctx.with("load", "agent-" + i,
+                    TaskResult.success(LOAD, "gatling", Duration.ofSeconds(10),
+                            Map.of(InjectionResult.OUTPUT_KEY, r)));
+        }
+        var step = step("slo", Map.of("refTaskId", "load",
+                "checks", List.of(Map.of("metric", "injection.latency.p95", "operator", "EQ",
+                        "threshold", (double) all.quantile(0.95), "tolerance", 0.001),
+                        Map.of("metric", "injection.throughput", "operator", "EQ",
+                                "threshold", 30.0, "tolerance", 0.001))));
+        AssertionSummary summary = (AssertionSummary) executor.execute(ctx, step)
+                .outputs().get(AssertionSummary.OUTPUT_KEY);
+        assertThat(summary.checks()).hasSize(2);
+        assertThat(summary.checks()).allMatch(c -> c.status() == AssertionStatus.PASSED);
+    }
+
+    @Test
+    @DisplayName("single agent: results unchanged (non-regression)")
+    void singleAgentUnchanged() {
+        var step = step("slo", Map.of("refTaskId", "load",
+                "checks", List.of(Map.of("metric", "injection.latency.p95", "operator", "EQ",
+                        "threshold", 412, "tolerance", 0.001))));
+        AssertionSummary summary = (AssertionSummary) executor.execute(context(), step)
+                .outputs().get(AssertionSummary.OUTPUT_KEY);
+        assertThat(summary.checks()).singleElement()
+                .matches(c -> c.status() == AssertionStatus.PASSED);
     }
 
     // ------------------------------------------------------------------

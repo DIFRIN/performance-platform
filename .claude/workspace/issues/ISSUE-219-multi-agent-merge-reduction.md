@@ -2,7 +2,7 @@
 
 **PDR** : PDR-058
 **Module** : `platform-assertion`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1
 **Bloquée par** : ISSUE-216, ISSUE-218
 **Estime** : L (3-6h)
@@ -39,8 +39,8 @@ performance/platform-assertion/src/test/java/com/performance/platform/assertion/
 
 ## Critères de Done
 
-- [ ] `mvn test -pl :platform-assertion -q` → 0 erreur
-- [ ] p95 global de 3 agents = p95 de l'histogramme fusionné
-- [ ] Débit = somme des requêtes / durée de la fenêtre commune
+- [x] `mvn test -pl :platform-assertion -q` → 0 erreur
+- [x] p95 global de 3 agents = p95 de l'histogramme fusionné
+- [x] Débit = somme des requêtes / durée de la fenêtre commune
 - [ ] `.claude/workspace/progress.md` mis à jour : ISSUE-219 → DONE
 - [ ] `.claude/workspace/interfaces-registry.md` mis à jour si interfaces concernées

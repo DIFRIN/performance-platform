@@ -531,7 +531,7 @@
 | `PlanAdmission`, `InjectionLimits` | platform-injection-gatling | ⬜ PLANNED | PDR-057 | ISSUE-213, ISSUE-214 |
 | `LatencyHistogram`, `LoadWindow`, `GeneratorHealth`, `InjectionResult` (étendu) | platform-domain | ✅ DONE | PDR-058 | ISSUE-215 |
 | `Reduction.MERGE`, `MetricCatalog` (métriques injection) | platform-domain | ⬜ PLANNED | PDR-058 | ISSUE-216 |
-| `InjectionAggregator` | platform-assertion | ⬜ PLANNED | PDR-058 | ISSUE-219 |
+| `InjectionAggregator` | platform-assertion | ✅ DONE | PDR-058 | ISSUE-219 |
 | `Verdict.INVALID`, `AssertionFamily.INTEGRITY`, `IntegrityTolerances` | platform-domain | ⬜ PLANNED | PDR-059 | ISSUE-221 |
 | `IntegrityCheckFactory`, `IntegrityInput` | platform-assertion | ⬜ PLANNED | PDR-059 | ISSUE-223 |
 | `GrantShare`, `TaskGrantSignal.share`, `ExecutionContext.share()` | platform-domain | ⬜ PLANNED | PDR-060 | ISSUE-227 |
