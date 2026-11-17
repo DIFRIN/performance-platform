@@ -20,5 +20,7 @@ public record StepYamlDto(
     String fanOut,
     Map<String, Object> parameters,
     String timeout,
-    RetryPolicyYamlDto retryPolicy
+    RetryPolicyYamlDto retryPolicy,
+    Integer minAgents,
+    String onAgentLoss
 ) {}

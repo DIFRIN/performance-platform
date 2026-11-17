@@ -9,6 +9,7 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.injection.LoadPresets;
 import com.performance.platform.domain.injection.WorkloadPlan;
 import com.performance.platform.domain.injection.WorkloadPlanCodec;
+import com.performance.platform.domain.scenario.AgentLossPolicy;
 import com.performance.platform.domain.scenario.FanOut;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
@@ -53,7 +54,7 @@ public class YamlScenarioParser implements ScenarioParser {
             "taskAvailabilityTimeoutSeconds", "steps", "report");
     private static final Set<String> STEP_KEYS = Set.of(
             "id", "task", "phase", "description", "requiredContexts", "dependsOn",
-            "ref", "during", "drain", "fanOut",
+            "ref", "during", "drain", "fanOut", "minAgents", "onAgentLoss",
             "parameters", "timeout", "retryPolicy");
     private static final Set<String> RETRY_KEYS = Set.of(
             "maxAttempts", "initialDelay", "multiplier", "maxDelay", "retryableExceptions");
@@ -399,6 +400,26 @@ public class YamlScenarioParser implements ScenarioParser {
         // retryPolicy
         RetryPolicy retryPolicy = parseRetryPolicy(dto.retryPolicy(), prefix, errors);
 
+        // minAgents / onAgentLoss (ADR-067)
+        String label = prefix + (dto.id() != null ? " (id=" + dto.id() + ")" : "");
+        int minAgents = 1;
+        if (dto.minAgents() != null) {
+            if (dto.minAgents() < 1) {
+                errors.add(label + ".minAgents: must be >= 1 but was " + dto.minAgents());
+            } else {
+                minAgents = dto.minAgents();
+            }
+        }
+        AgentLossPolicy onAgentLoss = AgentLossPolicy.ABORT;
+        if (dto.onAgentLoss() != null && !dto.onAgentLoss().isBlank()) {
+            try {
+                onAgentLoss = AgentLossPolicy.valueOf(dto.onAgentLoss().trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                errors.add(label + ".onAgentLoss: invalid value '" + dto.onAgentLoss()
+                    + "'. Expected abort or continue");
+            }
+        }
+
         // Si l'id est manquant on ne peut pas construire
         if (taskId == null) {
             return null;
@@ -417,7 +438,9 @@ public class YamlScenarioParser implements ScenarioParser {
                 fanOut,
                 requiredContexts,
                 timeout,
-                retryPolicy
+                retryPolicy,
+                minAgents,
+                onAgentLoss
             );
         } catch (Exception e) {
             errors.add(prefix + ": " + e.getMessage());

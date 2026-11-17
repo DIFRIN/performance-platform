@@ -1,11 +1,11 @@
-# ISSUE-226: API, IHM et CLI : verdict INVALID
+# ISSUE-229: Parsing YAML : scope, minAgents, onAgentLoss
 **Status**: APPROVED
-**PDR**: PDR-059
-**Module**: platform-bootstrap
-**Started**: 2026-11-17T14:15+01:00
-**IssueFile**: issues/ISSUE-226-expose-invalid-verdict.md
+**PDR**: PDR-060
+**Module**: platform-scenario-yaml
+**Started**: 2026-11-17T14:55+01:00
+**IssueFile**: issues/ISSUE-229-yaml-scope-min-agents.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-226-expose-invalid-verdict.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-229-yaml-scope-min-agents.md`
 
 ## Reviewer Feedback
 (None yet)
