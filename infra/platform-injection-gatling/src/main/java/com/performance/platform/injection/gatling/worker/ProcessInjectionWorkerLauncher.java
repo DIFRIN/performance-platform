@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.DisposableBean;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -16,6 +17,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Les secrets ({@link WorkerRunSpec#environment()}) ne transitent que par l'environnement du fils.
  */
 @Component
-public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher {
+public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher, DisposableBean {
 
     public static final String LOG_FILE = "worker.log";
     public static final int LOG_TAIL_LINES = 50;
@@ -38,6 +41,7 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher {
     private final Path pluginsDir;
     private final String javaBinary;
     private final String classpath;
+    private final Set<ProcessWorkerHandle> live = ConcurrentHashMap.newKeySet();
 
     @Autowired
     public ProcessInjectionWorkerLauncher(InjectionWorkerProperties properties,
@@ -70,10 +74,24 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher {
             Process process = builder.start();
             log.info("action=worker_started simulationId={} pid={} runDirectory={}",
                     spec.simulationId(), process.pid(), spec.runDirectory());
-            return new ProcessWorkerHandle(process, spec, logFile);
+            var handle = new ProcessWorkerHandle(process, spec, logFile);
+            live.add(handle);
+            process.onExit().thenRun(() -> live.remove(handle));
+            return handle;
         } catch (IOException e) {
             throw new UncheckedIOException("Cannot start injection worker: " + e.getMessage(), e);
         }
+    }
+
+    /** Arrete tous les workers vivants a l'arret de l'agent (ADR-066). */
+    @Override
+    public void destroy() {
+        stopAllWorkers();
+    }
+
+    public void stopAllWorkers() {
+        var grace = properties.stopGrace();
+        live.forEach(h -> h.stop(grace));
     }
 
     List<String> command(WorkerRunSpec spec, String mainClass) {
@@ -114,7 +132,7 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher {
         return String.join("\n", lines);
     }
 
-    private static final class ProcessWorkerHandle implements WorkerHandle {
+    private final class ProcessWorkerHandle implements WorkerHandle {
         private final Process process;
         private final WorkerRunSpec spec;
         private final Path logFile;
@@ -132,7 +150,7 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher {
                 Duration limit = spec.timeout().plus(TIMEOUT_MARGIN);
                 if (!process.waitFor(limit.toMillis(), TimeUnit.MILLISECONDS)) {
                     log.warn("action=worker_timeout simulationId={} limit={}", spec.simulationId(), limit);
-                    stop(Duration.ofSeconds(5));
+                    stop(properties.stopGrace());
                 }
             }
             int exit = process.waitFor();
@@ -159,14 +177,19 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher {
             if (!process.isAlive()) return;
             stopped.set(true);
             process.destroy();
+            boolean forced = false;
             try {
                 if (!process.waitFor(grace.toMillis(), TimeUnit.MILLISECONDS)) {
+                    forced = true;
                     process.destroyForcibly();
                 }
             } catch (InterruptedException e) {
+                forced = true;
                 process.destroyForcibly();
                 Thread.currentThread().interrupt();
             }
+            log.info("action=worker_stopped executionId={} taskId={} forced={}",
+                    "n/a", spec.simulationId(), forced);
         }
 
         @Override

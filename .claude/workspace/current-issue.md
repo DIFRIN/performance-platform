@@ -1,11 +1,11 @@
-# ISSUE-201: Lanceur de worker et bascule de l'executor
+# ISSUE-202: Annulation et arrêt du worker
 **Status**: APPROVED
 **PDR**: PDR-055
 **Module**: platform-injection-gatling
-**Started**: 2026-11-17T08:54+01:00
-**IssueFile**: issues/ISSUE-201-injection-worker-launcher.md
+**Started**: 2026-11-17T09:04+01:00
+**IssueFile**: issues/ISSUE-202-injection-worker-cancellation.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-201-injection-worker-launcher.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-202-injection-worker-cancellation.md`
 
 ## Reviewer Feedback
 (None yet)
