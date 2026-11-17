@@ -4,13 +4,13 @@ import io.gatling.core.action.Action;
 import io.gatling.core.action.builder.ActionBuilder;
 import io.gatling.core.structure.ScenarioContext;
 
-import java.util.concurrent.atomic.AtomicLong;
+import com.performance.platform.injection.gatling.load.ShareCounter;
 
 /** Scala-side builder of {@link KafkaPublishAction}; the message index is global to the run (1-based). */
 final class KafkaPublishActionBuilder implements ActionBuilder {
 
     private final KafkaInjectionSpec spec;
-    private final AtomicLong counter = new AtomicLong();
+    private final ShareCounter counter = ShareCounter.fromSystemProperties();
 
     KafkaPublishActionBuilder(KafkaInjectionSpec spec) {
         this.spec = spec;

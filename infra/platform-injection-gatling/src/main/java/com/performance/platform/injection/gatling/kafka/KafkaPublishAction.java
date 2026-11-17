@@ -12,7 +12,7 @@ import io.gatling.core.session.Session;
 import io.gatling.core.stats.StatsEngine;
 import scala.Option;
 
-import java.util.concurrent.atomic.AtomicLong;
+import com.performance.platform.injection.gatling.load.ShareCounter;
 
 /**
  * Gatling action publishing one message per virtual user. The publication is asynchronous (the
@@ -25,12 +25,12 @@ final class KafkaPublishAction implements Action {
 
     private final String requestName;
     private final KafkaInjectionSpec spec;
-    private final AtomicLong counter;
+    private final ShareCounter counter;
     private final StatsEngine stats;
     private final Clock clock;
     private final Action next;
 
-    KafkaPublishAction(String requestName, KafkaInjectionSpec spec, AtomicLong counter, StatsEngine stats,
+    KafkaPublishAction(String requestName, KafkaInjectionSpec spec, ShareCounter counter, StatsEngine stats,
                        Clock clock, Action next) {
         this.requestName = requestName;
         this.spec = spec;
@@ -50,7 +50,7 @@ final class KafkaPublishAction implements Action {
         long start = clock.nowMillis();
         MessageTemplate.Rendered message;
         try {
-            message = spec.template().render(counter.incrementAndGet());
+            message = spec.template().render(counter.next());
         } catch (RuntimeException e) {
             complete(session, start, false, "render: " + e.getMessage());
             return;

@@ -1,5 +1,6 @@
 package com.performance.platform.injection.gatling.http;
 
+import com.performance.platform.injection.gatling.load.ShareCounter;
 import com.performance.platform.injection.gatling.runner.SimulationInjectionHolder;
 
 import io.gatling.javaapi.core.ChainBuilder;
@@ -11,7 +12,6 @@ import io.gatling.javaapi.http.HttpProtocolBuilder;
 import io.gatling.javaapi.http.HttpRequestActionBuilder;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static io.gatling.javaapi.core.CoreDsl.StringBody;
 import static io.gatling.javaapi.core.CoreDsl.exec;
@@ -23,7 +23,7 @@ import static io.gatling.javaapi.http.HttpDsl.status;
  * Generic HTTP simulation used by the {@code gatling} step when no {@code simulation} class is
  * given. The request shape comes from the {@link HttpRequestSpec} published by the executor and
  * the load profile from {@link SimulationInjectionHolder}. Path, query, headers and body are
- * rendered for every request with a global 1-based {@code {index}}.
+ * rendered for every request with a 1-based {@code {index}} partitioned by agent share.
  */
 @SuppressWarnings("this-escape") // Gatling requires setUp() during Simulation construction.
 public class HttpScenarioSimulation extends Simulation {
@@ -43,7 +43,7 @@ public class HttpScenarioSimulation extends Simulation {
             throw new IllegalStateException("No injection steps registered for simulation '" + simId + "'");
         }
 
-        AtomicLong counter = new AtomicLong();
+        ShareCounter counter = ShareCounter.fromSystemProperties();
         HttpRequestActionBuilder request = http(spec.stepId())
                 .httpRequest(spec.method(), s -> rendered(s).target());
         for (String header : spec.headers().keySet()) {
@@ -56,7 +56,7 @@ public class HttpScenarioSimulation extends Simulation {
             request = request.check(status().is(spec.expectedStatus()));
         }
 
-        ChainBuilder iteration = exec(s -> s.set(SESSION_KEY, HttpRequestRenderer.render(spec, counter.incrementAndGet())))
+        ChainBuilder iteration = exec(s -> s.set(SESSION_KEY, HttpRequestRenderer.render(spec, counter.next())))
                 .exec(request);
         // Closed model: each user loops on the request for the whole plan duration.
         ScenarioBuilder scn = closed != null

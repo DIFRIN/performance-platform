@@ -25,6 +25,7 @@ import com.performance.platform.domain.injection.ArrivalModel;
 import com.performance.platform.injection.gatling.load.InjectionLimits;
 import com.performance.platform.injection.gatling.load.PlanAdmission;
 import com.performance.platform.injection.gatling.load.PlanScaler;
+import com.performance.platform.injection.gatling.load.ShareCounter;
 import com.performance.platform.domain.execution.GrantShare;
 import com.performance.platform.domain.injection.LatencyHistogram;
 import com.performance.platform.domain.injection.LoadScope;
@@ -294,7 +295,8 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                     "timeout must be positive: " + timeoutSeconds + "s");
         }
 
-        Map<String, String> systemProperties = paramMap(step, PARAM_SYSTEM_PROPERTIES);
+        Map<String, String> systemProperties = new java.util.LinkedHashMap<>(paramMap(step, PARAM_SYSTEM_PROPERTIES));
+        systemProperties.putAll(ShareCounter.toSystemProperties(globalPlan, share));
 
         // 2. Preparer l'injection du protocole (simulation generee) puis construire la configuration Gatling
         PreparedInjection prepared = null;
