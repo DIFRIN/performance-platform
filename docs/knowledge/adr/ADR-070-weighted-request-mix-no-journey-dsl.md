@@ -1,6 +1,6 @@
 # ADR-070 - Weighted request mix; no journey DSL in YAML
 
-**Status** : PROPOSED (2026-11-16)
+**Status** : ACCEPTED (2026-11-17)
 **Related** : ADR-039 (dynamic request values), ADR-064, ADR-065, ADR-068
 
 ## Context

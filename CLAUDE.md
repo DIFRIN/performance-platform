@@ -176,6 +176,13 @@ com.performance.platform.<module>/
 | Orchestrateur unique et modèle d'échec | `docs/knowledge/adr/ADR-058-single-orchestrator-failure-model.md` | — |
 | LOCAL = moteur distribué + transport mémoire + agent embarqué | `docs/knowledge/adr/ADR-059-local-mode-as-in-process-distributed.md` | — |
 | Domaine plateforme minimal | `docs/knowledge/adr/ADR-060-minimal-platform-domain.md` | — |
+| Plan de charge `workload` (WorkloadPlan, stages, presets `loadModel`, hash) | `docs/knowledge/adr/ADR-064-composable-workload-plan.md` | — |
+| Capacités d'injection, rejet strict, garde-fou `INJECTION_MAX_*` | `docs/knowledge/adr/ADR-065-injection-adapter-capabilities-and-guardrails.md` | — |
+| Worker d'injection isolé (JVM fille, annulation, `injection.worker.*`) | `docs/knowledge/adr/ADR-066-isolated-injection-worker-process.md` | — |
+| `GrantShare`, `scope: global`, `minAgents`, `onAgentLoss` | `docs/knowledge/adr/ADR-067-grant-share-and-global-load-scope.md` | — |
+| Mesures d'injection fusionnables (`MERGE`, histogrammes, fenêtres, planned/achieved) | `docs/knowledge/adr/ADR-068-mergeable-injection-measurements.md` | — |
+| Contrôles d'intégrité et verdict `INVALID` | `docs/knowledge/adr/ADR-069-experiment-integrity-and-invalid-verdict.md` | — |
+| Mix pondéré `requests`, pas de DSL de parcours | `docs/knowledge/adr/ADR-070-weighted-request-mix-no-journey-dsl.md` | — |
 | Multi-claim orchestrateur (ADR-011, SUPERSEDED partiellement par ADR-055) | `docs/knowledge/adr/ADR-011-multi-claim-all-complete.md` | historique uniquement |
 | AgentLifecycleEvent séparé de ExecutionEvent | `docs/knowledge/adr/ADR-012-agent-lifecycle-event.md` | — |
 | Spring-first infra | `docs/knowledge/adr/ADR-013-spring-first-infrastructure.md` | — |
@@ -235,3 +242,8 @@ bash .claude/scripts/check-adr-hygiene.sh             # numéros ADR uniques + s
 - `work-in-progress-reset-interval` — supprimé (ADR-058)
 - Transport RabbitMQ ou socket dans le build cœur — plugins externes via CUSTOM (ADR-056)
 - `LocalStepDispatcher`, `LocalLifecycleDispatcher`, publication d'outcomes LOCAL — supprimés (ADR-059)
+- `LoadModel`, `LoadModelType`, `LoadModelTranslator` dans le code — remplacés par `WorkloadPlan` ; `loadModel:` n'est plus qu'un preset YAML (ADR-064)
+- Unité `requests_per_second` ou débit de requêtes comme cible — mesure uniquement (ADR-065)
+- Exécution Gatling in-process dans la JVM agent — worker isolé obligatoire, y compris en LOCAL (ADR-066)
+- Calcul de taux/charge par agent dans `execution/` — seul `GrantShare` est transmis (ADR-067)
+- Chaînage, extraction, branchement ou think time dans le YAML d'injection — simulation Java custom (ADR-070)

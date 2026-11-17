@@ -232,7 +232,7 @@
 | ISSUE-217 | Parser : histogramme et fenêtres | DONE | PDR-058 | ISSUE-215, ISSUE-208 |
 | ISSUE-218 | Santé du générateur et sorties du résultat | DONE | PDR-058 | ISSUE-217, ISSUE-202 |
 | ISSUE-219 | Réduction multi-agents : MERGE et fenêtre commune | DONE | PDR-058 | ISSUE-216, ISSUE-218 |
-| ISSUE-220 | Rapport : charge planifiée, réalisée et distributions | APPROVED | PDR-058 | ISSUE-219, ISSUE-246 |
+| ISSUE-220 | Rapport : charge planifiée, réalisée et distributions | DONE | PDR-058 | ISSUE-219, ISSUE-246 |
 | ISSUE-221 | Verdict INVALID et famille INTEGRITY | DONE | PDR-059 | ISSUE-216 |
 | ISSUE-222 | Bloc integrity : validation scénario | DONE | PDR-059 | ISSUE-221, ISSUE-207 |
 | ISSUE-223 | IntegrityCheckFactory | DONE | PDR-059 | ISSUE-221, ISSUE-219 |
@@ -256,7 +256,7 @@
 | ISSUE-241 | Mix pondéré Kafka | DONE | PDR-061 | ISSUE-240 |
 | ISSUE-242 | Résultats par nom de requête | DONE | PDR-061 | ISSUE-240, ISSUE-218, ISSUE-238 |
 | ISSUE-243 | Métriques d'assertion par requête | DONE | PDR-061 | ISSUE-242, ISSUE-219 |
-| ISSUE-244 | Documentation, exemples et acceptation des ADR | WAITING | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
+| ISSUE-244 | Documentation, exemples et acceptation des ADR | APPROVED | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
 | ISSUE-245 | InjectionReportEntry : plan résolu et hash | DONE | PDR-056 | ISSUE-208 |
 | ISSUE-246 | CampaignReport : mesures d'injection (forme neutre) | DONE | PDR-058 | ISSUE-219 |
 
@@ -1306,3 +1306,9 @@
 | 2026-11-17 | ISSUE-220 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-220 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-220 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-220 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-244 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-244 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-244 | IN_REVIEW → CHANGES_REQUESTED | Critère de Done non rempli: ADR-064..070 toujours PROPOSED. Docs/exemple 04-global-workload.yaml OK, check-adr-hygiene OK. Obtenir la décision @architect (acceptation + éventuelle MAJ CLAUDE.md §8/§10), la consigner dans decisions-log.md, passer les 7 ADR en ACCEPTED (date), puis relancer issue-finish. |
+| 2026-11-17 | ISSUE-244 | CHANGES_REQUESTED → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-244 | IN_REVIEW → APPROVED | Reviewer approved |

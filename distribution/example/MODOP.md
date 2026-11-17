@@ -13,7 +13,7 @@ distribution/example/
 ├── docker-compose-distributed.yaml    # orchestrator + mock-agent + agent-http + agent-kafka + SUT + infra
 ├── sut/                               # one stub image, behaviours enabled by configuration
 ├── sut-db/sql/                        # devices schema + 10k seed
-├── scenarios/                         # 2 SUT scenarios (LOCAL + DISTRIBUTED) + assertion model (LOCAL)
+├── scenarios/                         # 3 SUT scenarios (LOCAL + DISTRIBUTED; `04` = global workload) + assertion model (LOCAL)
 └── MODOP.md                           # this file
 ```
 
@@ -103,6 +103,33 @@ platform --gatling HTTP--> POST /api/events?device_id=...
 3. The SUT checks the device in PostgreSQL and publishes to `device-events`.
 4. `kafka-consumer` COUNTs the topic; `direct-assertion` checks the expected volume.
 
+### Scenario 4 — global workload plan (LOCAL + DISTRIBUTED)
+
+`04-global-workload.yaml` is scenario 2 with a platform `workload` and
+`scope: global`: the plan (100 arrivals/s after a 10 s unmeasured warm-up) is the
+**total**, each granted agent runs its share (`GrantShare`). `minAgents` fails the
+step before any traffic if too few agents answer; set it to the number of
+`agent-http` replicas in DISTRIBUTED. `parameters.integrity` tunes the automatic
+integrity checks; a run that did not deliver the plan gets the verdict `INVALID`
+(CLI exit code `2`).
+
+```bash
+docker compose -f distribution/example/docker-compose-local.yaml \
+  run --rm -e SCENARIO_FILE=04-global-workload.yaml platform
+```
+
+Injection runs in an isolated worker JVM forked by the agent (LOCAL included);
+tune it with the variables below.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `INJECTION_WORKER_MAX_CONCURRENT` | `1` | injections an agent runs at once; at the limit it stops claiming |
+| `INJECTION_WORKER_JVM_ARGS` | empty | JVM arguments of the worker (e.g. `-Xmx2g`) |
+| `INJECTION_WORKER_STOP_GRACE` | `10s` | drain before the worker is killed on cancel/timeout |
+| `INJECTION_MAX_ARRIVAL_RATE` | none | highest arrivals/s this agent accepts (open model) |
+| `INJECTION_MAX_CONCURRENT_USERS` | none | highest concurrent users this agent accepts (closed model) |
+| `INJECTION_WINDOW` | `5s` | width of the measurement windows |
+
 ### Scenario 3 — assertion model (LOCAL only)
 
 `03-assertion-model.yaml` demonstrates the two declarative assertion
@@ -124,7 +151,7 @@ java -jar bootstrap/target/performance-platform.jar \
 The file-system check passes. The latency block has no injection step to read,
 so it produces an `INCONCLUSIVE` check and the report verdict is `WARNING`
 (measurement limitation, not a failure). Add a `gatling` injection step
-(optionally targeted with `refTaskId`) to turn it into a measured
+(optionally targeted with `ref`) to turn it into a measured
 `SUCCESS`/`FAILED`.
 
 ---

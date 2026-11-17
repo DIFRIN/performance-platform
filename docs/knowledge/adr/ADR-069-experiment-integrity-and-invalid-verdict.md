@@ -1,6 +1,6 @@
 # ADR-069 - Experiment integrity checks and the INVALID verdict
 
-**Status** : PROPOSED (2026-11-16)
+**Status** : ACCEPTED (2026-11-17)
 **Related** : ADR-021 (CLI exit codes), ADR-044 (report validation), ADR-049 (assertion model), ADR-065, ADR-067, ADR-068
 
 ## Context

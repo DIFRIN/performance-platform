@@ -1,6 +1,6 @@
 # ADR-065 - Injection adapter capabilities, strict rejection and rate guardrail
 
-**Status** : PROPOSED (2026-11-16)
+**Status** : ACCEPTED (2026-11-17)
 **Related** : ADR-057 (executors as capability modules), ADR-064, ADR-067, ADR-068, ADR-006
 
 ## Context

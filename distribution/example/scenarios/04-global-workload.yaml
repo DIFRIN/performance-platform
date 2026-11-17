@@ -1,0 +1,110 @@
+# =============================================================================
+# Scenario 4 - Global workload plan (ADR-064, ADR-067, ADR-069)
+# =============================================================================
+# Same flow as scenario 2 (HTTP injection -> SUT -> DB -> Kafka), but the load is
+# described as a platform WorkloadPlan with `scope: global`: the plan is the TOTAL
+# for the step, each granted agent runs its share. 100 arrivals/s in total whether
+# 1 agent (LOCAL) or N agents (DISTRIBUTED) answer.
+#
+#   - ramp with `measured: false` = warm-up, excluded from latency/error metrics;
+#   - `minAgents` fails the step before any traffic if too few agents answer;
+#   - integrity checks are automatic: a run that did not deliver the plan within
+#     `integrity.maxArrivalDeviation` gets the verdict INVALID, not SUCCESS.
+#
+# Run (LOCAL):
+#   docker compose -f distribution/example/docker-compose-local.yaml \
+#     run --rm -e SCENARIO_FILE=04-global-workload.yaml platform
+# Run (DISTRIBUTED): upload the file to the orchestrator; set minAgents to the
+#   number of agent-http replicas you started.
+# =============================================================================
+scenario:
+  id: 04-global-workload
+  name: "Global workload plan -> SUT -> DB -> Kafka"
+  version: "1.0.0"
+  tags: [example, http, kafka, workload]
+  metadata:
+    executionGroup: example-sut
+    owner: perf-team
+    sut: sut
+
+  steps:
+    - id: reset-sut-db
+      task: database
+      phase: PREPARATION
+      parameters:
+        datasource: sut-db
+        operation: PURGE
+        table: devices
+      timeout: 30s
+
+    - id: seed-sut-db
+      task: database
+      phase: PREPARATION
+      dependsOn: [reset-sut-db]
+      parameters:
+        datasource: sut-db
+        operation: POPULATE
+        scriptPath: "classpath:sql/seed-sut-devices.sql"
+      timeout: 2m
+
+    - id: check-sut
+      task: http-client
+      phase: PREPARATION
+      dependsOn: [seed-sut-db]
+      parameters:
+        target: sut-api
+        method: GET
+        path: health
+        expectedStatus: 200
+      timeout: 30s
+
+    - id: inject-events
+      task: gatling
+      phase: INJECTION
+      fanOut: all
+      dependsOn: [check-sut]
+      parameters:
+        target: sut-api
+        path: submit-event
+        method: POST
+        queryParams:
+          device_id: "device-{index:4}"
+        headers:
+          X-Request-Id: "{uuid}"
+        expectedStatus: 200
+        workload:
+          model: open
+          scope: global
+          stages:
+            - ramp: { from: 0, to: 100, duration: 10s, measured: false }
+            - hold: { level: 100, duration: 20s }
+        integrity:
+          maxArrivalDeviation: 5%
+      minAgents: 1
+      timeout: 5m
+
+    - id: count-events
+      task: kafka-consumer
+      phase: ASSERTION
+      dependsOn: [inject-events]
+      parameters:
+        cluster: iot-sut
+        topic: device-events
+        operation: COUNT
+      timeout: 1m
+
+    - id: assert-events-produced
+      task: direct-assertion
+      phase: ASSERTION
+      dependsOn: [count-events]
+      ref: count-events
+      description:
+        title: Events published to Kafka
+        sli: number of messages available in device-events
+        slo: at least 1000 messages produced by the global plan (about 2500 expected)
+        rationale: the SUT persisted each device check and published one event per request
+      parameters:
+        metric: kafka.messages.consumed
+        operator: GTE
+        threshold: 1000
+      timeout: 2m

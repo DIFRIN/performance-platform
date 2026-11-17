@@ -167,6 +167,9 @@ ignoré. Le set `processedMessageIds` est purgé au-delà de 10 000 entrées.
 `TaskAgentRuntime.onTaskReceived(request)` :
 1. ignore le message si l'agent est OFFLINE ou DRAINING ;
 2. `TaskSpecializationFilter` : `NotResponsible` → ignoré, aucun appel réseau ;
+   2bis. refus de claim : si l'executor implémente `ExecutorAvailability` et
+   `canAcceptNewTask() == false` (ex. `injection.worker.max-concurrent` atteint, ADR-066),
+   l'agent ne claim pas ; un autre agent peut prendre l'étape ;
 3. idempotence : un `MessageId` déjà traité est ignoré ;
 4. publie `TASK_CLAIMED` (`TaskClaimedByAgent`) et mémorise la requête en attente ;
 5. planifie l'expiration du claim (nettoyage mémoire si aucun grant n'arrive) ;
@@ -176,10 +179,13 @@ ignoré. Le set `processedMessageIds` est purgé au-delà de 10 000 entrées.
 - ignore le grant destiné à un autre agent ;
 - `granted == false` (`fanOut: one`, un autre agent a été accordé) → le claim est
   abandonné, aucune exécution ;
-- `granted == true` → `IDLE → EXECUTING`, soumission du pipeline.
+- `granted == true` → `IDLE → EXECUTING`, soumission du pipeline ; la part reçue
+  (`GrantShare(index, count, fraction)`, ADR-067) est exposée à l'executor comme attribut
+  en lecture seule de l'`ExecutionContext`.
 
 Le `TaskGrantSignal` circule sur le `SignalChannel` et porte
-`(executionId, taskId, messageId, agentId, granted)`.
+`(executionId, taskId, messageId, agentId, granted, share)`. `fanOut: one` →
+`GrantShare(0, 1, 1.0)` ; `fanOut: all` → agents triés par `AgentId`, fractions `1/count`.
 
 ### 6.2 Exécution
 

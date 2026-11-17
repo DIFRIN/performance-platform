@@ -51,8 +51,14 @@
 | Terme | Définition | Classe/Interface |
 |---|---|---|
 | **Injection** | Phase de génération de charge (load injection) | `Phase.INJECTION` |
-| **LoadModel** | Profil de charge d'une injection (RAMP, CONSTANT, SPIKE...), déclaré **inline** dans `parameters.loadModel` (ADR-053) | `LoadModel` |
-| **LoadModelType** | Type de profil : RAMP, RAMP_UP_DOWN, CONSTANT, SPIKE, STAIR, SOAK, BURST, CUSTOM | `LoadModelType` (enum) |
+| **WorkloadPlan** | Plan de charge typé et immuable d'une injection (modèle `open`/`closed`, scope, stages), déclaré **inline** dans `parameters.workload` (ADR-064) | `WorkloadPlan` |
+| **Stage** | Étape d'un plan : `Ramp`, `Hold`, `Burst`, `Pause` ; `measured: false` = warm-up exclu des métriques | `Stage` (sealed) |
+| **LoadScope** | `per-agent` (chaque agent joue le plan) ou `global` (le plan est le total, réparti par part) | `LoadScope` |
+| **GrantShare** | Part `(index, count, fraction)` accordée à un agent par le grant (ADR-067) | `GrantShare` |
+| **Preset** | Forme courte `loadModel: {type, parameters}` développée en `WorkloadPlan` au parsing | `LoadPresets` |
+| **INVALID** | Verdict : l'expérience décrite n'a pas été appliquée (contrôle d'intégrité en échec) ; prime sur `FAILED` (ADR-069) | `Verdict.INVALID` |
+| **Intégrité** | Famille de contrôles automatiques d'une injection : déviation d'arrivée, perte d'agent, run incomplet, saturation | `IntegrityCheckFactory` |
+| **Worker d'injection** | JVM fille démarrée par l'agent pour un run d'injection (ADR-066) | `InjectionWorkerMain` |
 | **Simulation** | Classe Gatling identifiée par son nom qualifié (String) | `GatlingRunConfig.simulationClass` |
 | **InjectionResult** | Métriques agrégées d'une injection (p50/p90/p95/p99, errorRate, throughput) | `InjectionResult` |
 
@@ -173,7 +179,7 @@
 |---|---|
 | `TestSuite` | `Scenario` ou `Campaign` |
 | `Runner` | `TaskExecutor` ou `ExecutionEngine` |
-| `Config` (seul) | `ScenarioDefinition`, `LoadModel`, `AgentDescriptor` selon contexte |
+| `Config` (seul) | `ScenarioDefinition`, `WorkloadPlan`, `AgentDescriptor` selon contexte |
 | `Manager` | Préférer `Registry`, `Orchestrator`, `Engine` selon responsabilité |
 | `Handler` (seul) | Préfixer : `CommandHandler`, `EventHandler`, `TaskHandler` |
 | `TaskMessage` | Remplacé par `TaskExecutionRequest` |
@@ -191,7 +197,8 @@
 | `parameters.linkedTo` | Remplacé par `during` (service step, ADR-054) |
 | `parameters.refTaskId` | Remplacé par le champ `ref` (ADR-053) |
 | `completion-policy` / `result-selection-policy` | Supprimés — `fanOut` par étape (ADR-055) |
-| `loadModels` (registre nommé) | Supprimé — `loadModel` inline dans les paramètres (ADR-053) |
+| `loadModels` (registre nommé) | Supprimé — `workload` inline dans les paramètres (ADR-053, ADR-064) |
+| `LoadModel` / `LoadModelType` | Supprimés du domaine — `WorkloadPlan` ; `loadModel` n'est plus qu'un preset YAML (ADR-064) |
 | `TaskMessage` | Remplacé par `TaskExecutionRequest` |
 | `ReportPublisher` / `PublicationTarget` | Supprimés — rapport local uniquement (ADR-022) |
 | `AGENT_TAGS` / `agentTags` | Remplacés par `AGENT_SUPPORTED_TASKS` / `agent.supported-tasks` (ADR-015) |

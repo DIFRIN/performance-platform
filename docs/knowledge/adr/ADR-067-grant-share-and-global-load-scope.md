@@ -1,6 +1,6 @@
 # ADR-067 - Grant share and global load scope
 
-**Status** : PROPOSED (2026-11-16)
+**Status** : ACCEPTED (2026-11-17)
 **Related** : ADR-045 (execution boundaries), ADR-055 (fan-out), ADR-058 (single orchestrator), ADR-064, ADR-065, ADR-068, ADR-069
 
 ## Context

@@ -95,8 +95,12 @@ Règles portées par le domaine :
 
 - `EQ`/`NEQ` sur une métrique continue (`GAUGE`, `RATIO`, `QUANTILE`,
   `DURATION`) exige une **tolérance strictement positive** ;
-- les quantiles ne sont **jamais** agrégés par moyenne (`Reduction.MAX` = pire
-  agent, `MIN` pour le débit, `SUM` pour les compteurs, `ALL` pour les états) ;
+- les quantiles ne sont **jamais** agrégés par moyenne : `Reduction.MERGE` somme les
+  histogrammes bucket par bucket puis calcule le quantile sur la distribution fusionnée
+  (percentile global, ADR-068) ; `MAX` = pire agent (`injection.latency.pNN.worst-agent`),
+  `SUM` pour les compteurs, `ALL` pour les états ;
+- seules les fenêtres `measured` (hors warm-up) entrent dans les métriques ; débit et
+  arrivées utilisent la fenêtre commune à tous les agents contributeurs ;
 - `Rollup.combine` renvoie `INCONCLUSIVE` dès qu'une mesure manque : un succès
   ne peut pas être déduit d'une absence de données.
 
@@ -153,7 +157,8 @@ Métriques résolues par `DirectMeasurementResolver` :
 | `filesystem` | `filesystem.exists`, `.size`, `.checksum` | `path`, `expect`, `checksum` |
 | `http` | `http.requests.matched`, `.unmatched` | `target` (cible nommée), `mockUrl` + `endpoint`/`method`, ou `ref` |
 | `kafka` | `kafka.messages.consumed`, `.produced`, `.consumer.lag` | `ref` (+ `output`) |
-| `injection` | `injection.latency.*`, `injection.error.rate`, `injection.throughput` | `ref` |
+| `injection` | `injection.latency.*` (dont `.worst-agent`), `injection.error.rate`, `injection.throughput`, `injection.arrival.{planned,achieved,deviation}`, `injection.start.skew`, `injection.generator.{cpu,gc.pause}` | `ref` |
+| `integrity` | `injection.arrival.deviation`, `injection.agent.loss`, `injection.run.incomplete`, `injection.generator.cpu` | automatique (ADR-069), voir §4.5 |
 
 Les métriques `STATE` (`filesystem.exists`, `filesystem.checksum`) comparent un
 état converti en `1.0`/`0.0` : plus de branchement `EXISTS`/`CHECKSUM` dans un
@@ -163,6 +168,16 @@ executor.
 
 Fournie par l'annexe [observability-probe](../tools/observability-probe.md)
 (plugin JAR). Voir [Spec 10](10-observability-assertions-and-evidence.md) §3.3.
+
+### 4.5 `integrity` — validité de l'expérience (ADR-069)
+
+Famille produite automatiquement pour chaque étape d'injection (`IntegrityCheckFactory`,
+fonction pure), sans déclaration. Contrôles : déviation d'arrivée (défaut 5 %, `CRITICAL`),
+perte d'agent accordé sans résultat (`CRITICAL`), run incomplet (`CRITICAL`), saturation du
+générateur (CPU > 90 %, `WARNING` seul). Tolérances réglables par étape
+(`integrity.maxArrivalDeviation`, `integrity.maxGeneratorCpu`), jamais désactivables ;
+la valeur utilisée est rapportée. Simulation opaque : déviation `INCONCLUSIVE`. Un
+contrôle `CRITICAL` en échec donne le verdict `INVALID`.
 
 ### 4.4 Critères temporels
 
@@ -183,6 +198,9 @@ Deux niveaux, une seule source :
    check `CRITICAL` échoue ou en cas d'échec technique ; sinon `WARNING` si un
    check est `INCONCLUSIVE`/`SKIPPED` ou si une limitation existe ; sinon
    `SUCCESS`.
+3. **`INVALID`** : un contrôle d'intégrité critique en échec prime sur tout :
+   `INVALID` > `FAILED` > `WARNING` > `SUCCESS`. Une étape en échec avant toute charge
+   (plan rejeté, `minAgents` non atteint) reste `FAILED`.
 
 ---
 

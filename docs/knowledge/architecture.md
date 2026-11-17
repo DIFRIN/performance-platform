@@ -205,8 +205,10 @@ scenario/
 └── usecase/     DefaultScenarioParsingService
 ```
 
-Le registre nommé de load models (`LoadModelRegistry`) est supprimé : le load model est
-inline dans `parameters.loadModel` (ADR-053).
+Le profil de charge est un `WorkloadPlan` (`platform-domain`, `domain.injection`, ADR-064)
+inline dans `parameters.workload`. Les presets `loadModel` (RAMP, CONSTANT, SPIKE…) sont
+développés en plan au parsing (`LoadPresets`, `WorkloadPlanCodec`) ; seul le plan existe
+ensuite. Pas de registre nommé (ADR-053).
 
 `ScenarioParser` est un port du core. `YamlScenarioParser`, les DTOs et
 `DurationParser` vivent dans `infra/platform-scenario-yaml`.
@@ -283,7 +285,7 @@ font plus partie du build cœur ; ils peuvent être fournis comme plugins via `C
 | `platform-infrastructure` | Socle runtime commun : `TaskExecutorRegistry` (`infrastructure.executor`), `infrastructure.plugin` (`PluginLoader`/`AnnotationScanner`/`PluginRegistry`), `infrastructure.scheduling` (`SpringScheduleCalculator`). Aucune dépendance technique lourde. |
 | `platform-persistence` | Store de l'orchestrateur : `infrastructure.persistence` (JPA, Flyway `db/migration`, runs programmés), `PersistenceDataSourceConfiguration` (DataSource primaire `platform.datasources.default`). |
 | `platform-executor-<famille>` (`infra/executors/`) | Un module par famille (ADR-057) : `database` (`database`, `DatasourceProvider`), `docker`, `filesystem` (paquet `.fs`), `http` (`http-client`, `HttpTargetRegistry` = `EndpointResolver`), `kafka` (`kafka-producer`, `kafka-consumer`, `KafkaClusterRegistry`), `mock` (`mock-server`, service step), `shell`. Dépendances : `platform-domain`, `platform-plugin-api` (ports `plugin.resource`, valeurs dynamiques `plugin.template`) et leurs bibliothèques techniques uniquement. |
-| `platform-injection-gatling` | `GatlingTaskExecutor` (`@Injection(name="gatling")`), `GatlingRunner`, `SimulationInjectionHolder`, `DefaultLoadModelTranslator`, `DefaultGatlingResultParser`, `ProtocolSupportInfo` |
+| `platform-injection-gatling` | `GatlingTaskExecutor` (`@Injection(name="gatling")`), `GatlingRunner`, `SimulationInjectionHolder`, `DefaultWorkloadPlanTranslator`, `PlanAdmission`, `PlanScaler`, `InjectionWorkerMain` (JVM fille), `SimulationLogResultParser`, `RequestMix`, `ProtocolSupportInfo` |
 | `platform-assertion` | `CheckEvaluator`, `TemporalCheckEvaluator`, `ParameterBinder`, `OperatorResolver`, `AssertionSummaryFactory`, sampling `assertion.lifecycle.DefaultLifecycleSignalHandler` |
 | `platform-assertion-adapters` | `performance-thresholds`, `direct-assertion` (ADR-049), `DirectMeasurementResolver` |
 | `platform-report-api` | Modeles et ports `ReportEngine`, `ReportRenderer`, `ReportOutput` |
@@ -590,6 +592,25 @@ déclaré par étape (`fanOut: one | all`).
 - résultat tardif pour une exécution terminale → journalisé et ignoré (ADR-058).
 - `@EventListener onAgentLost(AgentLost)` → `tracker.onAgentLost(agentId)` : les grants
   non répondus échouent immédiatement (fast-fail) au lieu d'attendre le timeout.
+
+### 5.5.1 Injection : plan, part, worker, mesures (ADR-064..070)
+- **Plan** : `WorkloadPlan(model, scope, stages)` — `Ramp`, `Hold`, `Burst`, `Pause`, flag
+  `measured` (warm-up exclu). Neutre vis-à-vis du moteur.
+- **Part** : `TaskGrantSignal.share = GrantShare(index, count, fraction)`. `fanOut: one` →
+  `(0,1,1.0)` ; `all` → agents triés, `1/count`. L'orchestrateur ne connaît ni débit ni charge
+  (ADR-045). `minAgents` non atteint → échec avant tout grant, aucune charge.
+- **Agent** : un executor qui implémente `ExecutorAvailability` peut refuser de claim
+  (`injection.worker.max-concurrent`, défaut 1). `GatlingTaskExecutor` : admission du plan
+  (`PlanAdmission`, rejet explicite sans approximation, garde-fou `injection.max-*`), mise à
+  l'échelle par la part si `scope: global` (`PlanScaler`), puis **une JVM fille par run**
+  (`InjectionWorkerMain`), identique en LOCAL. Annulation : `destroy` → `stop-grace` →
+  `destroyForcibly`.
+- **Mesures** : `InjectionResult` porte histogramme, fenêtres `LoadWindow`, `GeneratorHealth`,
+  `complete`, `perRequest`. `Reduction.MERGE` fusionne les histogrammes (percentile global) ;
+  `injection.latency.pNN.worst-agent` conserve le pire agent.
+- **Verdict** : contrôles d'intégrité automatiques (déviation d'arrivée, perte d'agent, run
+  incomplet, saturation) → `INVALID` > `FAILED` > `WARNING` > `SUCCESS` ; CLI exit `2`.
+- **Mix** : `requests` pondérées, une requête par utilisateur virtuel ; pas de DSL de parcours.
 
 ### 5.6 Retry
 `RetryPolicy(maxAttempts, initialDelay, multiplier, maxDelay, retryableExceptions)` avec

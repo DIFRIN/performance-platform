@@ -26,8 +26,8 @@ public class GatlingTaskExecutor implements TaskExecutor {
     @Override
     public TaskResult execute(ExecutionContext context, StepDefinition step) {
         // 1. Extraire les paramètres depuis step.parameters()
-        // 2. Lire le load model inline : step.parameters().get("loadModel")
-        //    (plus de registre nommé `loadModels`, ADR-053)
+        // 2. Décoder le plan inline : WorkloadPlanCodec.fromMap(parameters.workload)
+        //    puis admission (PlanAdmission, ADR-065) et mise à l'échelle par la part (PlanScaler, ADR-067)
         // 3. Configurer la simulation Gatling
         // 4. Lancer via GatlingRunner
         // 5. Parser les résultats
@@ -43,7 +43,7 @@ Quand `simulation` est absent, l'executor détecte une injection HTTP et crée l
 
 1. `HttpRequestSpecFactory` construit un `HttpRequestSpec` depuis les paramètres du step (`target` via le port `EndpointResolver`, ou `baseUrl` ; `method`, `path` logique, `pathParams`, `queryParams`, `headers` fusionnés avec `defaultHeaders` de la cible, `body`, `contentType`, `expectedStatus`) et le valide par un rendu à blanc.
 2. Le spec est publié dans `HttpRequestSpecHolder` (clé = `simulationId`), retiré en `finally`.
-3. `GatlingRunConfig.simulationClass` = `HttpScenarioSimulation` (instanciée par Gatling) : protocole `baseUrl`, un `exec` qui rend la requête via `HttpRequestRenderer` (`{index}` = compteur global 1-based, identique pour path/query/headers/body d'une même requête), puis la requête HTTP, injectée avec les `OpenInjectionStep` du `LoadModel`.
+3. `GatlingRunConfig.simulationClass` = `HttpScenarioSimulation` (instanciée par Gatling) : protocole `baseUrl`, un `exec` qui rend la requête via `HttpRequestRenderer` (`{index}` = compteur global 1-based, identique pour path/query/headers/body d'une même requête), puis la requête HTTP, injectée avec les étapes Gatling issues du `WorkloadPlan` (§4). Avec `requests`, un `RequestMix` tire une requête par utilisateur virtuel selon `weight`, graine = hash du plan + `GrantShare.index` (ADR-070).
 
 `simulation: <classe>` reste supporté pour une simulation personnalisée ; les paramètres HTTP sont alors ignorés. Placeholders : voir spec 03 (ADR-039).
 
@@ -54,7 +54,7 @@ Quand `simulation` est absent, l'executor détecte une injection HTTP et crée l
 ```java
 public interface GatlingRunner {
     /**
-     * Lance une simulation Gatling en-process.
+     * Lance une simulation Gatling (dans le worker isolé, §3.1).
      * Retourne le chemin du répertoire de résultats.
      */
     Path run(GatlingRunConfig config) throws GatlingExecutionException;
@@ -62,7 +62,7 @@ public interface GatlingRunner {
 
 public record GatlingRunConfig(
     String simulationClass,          // nom qualifié de la classe
-    LoadModel loadModel,
+    WorkloadPlan plan,
     Map<String, String> systemProperties,
     Path resultsDirectory,
     String simulationId,
@@ -72,35 +72,79 @@ public record GatlingRunConfig(
 
 ---
 
-## 4. LoadModel → Gatling OpenInjection
+## 3.1 Worker isolé (ADR-066)
 
-Chaque `LoadModelType` se traduit en OpenInjectionStep Gatling Java DSL :
+`GatlingTaskExecutor` ne lance pas Gatling dans la JVM de l'agent : il démarre une JVM fille
+(`InjectionWorkerMain`) par étape d'injection et l'attend sur un Virtual Thread. LOCAL utilise
+le même chemin (agent embarqué, ADR-059) : pas de repli en-process.
+
+- Entrée : répertoire de run (plan résolu, `GrantShare`, spec de protocole, ressources
+  nommées). Les secrets passent par l'environnement du worker, jamais par le répertoire.
+- Sortie : répertoire de résultats Gatling + un fichier résultat (`InjectionResult`).
+  Code de sortie ≠ 0 → `TaskResult.failed` avec la fin du log du worker.
+- Annulation / timeout / `cleanup(executionId)` : `destroy()`, attente `stop-grace`, puis
+  `destroyForcibly()` ; résultat `complete=false`. L'arrêt de l'agent tue ses workers.
+- Concurrence : l'executor implémente `ExecutorAvailability` ; à `max-concurrent` il ne
+  claim plus l'étape (spec 04 §6.1).
+
+| Propriété | Variable d'env (prioritaire) | Défaut |
+|---|---|---|
+| `injection.worker.max-concurrent` | `INJECTION_WORKER_MAX_CONCURRENT` | `1` |
+| `injection.worker.jvm-args` | `INJECTION_WORKER_JVM_ARGS` | vide |
+| `injection.worker.stop-grace` | `INJECTION_WORKER_STOP_GRACE` | `10s` |
+| `injection.max-arrival-rate` | `INJECTION_MAX_ARRIVAL_RATE` | aucune limite |
+| `injection.max-concurrent-users` | `INJECTION_MAX_CONCURRENT_USERS` | aucune limite |
+| `injection.window` | `INJECTION_WINDOW` | `5s` |
+
+## 4. WorkloadPlan → Gatling
 
 ```java
-public interface LoadModelTranslator {
-    List<OpenInjectionStep> translate(LoadModel model);
+public interface WorkloadPlanTranslator {
+    List<OpenInjectionStep> toOpenSteps(WorkloadPlan plan);       // model: open
+    List<ClosedInjectionStep> toClosedSteps(WorkloadPlan plan);   // model: closed
 }
-
-// Implémentations :
-
-// RAMP → rampUsersPerSec(from).to(to).during(duration) par stage
-// CONSTANT → constantUsersPerSec(n).during(duration)
-// SPIKE → rampUsersPerSec(base).to(spike).during(spikeDuration)
-// STAIR → stressPeakUsers(n).during(duration) ou stairs custom
-// SOAK → constantUsersPerSec(n).during(duration) avec ramp initial
-// BURST → Séquence de nothingFor() + atOnceUsers() répétée
-// RAMP_UP_DOWN → rampUp + hold + rampDown
-// CUSTOM → interpolation linéaire entre les points
 ```
 
----
+| Stage | Open | Closed |
+|---|---|---|
+| `ramp` | `rampUsersPerSec(from).to(to).during(d)` | `rampConcurrentUsers(from).to(to).during(d)` |
+| `hold` | `constantUsersPerSec(level).during(d)` | `constantConcurrentUsers(level).during(d)` |
+| `burst` | `atOnceUsers(users)` | rejeté |
+| `pause` | `nothingFor(d)` | `nothingFor(d)` |
+
+### 4.1 Capacités et admission (ADR-065)
+
+`GatlingTaskExecutor` implémente `InjectionCapabilityProvider` et déclare une
+`InjectionCapabilities(models, stageKinds, protocols, supportsGlobalScope,
+supportsCancellation, providesHistogram, providesWindows)`. `PlanAdmission.check` s'exécute
+sur l'agent **avant la première arrivée** : tout ce que l'adaptateur ne sait pas exécuter est
+rejeté avec un message nommant la fonctionnalité (`Unsupported feature 'scope: global'`),
+sans approximation. Garde-fou : le pic de la part de l'agent est comparé à
+`injection.max-arrival-rate` / `injection.max-concurrent-users`.
+
+Une simulation personnalisée qui ne déclare pas ses capacités est **opaque** : `scope: global`
+rejeté, déviation d'arrivée `INCONCLUSIVE`, rapport précisant que le profil vient de la
+simulation.
+
+### 4.2 Scope global (ADR-067)
+
+`PlanScaler` applique la part de l'agent : débits et niveaux × `fraction` ; quantités
+entières (`burst.users`, utilisateurs `closed`) réparties au plus fort reste selon `index`
+(somme exacte). Une part nulle ne lance rien et n'est pas une erreur. Les compteurs `{index}`
+avancent de `index + n × count` : valeurs disjointes sans coordination.
+
+### 4.3 Mix de requêtes (ADR-070)
+
+`requests` : liste de `{ name, weight, ...spec }` (HTTP) ou gabarits de message (Kafka). Un
+utilisateur virtuel = une requête. Compteurs, histogrammes et fenêtres sont tenus par nom de
+requête (`InjectionResult.perRequest`) et au total.
 
 ```mermaid
 flowchart TB
     subgraph PREP["Préparation de la simulation"]
         direction LR
-        STEP["step gatling"] --> LM["LoadModel"]
-        LM --> TR["LoadModelTranslator"]
+        STEP["step gatling"] --> LM["WorkloadPlan"]
+        LM --> TR["WorkloadPlanTranslator"]
         TR --> HOLDER["SimulationInjectionHolder"]
     end
     subgraph EXEC["Exécution et résultat"]
@@ -134,7 +178,13 @@ public record InjectionResult(
     long minMs,
     double meanMs,
     Path gatlingReportDirectory,    // répertoire du rapport HTML Gatling
-    Map<String, Object> rawStats    // stats brutes pour assertions custom
+    Map<String, Object> rawStats,   // stats brutes pour assertions custom
+    Instant startedAt, Instant endedAt,   // instants réels sur l'agent (ADR-068)
+    LatencyHistogram histogram,     // buckets creux {borneMs → compte}, succès/échecs séparés
+    List<LoadWindow> windows,       // fenêtres horodatées : plannedArrivals, startedUsers, requests, failures, measured
+    GeneratorHealth generatorHealth,// CPU, pause GC, heap max du worker
+    boolean complete,               // false = worker arrêté avant la fin du plan
+    Map<String, RequestStats> perRequest // par nom de requête (ADR-070)
 ) {}
 ```
 
@@ -170,18 +220,22 @@ Une étape d'injection ne s'exécute sur plusieurs agents que si elle le déclar
     target: sut-api
     path: submit-event
     method: POST
-    loadModel:
-      type: RAMP
-      parameters: { from: 1, to: 200, durationSeconds: 30 }
+    workload:
+      model: open
+      scope: global
+      stages:
+        - ramp: { from: 1, to: 200, duration: 30s }
   timeout: 5m
 ```
 
 - `fanOut: one` (défaut) : un seul agent accordé exécute la simulation ; le résultat est
   stocké sous `context[taskId]`.
 - `fanOut: all` : tous les agents compétents accordés dans la fenêtre de claim
-  (`execution.claim-window`) exécutent **le même** load model ; chaque agent produit un
+  (`execution.claim-window`) exécutent **le même** plan ; chaque agent produit un
   `InjectionResult` stocké sous `taskId → agentId`. La charge totale est la somme des
-  charges de chaque agent : dimensionner le load model en conséquence.
+  charges de chaque agent en `scope: per-agent` ; en `scope: global` le plan décrit le
+  total et chaque agent applique sa part (§4.2). `minAgents` fait échouer l'étape avant
+  tout grant si trop peu d'agents répondent.
 - L'agrégation des résultats multi-agents se fait dans les assertions, par règle déclarée
   sur la métrique (ADR-049) — jamais par une politique globale de sélection.
 - Les autres étapes (préparation, assertions, actions à effet de bord) restent en
@@ -201,7 +255,7 @@ Une étape d'injection ne s'exécute sur plusieurs agents que si elle le déclar
 
 La liste canonique est exposée par `ProtocolSupportInfo.SUPPORTED_PROTOCOLS`
 (HTTP, HTTPS, WebSocket, Kafka, JMS) ; `gRPC` figure dans `EXCLUDED_PROTOCOLS`.
-Sans `simulation`, le param `protocol` (`http` défaut | `kafka`) sélectionne un `InjectionProtocol` (SPI, beans Spring). Kafka : `cluster`, `topic` (logique, `platform.kafka-clusters.<c>.topics`), `key`, `headers`, `payload` dynamiques (ADR-039) ; cadence/durée via `loadModel`. Gatling ne dépend jamais de infra.
+Sans `simulation`, le param `protocol` (`http` défaut | `kafka`) sélectionne un `InjectionProtocol` (SPI, beans Spring). Kafka : `cluster`, `topic` (logique, `platform.kafka-clusters.<c>.topics`), `key`, `headers`, `payload` dynamiques (ADR-039) ; cadence/durée via `workload`. Gatling ne dépend jamais de infra.
 
 ---
 

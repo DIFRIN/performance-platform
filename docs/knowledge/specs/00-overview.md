@@ -17,7 +17,7 @@
 | `03-task-framework.md` | Contrats de tâches, registre, plugins JAR | `platform-plugin-api`, `platform-infrastructure`, `platform-executor-*` | `TaskExecutor`, `@Preparation/@Injection/@Assertion`, `TaskExecutorRegistry` |
 | `04-agent-runtime.md` | Runtime agent unique, spécialisation, registre, TTL | `platform-agent-runtime` | `TaskAgentRuntime`, `TaskSpecializationFilter`, `AgentTtlMonitor` |
 | `05-transport-layer.md` | Canaux de communication et implémentations | `platform-transport` | `TaskChannel`, `SignalChannel`, `EventChannel`, `LifecycleChannel` |
-| `06-injection-gatling.md` | Injection de charge Gatling | `platform-injection-gatling` | `GatlingTaskExecutor`, `GatlingRunner`, `LoadModelTranslator` |
+| `06-injection-gatling.md` | Injection de charge Gatling | `platform-injection-gatling` | `GatlingTaskExecutor`, `GatlingRunner`, `WorkloadPlanTranslator` |
 | `07-assertion-framework.md` | Assertions post-injection | `platform-assertion` | `AssertionExecutor`, `Check`, `AssertionSummary`, `SloStatement` |
 | `08-report-engine.md` | Rapport de campagne | `platform-reporting` | `DefaultReportEngine`, `CampaignReport`, renderers, `ReportFileWriter` |
 | `09-deployment.md` | Docker, compose LOCAL/DISTRIBUTED et exemple | `distribution` | Dockerfile, compose, profils Spring |

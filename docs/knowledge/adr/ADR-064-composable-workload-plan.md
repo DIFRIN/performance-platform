@@ -1,6 +1,6 @@
 # ADR-064 - Composable, platform-owned workload plan
 
-**Status** : PROPOSED (2026-11-16)
+**Status** : ACCEPTED (2026-11-17)
 **Supersedes** : the `LoadModel` / `LoadModelType` domain model (kept as YAML presets only)
 **Related** : ADR-053 (inline model only), ADR-065, ADR-067, ADR-068
 

@@ -89,9 +89,10 @@ scenario:
       dependsOn: [seed-db]
       parameters:
         simulation: com.example.CustomerApiSimulation
-        loadModel:                     # modèle inline uniquement
-          type: RAMP
-          parameters: { from: 1, to: 300, durationSeconds: 840 }
+        workload:                      # plan inline uniquement
+          model: open
+          stages:
+            - ramp: { from: 1, to: 300, duration: 14m }
       timeout: 20m
 
     - id: api-slo
@@ -138,6 +139,8 @@ scenario:
 | `requiredContexts` | non | override explicite ; défaut = `dependsOn` + `ref` |
 | `timeout` | non | défaut 5 min |
 | `retryPolicy` | non | `maxAttempts`, `initialDelay`, `multiplier`, `maxDelay`, `retryableExceptions` |
+| `minAgents` | non | entier ≥ 1 (défaut 1), `fanOut: all` — voir §3 |
+| `onAgentLoss` | non | `abort` (défaut) \| `continue` — voir §3 |
 | `description` | non | `title`, `sli`, `slo`, `rationale` — recopié dans `parameters.description` |
 
 `parameters.refTaskId` et `parameters.linkedTo` n'existent plus : `ref` remplace le
@@ -145,21 +148,39 @@ premier (ADR-053) et `during` remplace le second (ADR-054).
 
 ---
 
-## 3. Load Models
+## 3. Plan de charge (`workload`)
 
-Un load model est **inline** dans les paramètres de l'étape (`parameters.loadModel`,
-ADR-053). Le registre nommé `loadModels` au niveau `scenario` n'existe plus
-(`LoadModelRegistry` et `ScenarioDefinition.loadModels` sont supprimés). Seule une
-étape `gatling` de phase `INJECTION` est concernée.
+Le profil de charge est un `WorkloadPlan` **inline** dans `parameters.workload` de
+l'étape d'injection (ADR-053, ADR-064). Aucun registre racine.
 
 ```yaml
 parameters:
-  loadModel:
-    type: RAMP
-    parameters: { from: 1, to: 300, durationSeconds: 840 }
+  workload:
+    model: open            # open (arrivées/s) | closed (utilisateurs concurrents)
+    scope: global          # per-agent (défaut) | global (ADR-067)
+    stages:
+      - ramp:  { from: 0, to: 200, duration: 30s, measured: false }   # warm-up
+      - hold:  { level: 200, duration: 5m }
+      - burst: { users: 500 }                                          # open uniquement
+      - pause: { duration: 10s }
 ```
 
-| Type | Clés de `parameters` |
+- L'unité découle du modèle (`open` : arrivées/s ; `closed` : utilisateurs concurrents).
+  Un débit en requêtes/s n'est pas un modèle : c'est un résultat mesuré (ADR-065).
+- `measured: false` marque un warm-up exclu des métriques (ADR-068). Défaut : `true`.
+- Durées : `30s`, `5m`, `1h` ou ISO-8601.
+- `scope: global` : le plan décrit le total ; chaque agent applique sa part (`GrantShare`).
+  Exige `fanOut: all` et un adaptateur qui le supporte.
+- Rejet au parsing (HTTP 400) : plan vide, durée non positive, niveau négatif, `burst`
+  en `closed`, aucun stage mesuré, kind inconnu.
+
+### Presets `loadModel`
+
+`parameters.loadModel: { type, parameters }` reste accepté et est développé en `workload`
+(`scope: per-agent`) **avant validation**. `workload` et `loadModel` sont mutuellement
+exclusifs. Après parsing, seul le plan existe.
+
+| Preset | Clés de `parameters` |
 |---|---|
 | `RAMP` | `from`, `to`, `durationSeconds` |
 | `CONSTANT` | `usersPerSec`, `durationSeconds` |
@@ -170,8 +191,41 @@ parameters:
 | `RAMP_UP_DOWN` | `from`, `to`, `rampUpDurationSeconds`, `holdDurationSeconds`, `rampDownDurationSeconds` |
 | `CUSTOM` | `points` : liste de `{ timeSeconds, usersPerSec }` |
 
-La traduction en `OpenInjectionStep` Gatling est dans
-[Spec 06 section 4](06-injection-gatling.md#4-loadmodel--gatling-openinjection).
+### Mix de requêtes (`requests`, ADR-070)
+
+```yaml
+parameters:
+  target: sut-api
+  workload: { model: open, stages: [ { hold: { level: 50, duration: 2m } } ] }
+  requests:
+    - { name: create, weight: 70, path: submit-event, method: POST }
+    - { name: read,   weight: 30, path: get-event,    method: GET }
+```
+
+Chaque utilisateur virtuel envoie **une** requête tirée selon `weight` (normalisé, > 0).
+La forme à requête unique reste valide. Kafka : mix de gabarits de message. Pas de DSL de
+parcours (chaînage, branchement, extraction) : un parcours est une simulation Java.
+
+### Intégrité (`integrity`, ADR-069)
+
+```yaml
+parameters:
+  integrity:               # step INJECTION uniquement
+    maxArrivalDeviation: 5%
+    maxGeneratorCpu: 90%
+```
+
+Les contrôles d'intégrité sont automatiques et non désactivables ; seules les tolérances
+se règlent. Un contrôle en échec donne le verdict `INVALID`.
+
+### Étape multi-agents (`minAgents`, `onAgentLoss`)
+
+```yaml
+fanOut: all
+minAgents: 4          # défaut 1 ; moins d'agents accordés → étape en échec, aucune charge
+onAgentLoss: abort    # abort (défaut) | continue
+```
+
 
 ---
 
@@ -227,7 +281,7 @@ nom de propriété produit une erreur de parsing, jamais un champ ignoré. `exec
 - `requiredContexts` (ou son défaut `dependsOn` + `ref`) : chaque clé doit désigner un
   step disponible avant l'exécution — phase antérieure, ancêtre DAG dans la même phase,
   ou service `during: injection` pour une assertion (ADR-054)
-- `loadModel` dans un step INJECTION `gatling` : mapping inline avec un `type` valide ;
+- `workload` (ou preset `loadModel`) dans un step INJECTION `gatling` : plan inline valide, jamais les deux ;
   une référence nommée est une erreur
 - `task` : obligatoire — le `taskName` n'est pas validé contre un registre au parse time
   (les agents ne sont pas connus à ce stade)
@@ -278,14 +332,12 @@ public record StepDefinition(
     List<String> resolvedRequiredContexts();  // override, sinon dependsOn + ref
 }
 
-public record LoadModel(
-    LoadModelType type,
-    Map<String, Object> parameters
-) {}
+public record WorkloadPlan(ArrivalModel model, LoadScope scope, List<Stage> stages) {}
+public sealed interface Stage permits Ramp, Hold, Burst, Pause { boolean measured(); }
 ```
 
 `ExecutionMode` a été supprimé du domaine scenario : le mode vient uniquement du
-runtime (ADR-053). `LoadModel` reste un type d'injection ; il n'y a plus de map
+runtime (ADR-053). Le profil de charge est un `WorkloadPlan` (ADR-064) ; il n'y a ni `LoadModel` ni map
 `loadModels` dans `ScenarioDefinition`.
 
 ---

@@ -1,6 +1,6 @@
 # ADR-068 - Mergeable injection measurements and offered-load accounting
 
-**Status** : PROPOSED (2026-11-16)
+**Status** : ACCEPTED (2026-11-17)
 **Related** : ADR-049 (assertion model, reductions), ADR-044/051 (report evidence), ADR-064, ADR-066, ADR-067, ADR-069
 
 ## Context

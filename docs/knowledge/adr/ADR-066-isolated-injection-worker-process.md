@@ -1,6 +1,6 @@
 # ADR-066 - One isolated worker process per injection run
 
-**Status** : PROPOSED (2026-11-16)
+**Status** : ACCEPTED (2026-11-17)
 **Related** : ADR-007 (plugin JARs), ADR-046 (terminal cleanup), ADR-059 (LOCAL mode), ADR-065, ADR-068
 
 ## Context

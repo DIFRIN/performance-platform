@@ -144,3 +144,12 @@ IMPACT : ADR-019 et ADR-020 crees. Par ailleurs : le mode "headless run-and-exit
 CONTEXTE : Validation par l'Architect du design complet (PDR-034,035,036,037,038 + ISSUE-148 a 159 + analysis document). ADR-027 cree.
 RAISON : L'architecture est globalement solide. La decision d'uniformiser AssertionExecutor avec TaskExecutor (Option A) est la bonne : 0 breaking change pour les plugins, 0 code agent. ExecutionLifecycleSignal generaliste (pas assertion-specific) est le bon niveau d'abstraction. 7 findings identifies (voir ADR-027 et feedback System Designer ci-dessous) — aucun bloquant, tous resolubles avant ou pendant l'implementation.
 IMPACT : ADR-027 (Distributed Assertion Lifecycle) cree. PDRs et Issues valides. Implementation peut commencer apres traitement des 7 findings.
+
+---
+
+## Decisions acceptation ADR-064..070 (PDR-062 / ISSUE-244 — Architect 2026-11-17)
+
+[2026-11-17] [architecture] DECISION : ADR-064..070 passes de PROPOSED a ACCEPTED
+CONTEXTE : ISSUE-244 (PDR-062) en CHANGES_REQUESTED : critere de Done "ADR-064..070 en ACCEPTED" non rempli. Relecture croisee Architect ADR / code livre.
+RAISON : Code conforme aux decisions. ADR-064 : WorkloadPlan/Stage dans platform-domain, LoadModel/LoadModelType/LoadModelTranslator absents du code de production, presets expandus au parsing, WorkloadPlanValidator. ADR-065 : InjectionCapabilities + InjectionCapabilityProvider (optionnel) dans platform-plugin-api, TaskExecutor inchange, garde-fou PlanAdmission/InjectionLimits (max-arrival-rate, max-concurrent-users). ADR-066 : InjectionWorkerMain + ProcessInjectionWorkerLauncher (destroy puis destroyForcibly), injection.worker.* avec env prioritaire, refus de claim a max-concurrent. ADR-067 : GrantShare sur TaskGrantSignal (TransportStepDispatcher), minAgents/onAgentLoss dans StepDefinition, GlobalScopeDistributedIT. ADR-068 : Reduction.MERGE, metriques .worst-agent, InjectionAggregator. ADR-069 : Verdict.INVALID, IntegrityChecks/IntegrityCheckFactory, IntegrityTolerances, CLI EXIT_INVALID=2 (la proposition "code 2" de ADR-069 §5 est confirmee). ADR-070 : RequestMix/WeightedRequest HTTP + Kafka, RequestMixValidator, pas de DSL de parcours.
+IMPACT : 7 ADR en ACCEPTED (2026-11-17). La "regle interimaire" de ADR-066 §3 est caduque (worker livre), le refus de claim reste la regle. CLAUDE.md §8 : lignes de routing ADR-064..070. CLAUDE.md §10 : signaux d'alarme LoadModel/LoadModelType/LoadModelTranslator, unite requests_per_second, DSL de parcours YAML, execution Gatling in-process.

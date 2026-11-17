@@ -157,7 +157,7 @@ Outputs : `containerId`, `status`, `image` (selon action).
       value: "{random:1-100}"
     batchSize: 500
 ```
-Preparation-only : cadence et durée = step `gatling` avec `protocol: kafka` + `loadModel` (spec 06 §7).
+Preparation-only : cadence et durée = step `gatling` avec `protocol: kafka` + `workload` (spec 06 §7).
 Key, headers et payload acceptent les placeholders `DynamicValues` (ADR-039), résolus par message
 (`{index}` = index 1-based du message). Placeholder invalide → step FAILED.
 Outputs : `messagesProduced`, `messagesFailed`. La tâche échoue si
@@ -252,7 +252,7 @@ Injection HTTP décrite par le scénario (aucune classe de simulation à fournir
     headers: { X-Request-Id: "{uuid}" }
     body: { value: "{random:1-100}" }     # chaîne ou map/liste (JSON)
     expectedStatus: 201                   # optionnel (défaut Gatling : 2xx/3xx)
-    loadModel: { type: RAMP, parameters: { from: 1, to: 100, durationSeconds: 60 } }
+    workload: { model: open, stages: [ { ramp: { from: 1, to: 100, duration: 60s } } ] }
   timeout: 20m
 ```
 `simulation: com.example.CustomSimulation` reste possible pour une simulation Gatling personnalisée (les paramètres HTTP ci-dessus sont alors ignorés).

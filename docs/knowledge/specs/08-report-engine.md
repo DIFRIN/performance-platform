@@ -124,9 +124,18 @@ Le verdict final est calcule par `PerformanceAssessmentBuilder` (ADR-044) :
 
 | Condition | Verdict |
 |---|---|
+| controle d'integrite critique en echec (ADR-069) : charge non appliquee, agent perdu, run incomplet | `INVALID` (prioritaire) |
 | echec d'un critere critique, erreur d'assertion ou echec technique d'execution | `FAILED` |
 | seuil mineur depasse, verification ignoree, information requise absente | `WARNING` (PARTIAL) |
 | contexte complet, criteres requis mesures et respectes, aucun echec | `SUCCESS` |
+
+`INVALID` : les resultats d'assertion restent affiches mais marques non concluants ; le
+bandeau liste d'abord les controles d'integrite en echec avec la tolerance utilisee. L'execution
+reste `COMPLETED`, seul le verdict change. CLI : exit `2` (ADR-021).
+
+Preuves d'injection (`InjectionMeasurementsSection`) : percentiles globaux fusionnes, pire
+agent, debit sur fenetre commune, arrivees planifiees/obtenues par fenetre, sante du generateur,
+resultats par nom de requete et mix obtenu face aux poids declares.
 
 Les criteres requis couvrent `durationSeconds`, `totalRequests`, `errorRate` et
 `saturation`, plus au moins un SLO de latence ou throughput. Les informations de
@@ -143,8 +152,8 @@ synthetique `metric: assertion` dont le statut est le verdict enregistre et dont
 la criticite vient d'un critere `assertion` portant le meme `taskId` (defaut :
 critique).
 
-`VerdictCalculator.calculate(assertionEntries)` reste un helper historique, pas le
-calcul du verdict final :
+`VerdictCalculator` applique la priorite `INVALID` a un verdict deja calcule. Son
+`calculate(assertionEntries)` reste un helper historique, pas le calcul du verdict final :
 
 | Condition | Verdict |
 |---|---|

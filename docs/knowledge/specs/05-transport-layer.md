@@ -205,8 +205,13 @@ public record TaskGrantSignal(
     MessageId messageId,     // MessageId de la TaskExecutionRequest revendiquée
     AgentId agentId,         // agent destinataire du verdict
     boolean granted,         // true = exécuter ; false = claim rejeté
-    Instant issuedAt
-) {}
+    Instant issuedAt,
+    GrantShare share         // part de charge (ADR-067) ; GrantShare.single() par défaut
+) implements AgentSignal {}
+
+public record GrantShare(int index, int count, double fraction) {}
+// index : position 0-based de l'agent parmi les agents accordés ; count : nombre d'agents accordés
+// fraction : part du tout ; somme = 1.0. L'orchestrateur ne calcule rien d'autre (ADR-045).
 ```
 
 Réponse de l'orchestrateur au claim d'un agent. Chaque agent ne retient que le grant qui
