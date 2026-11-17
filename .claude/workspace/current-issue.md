@@ -1,11 +1,11 @@
-# ISSUE-212: InjectionCapabilities dans plugin-api
+# ISSUE-213: Admission du plan et simulations opaques
 **Status**: APPROVED
 **PDR**: PDR-057
-**Module**: platform-plugin-api
-**Started**: 2026-11-17T11:07+01:00
-**IssueFile**: issues/ISSUE-212-injection-capabilities-api.md
+**Module**: platform-injection-gatling
+**Started**: 2026-11-17T11:09+01:00
+**IssueFile**: issues/ISSUE-213-gatling-plan-admission.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-212-injection-capabilities-api.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-213-gatling-plan-admission.md`
 
 ## Reviewer Feedback
 (None yet)

@@ -19,7 +19,13 @@ import com.performance.platform.injection.gatling.worker.WorkerHandle;
 import com.performance.platform.injection.gatling.worker.WorkerOutcome;
 import com.performance.platform.injection.gatling.worker.WorkerRunSpec;
 import com.performance.platform.plugin.ExecutorAvailability;
+import com.performance.platform.domain.injection.ArrivalModel;
+import com.performance.platform.injection.gatling.load.PlanAdmission;
+import com.performance.platform.injection.gatling.load.PlanRejectedException;
+import com.performance.platform.injection.gatling.protocol.ProtocolSupportInfo;
 import com.performance.platform.plugin.Injection;
+import com.performance.platform.plugin.InjectionCapabilities;
+import com.performance.platform.plugin.InjectionCapabilityProvider;
 import com.performance.platform.plugin.StatefulResourceCleaner;
 import com.performance.platform.plugin.TaskExecutor;
 
@@ -36,6 +42,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,7 +93,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Injection(name = "gatling", description = "Gatling load injection")
 @Component
-public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleaner, ExecutorAvailability {
+public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleaner, ExecutorAvailability,
+        InjectionCapabilityProvider {
 
     private static final Logger log = LoggerFactory.getLogger(GatlingTaskExecutor.class);
 
@@ -103,6 +112,14 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     static final String OUTPUT_RESULT = InjectionResult.OUTPUT_KEY;
     static final String OUTPUT_WORKLOAD_PLAN = "workloadPlan";
     static final String OUTPUT_WORKLOAD_PLAN_HASH = "workloadPlanHash";
+    static final String OUTPUT_OPAQUE = "opaque";
+
+    private static final InjectionCapabilities CAPABILITIES = new InjectionCapabilities(
+            Set.of(ArrivalModel.OPEN, ArrivalModel.CLOSED),
+            Set.of("ramp", "hold", "burst", "pause"),
+            ProtocolSupportInfo.SUPPORTED_PROTOCOLS.stream()
+                    .map(String::toLowerCase).collect(Collectors.toUnmodifiableSet()),
+            false, true, false, false);
 
     // ── Defaults ──────────────────────────────────────────────────────────────
 
@@ -171,6 +188,11 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
         return runningInjections.get() < maxConcurrent;
     }
 
+    @Override
+    public InjectionCapabilities injectionCapabilities() {
+        return CAPABILITIES;
+    }
+
     // ── TaskExecutor contract ─────────────────────────────────────────────────
 
     @Override
@@ -217,6 +239,15 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
         } catch (IllegalArgumentException e) {
             return fail(step, startNanos, "Parameter '" + PARAM_WORKLOAD + "' is missing or invalid: "
                     + e.getMessage());
+        }
+
+        // Admission : rejet avant tout worker/trafic. Simulation custom = opaque (pas de provider).
+        try {
+            PlanAdmission.check(plan, CAPABILITIES);
+        } catch (PlanRejectedException e) {
+            log.warn("action=gatling_plan_rejected executionId={} stepId={} feature={}",
+                    executionKey, step.id().value(), e.feature());
+            return fail(step, startNanos, "Plan rejected: " + e.getMessage());
         }
 
         long timeoutSeconds = paramLong(step, PARAM_TIMEOUT, DEFAULT_TIMEOUT_SECONDS);
@@ -288,7 +319,8 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
                     Map.of(OUTPUT_RESULT, injectionResult,
                             OUTPUT_WORKLOAD_PLAN, WorkloadPlanCodec.toMap(plan),
-                            OUTPUT_WORKLOAD_PLAN_HASH, WorkloadPlanCodec.hash(plan)));
+                            OUTPUT_WORKLOAD_PLAN_HASH, WorkloadPlanCodec.hash(plan),
+                            OUTPUT_OPAQUE, customSimulation));
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

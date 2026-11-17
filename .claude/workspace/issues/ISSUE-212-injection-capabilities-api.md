@@ -2,7 +2,7 @@
 
 **PDR** : PDR-057
 **Module** : `platform-plugin-api`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P1
 **Bloquée par** : ISSUE-204
 **Estime** : S (< 1h)
