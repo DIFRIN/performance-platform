@@ -1,11 +1,11 @@
-# ISSUE-202: Annulation et arrêt du worker
+# ISSUE-203: Test d'intégration worker en mode LOCAL
 **Status**: APPROVED
 **PDR**: PDR-055
-**Module**: platform-injection-gatling
-**Started**: 2026-11-17T09:04+01:00
-**IssueFile**: issues/ISSUE-202-injection-worker-cancellation.md
+**Module**: platform-bootstrap
+**Started**: 2026-11-17T09:09+01:00
+**IssueFile**: issues/ISSUE-203-worker-integration-test.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-202-injection-worker-cancellation.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-203-worker-integration-test.md`
 
 ## Reviewer Feedback
 (None yet)

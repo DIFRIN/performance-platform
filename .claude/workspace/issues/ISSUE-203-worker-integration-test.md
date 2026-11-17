@@ -2,7 +2,7 @@
 
 **PDR** : PDR-055
 **Module** : `platform-bootstrap`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P2
 **Bloquée par** : ISSUE-202
 **Estime** : M (1-3h)

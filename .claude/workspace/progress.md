@@ -214,8 +214,8 @@
 | ISSUE-199 | Limite de concurrence d'injection par agent | DONE | PDR-055 | ISSUE-197 |
 | ISSUE-200 | InjectionWorkerMain et run directory | DONE | PDR-055 | ISSUE-199 |
 | ISSUE-201 | Lanceur de worker et bascule de l'executor | DONE | PDR-055 | ISSUE-200 |
-| ISSUE-202 | Annulation et arrêt du worker | APPROVED | PDR-055 | ISSUE-201 |
-| ISSUE-203 | Test d'intégration worker en mode LOCAL | WAITING | PDR-055 | ISSUE-202 |
+| ISSUE-202 | Annulation et arrêt du worker | DONE | PDR-055 | ISSUE-201 |
+| ISSUE-203 | Test d'intégration worker en mode LOCAL | APPROVED | PDR-055 | ISSUE-202 |
 | ISSUE-204 | Records WorkloadPlan et codec | DONE | PDR-056 | - |
 | ISSUE-205 | Presets : expansion des 8 types | WAITING | PDR-056 | ISSUE-204 |
 | ISSUE-206 | Parsing YAML de workload et presets | WAITING | PDR-056 | ISSUE-205 |
@@ -1135,3 +1135,7 @@
 | 2026-11-17 | ISSUE-202 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-202 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-202 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-202 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-203 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-203 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-203 | IN_REVIEW → APPROVED | Reviewer approved |
