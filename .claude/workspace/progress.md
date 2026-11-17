@@ -215,9 +215,9 @@
 | ISSUE-200 | InjectionWorkerMain et run directory | DONE | PDR-055 | ISSUE-199 |
 | ISSUE-201 | Lanceur de worker et bascule de l'executor | DONE | PDR-055 | ISSUE-200 |
 | ISSUE-202 | Annulation et arrêt du worker | DONE | PDR-055 | ISSUE-201 |
-| ISSUE-203 | Test d'intégration worker en mode LOCAL | APPROVED | PDR-055 | ISSUE-202 |
+| ISSUE-203 | Test d'intégration worker en mode LOCAL | DONE | PDR-055 | ISSUE-202 |
 | ISSUE-204 | Records WorkloadPlan et codec | DONE | PDR-056 | - |
-| ISSUE-205 | Presets : expansion des 8 types | WAITING | PDR-056 | ISSUE-204 |
+| ISSUE-205 | Presets : expansion des 8 types | APPROVED | PDR-056 | ISSUE-204 |
 | ISSUE-206 | Parsing YAML de workload et presets | WAITING | PDR-056 | ISSUE-205 |
 | ISSUE-207 | Validation du plan au parsing | WAITING | PDR-056 | ISSUE-204 |
 | ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | WAITING | PDR-056 | ISSUE-206, ISSUE-201 |
@@ -1139,3 +1139,7 @@
 | 2026-11-17 | ISSUE-203 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-203 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-203 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-203 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-205 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-205 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-205 | IN_REVIEW → APPROVED | Reviewer approved |
