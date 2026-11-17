@@ -202,6 +202,18 @@ class HtmlReportRendererTest {
         }
     }
 
+    @Test
+    @DisplayName("should render INVALID banner distinct from FAILED")
+    void shouldRenderInvalidBanner() {
+        var html = new String(renderer.render(buildReportWithVerdict(Verdict.INVALID, "load not applied")),
+                StandardCharsets.UTF_8);
+        assertTrue(html.contains("INVALID — test non valide"));
+        assertTrue(html.contains("badge-invalid"));
+        assertTrue(html.contains("non concluants"));
+        var failed = new String(renderer.render(buildReportWithVerdict(Verdict.FAILED, "x")), StandardCharsets.UTF_8);
+        assertFalse(failed.contains("INVALID — test non valide"));
+    }
+
     // ── helper ──
 
     private CampaignReport buildReportWithVerdict(Verdict verdict, String reason) {

@@ -59,10 +59,21 @@ class PerformanceReportingTest {
                 List.of(), List.of("Review release against baseline"));
     }
 
+    /** Resultat mesure : fenetre sans ecart, run complet, CPU connu (pas d'INCONCLUSIVE d'integrite). */
+    private static InjectionResult measured(InjectionResult r) {
+        var window = new com.performance.platform.domain.injection.LoadWindow(
+                java.time.Instant.EPOCH, Duration.ofSeconds(10), 1000, 1000, 1000, 0, true);
+        return new InjectionResult(r.taskId(), r.simulationClass(), r.duration(), r.totalRequests(),
+                r.successfulRequests(), r.failedRequests(), r.errorRate(), r.throughput(), r.p50Ms(), r.p75Ms(),
+                r.p90Ms(), r.p95Ms(), r.p99Ms(), r.maxMs(), r.minMs(), r.meanMs(), r.gatlingReportDirectory(),
+                r.rawStats(), r.startedAt(), r.endedAt(), r.histogram(), List.of(window),
+                new com.performance.platform.domain.injection.GeneratorHealth(0.1, Duration.ZERO, 0L), true);
+    }
+
     private ExecutionState state(ReportDefinition spec, boolean persisted, AssertionStatus assertionStatus) throws Exception {
-        var injection = new InjectionResult(LOAD, "GenericSimulation", Duration.ofSeconds(10),
+        var injection = measured(new InjectionResult(LOAD, "GenericSimulation", Duration.ofSeconds(10),
                 1000, 1000, 0, 0, 100, 25, 30, 40, 50, 90, 100, 10, 30,
-                directory, Map.of());
+                directory, Map.of()));
         var outputs = Map.<String, Object>of("result", injection, "cpu", 35.0);
         if (persisted) outputs = MAPPER.readValue(MAPPER.writeValueAsBytes(outputs), new TypeReference<>() {});
         var result = new TaskResult(LOAD, "gatling", com.performance.platform.domain.task.TaskStatus.SUCCESS,
@@ -202,8 +213,8 @@ class PerformanceReportingTest {
     @Test
     void allAgentsAreKeptAndTheirPercentilesAreNeverAveraged() throws Exception {
         var first = state(definition(List.of()), false, null);
-        var second = new InjectionResult(LOAD, "GenericSimulation", Duration.ofSeconds(10),
-                1000, 900, 100, 10, 100, 50, 75, 100, 700, 900, 1000, 5, 300, directory, Map.of());
+        var second = measured(new InjectionResult(LOAD, "GenericSimulation", Duration.ofSeconds(10),
+                1000, 900, 100, 10, 100, 50, 75, 100, 700, 900, 1000, 5, 300, directory, Map.of()));
         var context = first.context().with("load", "agent-2", TaskResult.success(LOAD, "gatling",
                 Duration.ofSeconds(10), Map.of("result", second, "cpu", 70)));
         var state = new ExecutionState(first.id(), first.scenarioId(), first.status(), first.phaseStatuses(),

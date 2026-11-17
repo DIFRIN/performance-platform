@@ -59,6 +59,7 @@ public class HtmlReportRenderer implements ReportRenderer {
                     .replace("${generatedAt}", report.generatedAt().toString())
                     .replace("${verdict}", report.verdict().name())
                     .replace("${verdictCssClass}", verdictCssClass(report.verdict()))
+                    .replace("${invalidBanner}", buildInvalidBanner(report))
                     .replace("${verdictReason}", report.verdictReason() != null
                             ? " — " + escapeHtml(report.verdictReason()) : "")
                     .replace("${jvmVersion}", escapeHtml(report.environment().jvmVersion()))
@@ -72,7 +73,9 @@ public class HtmlReportRenderer implements ReportRenderer {
                     .replace("${assertionDuration}", report.executionSummary().assertionDuration().toString())
                     .replace("${preparationTable}", buildPreparationTable(report.preparationResults()))
                     .replace("${injectionKPIs}", buildInjectionKPIs(report.injectionResults()))
-                    .replace("${assertionTable}", buildAssertionTable(report.assertionResults()))
+                    .replace("${assertionTable}", (report.verdict() == Verdict.INVALID
+                            ? "<p><em>Résultats non concluants : test INVALID.</em></p>" : "")
+                            + buildAssertionTable(report.assertionResults()))
                     .replace("${contextSection}", PerformanceSections.context(report.performance()))
                     .replace("${loadSection}", PerformanceSections.load(report.performance()))
                     .replace("${sliSection}", PerformanceSections.sli(report.performance()))
@@ -194,6 +197,22 @@ public class HtmlReportRenderer implements ReportRenderer {
         return sb.toString();
     }
 
+    private String buildInvalidBanner(CampaignReport report) {
+        if (report.verdict() != Verdict.INVALID) {
+            return "";
+        }
+        var sb = new StringBuilder("<div class=\"invalid-banner\"><strong>INVALID — test non valide</strong>");
+        sb.append("<p>Les résultats ci-dessous sont non concluants : la charge décrite n'a pas été appliquée.</p>");
+        var perf = report.performance();
+        if (perf != null && perf.validation() != null && !perf.validation().limitations().isEmpty()) {
+            sb.append("<h3>Contrôles d'intégrité</h3><ul>");
+            perf.validation().limitations().forEach(l ->
+                    sb.append("<li>").append(escapeHtml(l)).append("</li>"));
+            sb.append("</ul>");
+        }
+        return sb.append("</div>").toString();
+    }
+
     // ──────────────────────────────────────────────
     // Helpers
     // ──────────────────────────────────────────────
@@ -203,6 +222,7 @@ public class HtmlReportRenderer implements ReportRenderer {
             case SUCCESS -> "success";
             case WARNING -> "warning";
             case FAILED -> "failed";
+            case INVALID -> "invalid";
         };
     }
 

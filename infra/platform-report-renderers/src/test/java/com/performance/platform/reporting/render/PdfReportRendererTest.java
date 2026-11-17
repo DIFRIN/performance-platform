@@ -113,6 +113,20 @@ class PdfReportRendererTest {
         }
 
         @Test
+        @DisplayName("should render a PDF for an INVALID report")
+        void shouldRenderInvalidPdf() {
+            var invalid = new CampaignReport(
+                    report.id(), report.scenarioId(), report.scenarioName(), report.scenarioVersion(),
+                    report.tags(), report.metadata(), report.environment(), report.executionSummary(),
+                    report.preparationResults(), report.injectionResults(), report.assertionResults(),
+                    Verdict.INVALID, "load not applied", report.generatedAt(), report.totalDuration());
+            byte[] pdf = pdfRenderer.render(invalid);
+            assertTrue(pdf.length > 4);
+            assertTrue(new String(htmlRenderer.render(invalid), StandardCharsets.UTF_8)
+                    .contains("INVALID — test non valide"));
+        }
+
+        @Test
         @DisplayName("should produce non-empty PDF content")
         void shouldProduceNonEmptyPdf() {
             byte[] pdf = pdfRenderer.render(report);
