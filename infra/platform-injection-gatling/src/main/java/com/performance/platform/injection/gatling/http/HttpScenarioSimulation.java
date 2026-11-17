@@ -12,8 +12,11 @@ import io.gatling.javaapi.http.HttpProtocolBuilder;
 import io.gatling.javaapi.http.HttpRequestActionBuilder;
 
 import java.util.List;
+import java.util.random.RandomGenerator;
 
 import static io.gatling.javaapi.core.CoreDsl.StringBody;
+import static io.gatling.javaapi.core.CoreDsl.doSwitch;
+import static io.gatling.javaapi.core.CoreDsl.onCase;
 import static io.gatling.javaapi.core.CoreDsl.exec;
 import static io.gatling.javaapi.core.CoreDsl.scenario;
 import static io.gatling.javaapi.http.HttpDsl.http;
@@ -28,6 +31,7 @@ import static io.gatling.javaapi.http.HttpDsl.status;
 @SuppressWarnings("this-escape") // Gatling requires setUp() during Simulation construction.
 public class HttpScenarioSimulation extends Simulation {
 
+    private static final String MIX_KEY = "platform.request.name";
     private static final String SESSION_KEY = "platform.request";
     private static final String SIM_ID_PROPERTY = "gatling.simulationId";
 
@@ -43,21 +47,20 @@ public class HttpScenarioSimulation extends Simulation {
             throw new IllegalStateException("No injection steps registered for simulation '" + simId + "'");
         }
 
+        RequestMix mix = HttpRequestSpecHolder.getMix(simId);
         ShareCounter counter = ShareCounter.fromSystemProperties();
-        HttpRequestActionBuilder request = http(spec.stepId())
-                .httpRequest(spec.method(), s -> rendered(s).target());
-        for (String header : spec.headers().keySet()) {
-            request = request.header(header, s -> rendered(s).headers().get(header));
-        }
-        if (spec.body() != null) {
-            request = request.body(StringBody(s -> rendered(s).body()));
-        }
-        if (spec.expectedStatus() > 0) {
-            request = request.check(status().is(spec.expectedStatus()));
-        }
+        RandomGenerator random = RequestMix.generator(seed());
 
-        ChainBuilder iteration = exec(s -> s.set(SESSION_KEY, HttpRequestRenderer.render(spec, counter.next())))
-                .exec(request);
+        // One Gatling request per declared name; the drawn name selects which one is sent.
+        List<WeightedRequest> all = mix.requests();
+        ChainBuilder selected = all.size() == 1 ? exec(buildRequest(all.get(0))) : doSwitch(MIX_KEY).on(
+                all.stream().map(wr -> (io.gatling.javaapi.core.Choice.WithKey) onCase(wr.name())
+                        .then(exec(buildRequest(wr)))).toList());
+        ChainBuilder iteration = exec(s -> {
+            WeightedRequest wr = all.size() == 1 ? all.get(0) : mix.pick(random);
+            return s.set(MIX_KEY, wr.name())
+                    .set(SESSION_KEY, HttpRequestRenderer.render(wr.spec(), counter.next()));
+        }).exec(selected);
         // Closed model: each user loops on the request for the whole plan duration.
         ScenarioBuilder scn = closed != null
                 ? scenario(spec.stepId()).forever().on(iteration)
@@ -70,6 +73,27 @@ public class HttpScenarioSimulation extends Simulation {
         } else {
             setUp(scn.injectOpen(steps.toArray(new OpenInjectionStep[0]))).protocols(protocol);
         }
+    }
+
+    private static long seed() {
+        String seed = System.getProperty(ShareCounter.PROP_SEED);
+        return seed == null ? 0L : Long.parseUnsignedLong(seed);
+    }
+
+    private static HttpRequestActionBuilder buildRequest(WeightedRequest wr) {
+        HttpRequestSpec spec = wr.spec();
+        HttpRequestActionBuilder request = http(wr.name())
+                .httpRequest(spec.method(), s -> rendered(s).target());
+        for (String header : spec.headers().keySet()) {
+            request = request.header(header, s -> rendered(s).headers().get(header));
+        }
+        if (spec.body() != null) {
+            request = request.body(StringBody(s -> rendered(s).body()));
+        }
+        if (spec.expectedStatus() > 0) {
+            request = request.check(status().is(spec.expectedStatus()));
+        }
+        return request;
     }
 
     private static HttpRequestRenderer.Rendered rendered(io.gatling.javaapi.core.Session session) {

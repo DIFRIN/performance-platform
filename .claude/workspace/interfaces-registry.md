@@ -538,4 +538,4 @@
 | `AgentLossPolicy`, `StepDefinition.minAgents/onAgentLoss` | platform-domain | ⬜ PLANNED | PDR-060 | ISSUE-228 |
 | `PlanScaler` | platform-injection-gatling | ⬜ PLANNED | PDR-060 | ISSUE-235 |
 | `RequestStats`, `InjectionResult.perRequest` | platform-domain | ✅ IMPLEMENTED | PDR-061 | ISSUE-238 |
-| `RequestMix`, `WeightedRequest` | platform-injection-gatling | ⬜ PLANNED | PDR-061 | ISSUE-240 |
+| `RequestMix`, `WeightedRequest` | platform-injection-gatling | ✅ IMPLEMENTED | PDR-061 | ISSUE-240 |

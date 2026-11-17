@@ -251,8 +251,8 @@
 | ISSUE-236 | Compteurs partitionnés, graines et garde-fou sur la part | DONE | PDR-060 | ISSUE-235, ISSUE-214 |
 | ISSUE-237 | Test d'intégration : scope global distribué | DONE | PDR-060 | ISSUE-233, ISSUE-236 |
 | ISSUE-238 | RequestStats et résultats par requête | DONE | PDR-061 | ISSUE-215 |
-| ISSUE-239 | Validation du bloc requests | APPROVED | PDR-061 | ISSUE-207 |
-| ISSUE-240 | Mix pondéré HTTP | WAITING | PDR-061 | ISSUE-208 |
+| ISSUE-239 | Validation du bloc requests | DONE | PDR-061 | ISSUE-207 |
+| ISSUE-240 | Mix pondéré HTTP | APPROVED | PDR-061 | ISSUE-208 |
 | ISSUE-241 | Mix pondéré Kafka | WAITING | PDR-061 | ISSUE-240 |
 | ISSUE-242 | Résultats par nom de requête | WAITING | PDR-061 | ISSUE-240, ISSUE-218, ISSUE-238 |
 | ISSUE-243 | Métriques d'assertion par requête | WAITING | PDR-061 | ISSUE-242, ISSUE-219 |
@@ -1274,3 +1274,7 @@
 | 2026-11-17 | ISSUE-239 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-239 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-239 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-239 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-240 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-240 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-240 | IN_REVIEW → APPROVED | Reviewer approved |
