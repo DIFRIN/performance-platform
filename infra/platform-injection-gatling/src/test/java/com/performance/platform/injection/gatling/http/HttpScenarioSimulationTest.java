@@ -109,6 +109,29 @@ class HttpScenarioSimulationTest {
     }
 
     @Test
+    @DisplayName("closed plan keeps users looping for the plan duration then terminates")
+    void shouldRunClosedModel() {
+        String simId = "http-closed-" + System.nanoTime();
+        HttpRequestSpecHolder.set(simId, spec("{}"));
+        var plan = new com.performance.platform.domain.injection.WorkloadPlan(
+                com.performance.platform.domain.injection.ArrivalModel.CLOSED,
+                com.performance.platform.domain.injection.LoadScope.PER_AGENT,
+                List.of(new com.performance.platform.domain.injection.Hold(2, Duration.ofSeconds(2), true)));
+        var config = new GatlingRunConfig(HttpScenarioSimulation.class.getName(), plan,
+                Map.of(), resultsDir, simId, Duration.ofSeconds(60));
+        try {
+            long start = System.nanoTime();
+            Path directory = new DefaultGatlingRunner(new DefaultWorkloadPlanTranslator()).run(config);
+            assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(45));
+            var result = new DefaultGatlingResultParser().parse(directory, TaskId.of("http-closed"));
+            // 2 users looping ~2s on a 30ms endpoint: far more requests than users.
+            assertThat(result.totalRequests()).isGreaterThan(4);
+        } finally {
+            HttpRequestSpecHolder.remove(simId);
+        }
+    }
+
+    @Test
     @DisplayName("runner output parses failed HTTP checks as measured KO requests")
     void shouldParseHttpFailures() {
         String simId = "http-ko-" + System.nanoTime();

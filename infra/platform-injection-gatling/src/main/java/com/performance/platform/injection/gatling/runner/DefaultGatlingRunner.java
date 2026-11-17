@@ -1,5 +1,7 @@
 package com.performance.platform.injection.gatling.runner;
 
+import com.performance.platform.domain.injection.ArrivalModel;
+import com.performance.platform.domain.injection.Stage;
 import com.performance.platform.injection.gatling.load.WorkloadPlanTranslator;
 
 import io.gatling.javaapi.core.OpenInjectionStep;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -70,12 +73,22 @@ public class DefaultGatlingRunner implements GatlingRunner {
                 config.simulationId(), config.simulationClass(), config.timeout());
 
         // 1. Traduire WorkloadPlan en etapes d'injection Gatling
-        List<OpenInjectionStep> steps = translator.toOpenSteps(config.plan());
+        int stepCount;
+        if (config.plan().model() == ArrivalModel.CLOSED) {
+            var closed = translator.toClosedSteps(config.plan());
+            stepCount = closed.size();
+            // 2. Rendre les etapes disponibles a la simulation
+            SimulationInjectionHolder.setClosed(config.simulationId(), closed,
+                    config.plan().stages().stream()
+                            .map(Stage::duration)
+                            .reduce(Duration.ZERO, Duration::plus));
+        } else {
+            List<OpenInjectionStep> steps = translator.toOpenSteps(config.plan());
+            stepCount = steps.size();
+            SimulationInjectionHolder.set(config.simulationId(), steps);
+        }
         log.debug("action=workload_plan_translated simulationId={} stepCount={}",
-                config.simulationId(), steps.size());
-
-        // 2. Rendre les etapes disponibles a la simulation
-        SimulationInjectionHolder.set(config.simulationId(), steps);
+                config.simulationId(), stepCount);
 
         // 3. Sauvegarder et appliquer les proprietes systeme
         Map<String, String> previousSysProps = new HashMap<>();

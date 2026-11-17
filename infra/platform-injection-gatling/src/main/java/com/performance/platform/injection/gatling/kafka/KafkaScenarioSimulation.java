@@ -3,6 +3,7 @@ package com.performance.platform.injection.gatling.kafka;
 import com.performance.platform.injection.gatling.runner.SimulationInjectionHolder;
 
 import io.gatling.javaapi.core.ChainBuilder;
+import io.gatling.javaapi.core.ClosedInjectionStep;
 import io.gatling.javaapi.core.OpenInjectionStep;
 import io.gatling.javaapi.core.Simulation;
 
@@ -26,13 +27,21 @@ public class KafkaScenarioSimulation extends Simulation {
         if (spec == null) {
             throw new IllegalStateException("No Kafka spec registered for simulation '" + simId + "'");
         }
+        SimulationInjectionHolder.Closed closed = SimulationInjectionHolder.getClosed(simId);
         List<OpenInjectionStep> steps = SimulationInjectionHolder.get(simId);
-        if (steps.isEmpty()) {
+        if (closed == null && steps.isEmpty()) {
             throw new IllegalStateException("No injection steps registered for simulation '" + simId + "'");
         }
 
         var action = new KafkaPublishActionBuilder(spec);
         ChainBuilder publish = ChainBuilder.EMPTY.make(empty -> action.toChainBuilder());
-        setUp(scenario(spec.stepId()).exec(publish).injectOpen(steps.toArray(new OpenInjectionStep[0])));
+        if (closed != null) {
+            // Closed model: each user loops on the publish for the whole plan duration.
+            setUp(scenario(spec.stepId()).forever().on(publish)
+                    .injectClosed(closed.steps().toArray(new ClosedInjectionStep[0])))
+                    .maxDuration(closed.totalDuration());
+        } else {
+            setUp(scenario(spec.stepId()).exec(publish).injectOpen(steps.toArray(new OpenInjectionStep[0])));
+        }
     }
 }

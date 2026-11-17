@@ -48,11 +48,4 @@ class DefaultWorkloadPlanTranslatorTest {
                 List.of(new Hold(5, Duration.ofSeconds(5), true)));
         assertThrows(IllegalArgumentException.class, () -> translator.toOpenSteps(plan));
     }
-
-    @Test
-    void closedStepsNotYetSupported() {
-        var plan = new WorkloadPlan(ArrivalModel.CLOSED, LoadScope.PER_AGENT,
-                List.of(new Hold(5, Duration.ofSeconds(5), true)));
-        assertThrows(UnsupportedOperationException.class, () -> translator.toClosedSteps(plan));
-    }
 }

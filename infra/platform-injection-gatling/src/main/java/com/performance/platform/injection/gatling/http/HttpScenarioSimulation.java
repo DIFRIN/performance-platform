@@ -2,6 +2,8 @@ package com.performance.platform.injection.gatling.http;
 
 import com.performance.platform.injection.gatling.runner.SimulationInjectionHolder;
 
+import io.gatling.javaapi.core.ChainBuilder;
+import io.gatling.javaapi.core.ClosedInjectionStep;
 import io.gatling.javaapi.core.OpenInjectionStep;
 import io.gatling.javaapi.core.ScenarioBuilder;
 import io.gatling.javaapi.core.Simulation;
@@ -12,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static io.gatling.javaapi.core.CoreDsl.StringBody;
+import static io.gatling.javaapi.core.CoreDsl.exec;
 import static io.gatling.javaapi.core.CoreDsl.scenario;
 import static io.gatling.javaapi.http.HttpDsl.http;
 import static io.gatling.javaapi.http.HttpDsl.status;
@@ -34,8 +37,9 @@ public class HttpScenarioSimulation extends Simulation {
         if (spec == null) {
             throw new IllegalStateException("No HTTP request spec registered for simulation '" + simId + "'");
         }
+        SimulationInjectionHolder.Closed closed = SimulationInjectionHolder.getClosed(simId);
         List<OpenInjectionStep> steps = SimulationInjectionHolder.get(simId);
-        if (steps.isEmpty()) {
+        if (closed == null && steps.isEmpty()) {
             throw new IllegalStateException("No injection steps registered for simulation '" + simId + "'");
         }
 
@@ -52,12 +56,20 @@ public class HttpScenarioSimulation extends Simulation {
             request = request.check(status().is(spec.expectedStatus()));
         }
 
-        ScenarioBuilder scn = scenario(spec.stepId())
-                .exec(s -> s.set(SESSION_KEY, HttpRequestRenderer.render(spec, counter.incrementAndGet())))
+        ChainBuilder iteration = exec(s -> s.set(SESSION_KEY, HttpRequestRenderer.render(spec, counter.incrementAndGet())))
                 .exec(request);
+        // Closed model: each user loops on the request for the whole plan duration.
+        ScenarioBuilder scn = closed != null
+                ? scenario(spec.stepId()).forever().on(iteration)
+                : scenario(spec.stepId()).exec(iteration);
         HttpProtocolBuilder protocol = http.baseUrl(spec.baseUrl());
 
-        setUp(scn.injectOpen(steps.toArray(new OpenInjectionStep[0]))).protocols(protocol);
+        if (closed != null) {
+            setUp(scn.injectClosed(closed.steps().toArray(new ClosedInjectionStep[0])))
+                    .protocols(protocol).maxDuration(closed.totalDuration());
+        } else {
+            setUp(scn.injectOpen(steps.toArray(new OpenInjectionStep[0]))).protocols(protocol);
+        }
     }
 
     private static HttpRequestRenderer.Rendered rendered(io.gatling.javaapi.core.Session session) {

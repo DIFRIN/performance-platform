@@ -1,6 +1,9 @@
 package com.performance.platform.injection.gatling.runner;
 
+import io.gatling.javaapi.core.ClosedInjectionStep;
 import io.gatling.javaapi.core.OpenInjectionStep;
+
+import java.time.Duration;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,15 @@ public final class SimulationInjectionHolder {
     private static final Map<String, List<OpenInjectionStep>> injections =
             new ConcurrentHashMap<>();
 
+    /** Closed-model injection: concurrency steps plus the total plan duration. */
+    public record Closed(List<ClosedInjectionStep> steps, Duration totalDuration) {
+        public Closed {
+            steps = List.copyOf(steps);
+        }
+    }
+
+    private static final Map<String, Closed> closedInjections = new ConcurrentHashMap<>();
+
     private SimulationInjectionHolder() {
         // utilitaire non-instanciable
     }
@@ -66,5 +78,16 @@ public final class SimulationInjectionHolder {
      */
     public static void remove(String simulationId) {
         injections.remove(simulationId);
+        closedInjections.remove(simulationId);
+    }
+
+    /** Stores closed-model steps for a simulation. */
+    public static void setClosed(String simulationId, List<ClosedInjectionStep> steps, Duration totalDuration) {
+        closedInjections.put(simulationId, new Closed(steps, totalDuration));
+    }
+
+    /** @return closed-model injection, or {@code null} when the simulation is open-model */
+    public static Closed getClosed(String simulationId) {
+        return closedInjections.get(simulationId);
     }
 }

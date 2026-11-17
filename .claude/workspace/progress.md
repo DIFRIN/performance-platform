@@ -220,8 +220,8 @@
 | ISSUE-205 | Presets : expansion des 8 types | DONE | PDR-056 | ISSUE-204 |
 | ISSUE-206 | Parsing YAML de workload et presets | DONE | PDR-056 | ISSUE-205 |
 | ISSUE-207 | Validation du plan au parsing | DONE | PDR-056 | ISSUE-204 |
-| ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | APPROVED | PDR-056 | ISSUE-206, ISSUE-201 |
-| ISSUE-209 | Modèle fermé (utilisateurs concurrents) | WAITING | PDR-056 | ISSUE-208 |
+| ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | DONE | PDR-056 | ISSUE-206, ISSUE-201 |
+| ISSUE-209 | Modèle fermé (utilisateurs concurrents) | APPROVED | PDR-056 | ISSUE-208 |
 | ISSUE-210 | Suppression de LoadModel et LoadModelType | WAITING | PDR-056 | ISSUE-207, ISSUE-208 |
 | ISSUE-211 | Plan résolu et hash dans le rapport | WAITING | PDR-056 | ISSUE-208 |
 | ISSUE-212 | InjectionCapabilities dans plugin-api | WAITING | PDR-057 | ISSUE-204 |
@@ -1158,3 +1158,10 @@
 | 2026-11-17 | ISSUE-208 | CHANGES_REQUESTED → IN_PROGRESS (resume) | issue-start.sh |
 | 2026-11-17 | ISSUE-208 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-208 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-208 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-209 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-209 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-209 | IN_REVIEW → CHANGES_REQUESTED | 1) Critère de Done non couvert : aucun test n'exécute un plan fermé (ClosedModelTranslatorTest ne teste que les classes de steps). Ajouter un test d'exécution (ex. DefaultGatlingRunnerTest avec plan CLOSED, HttpScenarioSimulation/WireMock ou simulation minimale) vérifiant que la population est maintenue / que la simulation termine via maxDuration. 2) Tests Kafka/HTTP du branchement closed (SimulationInjectionHolder.getClosed, immutabilité Closed) absents. 3) HttpScenarioSimulation.java et KafkaScenarioSimulation.java : diff de fichier entier (fins de ligne CRLF→LF changées) — restaurer les fins de ligne d'origine pour un diff lisible. 4) Mineur : accolades superflues dans le case Hold; FQN inline dans DefaultGatlingRunner (imports à ajouter). Tests module: 103 OK. |
+| 2026-11-17 | ISSUE-209 | CHANGES_REQUESTED → IN_PROGRESS (resume) | issue-start.sh |
+| 2026-11-17 | ISSUE-209 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-209 | IN_REVIEW → APPROVED | Reviewer approved |
