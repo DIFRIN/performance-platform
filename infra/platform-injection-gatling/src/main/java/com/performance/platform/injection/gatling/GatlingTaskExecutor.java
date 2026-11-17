@@ -24,6 +24,10 @@ import com.performance.platform.plugin.ExecutorAvailability;
 import com.performance.platform.domain.injection.ArrivalModel;
 import com.performance.platform.injection.gatling.load.InjectionLimits;
 import com.performance.platform.injection.gatling.load.PlanAdmission;
+import com.performance.platform.injection.gatling.load.PlanScaler;
+import com.performance.platform.domain.execution.GrantShare;
+import com.performance.platform.domain.injection.LatencyHistogram;
+import com.performance.platform.domain.injection.LoadScope;
 import com.performance.platform.injection.gatling.load.PlanRejectedException;
 import com.performance.platform.injection.gatling.protocol.ProtocolSupportInfo;
 import com.performance.platform.plugin.Injection;
@@ -123,13 +127,15 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     static final String OUTPUT_GENERATOR_HEALTH = "generatorHealth";
     static final String OUTPUT_COMPLETE = "complete";
     static final String OUTPUT_ARRIVAL_KNOWN = "arrivalKnown";
+    static final String OUTPUT_SHARE_INDEX = "shareIndex";
+    static final String OUTPUT_SHARE_COUNT = "shareCount";
 
     private static final InjectionCapabilities CAPABILITIES = new InjectionCapabilities(
             Set.of(ArrivalModel.OPEN, ArrivalModel.CLOSED),
             Set.of("ramp", "hold", "burst", "pause"),
             ProtocolSupportInfo.SUPPORTED_PROTOCOLS.stream()
                     .map(String::toLowerCase).collect(Collectors.toUnmodifiableSet()),
-            false, true, true, true);
+            true, true, true, true);
 
     // ── Defaults ──────────────────────────────────────────────────────────────
 
@@ -262,6 +268,11 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                     + e.getMessage());
         }
 
+        // Mise a l'echelle de la part (scope global, ADR-067), puis admission du plan de l'agent.
+        final WorkloadPlan globalPlan = plan;
+        final GrantShare share = context.share();
+        plan = PlanScaler.scale(plan, share);
+
         // Admission : rejet avant tout worker/trafic. Simulation custom = opaque (pas de provider).
         try {
             PlanAdmission.check(plan, CAPABILITIES, limits);
@@ -269,6 +280,12 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             log.warn("action=gatling_plan_rejected executionId={} stepId={} feature={}",
                     executionKey, step.id().value(), e.feature());
             return fail(step, startNanos, "Plan rejected: " + e.getMessage());
+        }
+
+        if (globalPlan.scope() == LoadScope.GLOBAL && PlanScaler.isIdle(plan)) {
+            log.info("action=gatling_share_idle executionId={} stepId={} shareIndex={} shareCount={}",
+                    executionKey, step.id().value(), share.index(), share.count());
+            return idleResult(step, startNanos, simulation, plan, globalPlan, share, !customSimulation);
         }
 
         long timeoutSeconds = paramLong(step, PARAM_TIMEOUT, DEFAULT_TIMEOUT_SECONDS);
@@ -342,7 +359,9 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             var outputs = new LinkedHashMap<String, Object>();
             outputs.put(OUTPUT_RESULT, injectionResult);
             outputs.put(OUTPUT_WORKLOAD_PLAN, WorkloadPlanCodec.toMap(plan));
-            outputs.put(OUTPUT_WORKLOAD_PLAN_HASH, WorkloadPlanCodec.hash(plan));
+            outputs.put(OUTPUT_WORKLOAD_PLAN_HASH, WorkloadPlanCodec.hash(globalPlan));
+            outputs.put(OUTPUT_SHARE_INDEX, share.index());
+            outputs.put(OUTPUT_SHARE_COUNT, share.count());
             outputs.put(OUTPUT_OPAQUE, customSimulation);
             outputs.put(OUTPUT_HISTOGRAM, injectionResult.histogram().toMap());
             outputs.put(OUTPUT_WINDOWS, injectionResult.windows().stream().map(LoadWindow::toMap).toList());
@@ -469,6 +488,31 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                 r.successfulRequests(), r.failedRequests(), r.errorRate(), r.throughput(), r.p50Ms(), r.p75Ms(),
                 r.p90Ms(), r.p95Ms(), r.p99Ms(), r.maxMs(), r.minMs(), r.meanMs(), r.gatlingReportDirectory(),
                 r.rawStats(), r.startedAt(), r.endedAt(), r.histogram(), windows, health, r.complete());
+    }
+
+    /** Part nulle : aucun worker, resultat vide complet. */
+    private TaskResult idleResult(StepDefinition step, long startNanos, String simulation, WorkloadPlan scaled,
+                                  WorkloadPlan globalPlan, GrantShare share, boolean arrivalKnown) {
+        var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+        var now = java.time.Instant.now();
+        var empty = new InjectionResult(step.id(), simulation == null ? "" : simulation, elapsed, 0, 0, 0, 0.0, 0.0,
+                0, 0, 0, 0, 0, 0, 0, 0.0, Path.of("."), Map.of(), now, now, LatencyHistogram.empty(), List.of(),
+                GeneratorHealth.unknown(), true);
+        var outputs = new LinkedHashMap<String, Object>();
+        outputs.put(OUTPUT_RESULT, empty);
+        outputs.put(OUTPUT_WORKLOAD_PLAN, WorkloadPlanCodec.toMap(scaled));
+        outputs.put(OUTPUT_WORKLOAD_PLAN_HASH, WorkloadPlanCodec.hash(globalPlan));
+        outputs.put(OUTPUT_SHARE_INDEX, share.index());
+        outputs.put(OUTPUT_SHARE_COUNT, share.count());
+        outputs.put(OUTPUT_OPAQUE, !arrivalKnown);
+        outputs.put(OUTPUT_HISTOGRAM, empty.histogram().toMap());
+        outputs.put(OUTPUT_WINDOWS, List.of());
+        outputs.put(OUTPUT_STARTED_AT, now.toString());
+        outputs.put(OUTPUT_ENDED_AT, now.toString());
+        outputs.put(OUTPUT_GENERATOR_HEALTH, empty.generatorHealth().toMap());
+        outputs.put(OUTPUT_COMPLETE, true);
+        outputs.put(OUTPUT_ARRIVAL_KNOWN, arrivalKnown);
+        return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.copyOf(outputs));
     }
 
     private static String formatDuration(Duration d) {

@@ -2,7 +2,7 @@
 
 **PDR** : PDR-060
 **Module** : `platform-execution-engine`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-232, ISSUE-202
 **Estime** : M (1-3h)

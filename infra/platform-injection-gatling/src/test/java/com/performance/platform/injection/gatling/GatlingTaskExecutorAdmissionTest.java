@@ -39,16 +39,38 @@ class GatlingTaskExecutorAdmissionTest {
     }
 
     @Test
-    void globalScopeRejectedBeforeAnyWorker() {
+    void globalScopeScaledToShareBeforeWorker() {
         var runs = new AtomicInteger();
         var ex = new GatlingTaskExecutor(RunnerBackedLauncher.of(c -> {
             runs.incrementAndGet();
             return Path.of("/tmp/r");
         }), (d, id) -> RESULT, List.of());
-        var result = ex.execute(CTX, step(LoadScope.GLOBAL));
-        assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
-        assertThat(result.errorMessage()).contains("scope: global");
+        var ctx = CTX.withShare(com.performance.platform.domain.execution.GrantShare.equal(1, 5));
+        var result = ex.execute(ctx, step(LoadScope.GLOBAL));
+        assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
+        assertThat(runs).hasValue(1);
+        assertThat(result.outputs()).containsEntry("shareIndex", 1).containsEntry("shareCount", 5);
+        @SuppressWarnings("unchecked")
+        var scaled = WorkloadPlanCodec.fromMap((Map<String, Object>) result.outputs().get("workloadPlan"));
+        assertThat(((Hold) scaled.stages().get(0)).level()).isEqualTo(1.0);
+    }
+
+    @Test
+    void zeroShareRunsNoWorker() {
+        var runs = new AtomicInteger();
+        var ex = new GatlingTaskExecutor(RunnerBackedLauncher.of(c -> {
+            runs.incrementAndGet();
+            return Path.of("/tmp/r");
+        }), (d, id) -> RESULT, List.of());
+        var plan = new WorkloadPlan(ArrivalModel.OPEN, LoadScope.GLOBAL,
+                List.of(new com.performance.platform.domain.injection.Burst(1, true)));
+        var step = new StepDefinition(TASK_ID, "gatling", Phase.INJECTION,
+                Map.of("simulation", "Sim", "workload", WorkloadPlanCodec.toMap(plan)), null, null, null, null);
+        var ctx = CTX.withShare(com.performance.platform.domain.execution.GrantShare.equal(2, 3));
+        var result = ex.execute(ctx, step);
+        assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
         assertThat(runs).hasValue(0);
+        assertThat(result.outputs()).containsEntry("complete", true);
     }
 
     @Test
@@ -64,7 +86,7 @@ class GatlingTaskExecutorAdmissionTest {
     void declaresCapabilities() {
         var caps = new GatlingTaskExecutor(RunnerBackedLauncher.of(c -> Path.of("/tmp/r")),
                 (d, id) -> RESULT, List.of()).injectionCapabilities();
-        assertThat(caps.supportsGlobalScope()).isFalse();
+        assertThat(caps.supportsGlobalScope()).isTrue();
         assertThat(caps.stageKinds()).containsExactlyInAnyOrder("ramp", "hold", "burst", "pause");
     }
 }
