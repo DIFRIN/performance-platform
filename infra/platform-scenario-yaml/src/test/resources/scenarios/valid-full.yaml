@@ -53,13 +53,7 @@ scenario:
       simulation: com.example.CustomerApiSimulation
       loadModel:
         type: RAMP
-        stages:
-        - duration: 2m
-          usersPerSecond: 10
-        - duration: 5m
-          usersPerSecond: 100
-        - duration: 3m
-          usersPerSecond: 10
+        parameters: { from: 10, to: 100, durationSeconds: 120 }
       protocol: HTTP
     timeout: 10m
     retryPolicy:

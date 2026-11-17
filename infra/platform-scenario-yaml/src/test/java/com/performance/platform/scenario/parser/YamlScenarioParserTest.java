@@ -87,7 +87,7 @@ class YamlScenarioParserTest {
                   phase: INJECTION
                   requiredContexts: [purge-db]
                   dependsOn: [purge-db]
-                  parameters: { simulation: com.example.CustomerApiSimulation, loadModel: { type: RAMP } }
+                  parameters: { simulation: com.example.CustomerApiSimulation, loadModel: { type: RAMP, parameters: { from: 1, to: 10, durationSeconds: 30 } } }
                   timeout: 20m
             """;
 

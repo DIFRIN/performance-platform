@@ -121,7 +121,7 @@ class ScenarioDslContractE2ETest {
             ScenarioDefinition scenario = useCase.parse(yamlContent);
 
             assertEquals(6, scenario.steps().size());
-            assertNotNull(step(scenario, "customer-api-load").parameters().get("loadModel"));
+            assertNotNull(step(scenario, "customer-api-load").parameters().get("workload"));
         }
 
         @Test
@@ -175,7 +175,7 @@ class ScenarioDslContractE2ETest {
             var file = SCENARIOS_DIR.resolve("valid-distributed.yaml");
             ScenarioDefinition scenario = parser.parseFile(file);
 
-            assertNotNull(step(scenario, "distributed-load").parameters().get("loadModel"));
+            assertNotNull(step(scenario, "distributed-load").parameters().get("workload"));
         }
     }
 
@@ -386,7 +386,7 @@ class ScenarioDslContractE2ETest {
             assertTrue(assertionCount > 0);
 
             // Load model is accessible
-            assertNotNull(step(scenario, "customer-api-load").parameters().get("loadModel"));
+            assertNotNull(step(scenario, "customer-api-load").parameters().get("workload"));
         }
 
         @Test

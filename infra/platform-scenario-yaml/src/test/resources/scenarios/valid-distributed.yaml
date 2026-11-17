@@ -32,9 +32,7 @@ scenario:
       simulation: com.example.DistributedSimulation
       loadModel:
         type: CONSTANT
-        stages:
-        - duration: 10m
-          usersPerSecond: 200
+        parameters: { usersPerSec: 200, durationSeconds: 600 }
     timeout: 15m
   - id: distributed-assertion
     task: performance-thresholds

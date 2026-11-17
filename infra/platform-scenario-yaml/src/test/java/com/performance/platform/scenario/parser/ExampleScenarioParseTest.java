@@ -64,7 +64,7 @@ class ExampleScenarioParseTest {
         assertEquals("gatling", injection.taskName());
         assertEquals(FanOut.ALL, injection.fanOut());
         assertEquals("sut-api", injection.parameters().get("target"));
-        assertTrue(injection.parameters().get("loadModel") instanceof java.util.Map);
+        assertTrue(injection.parameters().get("workload") instanceof java.util.Map);
 
         StepDefinition assertion = step(scenario, "assert-events-produced");
         assertEquals("count-events", assertion.ref().value());

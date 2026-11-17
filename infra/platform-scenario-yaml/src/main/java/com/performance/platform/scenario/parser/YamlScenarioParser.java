@@ -6,6 +6,9 @@ import com.performance.platform.application.exception.ScenarioParsingException;
 import com.performance.platform.domain.execution.RetryPolicy;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
+import com.performance.platform.domain.injection.LoadPresets;
+import com.performance.platform.domain.injection.WorkloadPlan;
+import com.performance.platform.domain.injection.WorkloadPlanCodec;
 import com.performance.platform.domain.scenario.FanOut;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
@@ -354,6 +357,8 @@ public class YamlScenarioParser implements ScenarioParser {
             ? new HashMap<>(dto.parameters())
             : new HashMap<>();
 
+        normalizeWorkload(parameters, prefix, errors);
+
         // description (SLI/SLO textuel) — conservee dans les parametres sous
         // la cle "description" pour ne pas modifier StepDefinition (ADR-049).
         if (dto.description() != null && !dto.description().isEmpty()) {
@@ -417,6 +422,51 @@ public class YamlScenarioParser implements ScenarioParser {
         } catch (Exception e) {
             errors.add(prefix + ": " + e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Normalise l'injection (ADR-064) : {@code loadModel} (preset) est developpe en
+     * {@code workload} canonique ; {@code workload} est valide puis re-encode.
+     */
+    @SuppressWarnings("unchecked")
+    private void normalizeWorkload(Map<String, Object> parameters, String prefix, List<String> errors) {
+        boolean hasWorkload = parameters.containsKey(WorkloadPlanCodec.PARAM_KEY);
+        boolean hasLoadModel = parameters.containsKey("loadModel");
+        if (!hasWorkload && !hasLoadModel) {
+            return;
+        }
+        String stepId = prefix;
+        if (hasWorkload && hasLoadModel) {
+            errors.add(stepId + ".parameters: 'workload' and 'loadModel' are mutually exclusive");
+            return;
+        }
+        try {
+            WorkloadPlan plan;
+            if (hasWorkload) {
+                if (!(parameters.get("workload") instanceof Map<?, ?> m)) {
+                    errors.add(stepId + ".parameters.workload must be a mapping");
+                    return;
+                }
+                plan = WorkloadPlanCodec.fromMap((Map<String, Object>) m);
+            } else {
+                if (!(parameters.get("loadModel") instanceof Map<?, ?> m)) {
+                    errors.add(stepId + ".parameters.loadModel must be a mapping");
+                    return;
+                }
+                Object type = m.get("type");
+                Object params = m.get("parameters");
+                if (params != null && !(params instanceof Map<?, ?>)) {
+                    errors.add(stepId + ".parameters.loadModel.parameters must be a mapping");
+                    return;
+                }
+                plan = LoadPresets.expand(type == null ? null : type.toString(),
+                        (Map<String, Object>) params);
+            }
+            parameters.remove("loadModel");
+            parameters.put(WorkloadPlanCodec.PARAM_KEY, WorkloadPlanCodec.toMap(plan));
+        } catch (IllegalArgumentException e) {
+            errors.add(stepId + ".parameters." + (hasWorkload ? "workload" : "loadModel") + ": " + e.getMessage());
         }
     }
 
