@@ -46,6 +46,7 @@ public final class InjectionWorkerMain {
         }
         var probe = GeneratorHealthProbe.start();
         try {
+            WorkerStates.restore(spec.simulationId(), dir.readState());
             Path results = runner.run(new GatlingRunConfig(spec.simulationClass(), plan,
                     spec.systemProperties(), dir.resultsDirectory(), spec.simulationId(), spec.timeout()));
             dir.writeResult(new WorkerOutcome(EXIT_OK, true, false, results, dir.resultFile(), "", probe.stop()));

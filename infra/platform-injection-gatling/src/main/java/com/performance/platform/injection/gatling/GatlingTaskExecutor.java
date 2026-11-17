@@ -326,7 +326,9 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             Path runDir = Files.createTempDirectory("gatling-" + step.id().value() + "-").toAbsolutePath().normalize();
             var spec = new WorkerRunSpec(runDir, step.id().value(), simulationClass, systemProperties,
                     Map.of(), Duration.ofSeconds(timeoutSeconds));
-            new RunDirectory(runDir).writeInputs(spec, plan);
+            var runDirectory = new RunDirectory(runDir);
+            runDirectory.writeInputs(spec, plan);
+            if (preparedInjection != null) runDirectory.writeState(preparedInjection.workerState());
             log.info("action=gatling_execute_start executionId={} simulation={} stepId={}",
                     executionKey, simulationClass, step.id().value());
             handle = launcher.start(spec);

@@ -22,6 +22,7 @@ public final class RunDirectory {
 
     public static final String SPEC_FILE = "spec.json";
     public static final String PLAN_FILE = "workload-plan.json";
+    public static final String STATE_FILE = "worker-state.json";
     public static final String RESULT_FILE = "result.json";
     public static final String RESULTS_DIR = "results";
 
@@ -57,6 +58,17 @@ public final class RunDirectory {
 
         MAPPER.writerWithDefaultPrettyPrinter().writeValue(root.resolve(PLAN_FILE).toFile(),
                 WorkloadPlanCodec.toMap(plan));
+    }
+
+    /** Etat de protocole (HTTP...) a restaurer dans le worker ; vide = rien. */
+    public void writeState(Map<String, Object> state) throws IOException {
+        if (state == null || state.isEmpty()) return;
+        MAPPER.writerWithDefaultPrettyPrinter().writeValue(root.resolve(STATE_FILE).toFile(), state);
+    }
+
+    public Map<String, Object> readState() throws IOException {
+        Path f = root.resolve(STATE_FILE);
+        return Files.isRegularFile(f) ? MAPPER.readValue(f.toFile(), MAP_TYPE) : Map.of();
     }
 
     /** Lit le spec ; {@code environment} est toujours vide. */
