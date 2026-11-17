@@ -228,8 +228,8 @@
 | ISSUE-213 | Admission du plan et simulations opaques | DONE | PDR-057 | ISSUE-212, ISSUE-208 |
 | ISSUE-214 | Garde-fou de débit par agent | DONE | PDR-057 | ISSUE-213 |
 | ISSUE-215 | Histogramme, fenêtres et santé dans InjectionResult | DONE | PDR-058 | ISSUE-204 |
-| ISSUE-216 | Reduction.MERGE et catalogue de métriques | APPROVED | PDR-058 | ISSUE-215 |
-| ISSUE-217 | Parser : histogramme et fenêtres | WAITING | PDR-058 | ISSUE-215, ISSUE-208 |
+| ISSUE-216 | Reduction.MERGE et catalogue de métriques | DONE | PDR-058 | ISSUE-215 |
+| ISSUE-217 | Parser : histogramme et fenêtres | APPROVED | PDR-058 | ISSUE-215, ISSUE-208 |
 | ISSUE-218 | Santé du générateur et sorties du résultat | WAITING | PDR-058 | ISSUE-217, ISSUE-202 |
 | ISSUE-219 | Réduction multi-agents : MERGE et fenêtre commune | WAITING | PDR-058 | ISSUE-216, ISSUE-218 |
 | ISSUE-220 | Rapport : charge planifiée, réalisée et distributions | WAITING | PDR-058 | ISSUE-219 |
@@ -1195,3 +1195,7 @@
 | 2026-11-17 | ISSUE-216 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-216 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-216 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-216 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-217 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-217 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-217 | IN_REVIEW → APPROVED | Reviewer approved |
