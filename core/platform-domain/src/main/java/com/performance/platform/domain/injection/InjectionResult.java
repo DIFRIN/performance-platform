@@ -4,6 +4,8 @@ import com.performance.platform.domain.id.TaskId;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -31,7 +33,13 @@ public record InjectionResult(
     long minMs,
     double meanMs,
     Path gatlingReportDirectory,
-    Map<String, Object> rawStats
+    Map<String, Object> rawStats,
+    Instant startedAt,
+    Instant endedAt,
+    LatencyHistogram histogram,
+    List<LoadWindow> windows,
+    GeneratorHealth generatorHealth,
+    boolean complete
 ) {
 
     /**
@@ -39,6 +47,21 @@ public record InjectionResult(
      * {@code TaskResult}. Utilisee par les executors et les assertions.
      */
     public static final String OUTPUT_KEY = "result";
+
+    /**
+     * Constructeur de compatibilité (signature antérieure). Valeurs par défaut : instants epoch,
+     * histogramme vide, aucune fenêtre, santé inconnue, {@code complete=false} (mesures de
+     * distribution indisponibles).
+     */
+    public InjectionResult(TaskId taskId, String simulationClass, Duration duration, long totalRequests,
+                           long successfulRequests, long failedRequests, double errorRate, double throughput,
+                           long p50Ms, long p75Ms, long p90Ms, long p95Ms, long p99Ms, long maxMs, long minMs,
+                           double meanMs, Path gatlingReportDirectory, Map<String, Object> rawStats) {
+        this(taskId, simulationClass, duration, totalRequests, successfulRequests, failedRequests, errorRate,
+            throughput, p50Ms, p75Ms, p90Ms, p95Ms, p99Ms, maxMs, minMs, meanMs, gatlingReportDirectory,
+            rawStats, Instant.EPOCH, Instant.EPOCH, LatencyHistogram.empty(), List.of(),
+            GeneratorHealth.unknown(), false);
+    }
 
     public InjectionResult {
         Objects.requireNonNull(taskId, "taskId required");
@@ -67,6 +90,11 @@ public record InjectionResult(
             throw new IllegalArgumentException("meanMs must be non-negative, got " + meanMs);
         }
         rawStats = rawStats == null ? Map.of() : Map.copyOf(rawStats);
+        startedAt = startedAt == null ? Instant.EPOCH : startedAt;
+        endedAt = endedAt == null ? Instant.EPOCH : endedAt;
+        histogram = histogram == null ? LatencyHistogram.empty() : histogram;
+        windows = windows == null ? List.of() : List.copyOf(windows);
+        generatorHealth = generatorHealth == null ? GeneratorHealth.unknown() : generatorHealth;
     }
 
     /**

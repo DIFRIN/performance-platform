@@ -529,7 +529,7 @@
 | `LoadModel`, `LoadModelType`, `LoadModelTranslator` | platform-domain / gatling | ⚠️ BREAKING → ❌ REMOVED | PDR-056 | ISSUE-208, ISSUE-210 |
 | `InjectionCapabilities`, `InjectionCapabilityProvider` | platform-plugin-api | ✅ IMPLEMENTED (ISSUE-212) | PDR-057 | ISSUE-212 |
 | `PlanAdmission`, `InjectionLimits` | platform-injection-gatling | ⬜ PLANNED | PDR-057 | ISSUE-213, ISSUE-214 |
-| `LatencyHistogram`, `LoadWindow`, `GeneratorHealth`, `InjectionResult` (étendu) | platform-domain | ⬜ PLANNED | PDR-058 | ISSUE-215 |
+| `LatencyHistogram`, `LoadWindow`, `GeneratorHealth`, `InjectionResult` (étendu) | platform-domain | ✅ DONE | PDR-058 | ISSUE-215 |
 | `Reduction.MERGE`, `MetricCatalog` (métriques injection) | platform-domain | ⬜ PLANNED | PDR-058 | ISSUE-216 |
 | `InjectionAggregator` | platform-assertion | ⬜ PLANNED | PDR-058 | ISSUE-219 |
 | `Verdict.INVALID`, `AssertionFamily.INTEGRITY`, `IntegrityTolerances` | platform-domain | ⬜ PLANNED | PDR-059 | ISSUE-221 |

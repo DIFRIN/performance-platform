@@ -7,7 +7,10 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -459,6 +462,76 @@ class InjectionResultTest {
             assertEquals(Map.of(), result.rawStats());
             assertThrows(UnsupportedOperationException.class,
                 () -> result.rawStats().put("new", "val"));
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // Histogramme, fenêtres, santé
+    // ════════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("Histogramme, fenetres et sante")
+    class Distributions {
+
+        private InjectionResult full(Instant s, Instant e, LatencyHistogram h, List<LoadWindow> w,
+                                     GeneratorHealth g, boolean complete) {
+            return new InjectionResult(
+                taskId(), "sim", Duration.ofSeconds(1),
+                100, 90, 10, 10.0, 10.0,
+                10L, 20L, 30L, 40L, 50L, 60L, 5L, 15.0,
+                reportDir(), Map.of(), s, e, h, w, g, complete);
+        }
+
+        private LoadWindow window() {
+            return new LoadWindow(Instant.parse("2026-01-01T00:00:00Z"), Duration.ofSeconds(1),
+                10, 5, 10, 1, true);
+        }
+
+        @Test
+        @DisplayName("constructeur de compatibilite : defaults")
+        void compatibilityDefaults() {
+            var r = validResult();
+            assertEquals(Instant.EPOCH, r.startedAt());
+            assertEquals(Instant.EPOCH, r.endedAt());
+            assertEquals(LatencyHistogram.empty(), r.histogram());
+            assertTrue(r.windows().isEmpty());
+            assertEquals(GeneratorHealth.unknown(), r.generatorHealth());
+            assertFalse(r.complete());
+        }
+
+        @Test
+        @DisplayName("null normalises vers les defaults")
+        void nullsNormalized() {
+            var r = full(null, null, null, null, null, true);
+            assertEquals(Instant.EPOCH, r.startedAt());
+            assertEquals(Instant.EPOCH, r.endedAt());
+            assertEquals(LatencyHistogram.empty(), r.histogram());
+            assertEquals(List.of(), r.windows());
+            assertEquals(GeneratorHealth.unknown(), r.generatorHealth());
+            assertTrue(r.complete());
+        }
+
+        @Test
+        @DisplayName("valeurs fournies preservees")
+        void valuesPreserved() {
+            var s = Instant.parse("2026-01-01T00:00:00Z");
+            var e = Instant.parse("2026-01-01T00:00:10Z");
+            var g = new GeneratorHealth(0.4, Duration.ofMillis(10), 100L);
+            var r = full(s, e, LatencyHistogram.empty(), List.of(window()), g, true);
+            assertEquals(s, r.startedAt());
+            assertEquals(e, r.endedAt());
+            assertEquals(g, r.generatorHealth());
+            assertEquals(1, r.windows().size());
+        }
+
+        @Test
+        @DisplayName("windows : copie defensive et liste non modifiable")
+        void windowsImmutable() {
+            var src = new ArrayList<LoadWindow>(List.of(window()));
+            var r = full(null, null, null, src, null, false);
+            src.add(window());
+            assertEquals(1, r.windows().size());
+            assertThrows(UnsupportedOperationException.class, () -> r.windows().add(window()));
         }
     }
 
