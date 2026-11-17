@@ -522,7 +522,7 @@
 | Classe / Interface | Module | Statut | PDR | Issue |
 |---|---|---|---|---|
 | `ExecutorAvailability` | platform-plugin-api | ✅ DONE | PDR-055 | ISSUE-197 |
-| `InjectionWorkerLauncher`, `WorkerHandle`, `WorkerRunSpec`, `WorkerOutcome`, `InjectionWorkerMain` | platform-injection-gatling | ⬜ PLANNED | PDR-055 | ISSUE-200, ISSUE-201 |
+| `InjectionWorkerLauncher`, `WorkerHandle`, `WorkerRunSpec`, `WorkerOutcome`, `InjectionWorkerMain` | platform-injection-gatling | ✅ IMPLEMENTED (ISSUE-201: launcher, handle) | PDR-055 | ISSUE-200, ISSUE-201 |
 | `WorkloadPlan`, `Stage` (`Ramp`, `Hold`, `Burst`, `Pause`), `ArrivalModel`, `LoadScope`, `WorkloadPlanCodec` | platform-domain | ⬜ PLANNED | PDR-056 | ISSUE-204 |
 | `LoadPresets` | platform-domain | ⬜ PLANNED | PDR-056 | ISSUE-205 |
 | `WorkloadPlanTranslator` | platform-injection-gatling | ⬜ PLANNED | PDR-056 | ISSUE-208 |

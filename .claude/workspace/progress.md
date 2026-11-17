@@ -212,8 +212,8 @@
 | ISSUE-197 | Interface ExecutorAvailability | DONE | PDR-055 | - |
 | ISSUE-198 | Refus de claim si executor indisponible | DONE | PDR-055 | ISSUE-197 |
 | ISSUE-199 | Limite de concurrence d'injection par agent | DONE | PDR-055 | ISSUE-197 |
-| ISSUE-200 | InjectionWorkerMain et run directory | APPROVED | PDR-055 | ISSUE-199 |
-| ISSUE-201 | Lanceur de worker et bascule de l'executor | WAITING | PDR-055 | ISSUE-200 |
+| ISSUE-200 | InjectionWorkerMain et run directory | DONE | PDR-055 | ISSUE-199 |
+| ISSUE-201 | Lanceur de worker et bascule de l'executor | APPROVED | PDR-055 | ISSUE-200 |
 | ISSUE-202 | Annulation et arrêt du worker | WAITING | PDR-055 | ISSUE-201 |
 | ISSUE-203 | Test d'intégration worker en mode LOCAL | WAITING | PDR-055 | ISSUE-202 |
 | ISSUE-204 | Records WorkloadPlan et codec | DONE | PDR-056 | - |
@@ -1127,3 +1127,7 @@
 | 2026-11-17 | ISSUE-200 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-200 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-200 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-200 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-201 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-201 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-201 | IN_REVIEW → APPROVED | Reviewer approved |

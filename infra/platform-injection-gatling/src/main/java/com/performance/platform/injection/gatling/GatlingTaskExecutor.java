@@ -12,10 +12,12 @@ import com.performance.platform.injection.gatling.protocol.InjectionProtocol;
 import com.performance.platform.injection.gatling.protocol.PreparedInjection;
 import com.performance.platform.injection.gatling.result.GatlingResultParser;
 import com.performance.platform.injection.gatling.result.ResultParsingException;
-import com.performance.platform.injection.gatling.runner.GatlingExecutionException;
-import com.performance.platform.injection.gatling.runner.GatlingRunConfig;
-import com.performance.platform.injection.gatling.runner.GatlingRunner;
+import com.performance.platform.injection.gatling.worker.InjectionWorkerLauncher;
 import com.performance.platform.injection.gatling.worker.InjectionWorkerProperties;
+import com.performance.platform.injection.gatling.worker.RunDirectory;
+import com.performance.platform.injection.gatling.worker.WorkerHandle;
+import com.performance.platform.injection.gatling.worker.WorkerOutcome;
+import com.performance.platform.injection.gatling.worker.WorkerRunSpec;
 import com.performance.platform.plugin.ExecutorAvailability;
 import com.performance.platform.plugin.Injection;
 import com.performance.platform.plugin.StatefulResourceCleaner;
@@ -27,6 +29,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -34,12 +37,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * {@link TaskExecutor} pour l'injection de charge Gatling.
  * <p>
- * Assemble {@link GatlingRunner} (lancement de la simulation) et
+ * Assemble {@link InjectionWorkerLauncher} (JVM fille par etape, ADR-066) et
  * {@link GatlingResultParser} (parsing du {@code stats.json}) pour
  * produire un {@link InjectionResult} encapsule dans le
  * {@code outputs} du {@link TaskResult} sous la cle {@value #OUTPUT_RESULT}.
@@ -105,7 +109,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
     // ── State ─────────────────────────────────────────────────────────────────
 
-    private final Map<String, Boolean> activeExecutions = new ConcurrentHashMap<>();
+    private final Map<String, List<WorkerHandle>> activeExecutions = new ConcurrentHashMap<>();
 
     /** Injections en cours d'execution (ADR-066, regle interimaire). */
     private final AtomicInteger runningInjections = new AtomicInteger();
@@ -113,32 +117,45 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
     // ── Dependencies ──────────────────────────────────────────────────────────
 
-    private final GatlingRunner runner;
+    private final InjectionWorkerLauncher launcher;
+    private final Duration stopGrace;
     private final GatlingResultParser parser;
     private final Map<String, InjectionProtocol> protocols;
 
     /** Protocols are Spring beans discovered by name: adding one needs no change here. */
     @Autowired
-    public GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser,
+    public GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
                                ObjectProvider<InjectionProtocol> protocols,
                                ObjectProvider<InjectionWorkerProperties> workerProperties) {
-        this(runner, parser, protocols.orderedStream().toList(),
-                workerProperties.getIfAvailable(InjectionWorkerProperties::defaults).maxConcurrent());
+        this(launcher, parser, protocols.orderedStream().toList(),
+                workerProperties.getIfAvailable(InjectionWorkerProperties::defaults));
+    }
+
+    private GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
+                                List<InjectionProtocol> protocols, InjectionWorkerProperties props) {
+        this(launcher, parser, protocols, props.maxConcurrent(), props.stopGrace());
     }
 
     /** HTTP-only executor (no target resolver), for custom simulations and standalone use. */
-    public GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser) {
-        this(runner, parser, List.of(new HttpInjectionProtocol((com.performance.platform.plugin.resource.EndpointResolver) null)));
+    public GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser) {
+        this(launcher, parser, List.of(new HttpInjectionProtocol((com.performance.platform.plugin.resource.EndpointResolver) null)));
     }
 
-    GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser, List<InjectionProtocol> protocols) {
-        this(runner, parser, protocols, InjectionWorkerProperties.DEFAULT_MAX_CONCURRENT);
+    GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
+                        List<InjectionProtocol> protocols) {
+        this(launcher, parser, protocols, InjectionWorkerProperties.DEFAULT_MAX_CONCURRENT);
     }
 
-    GatlingTaskExecutor(GatlingRunner runner, GatlingResultParser parser, List<InjectionProtocol> protocols,
-                        int maxConcurrent) {
+    GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
+                        List<InjectionProtocol> protocols, int maxConcurrent) {
+        this(launcher, parser, protocols, maxConcurrent, InjectionWorkerProperties.DEFAULT_STOP_GRACE);
+    }
+
+    GatlingTaskExecutor(InjectionWorkerLauncher launcher, GatlingResultParser parser,
+                        List<InjectionProtocol> protocols, int maxConcurrent, Duration stopGrace) {
         this.maxConcurrent = Math.max(1, maxConcurrent);
-        this.runner = Objects.requireNonNull(runner, "runner must not be null");
+        this.stopGrace = Objects.requireNonNull(stopGrace, "stopGrace must not be null");
+        this.launcher = Objects.requireNonNull(launcher, "launcher must not be null");
         this.parser = Objects.requireNonNull(parser, "parser must not be null");
         var byName = new LinkedHashMap<String, InjectionProtocol>();
         protocols.forEach(p -> byName.put(p.name(), p));
@@ -207,8 +224,6 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
         Map<String, String> systemProperties = paramMap(step, PARAM_SYSTEM_PROPERTIES);
 
-        Path resultsDir = buildResultsDir(step);
-
         // 2. Preparer l'injection du protocole (simulation generee) puis construire la configuration Gatling
         PreparedInjection prepared = null;
         if (protocol != null) {
@@ -219,14 +234,8 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             }
             simulation = prepared.simulationClass();
         }
-        var config = new GatlingRunConfig(
-                simulation,
-                loadModel,
-                systemProperties,
-                resultsDir,
-                step.id().value(),
-                Duration.ofSeconds(timeoutSeconds)
-        );
+        final String simulationClass = simulation;
+        final PreparedInjection preparedInjection = prepared;
 
         if (runningInjections.incrementAndGet() > maxConcurrent) {
             runningInjections.decrementAndGet();
@@ -236,12 +245,29 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             return fail(step, startNanos, "Injection concurrency limit reached (injection.worker.max-concurrent="
                     + maxConcurrent + ")");
         }
-        activeExecutions.put(executionKey, true);
+        WorkerHandle handle = null;
         try {
-            // 3. Lancer la simulation Gatling
+            // 3. Lancer le worker (JVM fille) et attendre sa sortie
+            Path runDir = Files.createTempDirectory("gatling-" + step.id().value() + "-").toAbsolutePath().normalize();
+            var spec = new WorkerRunSpec(runDir, step.id().value(), simulationClass, systemProperties,
+                    Map.of(), Duration.ofSeconds(timeoutSeconds));
+            new RunDirectory(runDir).writeInputs(spec, loadModel);
             log.info("action=gatling_execute_start executionId={} simulation={} stepId={}",
-                    executionKey, simulation, step.id().value());
-            Path gatlingResultsDir = runner.run(config);
+                    executionKey, simulationClass, step.id().value());
+            handle = launcher.start(spec);
+            activeExecutions.computeIfAbsent(executionKey, k -> new CopyOnWriteArrayList<>()).add(handle);
+            WorkerOutcome outcome = handle.await();
+            if (!outcome.completed()) {
+                var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
+                String reason = outcome.stoppedByPlatform()
+                        ? "Gatling worker stopped by platform"
+                        : "Gatling worker failed (exitCode=" + outcome.exitCode() + ")";
+                log.error("action=gatling_execute_failed executionId={} stepId={} exitCode={}",
+                        executionKey, step.id().value(), outcome.exitCode());
+                return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed,
+                        "Gatling execution failed: " + reason + "\n" + outcome.logTail(), null);
+            }
+            Path gatlingResultsDir = outcome.resultsDirectory();
             log.info("action=gatling_execute_complete executionId={} resultsDir={} stepId={}",
                     executionKey, gatlingResultsDir, step.id().value());
 
@@ -259,12 +285,12 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
                     Map.of(OUTPUT_RESULT, injectionResult));
 
-        } catch (GatlingExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (handle != null) handle.stop(stopGrace);
             var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
-            log.error("action=gatling_execute_failed executionId={} stepId={} error={}",
-                    executionKey, step.id().value(), e.getMessage());
             return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed,
-                    "Gatling execution failed: " + e.getMessage(), e);
+                    "Gatling execution interrupted", e);
         } catch (ResultParsingException e) {
             var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
             log.error("action=gatling_parse_failed executionId={} stepId={} error={}",
@@ -278,33 +304,38 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             return TaskResult.failed(step.id(), getSupportedTaskName(), elapsed,
                     "Unexpected error: " + e.getMessage(), e);
         } finally {
-            if (prepared != null) prepared.close();
-            activeExecutions.remove(executionKey);
+            if (preparedInjection != null) preparedInjection.close();
+            if (handle != null) {
+                var list = activeExecutions.get(executionKey);
+                if (list != null) {
+                    list.remove(handle);
+                    if (list.isEmpty()) activeExecutions.remove(executionKey, list);
+                }
+            }
             runningInjections.decrementAndGet();
         }
     }
 
     // ── StatefulResourceCleaner contract ──────────────────────────────────────
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * L'execution Gatling etant synchrone (bloquante dans {@link #execute}),
-     * il n'y a generalement pas de simulation active a arreter entre deux appels.
-     * Le cleanup est best-effort et logge les executions orphelines eventuelles.
-     */
+    /** {@inheritDoc} Arrete reellement les workers de l'execution (ADR-066). */
     @Override
     public void cleanup(ExecutionId executionId) {
         if (executionId == null) {
-            log.info("action=gatling_cleanup_all activeExecutions={}",
-                    activeExecutions.size());
+            log.info("action=gatling_cleanup_all activeExecutions={}", activeExecutions.size());
+            activeExecutions.values().forEach(this::stopAll);
             activeExecutions.clear();
         } else {
-            String key = executionId.value();
-            if (activeExecutions.remove(key) != null) {
-                log.info("action=gatling_cleanup executionId={}", key);
+            var handles = activeExecutions.remove(executionId.value());
+            if (handles != null) {
+                log.info("action=gatling_cleanup executionId={} workers={}", executionId.value(), handles.size());
+                stopAll(handles);
             }
         }
+    }
+
+    private void stopAll(List<WorkerHandle> handles) {
+        handles.forEach(h -> h.stop(stopGrace));
     }
 
     // ── Parameter extraction ──────────────────────────────────────────────────
@@ -361,24 +392,6 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
         }
 
         return null;
-    }
-
-    /**
-     * Resout le repertoire de resultats Gatling.
-     * Cree un repertoire temporaire si non specifie.
-     */
-    private Path buildResultsDir(StepDefinition step) {
-        try {
-            Path dir = java.nio.file.Files.createTempDirectory(
-                    "gatling-" + step.id().value() + "-");
-            dir.toFile().deleteOnExit();
-            return dir.toAbsolutePath().normalize();
-        } catch (java.io.IOException e) {
-            log.warn("action=create_temp_dir_failed stepId={} using_default",
-                    step.id().value());
-            return Path.of(System.getProperty("java.io.tmpdir"),
-                    "gatling-" + step.id().value());
-        }
     }
 
     // ── Parameter helpers ─────────────────────────────────────────────────────

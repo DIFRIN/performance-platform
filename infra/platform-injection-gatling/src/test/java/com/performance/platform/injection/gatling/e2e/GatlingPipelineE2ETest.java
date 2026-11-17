@@ -107,7 +107,7 @@ class GatlingPipelineE2ETest {
             var parser = new StubParser();
             parser.returns(injectionResult);
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             StepDefinition step = buildGatlingStep(taskId,
                     Map.of("simulation", "com.example.RampSimulation",
@@ -143,7 +143,7 @@ class GatlingPipelineE2ETest {
                             "com.example.ConstantSimulation", Duration.ofSeconds(30),
                             5000, 5000, 0, 0.0, 20.0));
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             StepDefinition step = buildGatlingStep(TaskId.of("const-test"),
                     Map.of("simulation", "com.example.ConstantSimulation",
@@ -167,7 +167,7 @@ class GatlingPipelineE2ETest {
                             "com.example.BurstSimulation", Duration.ofSeconds(10),
                             2000, 1800, 200, 10.0, 20.0));
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             // Use a LoadModel record with BURST type
             var model = new LoadModel(LoadModelType.BURST, Map.of(
@@ -191,7 +191,7 @@ class GatlingPipelineE2ETest {
                             "com.example.SpikeSimulation", Duration.ofSeconds(30),
                             2000, 1900, 100, 5.0, 15.0));
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             var model = new LoadModel(LoadModelType.SPIKE, Map.of(
                     "usersPerSecond", 500,
@@ -224,7 +224,7 @@ class GatlingPipelineE2ETest {
                     .returns(buildInjectionResult(TaskId.of("fail-test"),
                             "x", Duration.ofSeconds(1), 1, 1, 0, 0.0, 1.0));
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             StepDefinition step = buildGatlingStep(TaskId.of("fail-test"),
                     Map.of("simulation", "com.example.FailingSimulation",
@@ -245,7 +245,7 @@ class GatlingPipelineE2ETest {
                     .throwsException(new ResultParsingException("stats.json corrupted",
                             new RuntimeException("Parse error")));
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             StepDefinition step = buildGatlingStep(TaskId.of("parse-fail"),
                     Map.of("simulation", "com.example.CorruptedSimulation",
@@ -266,7 +266,7 @@ class GatlingPipelineE2ETest {
                     .returns(buildInjectionResult(TaskId.of("no-sim"),
                             "x", Duration.ofSeconds(1), 1, 1, 0, 0.0, 1.0));
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             var step = new StepDefinition(
                     TaskId.of("no-sim"), "gatling", Phase.INJECTION,
@@ -297,7 +297,7 @@ class GatlingPipelineE2ETest {
                     .returns(buildInjectionResult(TaskId.of("cleanup-test"),
                             "x", Duration.ofSeconds(1), 1, 1, 0, 0.0, 1.0));
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             StepDefinition step = buildGatlingStep(TaskId.of("cleanup-test"),
                     Map.of("simulation", "com.example.CleanupSimulation",
@@ -336,7 +336,7 @@ class GatlingPipelineE2ETest {
                 }
             };
 
-            var executor = new GatlingTaskExecutor(runner, parser);
+            var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
             for (int i = 1; i <= 3; i++) {
                 var taskId = TaskId.of("seq-" + i);

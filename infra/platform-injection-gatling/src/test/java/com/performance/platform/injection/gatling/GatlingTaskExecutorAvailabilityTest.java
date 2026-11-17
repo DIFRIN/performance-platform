@@ -42,7 +42,7 @@ class GatlingTaskExecutorAvailabilityTest {
 
     private static GatlingTaskExecutor executor(GatlingRunner runner, int max) {
         GatlingResultParser parser = (dir, id) -> RESULT;
-        return new GatlingTaskExecutor(runner, parser, List.of(), max);
+        return new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser, List.of(), max);
     }
 
     @Test

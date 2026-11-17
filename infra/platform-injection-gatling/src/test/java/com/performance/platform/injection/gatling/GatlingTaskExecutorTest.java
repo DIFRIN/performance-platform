@@ -109,7 +109,7 @@ class GatlingTaskExecutorTest {
     void setUp() {
         stubRunner = new StubRunner();
         stubParser = new StubParser();
-        executor = new GatlingTaskExecutor(stubRunner, stubParser);
+        executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(stubRunner), stubParser);
     }
 
     // ── Generic HTTP injection (no simulation) ───────────────────────────────
@@ -120,7 +120,7 @@ class GatlingTaskExecutorTest {
                 Map.of("X-Env", "perf"), Map.of("devices", "/api/devices/{deviceId}"));
         com.performance.platform.plugin.resource.EndpointResolver resolver =
                 name -> "api".equals(name) ? target : null;
-        return new GatlingTaskExecutor(stubRunner, stubParser, java.util.List.of(
+        return new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(stubRunner), stubParser, java.util.List.of(
                 new com.performance.platform.injection.gatling.http.HttpInjectionProtocol(resolver)));
     }
 
@@ -409,7 +409,7 @@ class GatlingTaskExecutorTest {
         TaskResult result = executor.execute(CONTEXT, step);
 
         assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
-        assertThat(result.errorMessage()).contains("Unexpected error");
+        assertThat(result.errorMessage()).contains("Gatling worker failed").contains("Unexpected I/O error");
     }
 
     @Test
