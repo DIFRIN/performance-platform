@@ -255,9 +255,9 @@
 | ISSUE-240 | Mix pondéré HTTP | DONE | PDR-061 | ISSUE-208 |
 | ISSUE-241 | Mix pondéré Kafka | DONE | PDR-061 | ISSUE-240 |
 | ISSUE-242 | Résultats par nom de requête | DONE | PDR-061 | ISSUE-240, ISSUE-218, ISSUE-238 |
-| ISSUE-243 | Métriques d'assertion par requête | APPROVED | PDR-061 | ISSUE-242, ISSUE-219 |
+| ISSUE-243 | Métriques d'assertion par requête | DONE | PDR-061 | ISSUE-242, ISSUE-219 |
 | ISSUE-244 | Documentation, exemples et acceptation des ADR | WAITING | PDR-062 | ISSUE-203, ISSUE-210, ISSUE-211, ISSUE-214, ISSUE-220, ISSUE-225, ISSUE-226, ISSUE-237, ISSUE-243, ISSUE-209, ISSUE-239, ISSUE-241, ISSUE-229, ISSUE-230, ISSUE-222 |
-| ISSUE-245 | InjectionReportEntry : plan résolu et hash | WAITING | PDR-056 | ISSUE-208 |
+| ISSUE-245 | InjectionReportEntry : plan résolu et hash | APPROVED | PDR-056 | ISSUE-208 |
 | ISSUE-246 | CampaignReport : mesures d'injection (forme neutre) | WAITING | PDR-058 | ISSUE-219 |
 
 ## PDRs
@@ -1290,3 +1290,7 @@
 | 2026-11-17 | ISSUE-243 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-243 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-243 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-243 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-245 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-245 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-245 | IN_REVIEW → APPROVED | Reviewer approved |
