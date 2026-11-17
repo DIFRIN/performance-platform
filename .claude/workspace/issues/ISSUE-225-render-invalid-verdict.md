@@ -2,7 +2,7 @@
 
 **PDR** : PDR-059
 **Module** : `platform-report-renderers`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P2
 **Bloquée par** : ISSUE-224
 **Estime** : S (< 1h)

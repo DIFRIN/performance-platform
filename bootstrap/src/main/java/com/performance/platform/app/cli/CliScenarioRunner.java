@@ -13,6 +13,8 @@ import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.PhaseStatus;
 import com.performance.platform.domain.id.ExecutionId;
+import com.performance.platform.domain.report.Verdict;
+import com.performance.platform.reporting.output.ReportProperties;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.ScenarioDefinition;
 import com.performance.platform.application.schedule.ScheduleKind;
@@ -28,7 +30,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -51,7 +58,8 @@ import java.util.Optional;
  *   <li>{@code 0} — execution COMPLETED, toutes les assertions passees</li>
  *   <li>{@code 1} — execution FAILED, assertion en echec, ou timeout</li>
  *   <li>{@code 2} — arguments invalides (fichier introuvable, YAML invalide,
- *       {@code --scenario=} vide)</li>
+ *       {@code --scenario=} vide) ou verdict {@code INVALID} (ADR-069 §5 :
+ *       l'experience doit etre rejouee)</li>
  * </ul>
  * <p>
  * Implémente {@link ExitCodeGenerator} pour que {@code SpringApplication.exit()}
@@ -63,6 +71,11 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
 
     private static final Logger log = LoggerFactory.getLogger(CliScenarioRunner.class);
 
+    static final int EXIT_INVALID = 2;
+    static final Duration VERDICT_WAIT = Duration.ofSeconds(5);
+    private static final Pattern VERDICT_PATTERN =
+            Pattern.compile("\"verdict\"\\s*:\\s*\"(\\w+)\"\\s*,\\s*\"verdictReason\"");
+
     static final Duration POLL_INTERVAL = Duration.ofMillis(500);
     static final Duration MAX_POLL_WAIT = Duration.ofMinutes(5);
 
@@ -73,6 +86,7 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
     private final ExecutionProgressCalculator progressCalculator;
     private final ResourceLoader resourceLoader;
     private final ScheduleCalculator scheduleCalculator;
+    private final ReportProperties reportProperties;
 
     @Value("${scenario}")
     private String scenarioPath;
@@ -93,7 +107,8 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
             ExecutionRepository executionRepository,
             ExecutionProgressCalculator progressCalculator,
             ResourceLoader resourceLoader,
-            ScheduleCalculator scheduleCalculator) {
+            ScheduleCalculator scheduleCalculator,
+            ReportProperties reportProperties) {
         this.parsingUseCase = Objects.requireNonNull(parsingUseCase, "parsingUseCase required");
         this.executeUseCase = Objects.requireNonNull(executeUseCase, "executeUseCase required");
         this.statusUseCase = Objects.requireNonNull(statusUseCase, "statusUseCase required");
@@ -101,6 +116,7 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
         this.progressCalculator = Objects.requireNonNull(progressCalculator, "progressCalculator required");
         this.resourceLoader = Objects.requireNonNull(resourceLoader, "resourceLoader required");
         this.scheduleCalculator = Objects.requireNonNull(scheduleCalculator, "scheduleCalculator required");
+        this.reportProperties = reportProperties;
     }
 
     /**
@@ -217,9 +233,50 @@ public class CliScenarioRunner implements ApplicationRunner, ExitCodeGenerator {
 
         // 7. Determine exit code
         int code = determineExitCode(finalStatus, stateOpt);
+        String statusLabel = finalStatus.name();
+        if (code == 0 && readVerdict(executionId) == Verdict.INVALID) {
+            code = EXIT_INVALID;
+            statusLabel = Verdict.INVALID.name();
+        }
 
         return printResume(code, scenarioName, scenarioId, execIdValue,
-                finalStatus.name(), ok, ko, total, "-");
+                statusLabel, ok, ko, total, "-");
+    }
+
+    /**
+     * Reads the report verdict from {@code <outputDirectory>/<executionId>/campaign.json},
+     * waiting briefly for the report to be written. Returns null when unavailable.
+     */
+    Verdict readVerdict(ExecutionId executionId) {
+        if (reportProperties == null) {
+            return null;
+        }
+        String dir = reportProperties.outputDirectory() != null ? reportProperties.outputDirectory() : "reports";
+        Path file = Path.of(dir, executionId.value(), "campaign.json");
+        long deadline = System.currentTimeMillis() + VERDICT_WAIT.toMillis();
+        while (true) {
+            if (Files.isRegularFile(file)) {
+                try {
+                    Matcher m = VERDICT_PATTERN.matcher(Files.readString(file, StandardCharsets.UTF_8));
+                    if (m.find()) {
+                        return Verdict.valueOf(m.group(1));
+                    }
+                } catch (IOException | IllegalArgumentException e) {
+                    log.warn("action=verdict_read_failed executionId={} message={}",
+                            executionId.value(), e.getMessage());
+                }
+                return null;
+            }
+            if (System.currentTimeMillis() >= deadline) {
+                return null;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return null;
+            }
+        }
     }
 
     /**

@@ -298,6 +298,12 @@ select {
     color: var(--color-running);
 }
 
+.status--invalid {
+    background: #efe7f7;
+    color: #5b2a86;
+    border: 1px dashed currentColor;
+}
+
 .status--pending {
     background: var(--color-pending-bg);
     color: var(--color-pending);

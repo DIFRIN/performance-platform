@@ -93,7 +93,7 @@ class CliScenarioRunnerHeadlessTest {
         runner = new CliScenarioRunner(
                 parsingUseCase, executeUseCase, statusUseCase,
                 executionRepository, progressCalculator, resourceLoader,
-                new com.performance.platform.infrastructure.scheduling.SpringScheduleCalculator());
+                new com.performance.platform.infrastructure.scheduling.SpringScheduleCalculator(), null);
         // Capture stdout
         originalStdout = System.out;
         capturedStdout = new ByteArrayOutputStream();

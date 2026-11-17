@@ -22,6 +22,7 @@
  */
 
 import { getExecutionStatus, listExecutionTasks, getExecutionScenario, cancelExecution, rerunExecution, scheduleScenario } from "/assets/js/api.js";
+import { verdictSlotHtml, hydrateVerdictBadges } from "/assets/js/verdict.js";
 import {
     toast,
     announce,
@@ -434,6 +435,7 @@ function renderBody(bodyEl, detail, tasksData, error) {
         progressHtml +
         timelineHtml +
         phasesHtml;
+    hydrateVerdictBadges(bodyEl);
 }
 
 /**
@@ -452,7 +454,7 @@ function renderInfoSection(detail) {
         '    <div class="detail-info-label">Scenario ID</div>' +
         '    <div class="detail-info-value">' + scenarioLink(detail.scenarioId) + '</div>' +
         '    <div class="detail-info-label">Status</div>' +
-        '    <div class="detail-info-value"><span class="status ' + statusClass + '">' + escapeHtml(detail.status || "UNKNOWN") + '</span></div>' +
+        '    <div class="detail-info-value"><span class="status ' + statusClass + '">' + escapeHtml(detail.status || "UNKNOWN") + '</span>' + verdictSlotHtml(detail.executionId, detail.status) + '</div>' +
         '    <div class="detail-info-label">Started</div>' +
         '    <div class="detail-info-value">' + escapeHtml(started) + '</div>' +
         '    <div class="detail-info-label">Updated</div>' +

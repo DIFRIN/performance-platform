@@ -44,6 +44,7 @@ import {
     escapeAttr,
     timeZoneLabel
 } from "/assets/js/ui.js";
+import { verdictSlotHtml, hydrateVerdictBadges } from "/assets/js/verdict.js";
 import { readQueryParams, updateQueryParams } from "/assets/js/router.js";
 import {
     enhanceScheduleControls,
@@ -652,6 +653,7 @@ function renderBody(bodyEl, state) {
         '</table></div>';
 
     enhanceScheduleControls(bodyEl);
+    hydrateVerdictBadges(bodyEl);
 }
 
 function sortableHeader(key, label, state) {
@@ -687,7 +689,7 @@ function renderRow(exec, state) {
         '<tr class="executions-table__row" data-exec-id="' + escapeAttr(exec.executionId) + '">' +
         '  <td>' + copyableIdHtml(exec.executionId) + '</td>' +
         '  <td>' + scenarioLink + '</td>' +
-        '  <td><span class="status ' + statusClass + '">' + escapeHtml(exec.status) + '</span></td>' +
+        '  <td><span class="status ' + statusClass + '">' + escapeHtml(exec.status) + '</span>' + verdictSlotHtml(exec.executionId, exec.status) + '</td>' +
         '  <td>' + renderProgress(exec.progress) + '</td>' +
         '  <td class="executions-table__started" title="' + escapeAttr(formatDateTime(exec.startedAt)) + '">' +
              escapeHtml(formatDateTime(exec.startedAt)) +

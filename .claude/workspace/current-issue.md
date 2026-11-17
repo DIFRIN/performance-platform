@@ -1,11 +1,11 @@
-# ISSUE-225: Rendu HTML/PDF du verdict INVALID
+# ISSUE-226: API, IHM et CLI : verdict INVALID
 **Status**: APPROVED
 **PDR**: PDR-059
-**Module**: platform-report-renderers
-**Started**: 2026-11-17T13:57+01:00
-**IssueFile**: issues/ISSUE-225-render-invalid-verdict.md
+**Module**: platform-bootstrap
+**Started**: 2026-11-17T14:15+01:00
+**IssueFile**: issues/ISSUE-226-expose-invalid-verdict.md
 
-> 📄 Full specification: `.claude/workspace/issues/ISSUE-225-render-invalid-verdict.md`
+> 📄 Full specification: `.claude/workspace/issues/ISSUE-226-expose-invalid-verdict.md`
 
 ## Reviewer Feedback
 (None yet)
