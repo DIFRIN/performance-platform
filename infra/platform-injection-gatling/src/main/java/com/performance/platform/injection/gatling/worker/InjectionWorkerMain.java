@@ -1,7 +1,7 @@
 package com.performance.platform.injection.gatling.worker;
 
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.injection.gatling.load.DefaultLoadModelTranslator;
+import com.performance.platform.domain.injection.WorkloadPlan;
+import com.performance.platform.injection.gatling.load.DefaultWorkloadPlanTranslator;
 import com.performance.platform.injection.gatling.runner.DefaultGatlingRunner;
 import com.performance.platform.injection.gatling.runner.GatlingRunConfig;
 import com.performance.platform.injection.gatling.runner.GatlingRunner;
@@ -23,7 +23,7 @@ public final class InjectionWorkerMain {
     }
 
     public static void main(String[] args) {
-        int code = run(args, new DefaultGatlingRunner(new DefaultLoadModelTranslator()));
+        int code = run(args, new DefaultGatlingRunner(new DefaultWorkloadPlanTranslator()));
         System.exit(code);
     }
 
@@ -36,16 +36,16 @@ public final class InjectionWorkerMain {
         }
         RunDirectory dir = new RunDirectory(Path.of(args[0]));
         WorkerRunSpec spec;
-        LoadModel loadModel;
+        WorkloadPlan plan;
         try {
             spec = dir.readSpec();
-            loadModel = dir.readLoadModel();
+            plan = dir.readPlan();
         } catch (Exception e) {
             System.err.println("action=worker_invalid_run_directory runDirectory=" + args[0] + " error=" + e.getMessage());
             return EXIT_INVALID_RUN_DIRECTORY;
         }
         try {
-            Path results = runner.run(new GatlingRunConfig(spec.simulationClass(), loadModel,
+            Path results = runner.run(new GatlingRunConfig(spec.simulationClass(), plan,
                     spec.systemProperties(), dir.resultsDirectory(), spec.simulationId(), spec.timeout()));
             dir.writeResult(new WorkerOutcome(EXIT_OK, true, false, results, dir.resultFile(), ""));
             return EXIT_OK;

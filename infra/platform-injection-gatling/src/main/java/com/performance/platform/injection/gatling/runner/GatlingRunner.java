@@ -7,8 +7,8 @@ import java.nio.file.Path;
  * de resultats produits par Gatling.
  * <p>
  * La simulation est chargee depuis le classpath. Les etapes d'injection
- * sont traduites depuis le {@code LoadModel} du {@link GatlingRunConfig}
- * via le {@code LoadModelTranslator} (ISSUE-054) et rendues disponibles
+ * sont traduites depuis le {@code WorkloadPlan} du {@link GatlingRunConfig}
+ * via le {@code WorkloadPlanTranslator} et rendues disponibles
  * a la simulation via un holder statique.
  * <p>
  * <strong>Virtual Threads</strong> : le lancement est execute sur un

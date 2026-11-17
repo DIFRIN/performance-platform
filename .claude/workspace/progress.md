@@ -219,8 +219,8 @@
 | ISSUE-204 | Records WorkloadPlan et codec | DONE | PDR-056 | - |
 | ISSUE-205 | Presets : expansion des 8 types | DONE | PDR-056 | ISSUE-204 |
 | ISSUE-206 | Parsing YAML de workload et presets | DONE | PDR-056 | ISSUE-205 |
-| ISSUE-207 | Validation du plan au parsing | APPROVED | PDR-056 | ISSUE-204 |
-| ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | WAITING | PDR-056 | ISSUE-206, ISSUE-201 |
+| ISSUE-207 | Validation du plan au parsing | DONE | PDR-056 | ISSUE-204 |
+| ISSUE-208 | Traducteur Gatling du plan (modèle ouvert) | APPROVED | PDR-056 | ISSUE-206, ISSUE-201 |
 | ISSUE-209 | Modèle fermé (utilisateurs concurrents) | WAITING | PDR-056 | ISSUE-208 |
 | ISSUE-210 | Suppression de LoadModel et LoadModelType | WAITING | PDR-056 | ISSUE-207, ISSUE-208 |
 | ISSUE-211 | Plan résolu et hash dans le rapport | WAITING | PDR-056 | ISSUE-208 |
@@ -1151,3 +1151,10 @@
 | 2026-11-17 | ISSUE-207 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-207 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-207 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-207 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-208 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-208 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-208 | IN_REVIEW → CHANGES_REQUESTED | Code et tests OK (mvn test module vert). Critère de Done non satisfait : grep LoadModel dans infra/platform-injection-gatling/pom.xml lignes 16 (description: 'Traduction des LoadModel en OpenInjectionStep') et 19 (commentaire '(LoadModel, LoadModelType, InjectionResult)'). Remplacer par WorkloadPlan / plan de charge. |
+| 2026-11-17 | ISSUE-208 | CHANGES_REQUESTED → IN_PROGRESS (resume) | issue-start.sh |
+| 2026-11-17 | ISSUE-208 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-208 | IN_REVIEW → APPROVED | Reviewer approved |

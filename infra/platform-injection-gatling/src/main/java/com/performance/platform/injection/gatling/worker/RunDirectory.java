@@ -2,8 +2,8 @@ package com.performance.platform.injection.gatling.worker;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
+import com.performance.platform.domain.injection.WorkloadPlan;
+import com.performance.platform.domain.injection.WorkloadPlanCodec;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,14 +13,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Run directory d'un worker : {@code spec.json}, {@code load-model.json} (entrees),
+ * Run directory d'un worker : {@code spec.json}, {@code workload-plan.json} (entrees),
  * {@code results/} (Gatling) et {@code result.json} (sortie).
  * Aucun secret n'est ecrit : {@link WorkerRunSpec#environment()} est ignore.
  */
 public final class RunDirectory {
 
     public static final String SPEC_FILE = "spec.json";
-    public static final String LOAD_MODEL_FILE = "load-model.json";
+    public static final String PLAN_FILE = "workload-plan.json";
     public static final String RESULT_FILE = "result.json";
     public static final String RESULTS_DIR = "results";
 
@@ -45,7 +45,7 @@ public final class RunDirectory {
         return root.resolve(RESULT_FILE);
     }
 
-    public void writeInputs(WorkerRunSpec spec, LoadModel loadModel) throws IOException {
+    public void writeInputs(WorkerRunSpec spec, WorkloadPlan plan) throws IOException {
         Files.createDirectories(root);
         Map<String, Object> s = new LinkedHashMap<>();
         s.put("simulationId", spec.simulationId());
@@ -54,10 +54,8 @@ public final class RunDirectory {
         s.put("timeout", spec.timeout().toString());
         MAPPER.writerWithDefaultPrettyPrinter().writeValue(root.resolve(SPEC_FILE).toFile(), s);
 
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("type", loadModel.type().name());
-        m.put("parameters", loadModel.parameters());
-        MAPPER.writerWithDefaultPrettyPrinter().writeValue(root.resolve(LOAD_MODEL_FILE).toFile(), m);
+        MAPPER.writerWithDefaultPrettyPrinter().writeValue(root.resolve(PLAN_FILE).toFile(),
+                WorkloadPlanCodec.toMap(plan));
     }
 
     /** Lit le spec ; {@code environment} est toujours vide. */
@@ -78,14 +76,12 @@ public final class RunDirectory {
     }
 
     @SuppressWarnings("unchecked")
-    public LoadModel readLoadModel() throws IOException {
-        Map<String, Object> m = MAPPER.readValue(root.resolve(LOAD_MODEL_FILE).toFile(), MAP_TYPE);
+    public WorkloadPlan readPlan() throws IOException {
+        Map<String, Object> m = MAPPER.readValue(root.resolve(PLAN_FILE).toFile(), MAP_TYPE);
         try {
-            Object params = m.get("parameters");
-            return new LoadModel(LoadModelType.valueOf((String) m.get("type")),
-                    params instanceof Map<?, ?> ? (Map<String, Object>) params : Map.of());
+            return WorkloadPlanCodec.fromMap(m);
         } catch (RuntimeException e) {
-            throw new IOException("Invalid " + LOAD_MODEL_FILE + ": " + e.getMessage(), e);
+            throw new IOException("Invalid " + PLAN_FILE + ": " + e.getMessage(), e);
         }
     }
 

@@ -1,10 +1,9 @@
 package com.performance.platform.injection.gatling.http;
 
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
+import com.performance.platform.injection.gatling.TestPlans;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.injection.gatling.result.DefaultGatlingResultParser;
-import com.performance.platform.injection.gatling.load.DefaultLoadModelTranslator;
+import com.performance.platform.injection.gatling.load.DefaultWorkloadPlanTranslator;
 import com.performance.platform.injection.gatling.runner.DefaultGatlingRunner;
 import com.performance.platform.injection.gatling.runner.GatlingRunConfig;
 import com.sun.net.httpserver.HttpServer;
@@ -76,10 +75,10 @@ class HttpScenarioSimulationTest {
         String simId = "http-sim-" + System.nanoTime();
         HttpRequestSpecHolder.set(simId, spec("{\"id\":\"{index}\"}"));
         var config = new GatlingRunConfig(HttpScenarioSimulation.class.getName(),
-                new LoadModel(LoadModelType.CONSTANT, Map.of("usersPerSec", 4, "durationSeconds", 1)),
+                TestPlans.hold(4, 1),
                 Map.of(), resultsDir, simId, Duration.ofSeconds(60));
         try {
-            Path directory = new DefaultGatlingRunner(new DefaultLoadModelTranslator()).run(config);
+            Path directory = new DefaultGatlingRunner(new DefaultWorkloadPlanTranslator()).run(config);
             assertThat(directory).isNotEqualTo(resultsDir.toAbsolutePath().normalize());
             assertThat(directory.resolve("simulation.log")).isRegularFile();
             assertThat(Files.exists(directory.resolve("stats.json"))).isFalse();
@@ -117,10 +116,10 @@ class HttpScenarioSimulationTest {
                 "baseUrl", "http://localhost:" + server.getAddress().getPort(),
                 "path", "/unexpected-status", "expectedStatus", 200), null));
         var config = new GatlingRunConfig(HttpScenarioSimulation.class.getName(),
-                new LoadModel(LoadModelType.CONSTANT, Map.of("usersPerSec", 4, "durationSeconds", 1)),
+                TestPlans.hold(4, 1),
                 Map.of(), resultsDir, simId, Duration.ofSeconds(60));
         try {
-            Path directory = new DefaultGatlingRunner(new DefaultLoadModelTranslator()).run(config);
+            Path directory = new DefaultGatlingRunner(new DefaultWorkloadPlanTranslator()).run(config);
             var result = new DefaultGatlingResultParser().parse(directory, TaskId.of("http-ko"));
             assertThat(result.totalRequests()).isEqualTo(4);
             assertThat(result.failedRequests()).isEqualTo(4);

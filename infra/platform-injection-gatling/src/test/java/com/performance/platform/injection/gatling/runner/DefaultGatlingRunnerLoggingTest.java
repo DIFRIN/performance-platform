@@ -3,9 +3,8 @@ package com.performance.platform.injection.gatling.runner;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
-import com.performance.platform.injection.gatling.load.DefaultLoadModelTranslator;
+import com.performance.platform.injection.gatling.TestPlans;
+import com.performance.platform.injection.gatling.load.DefaultWorkloadPlanTranslator;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -69,9 +68,9 @@ class DefaultGatlingRunnerLoggingTest {
         String simulationId = "logging-" + UUID.randomUUID().toString().substring(0, 8);
         assertThat(loggerContext.isStarted()).isTrue();
 
-        Path result = new DefaultGatlingRunner(new DefaultLoadModelTranslator()).run(new GatlingRunConfig(
+        Path result = new DefaultGatlingRunner(new DefaultWorkloadPlanTranslator()).run(new GatlingRunConfig(
                 MinimalSimulation.class.getName(),
-                new LoadModel(LoadModelType.CONSTANT, Map.of("usersPerSec", 1, "durationSeconds", 1)),
+                TestPlans.hold(1, 1),
                 Map.of("test.baseUrl", baseUrl),
                 resultsDir,
                 simulationId,

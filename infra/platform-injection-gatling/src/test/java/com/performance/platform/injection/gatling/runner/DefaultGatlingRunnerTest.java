@@ -1,9 +1,8 @@
 package com.performance.platform.injection.gatling.runner;
 
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
-import com.performance.platform.injection.gatling.load.DefaultLoadModelTranslator;
-import com.performance.platform.injection.gatling.load.LoadModelTranslator;
+import com.performance.platform.injection.gatling.TestPlans;
+import com.performance.platform.injection.gatling.load.DefaultWorkloadPlanTranslator;
+import com.performance.platform.injection.gatling.load.WorkloadPlanTranslator;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +33,7 @@ class DefaultGatlingRunnerTest {
     private HttpServer mockServer;
     private int mockServerPort;
     private String baseUrl;
-    private LoadModelTranslator translator;
+    private WorkloadPlanTranslator translator;
     private DefaultGatlingRunner runner;
 
     @BeforeEach
@@ -54,7 +53,7 @@ class DefaultGatlingRunnerTest {
 
         System.setProperty("test.baseUrl", baseUrl);
 
-        translator = new DefaultLoadModelTranslator();
+        translator = new DefaultWorkloadPlanTranslator();
         runner = new DefaultGatlingRunner(translator);
     }
 
@@ -69,9 +68,7 @@ class DefaultGatlingRunnerTest {
     private GatlingRunConfig config(String simulationId) {
         return new GatlingRunConfig(
                 "com.performance.platform.injection.gatling.runner.MinimalSimulation",
-                new LoadModel(LoadModelType.CONSTANT, Map.of(
-                        "usersPerSec", 1,
-                        "durationSeconds", 1)),
+                TestPlans.hold(1, 1),
                 Map.of("test.baseUrl", baseUrl),
                 resultsDir,
                 simulationId,
@@ -154,9 +151,7 @@ class DefaultGatlingRunnerTest {
         void shouldThrowOnInvalidSimulationClass() {
             var config = new GatlingRunConfig(
                     "com.nonexistent.FakeSimulation",
-                    new LoadModel(LoadModelType.CONSTANT, Map.of(
-                            "usersPerSec", 1,
-                            "durationSeconds", 1)),
+                    TestPlans.hold(1, 1),
                     Map.of("test.baseUrl", baseUrl),
                     resultsDir,
                     "test-invalid-" + UUID.randomUUID().toString().substring(0, 8),

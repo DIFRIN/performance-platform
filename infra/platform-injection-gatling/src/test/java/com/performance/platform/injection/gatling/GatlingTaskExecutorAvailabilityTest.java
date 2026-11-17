@@ -36,7 +36,7 @@ class GatlingTaskExecutorAvailabilityTest {
     private static StepDefinition step() {
         return new StepDefinition(TASK_ID, "gatling", Phase.INJECTION, Map.of(
                 "simulation", "Sim",
-                "loadModel", Map.of("type", "CONSTANT", "parameters", Map.of("users", 1, "duration", "1s"))),
+                "workload", TestPlans.holdMap()),
                 null, null, null, null);
     }
 

@@ -1,6 +1,6 @@
 package com.performance.platform.injection.gatling.runner;
 
-import com.performance.platform.injection.gatling.load.LoadModelTranslator;
+import com.performance.platform.injection.gatling.load.WorkloadPlanTranslator;
 
 import io.gatling.javaapi.core.OpenInjectionStep;
 import org.slf4j.Logger;
@@ -26,8 +26,8 @@ import java.util.concurrent.TimeoutException;
  * Implementation par defaut de {@link GatlingRunner}.
  * <p>
  * Lance une simulation Gatling in-process sur un Virtual Thread avec
- * timeout. Les etapes d'injection sont traduites du {@code LoadModel}
- * via le {@code LoadModelTranslator} et rendues disponibles a la
+ * timeout. Les etapes d'injection sont traduites du {@code WorkloadPlan}
+ * via le {@code WorkloadPlanTranslator} et rendues disponibles a la
  * simulation via {@link SimulationInjectionHolder}.
  * <p>
  * <strong>Lancement Gatling</strong> : utilise {@link EmbeddedGatlingLauncher},
@@ -47,9 +47,9 @@ public class DefaultGatlingRunner implements GatlingRunner {
 
     private static final String SIM_ID_PROPERTY = "gatling.simulationId";
 
-    private final LoadModelTranslator translator;
+    private final WorkloadPlanTranslator translator;
 
-    public DefaultGatlingRunner(LoadModelTranslator translator) {
+    public DefaultGatlingRunner(WorkloadPlanTranslator translator) {
         this.translator = translator;
     }
 
@@ -69,9 +69,9 @@ public class DefaultGatlingRunner implements GatlingRunner {
         log.info("action=gatling_run simulationId={} simulationClass={} timeout={}",
                 config.simulationId(), config.simulationClass(), config.timeout());
 
-        // 1. Traduire LoadModel en etapes d'injection Gatling
-        List<OpenInjectionStep> steps = translator.translate(config.loadModel());
-        log.debug("action=load_model_translated simulationId={} stepCount={}",
+        // 1. Traduire WorkloadPlan en etapes d'injection Gatling
+        List<OpenInjectionStep> steps = translator.toOpenSteps(config.plan());
+        log.debug("action=workload_plan_translated simulationId={} stepCount={}",
                 config.simulationId(), steps.size());
 
         // 2. Rendre les etapes disponibles a la simulation

@@ -2,8 +2,8 @@ package com.performance.platform.injection.gatling;
 
 import com.performance.platform.domain.execution.ExecutionContext;
 import com.performance.platform.domain.id.ExecutionId;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
+import com.performance.platform.domain.injection.WorkloadPlan;
+import com.performance.platform.domain.injection.WorkloadPlanCodec;
 import com.performance.platform.domain.injection.InjectionResult;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
@@ -53,8 +53,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li>{@code simulation} — optionnel : classe de simulation Gatling custom. Absent =
  *       injection HTTP generique construite depuis le scenario (voir ci-dessous)</li>
  *   <li>{@code protocol} — optionnel (sans {@code simulation}) : {@code http} (defaut) ou {@code kafka}</li>
- *   <li>{@code loadModel} — obligatoire : map contenant {@code type} (String)
- *       et {@code parameters} (Map) definissant le modele de charge</li>
+ *   <li>{@code workload} — obligatoire : plan de charge (forme canonique de
+ *       {@link WorkloadPlanCodec}, ou {@link WorkloadPlan})</li>
  *   <li>{@code timeout} — optionnel : timeout en secondes (defaut 300)</li>
  *   <li>{@code systemProperties} — optionnel : proprietes systeme passees a Gatling</li>
  * </ul>
@@ -73,7 +73,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p>
  * <strong>CC-02 (taille &gt; 300 lignes) :</strong> cette classe encapsule le cycle
  * de vie complet d'une injection Gatling — validation des parametres, extraction
- * et conversion du {@code LoadModel} (3 variantes : Map, LoadModel, LoadModelType),
+ * et lecture du {@code WorkloadPlan} (Map canonique ou record),
  * construction du {@code GatlingRunConfig}, delegation au {@link GatlingRunner},
  * parsing des resultats via {@link GatlingResultParser}, assemblage du
  * {@link TaskResult}, gestion d'erreurs sur 3 niveaux de catch, et cleanup
@@ -92,7 +92,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     // ── Parameter keys ────────────────────────────────────────────────────────
 
     static final String PARAM_SIMULATION = "simulation";
-    static final String PARAM_LOAD_MODEL = "loadModel";
+    static final String PARAM_WORKLOAD = WorkloadPlanCodec.PARAM_KEY;
     static final String PARAM_PROTOCOL = "protocol";
     static final String DEFAULT_PROTOCOL = "http";
     static final String PARAM_TIMEOUT = "timeout";
@@ -101,6 +101,8 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     // ── Output keys ───────────────────────────────────────────────────────────
 
     static final String OUTPUT_RESULT = InjectionResult.OUTPUT_KEY;
+    static final String OUTPUT_WORKLOAD_PLAN = "workloadPlan";
+    static final String OUTPUT_WORKLOAD_PLAN_HASH = "workloadPlanHash";
 
     // ── Defaults ──────────────────────────────────────────────────────────────
 
@@ -209,11 +211,12 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             }
         }
 
-        LoadModel loadModel = extractLoadModel(step);
-        if (loadModel == null) {
-            return fail(step, startNanos,
-                    "Required parameter '" + PARAM_LOAD_MODEL + "' is missing, invalid, "
-                    + "or missing required 'type' field");
+        WorkloadPlan plan;
+        try {
+            plan = extractPlan(step);
+        } catch (IllegalArgumentException e) {
+            return fail(step, startNanos, "Parameter '" + PARAM_WORKLOAD + "' is missing or invalid: "
+                    + e.getMessage());
         }
 
         long timeoutSeconds = paramLong(step, PARAM_TIMEOUT, DEFAULT_TIMEOUT_SECONDS);
@@ -251,7 +254,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             Path runDir = Files.createTempDirectory("gatling-" + step.id().value() + "-").toAbsolutePath().normalize();
             var spec = new WorkerRunSpec(runDir, step.id().value(), simulationClass, systemProperties,
                     Map.of(), Duration.ofSeconds(timeoutSeconds));
-            new RunDirectory(runDir).writeInputs(spec, loadModel);
+            new RunDirectory(runDir).writeInputs(spec, plan);
             log.info("action=gatling_execute_start executionId={} simulation={} stepId={}",
                     executionKey, simulationClass, step.id().value());
             handle = launcher.start(spec);
@@ -283,7 +286,9 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
 
             // 5. Assembler le TaskResult
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed,
-                    Map.of(OUTPUT_RESULT, injectionResult));
+                    Map.of(OUTPUT_RESULT, injectionResult,
+                            OUTPUT_WORKLOAD_PLAN, WorkloadPlanCodec.toMap(plan),
+                            OUTPUT_WORKLOAD_PLAN_HASH, WorkloadPlanCodec.hash(plan)));
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -341,57 +346,17 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     // ── Parameter extraction ──────────────────────────────────────────────────
 
     /**
-     * Extrait le {@link LoadModel} depuis les parametres du step.
-     * <p>
-     * Format attendu dans {@code step.parameters()["loadModel"]} :
-     * <pre>{@code
-     * {
-     *   "type": "CONSTANT",
-     *   "parameters": {
-     *     "users": 10,
-     *     "duration": "60s"
-     *   }
-     * }
-     * }</pre>
+     * Extrait le {@link WorkloadPlan} de {@code step.parameters()["workload"]}.
      *
-     * @return le LoadModel extrait, ou {@code null} si absent/invalide
+     * @throws IllegalArgumentException si absent ou invalide
      */
     @SuppressWarnings("unchecked")
-    private LoadModel extractLoadModel(StepDefinition step) {
-        Object raw = step.parameters().get(PARAM_LOAD_MODEL);
-        if (raw == null) return null;
-
-        if (raw instanceof LoadModel lm) return lm;
-
-        if (raw instanceof Map<?, ?> map) {
-            Object typeObj = map.get("type");
-            if (typeObj == null) return null;
-
-            LoadModelType type;
-            if (typeObj instanceof LoadModelType lmt) {
-                type = lmt;
-            } else {
-                try {
-                    type = LoadModelType.valueOf(typeObj.toString().toUpperCase());
-                } catch (IllegalArgumentException e) {
-                    log.warn("action=invalid_load_model_type type={} stepId={}",
-                            typeObj, step.id().value());
-                    return null;
-                }
-            }
-
-            Object paramsObj = map.get("parameters");
-            Map<String, Object> params;
-            if (paramsObj instanceof Map<?, ?> pm) {
-                params = ((Map<String, Object>) pm);
-            } else {
-                params = Map.of();
-            }
-
-            return new LoadModel(type, params);
-        }
-
-        return null;
+    private WorkloadPlan extractPlan(StepDefinition step) {
+        Object raw = step.parameters().get(PARAM_WORKLOAD);
+        if (raw == null) throw new IllegalArgumentException("absent");
+        if (raw instanceof WorkloadPlan plan) return plan;
+        if (raw instanceof Map<?, ?> map) return WorkloadPlanCodec.fromMap((Map<String, Object>) map);
+        throw new IllegalArgumentException("unsupported type " + raw.getClass().getSimpleName());
     }
 
     // ── Parameter helpers ─────────────────────────────────────────────────────

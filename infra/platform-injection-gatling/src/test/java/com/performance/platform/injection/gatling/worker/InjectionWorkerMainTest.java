@@ -1,7 +1,7 @@
 package com.performance.platform.injection.gatling.worker;
 
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
+import com.performance.platform.injection.gatling.TestPlans;
+import com.performance.platform.injection.gatling.TestPlans;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -53,6 +53,6 @@ class InjectionWorkerMainTest {
     private void write() throws Exception {
         new RunDirectory(tmp).writeInputs(
                 new WorkerRunSpec(tmp, "sim", "com.X", Map.of(), Map.of(), Duration.ofSeconds(5)),
-                new LoadModel(LoadModelType.CONSTANT, Map.of()));
+                TestPlans.hold(1, 1));
     }
 }

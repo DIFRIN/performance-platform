@@ -5,8 +5,7 @@ import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.injection.InjectionResult;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
+import com.performance.platform.injection.gatling.TestPlans;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
@@ -33,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests E2E du pipeline d'injection Gatling complet.
  * <p>
- * Flux teste : parametres de step -> extraction LoadModel -> traduction
+ * Flux teste : parametres de step -> extraction WorkloadPlan -> traduction
  * -> execution GatlingRunner -> parsing GatlingResultParser -> InjectionResult -> TaskResult.
  */
 @DisplayName("Gatling Pipeline E2E")
@@ -97,7 +96,7 @@ class GatlingPipelineE2ETest {
 
         @Test
         @DisplayName("E2E-G-01: Full pipeline with RAMP load model produces successful result")
-        void rampLoadModelFullPipeline() {
+        void rampPlanFullPipeline() {
             var runner = new StubRunner();
             runner.returnsDir(RESULTS_DIR);
 
@@ -111,10 +110,7 @@ class GatlingPipelineE2ETest {
 
             StepDefinition step = buildGatlingStep(taskId,
                     Map.of("simulation", "com.example.RampSimulation",
-                            "loadModel", Map.of("type", "RAMP",
-                                    "stages", List.of(
-                                            Map.of("duration", "2m", "usersPerSecond", 10),
-                                            Map.of("duration", "5m", "usersPerSecond", 100)))));
+                            "workload", TestPlans.holdMap()));
 
             TaskResult result = executor.execute(CONTEXT, step);
 
@@ -136,7 +132,7 @@ class GatlingPipelineE2ETest {
 
         @Test
         @DisplayName("E2E-G-02: CONSTANT load model")
-        void constantLoadModelProducesCorrectConfig() {
+        void constantPlanProducesCorrectConfig() {
             var runner = new StubRunner();
             var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("const-test"),
@@ -147,9 +143,7 @@ class GatlingPipelineE2ETest {
 
             StepDefinition step = buildGatlingStep(TaskId.of("const-test"),
                     Map.of("simulation", "com.example.ConstantSimulation",
-                            "loadModel", Map.of("type", "CONSTANT",
-                                    "usersPerSecond", 200,
-                                    "duration", "10m")));
+                            "workload", TestPlans.holdMap()));
 
             executor.execute(CONTEXT, step);
 
@@ -160,7 +154,7 @@ class GatlingPipelineE2ETest {
 
         @Test
         @DisplayName("E2E-G-03: BURST load model passed as type reference")
-        void burstLoadModelType() {
+        void burstPlan() {
             var runner = new StubRunner();
             var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("burst-test"),
@@ -169,22 +163,17 @@ class GatlingPipelineE2ETest {
 
             var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
-            // Use a LoadModel record with BURST type
-            var model = new LoadModel(LoadModelType.BURST, Map.of(
-                    "usersPerSecond", 1000,
-                    "duration", "1m",
-                    "burstDuration", "10s"));
-            StepDefinition step = buildGatlingStep(TaskId.of("burst-test"),
+                        StepDefinition step = buildGatlingStep(TaskId.of("burst-test"),
                     Map.of("simulation", "com.example.BurstSimulation",
-                            "loadModel", model));
+                            "workload", TestPlans.holdMap()));
 
             TaskResult result = executor.execute(CONTEXT, step);
             assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
         }
 
         @Test
-        @DisplayName("E2E-G-04: LoadModel passed as LoadModel record directly")
-        void loadModelAsRecord() {
+        @DisplayName("E2E-G-04: WorkloadPlan passed as record directly")
+        void planAsRecord() {
             var runner = new StubRunner();
             var parser = new StubParser()
                     .returns(buildInjectionResult(TaskId.of("record-test"),
@@ -193,13 +182,10 @@ class GatlingPipelineE2ETest {
 
             var executor = new GatlingTaskExecutor(com.performance.platform.injection.gatling.worker.RunnerBackedLauncher.of(runner), parser);
 
-            var model = new LoadModel(LoadModelType.SPIKE, Map.of(
-                    "usersPerSecond", 500,
-                    "duration", "2m"));
-
+            
             StepDefinition step = buildGatlingStep(TaskId.of("record-test"),
                     Map.of("simulation", "com.example.SpikeSimulation",
-                            "loadModel", model));
+                            "workload", TestPlans.holdMap()));
 
             TaskResult result = executor.execute(CONTEXT, step);
             assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);
@@ -228,8 +214,7 @@ class GatlingPipelineE2ETest {
 
             StepDefinition step = buildGatlingStep(TaskId.of("fail-test"),
                     Map.of("simulation", "com.example.FailingSimulation",
-                            "loadModel", Map.of("type", "RAMP", "stages", List.of(
-                                    Map.of("duration", "1m", "usersPerSecond", 10)))));
+                            "workload", TestPlans.holdMap()));
 
             TaskResult result = executor.execute(CONTEXT, step);
 
@@ -249,8 +234,7 @@ class GatlingPipelineE2ETest {
 
             StepDefinition step = buildGatlingStep(TaskId.of("parse-fail"),
                     Map.of("simulation", "com.example.CorruptedSimulation",
-                            "loadModel", Map.of("type", "CONSTANT",
-                                    "usersPerSecond", 100, "duration", "1m")));
+                            "workload", TestPlans.holdMap()));
 
             TaskResult result = executor.execute(CONTEXT, step);
 
@@ -270,8 +254,7 @@ class GatlingPipelineE2ETest {
 
             var step = new StepDefinition(
                     TaskId.of("no-sim"), "gatling", Phase.INJECTION,
-                    Map.of("loadModel", Map.of("type", "CONSTANT",
-                            "usersPerSecond", 100, "duration", "1m")),
+                    Map.of("workload", TestPlans.holdMap()),
                     List.of(), List.of(), Duration.ofSeconds(300), null);
 
             TaskResult result = executor.execute(CONTEXT, step);
@@ -301,8 +284,7 @@ class GatlingPipelineE2ETest {
 
             StepDefinition step = buildGatlingStep(TaskId.of("cleanup-test"),
                     Map.of("simulation", "com.example.CleanupSimulation",
-                            "loadModel", Map.of("type", "CONSTANT",
-                                    "usersPerSecond", 10, "duration", "30s")));
+                            "workload", TestPlans.holdMap()));
             executor.execute(CONTEXT, step);
 
             executor.cleanup(EXECUTION_ID);
@@ -342,9 +324,7 @@ class GatlingPipelineE2ETest {
                 var taskId = TaskId.of("seq-" + i);
                 StepDefinition step = buildGatlingStep(taskId,
                         Map.of("simulation", "com.example.SeqSimulation",
-                                "loadModel", Map.of("type", "CONSTANT",
-                                        "usersPerSecond", 100 * i,
-                                        "duration", (i * 5) + "m")));
+                                "workload", TestPlans.holdMap()));
 
                 TaskResult result = executor.execute(CONTEXT, step);
                 assertThat(result.status()).isEqualTo(TaskStatus.SUCCESS);

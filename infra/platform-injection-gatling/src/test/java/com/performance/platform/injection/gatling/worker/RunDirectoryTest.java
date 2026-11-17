@@ -1,7 +1,7 @@
 package com.performance.platform.injection.gatling.worker;
 
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
+import com.performance.platform.injection.gatling.TestPlans;
+import com.performance.platform.injection.gatling.TestPlans;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -21,7 +21,7 @@ class RunDirectoryTest {
         var dir = new RunDirectory(tmp);
         var spec = new WorkerRunSpec(tmp, "sim-1", "com.X", Map.of("a", "b"),
                 Map.of("SECRET", "s3cr3t"), Duration.ofSeconds(30));
-        var model = new LoadModel(LoadModelType.CONSTANT, Map.of("usersPerSec", 5, "duration", "PT10S"));
+        var model = TestPlans.hold(5, 10);
         dir.writeInputs(spec, model);
 
         var read = dir.readSpec();
@@ -30,7 +30,7 @@ class RunDirectoryTest {
         assertThat(read.systemProperties()).containsEntry("a", "b");
         assertThat(read.timeout()).isEqualTo(Duration.ofSeconds(30));
         assertThat(read.environment()).isEmpty();
-        assertThat(dir.readLoadModel()).isEqualTo(model);
+        assertThat(dir.readPlan()).isEqualTo(model);
         assertThat(Files.readString(tmp.resolve(RunDirectory.SPEC_FILE))).doesNotContain("s3cr3t");
     }
 

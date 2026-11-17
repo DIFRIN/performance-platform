@@ -26,8 +26,8 @@ public final class RunnerBackedLauncher implements InjectionWorkerLauncher {
         var future = new CompletableFuture<WorkerOutcome>();
         Thread.ofVirtual().start(() -> {
             try {
-                var loadModel = dir.readLoadModel();
-                Path results = runner.run(new GatlingRunConfig(spec.simulationClass(), loadModel,
+                var plan = dir.readPlan();
+                Path results = runner.run(new GatlingRunConfig(spec.simulationClass(), plan,
                         spec.systemProperties(), dir.resultsDirectory(), spec.simulationId(), spec.timeout()));
                 future.complete(new WorkerOutcome(0, true, false, results, dir.resultFile(), ""));
             } catch (Throwable t) {

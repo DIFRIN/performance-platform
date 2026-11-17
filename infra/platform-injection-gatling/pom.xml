@@ -13,10 +13,10 @@
 
     <artifactId>platform-injection-gatling</artifactId>
     <name>Platform Injection Gatling</name>
-    <description>Traduction des LoadModel en OpenInjectionStep Gatling Java DSL. Injection via GatlingTaskExecutor.</description>
+    <description>Traduction du WorkloadPlan (plan de charge) en OpenInjectionStep Gatling Java DSL. Injection via GatlingTaskExecutor.</description>
 
     <dependencies>
-        <!-- Domaine pur (LoadModel, LoadModelType, InjectionResult) -->
+        <!-- Domaine pur (WorkloadPlan, InjectionResult) -->
         <dependency>
             <groupId>com.performance</groupId>
             <artifactId>platform-domain</artifactId>

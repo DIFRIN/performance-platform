@@ -5,8 +5,6 @@ import com.performance.platform.domain.id.ExecutionId;
 import com.performance.platform.domain.id.ScenarioId;
 import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.injection.InjectionResult;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
 import com.performance.platform.domain.scenario.Phase;
 import com.performance.platform.domain.scenario.StepDefinition;
 import com.performance.platform.domain.task.TaskResult;
@@ -98,10 +96,7 @@ class GatlingTaskExecutorTest {
     private static Map<String, Object> validParams() {
         return Map.of(
                 GatlingTaskExecutor.PARAM_SIMULATION, "com.example.Simulation",
-                GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
-                        "type", "CONSTANT",
-                        "parameters", Map.of("users", 10, "duration", "60s")
-                )
+                GatlingTaskExecutor.PARAM_WORKLOAD, TestPlans.holdMap()
         );
     }
 
@@ -126,8 +121,7 @@ class GatlingTaskExecutorTest {
 
     private static Map<String, Object> httpParams(Map<String, Object> extra) {
         var params = new java.util.HashMap<String, Object>(extra);
-        params.put(GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
-                "type", "CONSTANT", "parameters", Map.of("users", 10, "duration", "60s")));
+        params.put(GatlingTaskExecutor.PARAM_WORKLOAD, TestPlans.holdMap());
         return params;
     }
 
@@ -212,11 +206,13 @@ class GatlingTaskExecutorTest {
         assertThat(result.outputs().get(GatlingTaskExecutor.OUTPUT_RESULT))
                 .isInstanceOf(InjectionResult.class)
                 .isEqualTo(SUCCESS_RESULT);
+        assertThat(result.outputs()).containsKeys(GatlingTaskExecutor.OUTPUT_WORKLOAD_PLAN,
+                GatlingTaskExecutor.OUTPUT_WORKLOAD_PLAN_HASH);
     }
 
     @Test
-    @DisplayName("should extract loadModel from parameters with constant type")
-    void shouldExtractLoadModelFromParameters() {
+    @DisplayName("should extract workload from parameters")
+    void shouldExtractWorkloadFromParameters() {
         stubRunner.returnsDir(RESULTS_DIR);
         stubParser.returns(SUCCESS_RESULT);
         StepDefinition step = createStep(validParams());
@@ -227,33 +223,13 @@ class GatlingTaskExecutorTest {
     }
 
     @Test
-    @DisplayName("should accept LoadModel instance directly in parameters")
-    void shouldAcceptLoadModelInstanceDirectly() {
+    @DisplayName("should accept WorkloadPlan instance directly in parameters")
+    void shouldAcceptPlanInstanceDirectly() {
         stubRunner.returnsDir(RESULTS_DIR);
         stubParser.returns(SUCCESS_RESULT);
-        var loadModel = new LoadModel(LoadModelType.SPIKE,
-                Map.of("users", 100, "peak", "5s"));
         StepDefinition step = createStep(Map.of(
                 GatlingTaskExecutor.PARAM_SIMULATION, "com.example.Simulation",
-                GatlingTaskExecutor.PARAM_LOAD_MODEL, loadModel
-        ));
-
-        TaskResult result = executor.execute(CONTEXT, step);
-
-        assertThat(result.isSuccess()).isTrue();
-    }
-
-    @Test
-    @DisplayName("should handle LoadModelType enum in loadModel params")
-    void shouldHandleLoadModelTypeEnum() {
-        stubRunner.returnsDir(RESULTS_DIR);
-        stubParser.returns(SUCCESS_RESULT);
-        StepDefinition step = createStep(Map.of(
-                GatlingTaskExecutor.PARAM_SIMULATION, "com.example.SpikeSim",
-                GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
-                        "type", LoadModelType.SPIKE,
-                        "parameters", Map.of("users", 50)
-                )
+                GatlingTaskExecutor.PARAM_WORKLOAD, TestPlans.hold(10, 60)
         ));
 
         TaskResult result = executor.execute(CONTEXT, step);
@@ -280,10 +256,7 @@ class GatlingTaskExecutorTest {
     @DisplayName("should return failed when simulation parameter is missing")
     void shouldFailWhenSimulationMissing() {
         StepDefinition step = createStep(Map.of(
-                GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
-                        "type", "CONSTANT",
-                        "parameters", Map.of("users", 10)
-                )
+                GatlingTaskExecutor.PARAM_WORKLOAD, TestPlans.holdMap()
         ));
 
         TaskResult result = executor.execute(CONTEXT, step);
@@ -297,10 +270,7 @@ class GatlingTaskExecutorTest {
     void shouldFailWhenSimulationBlank() {
         StepDefinition step = createStep(Map.of(
                 GatlingTaskExecutor.PARAM_SIMULATION, "   ",
-                GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
-                        "type", "CONSTANT",
-                        "parameters", Map.of("users", 10)
-                )
+                GatlingTaskExecutor.PARAM_WORKLOAD, TestPlans.holdMap()
         ));
 
         TaskResult result = executor.execute(CONTEXT, step);
@@ -310,8 +280,8 @@ class GatlingTaskExecutorTest {
     }
 
     @Test
-    @DisplayName("should return failed when loadModel parameter is missing")
-    void shouldFailWhenLoadModelMissing() {
+    @DisplayName("should return failed when workload parameter is missing")
+    void shouldFailWhenWorkloadMissing() {
         StepDefinition step = createStep(Map.of(
                 GatlingTaskExecutor.PARAM_SIMULATION, "com.example.Simulation"
         ));
@@ -319,40 +289,35 @@ class GatlingTaskExecutorTest {
         TaskResult result = executor.execute(CONTEXT, step);
 
         assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
-        assertThat(result.errorMessage()).contains("loadModel");
+        assertThat(result.errorMessage()).contains("workload");
     }
 
     @Test
-    @DisplayName("should return failed when loadModel type is missing")
-    void shouldFailWhenLoadModelTypeMissing() {
+    @DisplayName("should return failed when workload stages are missing")
+    void shouldFailWhenWorkloadStagesMissing() {
         StepDefinition step = createStep(Map.of(
                 GatlingTaskExecutor.PARAM_SIMULATION, "com.example.Simulation",
-                GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
-                        "parameters", Map.of("users", 10)
-                )
+                GatlingTaskExecutor.PARAM_WORKLOAD, Map.of("model", "open")
         ));
 
         TaskResult result = executor.execute(CONTEXT, step);
 
         assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
-        assertThat(result.errorMessage()).contains("loadModel");
+        assertThat(result.errorMessage()).contains("workload");
     }
 
     @Test
-    @DisplayName("should return failed when loadModel type is invalid")
-    void shouldFailWhenLoadModelTypeInvalid() {
+    @DisplayName("should return failed when workload model is invalid")
+    void shouldFailWhenWorkloadModelInvalid() {
         StepDefinition step = createStep(Map.of(
                 GatlingTaskExecutor.PARAM_SIMULATION, "com.example.Simulation",
-                GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
-                        "type", "INVALID_TYPE",
-                        "parameters", Map.of("users", 10)
-                )
+                GatlingTaskExecutor.PARAM_WORKLOAD, Map.of("model", "bogus", "stages", java.util.List.of())
         ));
 
         TaskResult result = executor.execute(CONTEXT, step);
 
         assertThat(result.status()).isEqualTo(TaskStatus.FAILED);
-        assertThat(result.errorMessage()).contains("loadModel");
+        assertThat(result.errorMessage()).contains("workload");
     }
 
     @Test
@@ -360,10 +325,7 @@ class GatlingTaskExecutorTest {
     void shouldFailWhenTimeoutNegative() {
         StepDefinition step = createStep(Map.of(
                 GatlingTaskExecutor.PARAM_SIMULATION, "com.example.Simulation",
-                GatlingTaskExecutor.PARAM_LOAD_MODEL, Map.of(
-                        "type", "CONSTANT",
-                        "parameters", Map.of("users", 10)
-                ),
+                GatlingTaskExecutor.PARAM_WORKLOAD, TestPlans.holdMap(),
                 GatlingTaskExecutor.PARAM_TIMEOUT, -1
         ));
 

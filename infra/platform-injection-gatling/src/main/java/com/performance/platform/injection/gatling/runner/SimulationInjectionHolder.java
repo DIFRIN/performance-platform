@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Holder statique thread-safe pour passer les {@link OpenInjectionStep}
- * du {@code LoadModelTranslator} a la simulation Gatling.
+ * du {@code WorkloadPlanTranslator} a la simulation Gatling.
  * <p>
  * Les simulations Gatling etant instanciees par le framework Gatling
  * lui-meme, il n'y a pas de mecanisme d'injection de dependance.

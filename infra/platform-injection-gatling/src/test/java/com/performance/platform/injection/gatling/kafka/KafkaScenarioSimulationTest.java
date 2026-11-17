@@ -2,10 +2,9 @@ package com.performance.platform.injection.gatling.kafka;
 
 import com.performance.platform.plugin.resource.MessageChannel;
 import com.performance.platform.plugin.resource.MessageChannelFactory;
-import com.performance.platform.domain.injection.LoadModel;
-import com.performance.platform.domain.injection.LoadModelType;
+import com.performance.platform.injection.gatling.TestPlans;
 import com.performance.platform.domain.id.TaskId;
-import com.performance.platform.injection.gatling.load.DefaultLoadModelTranslator;
+import com.performance.platform.injection.gatling.load.DefaultWorkloadPlanTranslator;
 import com.performance.platform.injection.gatling.protocol.PreparedInjection;
 import com.performance.platform.injection.gatling.result.DefaultGatlingResultParser;
 import com.performance.platform.injection.gatling.runner.DefaultGatlingRunner;
@@ -75,9 +74,9 @@ class KafkaScenarioSimulationTest {
         PreparedInjection prepared = new KafkaInjectionProtocol(factory).prepare("exec-1", simId, params());
         try {
             var config = new GatlingRunConfig(prepared.simulationClass(),
-                    new LoadModel(LoadModelType.CONSTANT, Map.of("usersPerSec", 5, "durationSeconds", 1)),
+                    TestPlans.hold(5, 1),
                     Map.of(), resultsDir, simId, Duration.ofSeconds(60));
-            Path dir = new DefaultGatlingRunner(new DefaultLoadModelTranslator()).run(config);
+            Path dir = new DefaultGatlingRunner(new DefaultWorkloadPlanTranslator()).run(config);
             assertThat(dir).isNotEqualTo(resultsDir.toAbsolutePath().normalize());
             Path log = dir.resolve("simulation.log");
             assertThat(log).isRegularFile();

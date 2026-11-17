@@ -2,7 +2,7 @@
 
 **PDR** : PDR-056
 **Module** : `platform-scenario-dsl`
-**Statut** : APPROVED
+**Statut** : DONE
 **Priorité** : P0
 **Bloquée par** : ISSUE-204
 **Estime** : M (1-3h)
