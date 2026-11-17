@@ -2,7 +2,7 @@
 
 **PDR** : PDR-059
 **Module** : `platform-assertion`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1
 **Bloquée par** : ISSUE-221, ISSUE-219
 **Estime** : M (1-3h)
