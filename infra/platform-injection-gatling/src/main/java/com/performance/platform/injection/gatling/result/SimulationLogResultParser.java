@@ -4,6 +4,7 @@ import com.performance.platform.domain.id.TaskId;
 import com.performance.platform.domain.injection.InjectionResult;
 import com.performance.platform.domain.injection.LatencyHistogram;
 import com.performance.platform.domain.injection.LoadWindow;
+import com.performance.platform.domain.injection.RequestStats;
 import com.performance.platform.domain.injection.Stage;
 import com.performance.platform.domain.injection.WorkloadPlan;
 
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -52,7 +54,8 @@ final class SimulationLogResultParser {
         long windowMs = window.toMillis();
         if (windowMs <= 0) throw new IllegalArgumentException("window must be >= 1 ms");
         long runStart = -1;
-        var requestsRaw = new ArrayList<long[]>(); // {startMs, endMs, ko}
+        var requestsRaw = new ArrayList<long[]>(); // {startMs, endMs, ko, nameIndex}
+        var nameIndex = new LinkedHashMap<String, Integer>();
         var userStarts = new ArrayList<Long>();
         var latencies = new TreeMap<Long, Long>();
         String simulationClass = null;
@@ -97,7 +100,8 @@ final class SimulationLogResultParser {
                         if (end < start) {
                             throw new IllegalArgumentException("request ends before it starts");
                         }
-                        requestsRaw.add(new long[] {start, end, fields[5].equals("KO") ? 1 : 0});
+                        int idx = nameIndex.computeIfAbsent(fields[2], k -> nameIndex.size());
+                        requestsRaw.add(new long[] {start, end, fields[5].equals("KO") ? 1 : 0, idx});
                         total++;
                         if (fields[5].equals("KO")) failed++;
                         first = Math.min(first, start);
@@ -150,12 +154,25 @@ final class SimulationLogResultParser {
         var ok = new TreeMap<Long, Long>();
         var ko = new TreeMap<Long, Long>();
         long measuredTotal = 0;
+        int names = nameIndex.size();
+        long[] nameRequests = new long[names];
+        long[] nameFailures = new long[names];
+        var nameOk = new ArrayList<TreeMap<Long, Long>>();
+        var nameKo = new ArrayList<TreeMap<Long, Long>>();
+        for (int i = 0; i < names; i++) {
+            nameOk.add(new TreeMap<>());
+            nameKo.add(new TreeMap<>());
+        }
         for (long[] r : requestsRaw) {
             int w = (int) ((Math.floorDiv(r[0], windowMs) * windowMs - firstWindow) / windowMs);
             winRequests[w]++;
             if (r[2] == 1) winFailures[w]++;
+            int ni = (int) r[3];
+            nameRequests[ni]++;
+            if (r[2] == 1) nameFailures[ni]++;
             if (!winMeasured[w]) continue; // warm-up exclu des distributions
             long latency = r[1] - r[0];
+            (r[2] == 1 ? nameKo.get(ni) : nameOk.get(ni)).merge(LatencyHistogram.bucketOf(latency), 1L, Long::sum);
             latencies.merge(latency, 1L, Long::sum);
             (r[2] == 1 ? ko : ok).merge(LatencyHistogram.bucketOf(latency), 1L, Long::sum);
             sum += latency;
@@ -169,6 +186,13 @@ final class SimulationLogResultParser {
                     winMeasured[i]));
         }
         var histogram = new LatencyHistogram(ok, ko);
+        // Compteurs sur toutes les requêtes (somme = total) ; histogramme sur fenêtres mesurées.
+        var perRequest = new LinkedHashMap<String, RequestStats>();
+        for (var e : nameIndex.entrySet()) {
+            int i = e.getValue();
+            perRequest.put(e.getKey(), new RequestStats(nameRequests[i], nameFailures[i],
+                    new LatencyHistogram(nameOk.get(i), nameKo.get(i))));
+        }
 
         long durationMs = last - first;
         double throughput = total * 1000.0 / durationMs;
@@ -197,7 +221,7 @@ final class SimulationLogResultParser {
                 throughput, p50, p75, p90, p95, p99, maxLatency, minLatency,
                 mean, directory.toAbsolutePath().normalize(), rawStats,
                 Instant.ofEpochMilli(first), Instant.ofEpochMilli(last), histogram, windows,
-                null, true);
+                null, true, perRequest);
     }
 
     /** {@code measured} de l'étape couvrant l'offset ; au-delà du plan : dernière étape ; sans plan : vrai. */

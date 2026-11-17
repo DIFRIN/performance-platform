@@ -123,6 +123,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     static final String OUTPUT_OPAQUE = "opaque";
     static final String OUTPUT_HISTOGRAM = "histogram";
     static final String OUTPUT_WINDOWS = "windows";
+    static final String OUTPUT_PER_REQUEST = "perRequest";
     static final String OUTPUT_STARTED_AT = "startedAt";
     static final String OUTPUT_ENDED_AT = "endedAt";
     static final String OUTPUT_GENERATOR_HEALTH = "generatorHealth";
@@ -372,6 +373,9 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             outputs.put(OUTPUT_GENERATOR_HEALTH, injectionResult.generatorHealth().toMap());
             outputs.put(OUTPUT_COMPLETE, injectionResult.complete());
             outputs.put(OUTPUT_ARRIVAL_KNOWN, arrivalKnown);
+            var perRequest = new java.util.LinkedHashMap<String, Object>();
+            injectionResult.perRequest().forEach((n, st) -> perRequest.put(n, st.toMap()));
+            outputs.put(OUTPUT_PER_REQUEST, perRequest);
             return TaskResult.success(step.id(), getSupportedTaskName(), elapsed, Map.copyOf(outputs));
 
         } catch (InterruptedException e) {
@@ -489,7 +493,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
         return new InjectionResult(r.taskId(), r.simulationClass(), r.duration(), r.totalRequests(),
                 r.successfulRequests(), r.failedRequests(), r.errorRate(), r.throughput(), r.p50Ms(), r.p75Ms(),
                 r.p90Ms(), r.p95Ms(), r.p99Ms(), r.maxMs(), r.minMs(), r.meanMs(), r.gatlingReportDirectory(),
-                r.rawStats(), r.startedAt(), r.endedAt(), r.histogram(), windows, health, r.complete());
+                r.rawStats(), r.startedAt(), r.endedAt(), r.histogram(), windows, health, r.complete(), r.perRequest());
     }
 
     /** Part nulle : aucun worker, resultat vide complet. */
