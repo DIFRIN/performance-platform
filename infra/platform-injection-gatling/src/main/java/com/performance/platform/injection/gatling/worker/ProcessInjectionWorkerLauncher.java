@@ -35,6 +35,8 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher, 
     /** Marge accordee au worker au-dela de son propre timeout avant arret force. */
     static final Duration TIMEOUT_MARGIN = Duration.ofSeconds(30);
 
+    static final String BOOT_PROPERTIES_LAUNCHER = "org.springframework.boot.loader.launch.PropertiesLauncher";
+
     private static final Logger log = LoggerFactory.getLogger(ProcessInjectionWorkerLauncher.class);
 
     private final InjectionWorkerProperties properties;
@@ -101,9 +103,30 @@ public class ProcessInjectionWorkerLauncher implements InjectionWorkerLauncher, 
         spec.systemProperties().forEach((k, v) -> cmd.add("-D" + k + "=" + v));
         cmd.add("-cp");
         cmd.add(childClasspath());
-        cmd.add(mainClass);
+        if (isSpringBootFatJar(classpath)) {
+            // Les classes sont sous BOOT-INF : seul le launcher Spring Boot sait les charger.
+            cmd.add("-Dloader.main=" + mainClass);
+            cmd.add(BOOT_PROPERTIES_LAUNCHER);
+        } else {
+            cmd.add(mainClass);
+        }
         cmd.add(spec.runDirectory().toString());
         return cmd;
+    }
+
+    /** Vrai si le classpath est un unique jar executable Spring Boot (Main-Class = launcher). */
+    static boolean isSpringBootFatJar(String classpath) {
+        if (classpath == null || classpath.contains(java.io.File.pathSeparator)
+                || !classpath.endsWith(".jar") || !Files.isRegularFile(Path.of(classpath))) {
+            return false;
+        }
+        try (var jar = new java.util.jar.JarFile(classpath)) {
+            var manifest = jar.getManifest();
+            var main = manifest == null ? null : manifest.getMainAttributes().getValue("Main-Class");
+            return main != null && main.startsWith("org.springframework.boot.loader");
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private String childClasspath() {

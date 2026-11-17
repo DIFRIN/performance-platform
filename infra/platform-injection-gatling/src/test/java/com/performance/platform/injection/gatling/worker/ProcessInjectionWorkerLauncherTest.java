@@ -81,4 +81,21 @@ class ProcessInjectionWorkerLauncherTest {
         assertThat(l.command(spec(), "Main")).containsExactly("java", "-Xmx64m", "-Dmy.prop=v1",
                 "-cp", "a.jar", "Main", dir.toString());
     }
+
+    @Test
+    @DisplayName("Spring Boot fat jar: worker started through PropertiesLauncher with loader.main")
+    void commandForFatJar() throws Exception {
+        var jar = dir.resolve("app.jar");
+        var manifest = new java.util.jar.Manifest();
+        manifest.getMainAttributes().put(java.util.jar.Attributes.Name.MANIFEST_VERSION, "1.0");
+        manifest.getMainAttributes().putValue("Main-Class", "org.springframework.boot.loader.launch.JarLauncher");
+        try (var out = new java.util.jar.JarOutputStream(java.nio.file.Files.newOutputStream(jar), manifest)) {
+            // jar vide : seul le manifest compte
+        }
+        var props = new InjectionWorkerProperties(1, java.util.List.of(), null);
+        var l = new ProcessInjectionWorkerLauncher(props, null, "java", jar.toString());
+        assertThat(l.command(spec(), "Main")).containsExactly("java", "-Dmy.prop=v1",
+                "-cp", jar.toString(), "-Dloader.main=Main",
+                "org.springframework.boot.loader.launch.PropertiesLauncher", dir.toString());
+    }
 }
