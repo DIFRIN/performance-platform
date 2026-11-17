@@ -23,11 +23,21 @@ public final class MetricCatalog {
     private static final Map<String, String> UNITS = new LinkedHashMap<>();
 
     static {
-        register("injection.latency.p50", MetricKind.QUANTILE, "ms", Reduction.MAX, "Latence p50");
-        register("injection.latency.p75", MetricKind.QUANTILE, "ms", Reduction.MAX, "Latence p75");
-        register("injection.latency.p90", MetricKind.QUANTILE, "ms", Reduction.MAX, "Latence p90");
-        register("injection.latency.p95", MetricKind.QUANTILE, "ms", Reduction.MAX, "Latence p95");
-        register("injection.latency.p99", MetricKind.QUANTILE, "ms", Reduction.MAX, "Latence p99");
+        register("injection.latency.p50", MetricKind.QUANTILE, "ms", Reduction.MERGE, "Latence p50 (globale)");
+        register("injection.latency.p50.worst-agent", MetricKind.QUANTILE, "ms", Reduction.MAX,
+                "Latence p50 du pire agent");
+        register("injection.latency.p75", MetricKind.QUANTILE, "ms", Reduction.MERGE, "Latence p75 (globale)");
+        register("injection.latency.p75.worst-agent", MetricKind.QUANTILE, "ms", Reduction.MAX,
+                "Latence p75 du pire agent");
+        register("injection.latency.p90", MetricKind.QUANTILE, "ms", Reduction.MERGE, "Latence p90 (globale)");
+        register("injection.latency.p90.worst-agent", MetricKind.QUANTILE, "ms", Reduction.MAX,
+                "Latence p90 du pire agent");
+        register("injection.latency.p95", MetricKind.QUANTILE, "ms", Reduction.MERGE, "Latence p95 (globale)");
+        register("injection.latency.p95.worst-agent", MetricKind.QUANTILE, "ms", Reduction.MAX,
+                "Latence p95 du pire agent");
+        register("injection.latency.p99", MetricKind.QUANTILE, "ms", Reduction.MERGE, "Latence p99 (globale)");
+        register("injection.latency.p99.worst-agent", MetricKind.QUANTILE, "ms", Reduction.MAX,
+                "Latence p99 du pire agent");
         register("injection.latency.max", MetricKind.DURATION, "ms", Reduction.MAX, "Latence maximale");
         register("injection.latency.min", MetricKind.DURATION, "ms", Reduction.MIN, "Latence minimale");
         register("injection.latency.mean", MetricKind.DURATION, "ms", Reduction.MAX, "Latence moyenne");
@@ -37,7 +47,21 @@ public final class MetricCatalog {
                 "Requetes en echec");
         register("injection.error.rate", MetricKind.RATIO, "percent", Reduction.WEIGHTED,
                 "Taux d'erreur");
-        register("injection.throughput", MetricKind.GAUGE, "req/s", Reduction.MIN, "Debit");
+        // Reduction documentee : somme(requetes) / fenetre commune mesuree ; calcul dans platform-assertion.
+        register("injection.throughput", MetricKind.GAUGE, "req/s", Reduction.MIN,
+                "Debit (fenetre commune)");
+        register("injection.arrival.planned", MetricKind.COUNTER, "count", Reduction.SUM,
+                "Arrivees planifiees");
+        register("injection.arrival.achieved", MetricKind.COUNTER, "count", Reduction.SUM,
+                "Arrivees realisees");
+        register("injection.arrival.deviation", MetricKind.RATIO, "percent", Reduction.WEIGHTED,
+                "Ecart arrivees realisees / planifiees");
+        register("injection.start.skew", MetricKind.DURATION, "ms", Reduction.MAX,
+                "Ecart de demarrage entre agents");
+        register("injection.generator.cpu", MetricKind.RATIO, "percent", Reduction.MAX,
+                "CPU du generateur");
+        register("injection.generator.gc.pause", MetricKind.DURATION, "ms", Reduction.MAX,
+                "Pause GC du generateur");
         register("database.scalar", MetricKind.GAUGE, "rows", Reduction.SUM,
                 "Valeur scalaire SQL (COUNT, EXISTS...)");
         register("database.updates", MetricKind.COUNTER, "count", Reduction.SUM,

@@ -14,5 +14,7 @@ public enum Reduction {
     WEIGHTED,
     ALL,
     ANY,
-    FIRST
+    FIRST,
+    /** Histogrammes sommes bucket par bucket, quantile calcule sur la distribution fusionnee (ADR-068). */
+    MERGE
 }
