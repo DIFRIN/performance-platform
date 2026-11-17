@@ -30,6 +30,7 @@ public class DefaultScenarioValidator implements ScenarioValidator {
 
     private final WorkloadPlanValidator workloadPlanValidator = new WorkloadPlanValidator();
     private final IntegrityBlockValidator integrityBlockValidator = new IntegrityBlockValidator();
+    private final RequestMixValidator requestMixValidator = new RequestMixValidator();
 
     private static final String GATLING_TASK_NAME = "gatling";
     private static final String METADATA_OWNER_KEY = "owner";
@@ -513,6 +514,7 @@ public class DefaultScenarioValidator implements ScenarioValidator {
             if (step == null || step.id() == null) continue;
             errors.addAll(integrityBlockValidator.validate(step.id().value(), step.phase(), step.parameters()));
             errors.addAll(workloadPlanValidator.validateStep(step));
+            errors.addAll(requestMixValidator.validate(step.id().value(), step.phase(), step.parameters()));
         }
     }
 }
