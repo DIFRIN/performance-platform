@@ -19,6 +19,11 @@
         </dependency>
         <dependency>
             <groupId>com.performance</groupId>
+            <artifactId>platform-assertion</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.performance</groupId>
             <artifactId>platform-report-api</artifactId>
             <version>${project.version}</version>
         </dependency>

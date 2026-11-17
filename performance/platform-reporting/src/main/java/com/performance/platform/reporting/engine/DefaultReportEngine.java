@@ -135,7 +135,8 @@ public class DefaultReportEngine implements ReportEngine {
             List<AssertionReportEntry> assertionResults = buildAssertionEntries(state, assertTaskIds);
 
             // Calculer le verdict
-            var performance = PerformanceAssessmentBuilder.build(state, injectionResults, assertionResults);
+            var performance = PerformanceAssessmentBuilder.build(state, injectionResults, assertionResults,
+                    IntegrityChecks.forState(state));
             var verdict = performance.validation().status();
 
             // Construire le résumé d'exécution

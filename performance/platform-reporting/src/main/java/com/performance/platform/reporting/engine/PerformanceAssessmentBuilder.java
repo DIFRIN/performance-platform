@@ -29,6 +29,12 @@ final class PerformanceAssessmentBuilder {
 
     static PerformanceAssessment build(ExecutionState state, List<InjectionReportEntry> injections,
                                        List<AssertionReportEntry> assertions) {
+        return build(state, injections, assertions, Map.of());
+    }
+
+    static PerformanceAssessment build(ExecutionState state, List<InjectionReportEntry> injections,
+                                       List<AssertionReportEntry> assertions,
+                                       Map<String, List<com.performance.platform.domain.assertion.Check>> integrity) {
         var details = state.scenarioDetails();
         var spec = details == null ? null : details.report();
         if (spec == null) spec = new ReportDefinition(null, null, null, null, null,
@@ -60,6 +66,12 @@ final class PerformanceAssessmentBuilder {
         }
 
         var checks = new ArrayList<Check>();
+        var integrityChecks = new ArrayList<com.performance.platform.domain.assertion.Check>();
+        integrity.forEach((stepId, domainChecks) -> {
+            integrityChecks.addAll(domainChecks);
+            domainChecks.forEach(c -> checks.add(toAssessmentCheck(c, stepId)));
+        });
+        boolean invalid = VerdictCalculator.isInvalid(integrityChecks);
         for (var criterion : spec.criteria()) {
             Double actual = metric(criterion.metric(), criterion.taskId(), state, injections, assertions, measurements);
             checks.add(new Check(criterion.name(), criterion.metric(), criterion.taskId(), actual,
@@ -86,7 +98,9 @@ final class PerformanceAssessmentBuilder {
         }
         boolean reviewRequired = sloSections.stream()
                 .flatMap(section -> section.checks().stream())
-                .anyMatch(check -> "INCONCLUSIVE".equals(check.status()));
+                .anyMatch(check -> "INCONCLUSIVE".equals(check.status()))
+                || integrityChecks.stream().anyMatch(c ->
+                        c.status() == AssertionStatus.INCONCLUSIVE);
         var validation = new ArrayList<Check>();
         for (String metric : VALIDATION_METRICS) {
             var matching = checks.stream().filter(c -> c.metric().equals(metric)).toList();
@@ -121,9 +135,12 @@ final class PerformanceAssessmentBuilder {
         boolean failedWithoutAssertionEvidence = state.status() == ExecutionStatus.FAILED
                 && assertions.stream().noneMatch(a -> a.verdict() == AssertionStatus.FAILED
                         || a.verdict() == AssertionStatus.ERROR);
-        Verdict verdict = failedTask || criticalFailure || failedWithoutAssertionEvidence ? Verdict.FAILED
+        if (invalid) {
+            limitations.add("Résultats non concluants : la charge décrite n'a pas été appliquée");
+        }
+        Verdict verdict = VerdictCalculator.applyIntegrity(failedTask || criticalFailure || failedWithoutAssertionEvidence ? Verdict.FAILED
                 : warning || reviewRequired || state.status() != ExecutionStatus.COMPLETED
-                ? Verdict.WARNING : Verdict.SUCCESS;
+                ? Verdict.WARNING : Verdict.SUCCESS, integrityChecks);
         var findings = new ArrayList<String>(spec.incidents());
         checks.stream().filter(c -> !c.status().equals("PASSED")).forEach(c ->
                 findings.add(c.name() + ": " + c.status() + " (observed=" + c.actual()

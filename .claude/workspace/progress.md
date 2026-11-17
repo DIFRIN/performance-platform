@@ -235,8 +235,8 @@
 | ISSUE-220 | Rapport : charge planifiée, réalisée et distributions | WAITING | PDR-058 | ISSUE-219, ISSUE-246 |
 | ISSUE-221 | Verdict INVALID et famille INTEGRITY | DONE | PDR-059 | ISSUE-216 |
 | ISSUE-222 | Bloc integrity : validation scénario | DONE | PDR-059 | ISSUE-221, ISSUE-207 |
-| ISSUE-223 | IntegrityCheckFactory | APPROVED | PDR-059 | ISSUE-221, ISSUE-219 |
-| ISSUE-224 | Verdict INVALID dans le moteur de rapport | WAITING | PDR-059 | ISSUE-223 |
+| ISSUE-223 | IntegrityCheckFactory | DONE | PDR-059 | ISSUE-221, ISSUE-219 |
+| ISSUE-224 | Verdict INVALID dans le moteur de rapport | APPROVED | PDR-059 | ISSUE-223 |
 | ISSUE-225 | Rendu HTML/PDF du verdict INVALID | WAITING | PDR-059 | ISSUE-224 |
 | ISSUE-226 | API, IHM et CLI : verdict INVALID | WAITING | PDR-059 | ISSUE-224 |
 | ISSUE-227 | GrantShare, signal de grant et contexte | DONE | PDR-060 | - |
@@ -1230,3 +1230,7 @@
 | 2026-11-17 | ISSUE-223 | WAITING → IN_PROGRESS | issue-start.sh |
 | 2026-11-17 | ISSUE-223 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
 | 2026-11-17 | ISSUE-223 | IN_REVIEW → APPROVED | Reviewer approved |
+| 2026-11-17 | ISSUE-223 | APPROVED → DONE | issue-next.sh |
+| 2026-11-17 | ISSUE-224 | WAITING → IN_PROGRESS | issue-start.sh |
+| 2026-11-17 | ISSUE-224 | IN_PROGRESS → IN_REVIEW | issue-finish.sh |
+| 2026-11-17 | ISSUE-224 | IN_REVIEW → APPROVED | Reviewer approved |
