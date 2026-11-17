@@ -32,7 +32,8 @@ public record CampaignReport(
     String verdictReason,
     Instant generatedAt,
     Duration totalDuration,
-    PerformanceAssessment performance
+    PerformanceAssessment performance,
+    Map<String, Object> injectionMeasurements
 ) {
     public CampaignReport(ReportId id, ScenarioId scenarioId, String scenarioName, String scenarioVersion,
                           List<String> tags, Map<String, String> metadata, EnvironmentInfo environment,
@@ -41,7 +42,18 @@ public record CampaignReport(
                           Verdict verdict, String verdictReason, Instant generatedAt, Duration totalDuration) {
         this(id, scenarioId, scenarioName, scenarioVersion, tags, metadata, environment, executionSummary,
                 preparationResults, injectionResults, assertionResults, verdict, verdictReason,
-                generatedAt, totalDuration, null);
+                generatedAt, totalDuration, null, Map.of());
+    }
+
+    public CampaignReport(ReportId id, ScenarioId scenarioId, String scenarioName, String scenarioVersion,
+                          List<String> tags, Map<String, String> metadata, EnvironmentInfo environment,
+                          ExecutionSummary executionSummary, List<TaskReportEntry> preparationResults,
+                          List<InjectionReportEntry> injectionResults, List<AssertionReportEntry> assertionResults,
+                          Verdict verdict, String verdictReason, Instant generatedAt, Duration totalDuration,
+                          PerformanceAssessment performance) {
+        this(id, scenarioId, scenarioName, scenarioVersion, tags, metadata, environment, executionSummary,
+                preparationResults, injectionResults, assertionResults, verdict, verdictReason,
+                generatedAt, totalDuration, performance, Map.of());
     }
 
     public CampaignReport {
@@ -59,5 +71,11 @@ public record CampaignReport(
         preparationResults = preparationResults == null ? List.of() : List.copyOf(preparationResults);
         injectionResults = injectionResults == null ? List.of() : List.copyOf(injectionResults);
         assertionResults = assertionResults == null ? List.of() : List.copyOf(assertionResults);
+        injectionMeasurements = injectionMeasurements == null ? Map.of() : Map.copyOf(injectionMeasurements);
+    }
+
+    /** Vrai si la section « mesures d'injection » a été calculée. */
+    public boolean hasInjectionMeasurements() {
+        return !injectionMeasurements.isEmpty();
     }
 }

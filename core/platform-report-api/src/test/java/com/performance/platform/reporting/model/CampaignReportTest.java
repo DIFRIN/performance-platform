@@ -142,6 +142,41 @@ class CampaignReportTest {
             );
             assertTrue(report.metadata().isEmpty());
         }
+
+        private CampaignReport base(Map<String, Object> measurements) {
+            return new CampaignReport(
+                    reportId, scenarioId, "S", "1", List.of(), Map.of(),
+                    new EnvironmentInfo(List.of(), "25", Map.of()),
+                    new ExecutionSummary(0, 0, 0, 0, Duration.ZERO, Duration.ZERO, Duration.ZERO),
+                    List.of(), List.of(), List.of(),
+                    Verdict.SUCCESS, null, now, Duration.ZERO, null, measurements);
+        }
+
+        @Test
+        @DisplayName("legacy 15/16-arg constructors default injectionMeasurements to empty")
+        void legacyConstructorsDefaultToEmpty() {
+            var env = new EnvironmentInfo(List.of(), "25", Map.of());
+            var sum = new ExecutionSummary(0, 0, 0, 0, Duration.ZERO, Duration.ZERO, Duration.ZERO);
+            var r15 = new CampaignReport(reportId, scenarioId, "S", "1", List.of(), Map.of(), env, sum,
+                    List.of(), List.of(), List.of(), Verdict.SUCCESS, null, now, Duration.ZERO);
+            var r16 = new CampaignReport(reportId, scenarioId, "S", "1", List.of(), Map.of(), env, sum,
+                    List.of(), List.of(), List.of(), Verdict.SUCCESS, null, now, Duration.ZERO, null);
+            assertFalse(r15.hasInjectionMeasurements());
+            assertFalse(r16.hasInjectionMeasurements());
+            assertTrue(r15.injectionMeasurements().isEmpty());
+        }
+
+        @Test
+        @DisplayName("injectionMeasurements: null -> empty, non-empty detected, defensive copy")
+        void injectionMeasurementsBehaviour() {
+            assertFalse(base(null).hasInjectionMeasurements());
+            var mut = new java.util.HashMap<String, Object>(Map.of("k", 1));
+            var report = base(mut);
+            mut.put("x", 2);
+            assertTrue(report.hasInjectionMeasurements());
+            assertEquals(1, report.injectionMeasurements().size());
+            assertThrows(UnsupportedOperationException.class, () -> report.injectionMeasurements().put("y", 3));
+        }
     }
 
     @Nested

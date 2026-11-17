@@ -303,6 +303,7 @@
 |---|---|---|---|
 | `PublicationTarget` | ❌ REMOVED (ADR-022) | PDR-015 | ISSUE-065 → suppr. ISSUE-137 |
 | `ReportEngine` / `ReportRenderer` / `CampaignReport` (CONSERVÉS) ; ~~`ReportPublisher`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 ; ADR-044 (+PerformanceAssessment, six sections) |
+| `CampaignReport` (étendu : `injectionMeasurements` Map canonique, `hasInjectionMeasurements()`, constructeurs 15/16 args conservés) | ✅ STABLE | PDR-058 | ISSUE-246 ; ADR-068 §7 |
 | `EnvironmentInfo` / `ExecutionSummary` / `TaskReportEntry` | ✅ STABLE | PDR-015 | ISSUE-065 |
 | `InjectionReportEntry` / `AssertionReportEntry` (CONSERVÉS) ; ~~`PublisherConfig`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 ; ADR-044 (+agentId sur injection) ; ISSUE-245 : InjectionReportEntry étendu (+workloadPlan, +workloadPlanHash, planRecorded()) |
 | `RenderException` (CONSERVÉ) ; ~~`PublicationException`~~ ❌ REMOVED (ISSUE-137) | ✅ STABLE | PDR-015 | ISSUE-065 |

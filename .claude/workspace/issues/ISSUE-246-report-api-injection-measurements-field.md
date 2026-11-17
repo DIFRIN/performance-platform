@@ -2,7 +2,7 @@
 
 **PDR** : PDR-058
 **Module** : `platform-report-api`
-**Statut** : WAITING
+**Statut** : APPROVED
 **Priorité** : P1
 **Bloquée par** : ISSUE-219
 **Estime** : S (< 1h)
