@@ -11,6 +11,7 @@ import com.performance.platform.domain.execution.ExecutionState;
 import com.performance.platform.domain.execution.ExecutionStatus;
 import com.performance.platform.domain.execution.ExecutionStep;
 import com.performance.platform.domain.execution.PhaseStatus;
+import com.performance.platform.domain.execution.RetryPolicy;
 import com.performance.platform.domain.id.AgentId;
 import com.performance.platform.domain.id.EventId;
 import com.performance.platform.domain.id.ExecutionId;
@@ -124,7 +125,10 @@ class AgentLossRecoveryIT {
     private static ScenarioDefinition scenarioWithOneStep() {
         var step = new StepDefinition(
                 TaskId.of("slow-step"), "slow-task", Phase.PREPARATION, Map.of(),
-                List.of(), List.of(), Duration.ofSeconds(20), null);
+                List.of(), List.of(), Duration.ofSeconds(20),
+                // Pas de retry : sinon le dispatcher redispatche (defaut 3 tentatives) et l'agent simule
+                // reclame a nouveau sans jamais repondre, ce qui masque le fast-fail teste ici.
+                new RetryPolicy(1, Duration.ofSeconds(1), 1.0, Duration.ofSeconds(1), Set.of()));
         return new ScenarioDefinition(
                 ScenarioId.of("agent-loss"), "agent-loss", "1.0", List.of(), Map.of(),
                 List.of(step), null, null);
