@@ -56,7 +56,8 @@ public class KafkaInjectionProtocol implements InjectionProtocol {
         if (factory == null) {
             throw new IllegalArgumentException("No Kafka cluster configured (platform.kafka-clusters)");
         }
-        RequestMix<MessageTemplate> mix = mix(executionId, stepId, params);
+        List<KafkaWorkerState.RawRequest> raw = KafkaWorkerState.rawRequests(params);
+        RequestMix<MessageTemplate> mix = KafkaWorkerState.mix(executionId, stepId, raw);
         MessageChannel publisher = factory.open(cluster, topic, PUBLISH_TIMEOUT);
         KafkaInjectionSpecHolder.set(stepId, new KafkaInjectionSpec(stepId, mix, publisher));
         return new PreparedInjection() {
@@ -66,38 +67,16 @@ public class KafkaInjectionProtocol implements InjectionProtocol {
             }
 
             @Override
+            public Map<String, Object> workerState() {
+                return KafkaWorkerState.toState(executionId, stepId, raw, factory.describe(cluster, topic));
+            }
+
+            @Override
             public void close() {
                 KafkaInjectionSpecHolder.remove(stepId);
                 publisher.close();
             }
         };
-    }
-
-    /** {@code requests} list = weighted mix of templates; absent = single template (mix of one). */
-    private static RequestMix<MessageTemplate> mix(String executionId, String stepId, Map<String, Object> params) {
-        Object raw = params.get("requests");
-        if (raw == null) {
-            return RequestMix.single(MessageTemplate.of(executionId, stepId, params));
-        }
-        if (!(raw instanceof List<?> list) || list.isEmpty()) {
-            throw new IllegalArgumentException("Parameter 'requests' must be a non-empty list");
-        }
-        List<WeightedRequest<MessageTemplate>> requests = new ArrayList<>();
-        for (Object item : list) {
-            if (!(item instanceof Map<?, ?> entry)) {
-                throw new IllegalArgumentException("Each 'requests' entry must be a mapping");
-            }
-            Map<String, Object> values = new LinkedHashMap<>();
-            entry.forEach((k, v) -> values.put(String.valueOf(k), v));
-            Object name = values.get("name");
-            Object weight = values.get("weight");
-            if (name == null || !(weight instanceof Number w)) {
-                throw new IllegalArgumentException("Each 'requests' entry needs 'name' and numeric 'weight'");
-            }
-            requests.add(new WeightedRequest<>(name.toString(), w.doubleValue(),
-                    MessageTemplate.of(executionId, stepId, values)));
-        }
-        return new RequestMix<>(requests);
     }
 
     private static String text(Map<String, Object> params, String key) {

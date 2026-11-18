@@ -17,4 +17,15 @@ public interface MessageChannelFactory {
      * @throws IllegalArgumentException si la cible est inconnue
      */
     MessageChannel open(String target, String destination, Duration timeout);
+
+    /**
+     * Description serialisable du canal que {@link #open} ouvrirait, pour le rouvrir dans un autre
+     * processus (ADR-071).
+     *
+     * @throws IllegalArgumentException si la cible est inconnue
+     * @throws UnsupportedOperationException si la technologie ne peut pas etre decrite
+     */
+    default ChannelDescriptor describe(String target, String destination) {
+        throw new UnsupportedOperationException("Channel cannot be described for another process");
+    }
 }

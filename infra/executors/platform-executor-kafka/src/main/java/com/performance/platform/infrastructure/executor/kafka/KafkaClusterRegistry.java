@@ -60,15 +60,21 @@ public class KafkaClusterRegistry {
         if (cluster == null) {
             throw new IllegalArgumentException("Unknown Kafka cluster: " + clusterName);
         }
-        var config = new HashMap<String, Object>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, cluster.bootstrapServers());
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.ACKS_CONFIG, cluster.producerAcks());
-        applyOperationTimeout(config, operationTimeout);
+        var config = producerConfig(cluster.bootstrapServers(), cluster.producerAcks(), operationTimeout);
         log.debug("action=producer_factory_created clusterName={} bootstrapServers={} acks={}",
                 clusterName, cluster.bootstrapServers(), cluster.producerAcks());
         return new DefaultKafkaProducerFactory<>(config);
+    }
+
+    /** Producer configuration shared with {@link KafkaChannelOpener} (worker JVM, ADR-071). */
+    static Map<String, Object> producerConfig(String bootstrapServers, String acks, Duration operationTimeout) {
+        var config = new HashMap<String, Object>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.ACKS_CONFIG, acks);
+        applyOperationTimeout(config, operationTimeout);
+        return config;
     }
 
     /**

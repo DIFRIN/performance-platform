@@ -1,6 +1,7 @@
 package com.performance.platform.infrastructure.executor.kafka;
 
 import com.performance.platform.plugin.resource.MessageChannel;
+import com.performance.platform.plugin.resource.ChannelDescriptor;
 import com.performance.platform.plugin.resource.MessageChannelFactory;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -30,6 +31,18 @@ public class KafkaClusterPublisherFactory implements MessageChannelFactory {
         return new TemplatePublisher(template, topic);
     }
 
+    @Override
+    public ChannelDescriptor describe(String cluster, String logicalTopic) {
+        KafkaClusterProperties properties = registry.get(cluster);
+        if (properties == null) {
+            throw new IllegalArgumentException("Unknown Kafka cluster: " + cluster);
+        }
+        return new ChannelDescriptor(KafkaChannelOpener.TYPE, Map.of(
+                "bootstrapServers", properties.bootstrapServers(),
+                "acks", String.valueOf(properties.producerAcks()),
+                "topic", registry.resolveTopic(cluster, logicalTopic)));
+    }
+
     /** Builds the Kafka record (key, value, headers) shared with the kafka-producer preparation. */
     static ProducerRecord<String, String> record(String topic, String key, String value, Map<String, String> headers) {
         var record = new ProducerRecord<>(topic, key, value);
@@ -38,7 +51,7 @@ public class KafkaClusterPublisherFactory implements MessageChannelFactory {
         return record;
     }
 
-    private record TemplatePublisher(KafkaTemplate<String, String> template, String topic) implements MessageChannel {
+    record TemplatePublisher(KafkaTemplate<String, String> template, String topic) implements MessageChannel {
 
         @Override
         public CompletableFuture<Void> publish(String key, String value, Map<String, String> headers) {

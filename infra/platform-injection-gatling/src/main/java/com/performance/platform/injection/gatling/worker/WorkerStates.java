@@ -9,7 +9,7 @@ import java.util.Map;
 /** Envelope {@code {type, data}} of the protocol state carried by the run directory. */
 public final class WorkerStates {
 
-    static final List<WorkerStateRestorer> RESTORERS = List.of(new HttpWorkerState());
+    static final List<WorkerStateRestorer> RESTORERS = List.of(new HttpWorkerState(), new com.performance.platform.injection.gatling.kafka.KafkaWorkerState());
 
     private WorkerStates() {
     }

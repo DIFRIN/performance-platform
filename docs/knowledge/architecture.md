@@ -172,7 +172,7 @@ plugin/
 ├── Assertion               @Assertion(name=…)
 ├── StatefulResourceCleaner cleanup(executionId | null)
 ├── resource/               Endpoint, EndpointResolver (ADR-036), NamedResourceResolver (ADR-042),
-│                           MessageChannel, MessageChannelFactory — ports de ressources nommées
+│                           MessageChannel, MessageChannelFactory (+ describe), ChannelDescriptor, ChannelOpener (ServiceLoader, ADR-071) — ports de ressources nommées
 └── template/               DynamicValues, MessageTemplate, JsonText — valeurs dynamiques (ADR-039)
 ```
 
