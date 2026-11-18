@@ -147,6 +147,8 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
     // ── State ─────────────────────────────────────────────────────────────────
 
     private final Map<String, List<WorkerHandle>> activeExecutions = new ConcurrentHashMap<>();
+    /** Executions annulees (cleanup) pendant qu'une injection demarrait : le worker est arrete des son lancement. */
+    private final java.util.Set<String> cancelledExecutions = ConcurrentHashMap.newKeySet();
 
     /** Injections en cours d'execution (ADR-066, regle interimaire). */
     private final AtomicInteger runningInjections = new AtomicInteger();
@@ -312,6 +314,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
         final String simulationClass = simulation;
         final PreparedInjection preparedInjection = prepared;
 
+        cancelledExecutions.remove(executionKey); // annulation anterieure : perimee
         if (runningInjections.incrementAndGet() > maxConcurrent) {
             runningInjections.decrementAndGet();
             if (prepared != null) prepared.close();
@@ -333,6 +336,10 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                     executionKey, simulationClass, step.id().value());
             handle = launcher.start(spec);
             activeExecutions.computeIfAbsent(executionKey, k -> new CopyOnWriteArrayList<>()).add(handle);
+            if (cancelledExecutions.contains(executionKey)) {
+                log.info("action=gatling_cancelled_during_start executionId={} stepId={}", executionKey, step.id().value());
+                handle.stop(stopGrace);
+            }
             WorkerOutcome outcome = handle.await();
             if (!outcome.completed()) {
                 var elapsed = Duration.ofNanos(System.nanoTime() - startNanos);
@@ -407,6 +414,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
                     if (list.isEmpty()) activeExecutions.remove(executionKey, list);
                 }
             }
+            cancelledExecutions.remove(executionKey);
             runningInjections.decrementAndGet();
         }
     }
@@ -421,6 +429,7 @@ public class GatlingTaskExecutor implements TaskExecutor, StatefulResourceCleane
             activeExecutions.values().forEach(this::stopAll);
             activeExecutions.clear();
         } else {
+            if (runningInjections.get() > 0) cancelledExecutions.add(executionId.value());
             var handles = activeExecutions.remove(executionId.value());
             if (handles != null) {
                 log.info("action=gatling_cleanup executionId={} workers={}", executionId.value(), handles.size());

@@ -100,8 +100,9 @@ class InjectionWorkerIT {
                 "simulation", PingSimulation.class.getName(),
                 "timeout", 120,
                 "systemProperties", Map.of("test.baseUrl", "http://localhost:" + sut.port()),
-                "loadModel", Map.of("type", "CONSTANT",
-                        "parameters", Map.of("usersPerSec", usersPerSec, "durationSeconds", durationSeconds))),
+                "workload", com.performance.platform.domain.injection.WorkloadPlanCodec.toMap(
+                        com.performance.platform.domain.injection.LoadPresets.expand("CONSTANT",
+                                Map.of("usersPerSec", usersPerSec, "durationSeconds", durationSeconds)))),
                 null, null, null, null);
     }
 
