@@ -85,7 +85,7 @@ public class TransportStepDispatcher implements StepDispatcher {
     @Override
     public List<StepDispatchResult> dispatch(ExecutionStep execStep, ExecutionContext context) {
         StepDefinition stepDef = execStep.step();
-        RetryPolicy retry = stepDef.retryPolicy() != null ? stepDef.retryPolicy() : RetryPolicy.defaults();
+        RetryPolicy retry = retryPolicyOf(stepDef);
         int maxAttempts = Math.max(1, retry.maxAttempts());
         List<StepDispatchResult> last = null;
 
@@ -104,6 +104,14 @@ public class TransportStepDispatcher implements StepDispatcher {
             }
         }
         return last == null ? failure(stepDef, "No dispatch attempt") : last;
+    }
+
+    /** Politique absente = pas de retry (contrat de {@code StepDefinition} et spec 01) : une seule tentative. */
+    private static final RetryPolicy NO_RETRY =
+            new RetryPolicy(1, Duration.ofSeconds(1), 1.0, Duration.ofSeconds(1), java.util.Set.of());
+
+    private static RetryPolicy retryPolicyOf(StepDefinition stepDef) {
+        return stepDef.retryPolicy() != null ? stepDef.retryPolicy() : NO_RETRY;
     }
 
     private List<StepDispatchResult> dispatchOnce(ExecutionStep execStep, ExecutionContext context) {
@@ -214,7 +222,7 @@ public class TransportStepDispatcher implements StepDispatcher {
         StepDefinition stepDef = execStep.step();
         var partialCtx = PartialContextBuilder.build(context, execStep.requiredContextKeys());
         MessageId messageId = MessageId.generate();
-        RetryPolicy retry = stepDef.retryPolicy() != null ? stepDef.retryPolicy() : RetryPolicy.defaults();
+        RetryPolicy retry = retryPolicyOf(stepDef);
         var request = new TaskExecutionRequest(
                 messageId, context.executionId(), stepDef, partialCtx, Instant.now(), retry);
 

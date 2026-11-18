@@ -261,10 +261,11 @@ les ports de transport (ADR-059). Le parcours DAG ne connaît ni le transport ni
   `min(initialDelay × multiplier^(n-1), maxDelay)` via `Thread.sleep`
   (Virtual Threads, pas de blocage du carrier).
 
-**État actuel** : la politique est portée par `TaskExecutionRequest.retryPolicy`, mais
-ni `TransportStepDispatcher` ni `TaskExecutionPipeline` ne l'appliquent — une tâche est
-exécutée une seule fois. `RetryExecutor` reste disponible mais n'est plus câblé dans le
-dispatcher. Le retry effectif est un suivi d'implémentation.
+**État actuel** : `TransportStepDispatcher` rejoue un step sur échec transitoire (aucun agent accordé,
+timeout, résultat absent) selon la `retryPolicy` du step. **Politique absente (`null`) = une seule
+tentative**, conformément à `StepDefinition` et à la spec 01 ; les défauts ci-dessus ne s'appliquent
+qu'à `RetryPolicy.defaults()` demandé explicitement. Un échec avec cause (erreur métier du
+`TaskExecutor`, perte d'agent sous `onAgentLoss: abort`) n'est jamais rejoué.
 
 ---
 
